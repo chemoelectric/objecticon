@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>bsearch</title></head><body>
+<h1>bsearch(l, val, cmp, pos1, pos2, iflag)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.sort-package.html" target="listFrame">ipl.sort</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+A binary search algorithm.  If pos1 and pos2 are given, then only
+the sublist l[pos1:pos2] is searched.
+<p/>
+If the <code>iflag</code> parameter is set, and the value is not found, then a
+valid insert position is returned which, when inserting val, would
+keep the list in order.  If <code>iflag</code> is not set, then the procedure
+simply fails.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - the list to search
+</dd>
+<dd>
+<code>val</code> - the value to search for
+</dd>
+<dd>
+<code>cmp</code> - a comparator function, default <code><a href="lang.Internal.html#compare">Internal.compare</a></code>
+</dd>
+<dd>
+<code>pos1</code> - the first slice index, default 1
+</dd>
+<dd>
+<code>pos2</code> - the second slice index, default 0
+</dd>
+<dd>
+<code>iflag</code> - a flag requesting an insert position if val is not
+found.
+</dd>
+</dl>
+<p/><a href="ipl.sort-sort.icn.html#452" target="displayFrame">Source - sort.icn </a>
+<p/>
+</body></html>

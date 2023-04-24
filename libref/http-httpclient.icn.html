@@ -1,0 +1,1161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>httpclient.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: httpclient.icn 9177 2021-09-08 13:04:55Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package http
+<a name="6"/>
+<a name="7"/>import util,
+<a name="8"/>   lang,
+<a name="9"/>   net,
+<a name="10"/>   io,
+<a name="11"/>   datastruct(SortTable),
+<a name="12"/>   ipl.base64,
+<a name="13"/>   ipl.strings,
+<a name="14"/>   ipl.scan,
+<a name="15"/>   ipl.printf
+<a name="16"/>
+<a name="17"/>#
+<a name="18"/># Little helper class to store cookie details
+<a name="19"/>#
+<a name="20"/>class Cookie()
+<a name="21"/>   package readable
+<a name="22"/>      name,
+<a name="23"/>      value,
+<a name="24"/>      expires, 
+<a name="25"/>      domain, 
+<a name="26"/>      path,
+<a name="27"/>      secure,
+<a name="28"/>      comment, 
+<a name="29"/>      version
+<a name="30"/>
+<a name="31"/>   #
+<a name="32"/>   # This is a utility function to remove any expired cookies from
+<a name="33"/>   # a table of cookies.
+<a name="34"/>   #
+<a name="35"/>   public static expire_cookies(cookies)
+<a name="36"/>      local e, f, g, now, t
+<a name="37"/>      now := Time()
+<a name="38"/>      every e := !sort(cookies) do {
+<a name="39"/>         every f := !sort(e[2]) do {
+<a name="40"/>            every g := !sort(f[2]) do {
+<a name="41"/>               t := g[2].expires
+<a name="42"/>               if /t | now.after(t) then
+<a name="43"/>                  delete(f[2], g[1])
+<a name="44"/>            }
+<a name="45"/>            if *f[2] = 0 then
+<a name="46"/>               delete(e[2], f[1])
+<a name="47"/>         }
+<a name="48"/>         if *e[2] = 0 then
+<a name="49"/>            delete(cookies, e[1])
+<a name="50"/>      }
+<a name="51"/>      return cookies
+<a name="52"/>   end
+<a name="53"/>end
+<a name="54"/>
+<a name="55"/># This class contains an interface for additional functions which can
+<a name="56"/># be called during a request.  It is set by setting the helper member
+<a name="57"/># of `HttpRequest`.
+<a name="58"/>#
+<a name="59"/>abstract class HttpRequestHelper()
+<a name="60"/>   # This function is called when an 401 Unauthorized response occurs.
+<a name="61"/>   # The domain and realm are passed to the function, and it should
+<a name="62"/>   # return an `Authentication` instance to provide the username and
+<a name="63"/>   # password so the request can be retried.  If it fails, then the
+<a name="64"/>   # entire request fails.
+<a name="65"/>   #
+<a name="66"/>   public abstract get_authentication(httpc, dom, realm)
+<a name="67"/>
+<a name="68"/>   # This function is called on a redirect with the request and
+<a name="69"/>   # response objects.  It may modify those objects (eg by setting
+<a name="70"/>   # request headers).  If the function returns, then the redirect is
+<a name="71"/>   # not carried out and the whole request fails with the http error
+<a name="72"/>   # of the redirect.  If the function fails, then the redirect is
+<a name="73"/>   # carried out.
+<a name="74"/>   #
+<a name="75"/>   public abstract modify_redirect(httpc, request, response)
+<a name="76"/>end
+<a name="77"/>
+<a name="78"/>#
+<a name="79"/># An http client
+<a name="80"/>#
+<a name="81"/>class HttpClient(NetClient)
+<a name="82"/>   public static const
+<a name="83"/>      TOKEN_CHAR,
+<a name="84"/>      BEGIN_EVENT,
+<a name="85"/>      COMPLETE_EVENT,
+<a name="86"/>      FAILED_EVENT,
+<a name="87"/>      HTTP_SUCCESS_EVENT,
+<a name="88"/>      HTTP_ERROR_EVENT,
+<a name="89"/>      ABORTED_EVENT,
+<a name="90"/>      RETRYING_EVENT,
+<a name="91"/>      HEADERS_EVENT,
+<a name="92"/>      PROGRESS_EVENT,
+<a name="93"/>      FOUND_GZIP
+<a name="94"/>
+<a name="95"/>   private static init()
+<a name="96"/>      TOKEN_CHAR := &amp;ascii[33:128] -- '()&lt;&gt;@,;:\\\"/[]?={} \t'
+<a name="97"/>      BEGIN_EVENT := "Begin"
+<a name="98"/>      COMPLETE_EVENT := "Complete"
+<a name="99"/>      FAILED_EVENT := "Failed"
+<a name="100"/>      HTTP_ERROR_EVENT := "HTTP Error"
+<a name="101"/>      HTTP_SUCCESS_EVENT := "HTTP Success"
+<a name="102"/>      ABORTED_EVENT := "Aborted"
+<a name="103"/>      RETRYING_EVENT := "Retrying"
+<a name="104"/>      HEADERS_EVENT := "Headers"
+<a name="105"/>      PROGRESS_EVENT := "Progress"
+<a name="106"/>$if (_UNIX | _PLAN9) &amp; ~_CYGWIN
+<a name="107"/>      FOUND_GZIP := Yes{ Files.find_exe("gunzip") }
+<a name="108"/>$endif
+<a name="109"/>   end
+<a name="110"/>
+<a name="111"/>   private readable 
+<a name="112"/>      request,
+<a name="113"/>      response,
+<a name="114"/>      previous_response,
+<a name="115"/>      retries,
+<a name="116"/>      retry_while_data_flag,
+<a name="117"/>      length,
+<a name="118"/>      read,
+<a name="119"/>      http_version,
+<a name="120"/>      http_error,
+<a name="121"/>      keep_alive_flag,
+<a name="122"/>      user_agent,
+<a name="123"/>      redir_set, 
+<a name="124"/>      auth,
+<a name="125"/>      auth_scheme,
+<a name="126"/>      basic_auth_header,
+<a name="127"/>      nonce,
+<a name="128"/>      nonce_count,
+<a name="129"/>      cnonce,
+<a name="130"/>      opaque,
+<a name="131"/>      ha1,
+<a name="132"/>      qop,
+<a name="133"/>      realm,
+<a name="134"/>      cookies,
+<a name="135"/>      authentications,
+<a name="136"/>      abort_flag,
+<a name="137"/>      some_data_flag,
+<a name="138"/>      gzip_flag,
+<a name="139"/>      inflater_stream
+<a name="140"/>
+<a name="141"/>   #
+<a name="142"/>   # Set the http version to use; by default "1.1"
+<a name="143"/>   #
+<a name="144"/>   public set_http_version(s)
+<a name="145"/>      http_version := s
+<a name="146"/>      link
+<a name="147"/>   end
+<a name="148"/>
+<a name="149"/>   #
+<a name="150"/>   # Set the user-agent identification
+<a name="151"/>   #
+<a name="152"/>   public set_user_agent(s)
+<a name="153"/>      self.user_agent := s
+<a name="154"/>      link
+<a name="155"/>   end
+<a name="156"/>
+<a name="157"/>   #
+<a name="158"/>   # Configure whether the client uses the keep-alive feature (the
+<a name="159"/>   # default is yes).
+<a name="160"/>   #
+<a name="161"/>   public set_keep_alive(s)
+<a name="162"/>      self.keep_alive_flag := need_flag(s)
+<a name="163"/>      link
+<a name="164"/>   end
+<a name="165"/>
+<a name="166"/>   #
+<a name="167"/>   # This flag indicates that after a timeout, the retries count should
+<a name="168"/>   # be reset if any data was received.
+<a name="169"/>   #
+<a name="170"/>   public set_retry_while_data(s)
+<a name="171"/>      self.retry_while_data_flag := need_flag(s)
+<a name="172"/>      link
+<a name="173"/>   end
+<a name="174"/>
+<a name="175"/>   #
+<a name="176"/>   # Set the cookies table.
+<a name="177"/>   #
+<a name="178"/>   public set_cookies(m)
+<a name="179"/>      self.cookies := m
+<a name="180"/>      link
+<a name="181"/>   end
+<a name="182"/>
+<a name="183"/>   #
+<a name="184"/>   # Get the cookies table.
+<a name="185"/>   #
+<a name="186"/>   public get_cookies()
+<a name="187"/>      return .self.cookies
+<a name="188"/>   end
+<a name="189"/>
+<a name="190"/>   #
+<a name="191"/>   # Set the authentications table.
+<a name="192"/>   #
+<a name="193"/>   public set_authentications(m)
+<a name="194"/>      self.authentications := m
+<a name="195"/>      link
+<a name="196"/>   end
+<a name="197"/>
+<a name="198"/>   #
+<a name="199"/>   # Get the authentications table.
+<a name="200"/>   #
+<a name="201"/>   public get_authentications()
+<a name="202"/>      return .self.authentications
+<a name="203"/>   end
+<a name="204"/>
+<a name="205"/>   #
+<a name="206"/>   # A flag value.  When set, indicates that gzip compression may be used, if available.
+<a name="207"/>   #
+<a name="208"/>   public set_gzip(s)
+<a name="209"/>      self.gzip_flag := need_flag(s)
+<a name="210"/>      link
+<a name="211"/>   end
+<a name="212"/>
+<a name="213"/>   #
+<a name="214"/>   # Get the current HttpRequest
+<a name="215"/>   #
+<a name="216"/>   public get_request()
+<a name="217"/>      return .self.request
+<a name="218"/>   end
+<a name="219"/>
+<a name="220"/>   #
+<a name="221"/>   # Get the current HttpResponse.  It generally only makes sense to
+<a name="222"/>   # examine this after an HTTP error, since otherwise it may be
+<a name="223"/>   # incomplete.
+<a name="224"/>   #
+<a name="225"/>   public get_response()
+<a name="226"/>      return .\self.response
+<a name="227"/>   end
+<a name="228"/>
+<a name="229"/>   #
+<a name="230"/>   # Abort the current request.
+<a name="231"/>   #
+<a name="232"/>   public abort()
+<a name="233"/>      self.abort_flag := &amp;yes
+<a name="234"/>      link
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   #
+<a name="238"/>   # Helper function to put a header string into the conventional
+<a name="239"/>   # capitalization used in HTTP; eg "abc-DEF" -&gt; "Abc-Def".
+<a name="240"/>   #
+<a name="241"/>   public static capitalize_header(s)
+<a name="242"/>      local t
+<a name="243"/>      t := ""
+<a name="244"/>      s ? until pos(0) do {
+<a name="245"/>         t ||:= Text.upper(move(1)) || Text.lower(tab(past("-") | 0))
+<a name="246"/>      }
+<a name="247"/>      return t
+<a name="248"/>   end
+<a name="249"/>
+<a name="250"/>   private add_request_headers(l)
+<a name="251"/>      local e
+<a name="252"/>      every e := request.gen_header_entries() do
+<a name="253"/>         every put(l, capitalize_header(e.key) || ": " || !e.val)
+<a name="254"/>   end
+<a name="255"/>
+<a name="256"/>   #
+<a name="257"/>   # Set the number of retries to use, with `&amp;null` meaning
+<a name="258"/>   # retry indefinitely.  The default is two.
+<a name="259"/>   #
+<a name="260"/>   public set_retries(retries)
+<a name="261"/>      self.retries := /retries | need_integer(retries, 0)
+<a name="262"/>      link
+<a name="263"/>   end
+<a name="264"/>
+<a name="265"/>   #
+<a name="266"/>   # Retrieve the given `HttpRequest` request, or fail if that
+<a name="267"/>   # is not possible.
+<a name="268"/>   #
+<a name="269"/>   # :Parameters :
+<a name="270"/>   # :  `request` - an `HttpRequest` instance
+<a name="271"/>   # :Returns :
+<a name="272"/>   # :  an `HttpResponse` object.
+<a name="273"/>   public retrieve(request)
+<a name="274"/>      local sc, e
+<a name="275"/>      \request.url | runerr("URL not set")
+<a name="276"/>      # Create our own copy of the request as we may modify it during
+<a name="277"/>      # redirects
+<a name="278"/>      self.request := HttpRequest().
+<a name="279"/>         set_url(request.url).
+<a name="280"/>         set_helper(request.helper).
+<a name="281"/>         set_method(request.method).
+<a name="282"/>         set_referer(request.referer).
+<a name="283"/>         set_range(request.range_start, request.range_end)
+<a name="284"/>      every e := request.gen_header_entries() do
+<a name="285"/>         every self.request.add_header(e.key, !e.val)
+<a name="286"/>      if /request.output_stream then
+<a name="287"/>         request.method == "HEAD" | runerr("No output stream set")
+<a name="288"/>      else {
+<a name="289"/>         request.output_stream.can(Stream.WRITE + Stream.TRUNCATE + Stream.SEEK) | 
+<a name="290"/>                        runerr("Output stream not writable, seekable and truncatable", request.output_stream)
+<a name="291"/>         self.request.set_output_stream(request.output_stream)
+<a name="292"/>      }
+<a name="293"/>      if /request.input_stream then {
+<a name="294"/>         if request.method == ("POST" | "PUT") then runerr("No input stream set on a POST or PUT")
+<a name="295"/>      } else {
+<a name="296"/>         \request.content_type | runerr("Content-type not set with an input stream")
+<a name="297"/>         self.request.set_content_type(request.content_type)
+<a name="298"/>         request.input_stream.can(Stream.READ + Stream.SEEK) | 
+<a name="299"/>                        runerr("Input stream not readable and seekable", request.input_stream)
+<a name="300"/>         self.request.set_input_stream(request.input_stream)
+<a name="301"/>      }
+<a name="302"/>
+<a name="303"/>      redir_set := set()
+<a name="304"/>      response := previous_response := auth := auth_scheme := abort_flag := &amp;null
+<a name="305"/>      repeat {
+<a name="306"/>         http_error := &amp;null
+<a name="307"/>
+<a name="308"/>         retrieve_page() | fail
+<a name="309"/>         sc := response.get_status_code() | return on_http_error("Invalid status code in response")
+<a name="310"/>         if sc = (200 | 201 | 206) then {
+<a name="311"/>            fire(HTTP_SUCCESS_EVENT)
+<a name="312"/>            return response
+<a name="313"/>         }
+<a name="314"/>
+<a name="315"/>         if sc = 401 then
+<a name="316"/>            handle_authentication() | fail
+<a name="317"/>         else if sc = (301| 302 | 303 | 307) then
+<a name="318"/>            handle_redirect(sc) | fail
+<a name="319"/>         else
+<a name="320"/>            return on_http_error(response.get_status())
+<a name="321"/>      }
+<a name="322"/>   end
+<a name="323"/>
+<a name="324"/>   private handle_redirect(sc)
+<a name="325"/>      local l, s, u
+<a name="326"/>      #
+<a name="327"/>      # A redirection, so extract the URL if possible.
+<a name="328"/>      #
+<a name="329"/>      auth := auth_scheme := &amp;null
+<a name="330"/>      l := response.get_first_header("Location") | return on_http_error("No Location in a redirect response")
+<a name="331"/>      if match("http://" | "https://", Text.lower(l)) then {
+<a name="332"/>         u := URL(l) | return on_http_error("Invalid Location in a redirect response: " || l)
+<a name="333"/>         request.set_url(u)
+<a name="334"/>      } else
+<a name="335"/>         #
+<a name="336"/>         # It shouldn't be a relative URL, but that seems to be
+<a name="337"/>         # commonplace.
+<a name="338"/>         #
+<a name="339"/>         request.set_url(request.url.get_relative(l))
+<a name="340"/>      
+<a name="341"/>      s := request.url.str()
+<a name="342"/>      if member(redir_set, s) then
+<a name="343"/>         return on_http_error("Circular redirection detected: " || s)
+<a name="344"/>      insert(redir_set, s)
+<a name="345"/>
+<a name="346"/>      if (\request.helper).modify_redirect(self, request, response) then
+<a name="347"/>         return on_http_error(response.get_status())
+<a name="348"/>         
+<a name="349"/>      #
+<a name="350"/>      # On a redirect, a POST becomes a GET, except for code 307.
+<a name="351"/>      #
+<a name="352"/>      if request.method == "POST" &amp; sc ~= 307 then {
+<a name="353"/>         request.set_method("GET").
+<a name="354"/>            set_input_stream().
+<a name="355"/>            set_content_type().
+<a name="356"/>            unset_header("content-length").
+<a name="357"/>            unset_header("content-type")
+<a name="358"/>      }
+<a name="359"/>
+<a name="360"/>      # Note this response so that it is added to the chain of
+<a name="361"/>      # redirected responses in the final response.
+<a name="362"/>      previous_response := response
+<a name="363"/>
+<a name="364"/>      return
+<a name="365"/>   end
+<a name="366"/>
+<a name="367"/>   private handle_authentication()
+<a name="368"/>      local s, t, k, realm, dom
+<a name="369"/>
+<a name="370"/>      s := response.get_first_header("www-authenticate") | 
+<a name="371"/>         return on_http_error("No WWW-Authenticate in a 401 response")
+<a name="372"/>      t := parse_generic_header(s)
+<a name="373"/>
+<a name="374"/>      realm := t.member("realm") | 
+<a name="375"/>         return on_http_error("No realm in WWW-Authenticate header in a 401 response")
+<a name="376"/>      dom := string(response.url.host)
+<a name="377"/>      k := realm || " at " || dom
+<a name="378"/>      if /auth then {
+<a name="379"/>         # First 401 response, so see if we have a cached
+<a name="380"/>         # authentication; if not then ask for one.
+<a name="381"/>         unless auth := member(authentications, k) then {
+<a name="382"/>            if auth := (\request.helper).get_authentication(self, dom, realm) then
+<a name="383"/>               insert(authentications, k, auth)
+<a name="384"/>            else
+<a name="385"/>               return on_http_error("Authentication requested - please set username, password")
+<a name="386"/>         }
+<a name="387"/>      } else {
+<a name="388"/>         # 401 response to a request with authentication, so it must
+<a name="389"/>         # have been wrong.  Delete bad value from cache and ask.
+<a name="390"/>         delete(authentications, k)
+<a name="391"/>         if auth := (\request.helper).get_authentication(self, dom, realm) then
+<a name="392"/>            insert(authentications, k, auth)
+<a name="393"/>         else
+<a name="394"/>            return on_http_error("Failed to authenticate - correct username, password")
+<a name="395"/>      }
+<a name="396"/>
+<a name="397"/>      if t.member("Basic") then {
+<a name="398"/>         auth_scheme := "Basic"
+<a name="399"/>         return setup_basic_authentication()
+<a name="400"/>      }
+<a name="401"/>      if t.member("Digest") then {
+<a name="402"/>         auth_scheme := "Digest"
+<a name="403"/>         return setup_digest_authentication(t)
+<a name="404"/>      }
+<a name="405"/>
+<a name="406"/>      return on_http_error("WWW-Authenticate header contained unknown authentication method")
+<a name="407"/>   end
+<a name="408"/>
+<a name="409"/>   private setup_basic_authentication()
+<a name="410"/>      basic_auth_header := "Basic " || base64encode(auth.username || ":" || auth.password)
+<a name="411"/>      return
+<a name="412"/>   end
+<a name="413"/>
+<a name="414"/>   private setup_digest_authentication(t)
+<a name="415"/>      local algorithm, md5, qop_options
+<a name="416"/>
+<a name="417"/>      self.realm := t["realm"]
+<a name="418"/>      self.nonce := member(t, "nonce") | 
+<a name="419"/>         return on_http_error("WWW-Authenticate digest header didn't contain a nonce")
+<a name="420"/>      self.opaque := t["opaque"]
+<a name="421"/>
+<a name="422"/>      algorithm := member(t, "algorithm") | "MD5"
+<a name="423"/>      self.nonce_count := 0
+<a name="424"/>      self.cnonce := "0a4f113b"
+<a name="425"/>      
+<a name="426"/>      #
+<a name="427"/>      # Calculate HA1
+<a name="428"/>      #
+<a name="429"/>      md5 := MD5()
+<a name="430"/>      md5.update(auth.username || ":" || realm || ":" || auth.password)
+<a name="431"/>      if Text.lower(algorithm) == "md5-sess" then {
+<a name="432"/>         md5.update(":" || nonce || ":" || cnonce)
+<a name="433"/>      }
+<a name="434"/>      self.ha1 := md5.final_str()
+<a name="435"/>
+<a name="436"/>      #
+<a name="437"/>      # Get the available qop values and select a qop.
+<a name="438"/>      #
+<a name="439"/>      qop_options := set()
+<a name="440"/>      member(t, "qop") ? {
+<a name="441"/>         while(tab(upto(TOKEN_CHAR))) do 
+<a name="442"/>            insert(qop_options, Text.lower(tab(many(TOKEN_CHAR))))
+<a name="443"/>      }
+<a name="444"/>      self.qop := member(qop_options, "auth-int" | "auth") | &amp;null
+<a name="445"/>
+<a name="446"/>      return
+<a name="447"/>   end
+<a name="448"/>
+<a name="449"/>   private create_digest_authorization_header()
+<a name="450"/>      local md5, nc, h, t, hentity, ha2, s
+<a name="451"/>
+<a name="452"/>      self.nonce_count +:= 1
+<a name="453"/>      nc := Text.lower(Format.int_to_string(self.nonce_count, 16, 8))
+<a name="454"/>      md5 := MD5()
+<a name="455"/>      #
+<a name="456"/>      # Calculate HA2
+<a name="457"/>      #
+<a name="458"/>      md5.update(string(request.method || ":" || request.url.get_file()))
+<a name="459"/>      if \qop == "auth-int" then {
+<a name="460"/>         # Calculate H(entity)
+<a name="461"/>         t := MD5()
+<a name="462"/>         if \request.input_stream then {
+<a name="463"/>            request.input_stream.seek(1) | return whyf_dont_retry("Couldn't seek on request input stream: %w")
+<a name="464"/>            repeat {
+<a name="465"/>               s := request.input_stream.in(1048576) | return whyf_dont_retry("Couldn't read request input stream: %w")
+<a name="466"/>               if /s then
+<a name="467"/>                  break
+<a name="468"/>               t.update(s)
+<a name="469"/>            }
+<a name="470"/>         }
+<a name="471"/>         hentity := t.final_str()
+<a name="472"/>         md5.update(":" || hentity)
+<a name="473"/>      }
+<a name="474"/>
+<a name="475"/>      ha2 := md5.final_str()
+<a name="476"/>
+<a name="477"/>      md5.update(ha1 || ":" || nonce || ":")
+<a name="478"/>      if \self.qop then
+<a name="479"/>         md5.update(nc || ":" || cnonce || ":" || qop || ":")
+<a name="480"/>
+<a name="481"/>      md5.update(ha2)
+<a name="482"/>
+<a name="483"/>      h := "Digest username=\"" || auth.username || "\",\r\n\t" ||
+<a name="484"/>         "realm=" || realm || ",\r\n\t" ||
+<a name="485"/>         "nonce=" || nonce || ",\r\n\t" ||
+<a name="486"/>         "uri=\"" || request.url.get_file() || "\",\r\n\t"
+<a name="487"/>      if \qop then {
+<a name="488"/>         h ||:= "qop=" || qop || ",\r\n\t" ||
+<a name="489"/>            "nc=" || nc || ",\r\n\t" ||
+<a name="490"/>            "cnonce=" || cnonce || ",\r\n\t"
+<a name="491"/>      }
+<a name="492"/>      if \opaque then
+<a name="493"/>         h ||:= "opaque=" || opaque || ",\r\n\t"
+<a name="494"/>      h ||:= "response=\"" || md5.final_str() || "\""
+<a name="495"/>
+<a name="496"/>      return h
+<a name="497"/>   end
+<a name="498"/>
+<a name="499"/>   #
+<a name="500"/>   # Parse a string `s` as a generic header consisting of key-values.
+<a name="501"/>   # The keys are comprised of `TOKEN_CHAR`s, as are the values,
+<a name="502"/>   # unless enclosed in double quotes.  Examples of `s` :-
+<a name="503"/>   # ~
+<a name="504"/>   #      a=100 b=200; c="hello world"
+<a name="505"/>   #      x="backslash escapes \" are allowed"
+<a name="506"/>   # ~
+<a name="507"/>   #
+<a name="508"/>   public static parse_generic_header(s)
+<a name="509"/>      local t, k, v
+<a name="510"/>
+<a name="511"/>      t := SortTable(, Text.caseless_compare)
+<a name="512"/>      s ? while tab(upto(TOKEN_CHAR)) do {
+<a name="513"/>         k := tab(many(TOKEN_CHAR))
+<a name="514"/>         v := if ="=" then {
+<a name="515"/>            if any('\"') then
+<a name="516"/>               parse_and_convert_quoted_string()
+<a name="517"/>            else
+<a name="518"/>               tab(many(TOKEN_CHAR)) | ""
+<a name="519"/>         } else
+<a name="520"/>            &amp;null
+<a name="521"/>         t.insert(k, v)
+<a name="522"/>      }
+<a name="523"/>      return t
+<a name="524"/>   end
+<a name="525"/>
+<a name="526"/>   #
+<a name="527"/>   # Parse a string in double quotes; a scan must be in progress with
+<a name="528"/>   # &amp;pos at a ".  &amp;pos will be moved beyond the terminating quote.
+<a name="529"/>   #
+<a name="530"/>   # The whole matched string including enclosing quotes is returned.
+<a name="531"/>   #
+<a name="532"/>   public static parse_quoted_string()
+<a name="533"/>      local res
+<a name="534"/>      res := move(1)
+<a name="535"/>      repeat {
+<a name="536"/>         res ||:= tab(upto('\\"') | 0)
+<a name="537"/>         if any('\\') then
+<a name="538"/>            res ||:= move(2)
+<a name="539"/>         else {
+<a name="540"/>            # Closing quote or end of string
+<a name="541"/>            res ||:= move(1)
+<a name="542"/>            return res
+<a name="543"/>         }
+<a name="544"/>      }
+<a name="545"/>   end
+<a name="546"/>
+<a name="547"/>   #
+<a name="548"/>   # As `parse_quoted_string()` above, but returns the string without
+<a name="549"/>   # the surrounding quotes, and any escape sequences converted.
+<a name="550"/>   #
+<a name="551"/>   public static parse_and_convert_quoted_string()
+<a name="552"/>      local res
+<a name="553"/>      res := ""
+<a name="554"/>      move(1)
+<a name="555"/>      repeat {
+<a name="556"/>         res ||:= tab(upto('\\"') | 0)
+<a name="557"/>         if ="\\" then
+<a name="558"/>            res ||:= move(1)
+<a name="559"/>         else {
+<a name="560"/>            # Closing quote or end of string
+<a name="561"/>            move(1)
+<a name="562"/>            return res
+<a name="563"/>         }
+<a name="564"/>      }
+<a name="565"/>   end
+<a name="566"/>
+<a name="567"/>   private maybe_set_authorization_header()
+<a name="568"/>      case auth_scheme of {
+<a name="569"/>         "Basic":
+<a name="570"/>            request.set_header("authorization", basic_auth_header)
+<a name="571"/>         "Digest":
+<a name="572"/>            request.set_header("authorization", create_digest_authorization_header()) | fail
+<a name="573"/>      }
+<a name="574"/>      return
+<a name="575"/>   end
+<a name="576"/>
+<a name="577"/>   private static parse_cookie_string(s)
+<a name="578"/>      local c, k, v, t, d
+<a name="579"/>
+<a name="580"/>      s ? while tab(upto(TOKEN_CHAR)) do {
+<a name="581"/>         k := tab(many(TOKEN_CHAR))
+<a name="582"/>         v := if ="=" then {
+<a name="583"/>            if any('\"') then
+<a name="584"/>               # The first one (c.value) keeps its quotes, the others don't.
+<a name="585"/>               if /c then parse_quoted_string()
+<a name="586"/>                     else parse_and_convert_quoted_string()
+<a name="587"/>            else
+<a name="588"/>               tab(upto(';') | 0)
+<a name="589"/>         } else
+<a name="590"/>            &amp;null
+<a name="591"/>         if /c then {
+<a name="592"/>            c := Cookie()
+<a name="593"/>            c.name := k
+<a name="594"/>            c.value := v
+<a name="595"/>         } else {
+<a name="596"/>            case Text.lower(k) of {
+<a name="597"/>               # Allow old netscape format or format from the later RFCs.
+<a name="598"/>               "expires" : c.expires := Time.parse(v, "E, d MMM yyyy HH':'mm':'ss z" |
+<a name="599"/>                                                      "E, d'-'MMM'-'yyyy HH':'mm':'ss z")
+<a name="600"/>               "path" : c.path := v
+<a name="601"/>               "domain" : c.domain := v
+<a name="602"/>               "secure" : c.secure := &amp;yes
+<a name="603"/>               "max-age" : {
+<a name="604"/>                  if d := integer(v) then {
+<a name="605"/>                     t := Time()
+<a name="606"/>                     t.set_seconds(t.seconds + d)
+<a name="607"/>                     c.expires := t
+<a name="608"/>                  }
+<a name="609"/>               }
+<a name="610"/>               "comment" : c.comment := v
+<a name="611"/>               "version" : c.version := integer(v)
+<a name="612"/>            }
+<a name="613"/>         }
+<a name="614"/>      }
+<a name="615"/>
+<a name="616"/>      return \c
+<a name="617"/>   end
+<a name="618"/>
+<a name="619"/>   private valid_cookie(c)
+<a name="620"/>      local d, e
+<a name="621"/>
+<a name="622"/>      # The path must be a prefix of the request url path
+<a name="623"/>      #
+<a name="624"/>      if \c.path then
+<a name="625"/>         match(c.path, request.url.get_file()) | fail
+<a name="626"/>
+<a name="627"/>      if \c.domain then {
+<a name="628"/>         d := Text.lower(c.domain)
+<a name="629"/>         e := Text.lower(request.url.get_host())
+<a name="630"/>
+<a name="631"/>         # The domain must have an embedded dot
+<a name="632"/>         #
+<a name="633"/>         upto('.', trim(d, '.')) | fail
+<a name="634"/>
+<a name="635"/>         # The domain must match a domain key of the request address
+<a name="636"/>         #
+<a name="637"/>         d == domain_keys(e) | fail
+<a name="638"/>
+<a name="639"/>         # The prefix of the request address after discarding the
+<a name="640"/>         # domain must have no embedded dots.  Eg "www.acme.co.uk"
+<a name="641"/>         # can't specify ".co.uk" since "www.acme" has an embedded dot
+<a name="642"/>         # - but it can specify ".acme.co.uk".
+<a name="643"/>         #
+<a name="644"/>         if upto('.', trim(e[1:-*d], '.')) then
+<a name="645"/>            fail
+<a name="646"/>      }
+<a name="647"/>
+<a name="648"/>      return
+<a name="649"/>   end
+<a name="650"/>
+<a name="651"/>   #
+<a name="652"/>   # Store any cookie values in the current page's header.
+<a name="653"/>   # 
+<a name="654"/>   private store_cookies()
+<a name="655"/>      local c, domain, path, paths, vals, s
+<a name="656"/>      every s := response.gen_headers("set-cookie") do {
+<a name="657"/>         if (c := parse_cookie_string(s)) &amp; valid_cookie(c) then {
+<a name="658"/>            domain := Text.lower(\c.domain | string(request.url.get_host()))
+<a name="659"/>            (paths := member(cookies, domain)) | insert(cookies, domain, paths := table())
+<a name="660"/>            path := c.path
+<a name="661"/>            if /path then {
+<a name="662"/>               # Netscape cookies default to the full file path; rfc2109 ones
+<a name="663"/>               # default to the file up to, but not including, the right-most /.
+<a name="664"/>               if /c.version then
+<a name="665"/>                  path := string(request.url.get_file())
+<a name="666"/>               else {
+<a name="667"/>                  path := string(request.url.get_path_dir())
+<a name="668"/>                  if path[-1] == "/" then
+<a name="669"/>                     path[-1] := ""
+<a name="670"/>               }
+<a name="671"/>            }
+<a name="672"/>            (vals := member(paths, path)) | insert(paths, path, vals := table())
+<a name="673"/>            insert(vals, Text.lower(c.name), c)
+<a name="674"/>         }
+<a name="675"/>      }
+<a name="676"/>   end
+<a name="677"/>
+<a name="678"/>   # 
+<a name="679"/>   # Given a domain name, generate all the valid matching cookie domain
+<a name="680"/>   # values.
+<a name="681"/>   #
+<a name="682"/>   private static domain_keys(s)
+<a name="683"/>      # If a numerical address, then just return s
+<a name="684"/>      if many('0-9.', s) = *s + 1 then
+<a name="685"/>         return s
+<a name="686"/>      suspend ("." || s) | s
+<a name="687"/>      s ? {
+<a name="688"/>         while tab(upto('.')) do {
+<a name="689"/>            suspend s[&amp;pos:0]
+<a name="690"/>            move(1)
+<a name="691"/>            suspend s[&amp;pos:0]
+<a name="692"/>         }
+<a name="693"/>      }
+<a name="694"/>   end
+<a name="695"/>
+<a name="696"/>   private create_cookie_header()
+<a name="697"/>      local s, e, f, domain, path, c, now, ver, t
+<a name="698"/>      domain := string(Text.lower(request.url.get_host()))
+<a name="699"/>      path := string(request.url.get_file())
+<a name="700"/>      now := Time()
+<a name="701"/>      s := ""
+<a name="702"/>      every e := \cookies[domain_keys(domain)] do {
+<a name="703"/>         every f := back(sort(e)) do {
+<a name="704"/>            if match(f[1], path) then {
+<a name="705"/>               every c := (!sort(f[2]))[2] do {
+<a name="706"/>                  t := c.expires
+<a name="707"/>                  if (/t | t.after(now))\1 &amp;
+<a name="708"/>                     (/c.secure | request.url.get_scheme() == "https")
+<a name="709"/>                  then {
+<a name="710"/>                     if *s &gt; 0 then
+<a name="711"/>                        s ||:= "; "
+<a name="712"/>                     s ||:= c.name
+<a name="713"/>                     s ||:= "=" || \c.value
+<a name="714"/>                     if \c.version then {
+<a name="715"/>                        s ||:= "; $Path=\"" || \c.path || "\"" 
+<a name="716"/>                        s ||:= "; $Domain=\"" || \c.domain || "\"" 
+<a name="717"/>                        ver := c.version
+<a name="718"/>                     }
+<a name="719"/>                  }
+<a name="720"/>               }
+<a name="721"/>            }
+<a name="722"/>         }
+<a name="723"/>      }
+<a name="724"/>
+<a name="725"/>      if \ver then
+<a name="726"/>         s := "$Version=\"" || ver || "\"; " || s
+<a name="727"/>
+<a name="728"/>      if *s &gt; 0 then
+<a name="729"/>         return s
+<a name="730"/>   end
+<a name="731"/>
+<a name="732"/>   #
+<a name="733"/>   # Useful debug function
+<a name="734"/>   # 
+<a name="735"/>   public dump_cookies()
+<a name="736"/>      local c, e, f
+<a name="737"/>      every e := !sort(cookies) do {
+<a name="738"/>         write("domain:", e[1])
+<a name="739"/>         every f := back(sort(e[2])) do {
+<a name="740"/>            write("\tpath:", f[1])
+<a name="741"/>            every c := (!sort(f[2]))[2] do {
+<a name="742"/>               write("\t\t", to_string(c))
+<a name="743"/>            }
+<a name="744"/>         }
+<a name="745"/>      }
+<a name="746"/>   end
+<a name="747"/>
+<a name="748"/>   private on_http_error(s)
+<a name="749"/>      &amp;why := http_error := s
+<a name="750"/>      fire(HTTP_ERROR_EVENT)
+<a name="751"/>   end
+<a name="752"/>
+<a name="753"/>   #
+<a name="754"/>   # After invoking retrieve(), this method can be used to determine
+<a name="755"/>   # whether a failure was caused by a network failure or an HTTP failure
+<a name="756"/>   # (for example 404 not found).  In the former case this method fails; in
+<a name="757"/>   # the latter case the error string is returned.
+<a name="758"/>   #
+<a name="759"/>   public get_http_error()
+<a name="760"/>      return .\http_error
+<a name="761"/>   end
+<a name="762"/>
+<a name="763"/>   #
+<a name="764"/>   # 
+<a name="765"/>   private maybe_open_connection()
+<a name="766"/>      local s, p, f
+<a name="767"/>      s := request.url.get_decoded_host()
+<a name="768"/>      p := request.url.get_port()
+<a name="769"/>      f := Yes{ request.url.get_scheme() == "https" }
+<a name="770"/>      if not(is_connected()) | server ~== s | port ~= p | ssl_flag ~=== f then {
+<a name="771"/>         close_connection()
+<a name="772"/>         set_server(s)
+<a name="773"/>         set_port(p)
+<a name="774"/>         set_ssl(f)
+<a name="775"/>         open_connection() | fail
+<a name="776"/>      }
+<a name="777"/>      return
+<a name="778"/>   end
+<a name="779"/>
+<a name="780"/>   #
+<a name="781"/>   # Retrieve the current request; doesn't handle redirects and so
+<a name="782"/>   # on - these are handled by the caller, retrieve().
+<a name="783"/>   # 
+<a name="784"/>   private retrieve_page()
+<a name="785"/>      local i
+<a name="786"/>
+<a name="787"/>      i := retries
+<a name="788"/>      self.read := self.length := &amp;null
+<a name="789"/>      reset_dont_retry()
+<a name="790"/>
+<a name="791"/>      fire(BEGIN_EVENT)
+<a name="792"/>      repeat {
+<a name="793"/>         if tryone() then {
+<a name="794"/>            store_cookies()
+<a name="795"/>            unless close_inflater() then {
+<a name="796"/>               fire(FAILED_EVENT)
+<a name="797"/>               fail
+<a name="798"/>            }
+<a name="799"/>            if /abort_flag then {
+<a name="800"/>               fire(COMPLETE_EVENT)
+<a name="801"/>               return response
+<a name="802"/>            }
+<a name="803"/>         }
+<a name="804"/>
+<a name="805"/>         close_connection()
+<a name="806"/>         if \abort_flag then {
+<a name="807"/>            close_inflater()
+<a name="808"/>            error("Aborted")
+<a name="809"/>            fire(ABORTED_EVENT)
+<a name="810"/>            fail
+<a name="811"/>         }
+<a name="812"/>         if \dont_retry_flag then {
+<a name="813"/>            # Since we may be closing the inflater prematurely, gzip would
+<a name="814"/>            # overwrite &amp;why with "unexpected end of file"
+<a name="815"/>            save_why{close_inflater()}
+<a name="816"/>            whyf("Failed and unable to retry - last reason: %w")
+<a name="817"/>            fire(FAILED_EVENT)
+<a name="818"/>            fail
+<a name="819"/>         }
+<a name="820"/>
+<a name="821"/>         if \retry_while_data_flag &amp; \some_data_flag then
+<a name="822"/>            i := retries
+<a name="823"/>         else if (\i -:= 1) &lt; 0 then {
+<a name="824"/>            save_why{close_inflater()}
+<a name="825"/>            if retries &gt; 0 then
+<a name="826"/>               whyf("Gave up after %d attempts - last reason: %w", 1 + retries)
+<a name="827"/>            fire(FAILED_EVENT)
+<a name="828"/>            fail
+<a name="829"/>         }
+<a name="830"/>
+<a name="831"/>         fire(RETRYING_EVENT)
+<a name="832"/>      }
+<a name="833"/>   end
+<a name="834"/>
+<a name="835"/>   private tryone()
+<a name="836"/>      local s
+<a name="837"/>
+<a name="838"/>      # Flag to indicate whether we read any data in this attempt.
+<a name="839"/>      #
+<a name="840"/>      some_data_flag := &amp;null
+<a name="841"/>
+<a name="842"/>      #
+<a name="843"/>      # Open the connection
+<a name="844"/>      #
+<a name="845"/>      maybe_open_connection() | fail
+<a name="846"/>
+<a name="847"/>      #
+<a name="848"/>      # Write the request
+<a name="849"/>      #
+<a name="850"/>      write_request() | fail
+<a name="851"/>
+<a name="852"/>      repeat {
+<a name="853"/>         #
+<a name="854"/>         # Create a response
+<a name="855"/>         #
+<a name="856"/>         response := HttpResponse().
+<a name="857"/>            set_url(request.url).
+<a name="858"/>            set_previous_response(previous_response)
+<a name="859"/>
+<a name="860"/>         s := expect_line() | fail
+<a name="861"/>         response.set_status(s)
+<a name="862"/>
+<a name="863"/>         #
+<a name="864"/>         # Read the response.
+<a name="865"/>         #
+<a name="866"/>         read_headers() | fail
+<a name="867"/>         fire(HEADERS_EVENT)
+<a name="868"/>         if \abort_flag then
+<a name="869"/>            fail
+<a name="870"/>
+<a name="871"/>         #
+<a name="872"/>         # A 100 ("Continue") result means go round again and get 
+<a name="873"/>         # the status/headers again - they follow immediately after
+<a name="874"/>         # the end of the first headers.
+<a name="875"/>         #
+<a name="876"/>         (response.get_status_code() = 100) | break
+<a name="877"/>      }
+<a name="878"/>
+<a name="879"/>      #
+<a name="880"/>      # A 304 ("Not Modified") or a 204 ("No Content") never has a
+<a name="881"/>      # body; nor of course does a HEAD request.
+<a name="882"/>      #
+<a name="883"/>      if (request.method == "HEAD") | (response.get_status_code() = (204 | 304)) then
+<a name="884"/>         maybe_close_connection()
+<a name="885"/>      else if \ (request.range_start | request.range_end) &amp; response.get_status_code() ~= 206 then
+<a name="886"/>         return error_dont_retry("Requested for range was unsatisfiable")
+<a name="887"/>      else
+<a name="888"/>         read_data() | fail
+<a name="889"/>
+<a name="890"/>      return
+<a name="891"/>   end
+<a name="892"/>   
+<a name="893"/>   #
+<a name="894"/>   # 
+<a name="895"/>   private maybe_close_connection()
+<a name="896"/>      #
+<a name="897"/>      # Close if told to do so, or if keep_alive_flag is unset
+<a name="898"/>      #
+<a name="899"/>      if /keep_alive_flag | Text.lower(response.gen_headers("connection")) == "close" then
+<a name="900"/>         close_connection()
+<a name="901"/>   end
+<a name="902"/>
+<a name="903"/>   private write_request()
+<a name="904"/>      local rs, sz, s, f, v, l, h, p
+<a name="905"/>      request.set_header("user-agent", user_agent)
+<a name="906"/>      h := URL.bracket_host(request.url.get_decoded_host())
+<a name="907"/>      p := request.url.get_port()
+<a name="908"/>      unless p = URL.get_default_port(request.url.get_scheme()) then
+<a name="909"/>         h ||:= ":" || p
+<a name="910"/>      request.set_header("host", h)
+<a name="911"/>      if v := \request.referer then {
+<a name="912"/>         # A referer header shouldn't include a fragment (rfc2616).
+<a name="913"/>         if is(v, URL) then
+<a name="914"/>            v := clone(v).set_fragment().str()
+<a name="915"/>         request.set_header("referer", v)
+<a name="916"/>      }
+<a name="917"/>      if \gzip_flag then
+<a name="918"/>         request.set_header("accept-encoding", "gzip")
+<a name="919"/>      request.unset_header("cookie")
+<a name="920"/>      request.set_header("cookie", create_cookie_header())
+<a name="921"/>      request.set_header("connection", if \keep_alive_flag then "Keep-Alive" else "Close")
+<a name="922"/>
+<a name="923"/>      f := (\request.range_start | 0) + (\self.read | 0)
+<a name="924"/>      rs := if f &gt; 0 then
+<a name="925"/>         f || "-"
+<a name="926"/>      else
+<a name="927"/>         "-"
+<a name="928"/>      rs ||:= \request.range_end
+<a name="929"/>            
+<a name="930"/>      if rs == "-" then
+<a name="931"/>         request.unset_header("range")
+<a name="932"/>      else
+<a name="933"/>         request.set_header("range", "bytes=" || rs)
+<a name="934"/>
+<a name="935"/>      l := [request.method || " " || request.url.get_file() || " HTTP/" || http_version]
+<a name="936"/>
+<a name="937"/>      if \request.input_stream then {
+<a name="938"/>         request.set_header("content-type", request.content_type)
+<a name="939"/>         sz := request.input_stream.seek(0) - 1 | return whyf_dont_retry("Couldn't seek on request input stream: %w")
+<a name="940"/>         request.set_header("content-length", sz)
+<a name="941"/>         maybe_set_authorization_header() | fail
+<a name="942"/>         add_request_headers(l)
+<a name="943"/>         put(l, "")
+<a name="944"/>         write_lines(l) | fail
+<a name="945"/>         request.input_stream.seek(1) | return whyf_dont_retry("Couldn't seek on request input stream: %w")
+<a name="946"/>         repeat {
+<a name="947"/>            s := request.input_stream.in(1048576) | return whyf_dont_retry("Couldn't read request input stream: %w")
+<a name="948"/>            if /s then
+<a name="949"/>               break
+<a name="950"/>            if \abort_flag then fail
+<a name="951"/>            write_str(s) | fail
+<a name="952"/>         }
+<a name="953"/>      } else {
+<a name="954"/>         maybe_set_authorization_header() | fail
+<a name="955"/>         add_request_headers(l)
+<a name="956"/>         put(l, "")
+<a name="957"/>         write_lines(l) | fail
+<a name="958"/>      }
+<a name="959"/>
+<a name="960"/>      return
+<a name="961"/>   end
+<a name="962"/>
+<a name="963"/>   private read_headers()
+<a name="964"/>      local s, key, val
+<a name="965"/>      repeat {
+<a name="966"/>         s := expect_line() | fail
+<a name="967"/>         if *s = 0 then {
+<a name="968"/>            # Add last header (if any).
+<a name="969"/>            response.add_header(\key, val)
+<a name="970"/>            break
+<a name="971"/>         }
+<a name="972"/>         s ? {
+<a name="973"/>            #
+<a name="974"/>            # A continuation line starts with a space or a tab.
+<a name="975"/>            #
+<a name="976"/>            if any(' \t') then
+<a name="977"/>               val ||:= tab(0)
+<a name="978"/>            else {
+<a name="979"/>               # Add current header and start a new one.
+<a name="980"/>               response.add_header(\key, val)
+<a name="981"/>               key := tab(upto(':') | 0)
+<a name="982"/>               =":"
+<a name="983"/>               tab(many(' \t'))
+<a name="984"/>               val := tab(0)
+<a name="985"/>            }
+<a name="986"/>         }
+<a name="987"/>      }
+<a name="988"/>      return
+<a name="989"/>   end
+<a name="990"/>
+<a name="991"/>   private close_inflater()
+<a name="992"/>      if \inflater_stream then {
+<a name="993"/>         unless inflater_stream.close() &amp; inflater_stream.succeeded() then {
+<a name="994"/>            inflater_stream := &amp;null
+<a name="995"/>            fail
+<a name="996"/>         }
+<a name="997"/>         inflater_stream := &amp;null
+<a name="998"/>      }
+<a name="999"/>      return
+<a name="1000"/>   end
+<a name="1001"/>
+<a name="1002"/>   private open_inflater()
+<a name="1003"/>      # x-gzip is equivalent to gzip - see
+<a name="1004"/>      # http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.5
+<a name="1005"/>      #
+<a name="1006"/>      # Note that we don't inflate .tar.gz and similar files.
+<a name="1007"/>      # These are unfortunately regularly returned with headers
+<a name="1008"/>      # Content-type=application/x-tar and Content-encoding=gzip,
+<a name="1009"/>      # rather than just Content-type=application/x-gzip.  This happens
+<a name="1010"/>      # even without Accept-encoding=gzip.
+<a name="1011"/>      #
+<a name="1012"/>      if \gzip_flag &amp;
+<a name="1013"/>         trim(Text.lower(response.get_first_header("content-encoding"))) == ("gzip" | "x-gzip") &amp;
+<a name="1014"/>         not endswith(Text.lower(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
+<a name="1015"/>      {
+<a name="1016"/>         inflater_stream := FilterOutputStream(request.output_stream, "gunzip", ["-c"]) | 
+<a name="1017"/>            return whyf_dont_retry("Couldn't open inflater stream: %w")
+<a name="1018"/>      }
+<a name="1019"/>      return
+<a name="1020"/>   end
+<a name="1021"/>
+<a name="1022"/>   #
+<a name="1023"/>   # 
+<a name="1024"/>   private read_data()
+<a name="1025"/>      #
+<a name="1026"/>      # See whether we are continuing a partial read.  If so, the
+<a name="1027"/>      # self.read and self.length values continue from the previous
+<a name="1028"/>      # attempt.  Otherwise, they are reset and the output stream
+<a name="1029"/>      # truncated.
+<a name="1030"/>      #
+<a name="1031"/>      unless \self.read &amp; response.get_status_code() = 206 then {
+<a name="1032"/>         close_inflater()
+<a name="1033"/>         request.output_stream.truncate(0).seek(1) | return whyf_dont_retry("Couldn't reset request output stream: %w")
+<a name="1034"/>         open_inflater() | fail
+<a name="1035"/>         self.length := integer(response.get_first_header("content-length")) | &amp;null
+<a name="1036"/>         self.read := 0
+<a name="1037"/>      }
+<a name="1038"/>
+<a name="1039"/>      #
+<a name="1040"/>      # Read the data.
+<a name="1041"/>      #
+<a name="1042"/>      return if trim(Text.lower(response.get_first_header("transfer-encoding"))) == "chunked" then
+<a name="1043"/>         read_chunked()
+<a name="1044"/>      else if /length then
+<a name="1045"/>         read_to_eof()
+<a name="1046"/>      else
+<a name="1047"/>         read_length()
+<a name="1048"/>   end
+<a name="1049"/>
+<a name="1050"/>   #
+<a name="1051"/>   # 
+<a name="1052"/>   private read_chunked()
+<a name="1053"/>      local l, chunk, s
+<a name="1054"/>      repeat {
+<a name="1055"/>         l := expect_line() | fail
+<a name="1056"/>         l ? {
+<a name="1057"/>            chunk := Format.string_to_int(tab(many('0-9a-fA-F'))) |
+<a name="1058"/>               return error("Expected chunk-length specifier; got " || l)
+<a name="1059"/>         }
+<a name="1060"/>         if chunk = 0 then
+<a name="1061"/>            break
+<a name="1062"/>         while chunk &gt; 0 do {
+<a name="1063"/>            if \abort_flag then fail
+<a name="1064"/>            s := expect_str(min(1048576, chunk)) | fail
+<a name="1065"/>            add_some(s) | fail
+<a name="1066"/>            chunk -:= *s
+<a name="1067"/>         }
+<a name="1068"/>         l := expect_line() | fail
+<a name="1069"/>         if *l &gt; 0 then
+<a name="1070"/>            return error("Expected empty line at end of chunk")
+<a name="1071"/>      }
+<a name="1072"/>      #
+<a name="1073"/>      # Read any trailing lines, upto an empty line.
+<a name="1074"/>      #
+<a name="1075"/>      repeat {
+<a name="1076"/>         l := expect_line() | fail
+<a name="1077"/>         if *l = 0 then
+<a name="1078"/>            break
+<a name="1079"/>      }
+<a name="1080"/>
+<a name="1081"/>      maybe_close_connection()
+<a name="1082"/>
+<a name="1083"/>      return
+<a name="1084"/>   end
+<a name="1085"/>
+<a name="1086"/>   private read_to_eof()
+<a name="1087"/>      local s
+<a name="1088"/>      #
+<a name="1089"/>      # No content length.  Read until eof, then close.
+<a name="1090"/>      #
+<a name="1091"/>      repeat {
+<a name="1092"/>         if \abort_flag then fail
+<a name="1093"/>         s := read_str(1048576) | fail
+<a name="1094"/>         if /s then {
+<a name="1095"/>            close_connection()
+<a name="1096"/>            return
+<a name="1097"/>         }
+<a name="1098"/>         add_some(s) | fail
+<a name="1099"/>      }
+<a name="1100"/>   end
+<a name="1101"/>
+<a name="1102"/>   #
+<a name="1103"/>   # 
+<a name="1104"/>   private read_length()
+<a name="1105"/>      local s
+<a name="1106"/>      #
+<a name="1107"/>      # Got a content length.  Read len bytes and leave the connection
+<a name="1108"/>      # open - unless told to close it.
+<a name="1109"/>      #
+<a name="1110"/>      while read &lt; length do {
+<a name="1111"/>         if \abort_flag then fail
+<a name="1112"/>         s := expect_str(min(1048576, length - read)) | fail
+<a name="1113"/>         add_some(s) | fail
+<a name="1114"/>      }
+<a name="1115"/>
+<a name="1116"/>      maybe_close_connection()
+<a name="1117"/>
+<a name="1118"/>      return
+<a name="1119"/>   end
+<a name="1120"/>
+<a name="1121"/>   #
+<a name="1122"/>   # Return the length of the current download, or fail if unknown
+<a name="1123"/>   #
+<a name="1124"/>   public get_length()
+<a name="1125"/>      return .\self.length
+<a name="1126"/>   end
+<a name="1127"/>
+<a name="1128"/>   #
+<a name="1129"/>   # Return the number of bytes read so far, or fail if request has not begun to read
+<a name="1130"/>   #
+<a name="1131"/>   public get_read()
+<a name="1132"/>      return .\self.read
+<a name="1133"/>   end
+<a name="1134"/>
+<a name="1135"/>   private add_some(s)
+<a name="1136"/>      if \abort_flag then fail
+<a name="1137"/>      read +:= *s
+<a name="1138"/>      some_data_flag := &amp;yes
+<a name="1139"/>      fire(PROGRESS_EVENT)
+<a name="1140"/>      return if \inflater_stream then
+<a name="1141"/>         inflater_stream.writes1(s) | whyf_dont_retry("Couldn't write to inflater stream: %w")
+<a name="1142"/>      else
+<a name="1143"/>         request.output_stream.writes1(s) | whyf_dont_retry("Couldn't write to request output stream: %w")
+<a name="1144"/>   end
+<a name="1145"/>
+<a name="1146"/>   public override new()
+<a name="1147"/>      NetClient.new()
+<a name="1148"/>      cookies := table()
+<a name="1149"/>      authentications := table()
+<a name="1150"/>      set_timeout(12000)
+<a name="1151"/>      keep_alive_flag := &amp;yes
+<a name="1152"/>      retries := 2
+<a name="1153"/>      http_version := "1.1"
+<a name="1154"/>      user_agent := "httpclient.icn [en]"
+<a name="1155"/>      gzip_flag := FOUND_GZIP
+<a name="1156"/>      return
+<a name="1157"/>   end
+<a name="1158"/>end
+</pre></body></html>

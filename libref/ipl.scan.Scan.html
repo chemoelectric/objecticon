@@ -1,0 +1,214 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Scan</title></head><body>
+<h1>Scan</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="ipl.scan-package.html" target="listFrame">ipl.scan</a></dd>
+</dl><p/>
+String scanning encapsulated in a class
+<p/><a href="ipl.scan-scan.icn.html#566" target="displayFrame">Source - scan.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#any">any()</a>
+<a href="#bal">bal()</a>
+<a href="#cvpos">cvpos()</a>
+<a href="#find">find()</a>
+<a href="#many">many()</a>
+<a href="#match">match()</a>
+<a href="#move">move()</a>
+<a href="#new">new()</a>
+<a href="#pos">pos()</a>
+<a href="#q">q()</a>
+<a href="#qswap">qswap()</a>
+<a href="#set_pos">set_pos()</a>
+<a href="#set_subject">set_subject()</a>
+<a href="#tab">tab()</a>
+<a href="#tabmat">tabmat()</a>
+<a href="#upto">upto()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#kpos">kpos</a>
+<a href="#ksubject">ksubject</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="any"/>
+<h3>any(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#630" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="bal"/>
+<h3>bal(c1, c2, c3)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#634" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="cvpos"/>
+<h3>cvpos(i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#609" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="find"/>
+<h3>find(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#638" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="many"/>
+<h3>many(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#618" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="match"/>
+<h3>match(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#622" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="move"/>
+<h3>move(i)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#573" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(s)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance with subject <code>s</code>.
+<p/><a href="ipl.scan-scan.icn.html#664" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="pos"/>
+<h3>pos(i)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#590" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="q"/>
+<h3>q(e)</h3>
+public<p/>
+<dl>
+<dd>
+This method allows other string scanning functions to be used
+with this class.  The co-expression <code>e</code> is evaluated for its
+results, with <code>&amp;subject</code> and <code>&amp;pos</code> being repeatedly swapped with
+<code><a href="ipl.scan.Scan.html#ksubject">ksubject</a></code> and <code><a href="ipl.scan.Scan.html#kpos">kpos</a></code>.  For example :-
+<p/>
+<pre>
+   s := Scan("Mary had a little lamb").set_pos(0)
+   s.q{ backto('a') }     # Generates 21, 11, 8, 3.
+</pre>
+<p/><a href="ipl.scan-scan.icn.html#650" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="qswap"/>
+<h3>qswap()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#642" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pos"/>
+<h3>set_pos(i)</h3>
+public<p/>
+<dl>
+<dd>
+Set the position, failing if the given value is out of range.
+<p/><a href="ipl.scan-scan.icn.html#603" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="set_subject"/>
+<h3>set_subject(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the subject, and reset the position to 1.
+<p/><a href="ipl.scan-scan.icn.html#594" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="tab"/>
+<h3>tab(i)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#579" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="tabmat"/>
+<h3>tabmat(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#614" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="upto"/>
+<h3>upto(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#626" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="kpos"/>
+<h3>kpos</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#571" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+<a name="ksubject"/>
+<h3>ksubject</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.scan-scan.icn.html#571" target="displayFrame">Source - scan.icn </a>
+</dd>
+</dl><hr>
+</body></html>

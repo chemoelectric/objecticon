@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>sentence.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     sentence.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to generate sentences in file
+<a name="6"/>#
+<a name="7"/>#	Author:   Richard L. Goerwitz
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Version:  1.2
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#  
+<a name="21"/>#  sentence(f)   - suspends sentences from file f
+<a name="22"/>#
+<a name="23"/>#  A lot of grammatical and stylistic analysis programs are predicated
+<a name="24"/>#  on the notion of a sentence.  For instance, some programs count the
+<a name="25"/>#  number of words in each sentence.  Other count the number and length
+<a name="26"/>#  of clauses.  Still others pedantically check for sentence-final par-
+<a name="27"/>#  ticles and prepositions.
+<a name="28"/>#
+<a name="29"/>#  This procedure, sentence(), is supposed to be used as a filter for
+<a name="30"/>#  ASCII text files, suspending everything that looks remotely like a
+<a name="31"/>#  sentence in them.
+<a name="32"/>#
+<a name="33"/>############################################################################
+<a name="34"/>#
+<a name="35"/>#  BUGS:  Cannot correctly parse sentences with constructs like "R. L.
+<a name="36"/>#  Goerwitz" in them.  The algorithm can be much improved simply by
+<a name="37"/>#  checking to see if the word after the period is in /usr/dict/words
+<a name="38"/>#  or whatever your system dictionary file is.  If it isn't, then it's
+<a name="39"/>#  likely not to be the beginning of a sentence (this also is not in-
+<a name="40"/>#  fallible, naturally).
+<a name="41"/>#
+<a name="42"/>############################################################################
+<a name="43"/>#
+<a name="44"/>#  Requires:  co-expressions
+<a name="45"/>#
+<a name="46"/>############################################################################
+<a name="47"/>
+<a name="48"/>
+<a name="49"/>package ipl.sentence
+<a name="50"/>
+<a name="51"/>procedure sentence(intext)
+<a name="52"/>
+<a name="53"/>    local sentence, get_line, line, tmp_s, end_part, whole_thing
+<a name="54"/>    static inits, punct
+<a name="55"/>    initial {
+<a name="56"/>	inits := &amp;ucase ++ &amp;digits
+<a name="57"/>	punct := ".\"'!?)]"
+<a name="58"/>    }
+<a name="59"/>    sentence := ""
+<a name="60"/>    get_line := create read_line(intext)
+<a name="61"/>
+<a name="62"/>    while line := @get_line do {
+<a name="63"/>
+<a name="64"/>	# If we hit a blank line, it's a signal from read_line that we
+<a name="65"/>	# have encountered a change in the indentation level, and
+<a name="66"/>	# should call it a sentence break (though it could just be
+<a name="67"/>	# indentation for a quote, a section header, etc., it seems
+<a name="68"/>	# these all indicate major, sentence-like divisions in the
+<a name="69"/>	# text).
+<a name="70"/>	if line == "" then {
+<a name="71"/>	    suspend sentence
+<a name="72"/>	    sentence := ""
+<a name="73"/>	    next
+<a name="74"/>	}
+<a name="75"/>
+<a name="76"/>	# Go on until you can't find any more sentence-endings in line,
+<a name="77"/>	# then break and get another line.
+<a name="78"/>	repeat {
+<a name="79"/>
+<a name="80"/>	    # Scan for a sentence break somewhere in line.
+<a name="81"/>	    line ? {
+<a name="82"/>
+<a name="83"/>		# Ugly, but it works.  Look for sequences containing
+<a name="84"/>		# things like periods and question marks, followed by
+<a name="85"/>		# a space and another space or a word beginning with
+<a name="86"/>		# a capital letter.  If we don't have enough context,
+<a name="87"/>		# append the next line from intext to line &amp; scan again.
+<a name="88"/>		if tmp_s := tab(upto(punct)) &amp;
+<a name="89"/>		    upto('!?.', end_part := tab(many(punct))) &amp;
+<a name="90"/>		    not (pos(-1), line ||:= @get_line, next) &amp;
+<a name="91"/>		    =" " &amp; (=" " | (tab(many('\'"('))|&amp;null,any(inits)))
+<a name="92"/>		# IF YOU WANT TO ADD A DICTIONARY CHECK, then read in
+<a name="93"/>		# a dictionary like /usr/dict/words, and then change
+<a name="94"/>		# any(inits) above to something like (any(inits),
+<a name="95"/>		# longstr(list_of_usrdictwords,map(&amp;subject),&amp;pos), =" ")
+<a name="96"/>		# where longstr() matches each string in list_of_usr-
+<a name="97"/>		# dictwords.
+<a name="98"/>		then {
+<a name="99"/>
+<a name="100"/>		    # Don't bother with little two-letter hunks.
+<a name="101"/>		    whole_thing := sentence || tmp_s || end_part
+<a name="102"/>		    if *whole_thing &gt; 3 | find(" ",whole_thing)
+<a name="103"/>		    then suspend whole_thing
+<a name="104"/>
+<a name="105"/>		    tab(many(' '))
+<a name="106"/>		    line := tab(0)
+<a name="107"/>		    sentence := ""
+<a name="108"/>		    next
+<a name="109"/>		}
+<a name="110"/>		else break
+<a name="111"/>	    }
+<a name="112"/>	}
+<a name="113"/>
+<a name="114"/>	# Otherwise just tack line onto sentence &amp; try again.
+<a name="115"/>	sentence ||:= line
+<a name="116"/>    }
+<a name="117"/>
+<a name="118"/>    return sentence
+<a name="119"/>
+<a name="120"/>end
+<a name="121"/>
+<a name="122"/>
+<a name="123"/>
+<a name="124"/>
+<a name="125"/>procedure read_line(intext)
+<a name="126"/>
+<a name="127"/>    local new_line, ilevel,   line
+<a name="128"/>    static last_ilevel, blank_flag
+<a name="129"/>    last_ilevel := 0
+<a name="130"/>
+<a name="131"/>    while line := trim(intext.read(),'\t ') do {
+<a name="132"/>
+<a name="133"/>	# Check to see if line is blank; if so, set blank_flag.
+<a name="134"/>	if line == "" then
+<a name="135"/>	    { blank_flag := &amp;yes; next }
+<a name="136"/>
+<a name="137"/>	# Determine current indentation level.
+<a name="138"/>	detab(line) ? {
+<a name="139"/>	    ilevel := *tab(many(' ')) | 0
+<a name="140"/>	}
+<a name="141"/>
+<a name="142"/>	line ? {
+<a name="143"/>
+<a name="144"/>	    tab(many('\t '))
+<a name="145"/>
+<a name="146"/>	    # Signal the calling procedure if there is a change in the
+<a name="147"/>	    # indentation level by suspending a blank line.
+<a name="148"/>	    if (ilevel &gt; last_ilevel) | (ilevel &lt; last_ilevel, \blank_flag)
+<a name="149"/>	    then suspend ""
+<a name="150"/>	    last_ilevel := ilevel
+<a name="151"/>
+<a name="152"/>	    # Put a space on the end of line, unless it ends in a dash.
+<a name="153"/>	    new_line := tab(-1) || (="-" | (move(1) || " "))
+<a name="154"/>	    # Make sure the flag that indicates blank lines is unset.
+<a name="155"/>	    blank_flag := &amp;null
+<a name="156"/>	}
+<a name="157"/>
+<a name="158"/>	# Suspend the newly reformatted, trimmed, space-terminated line.
+<a name="159"/>	suspend new_line
+<a name="160"/>    }
+<a name="161"/>
+<a name="162"/>end
+</pre></body></html>

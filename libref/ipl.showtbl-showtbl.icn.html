@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>showtbl.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     showtbl.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to show contents of a table
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 25, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#
+<a name="18"/>#  showtbl(title, tbl, sort_type, limit, sort_order, posit,
+<a name="19"/>#    w1, w2, gutter, f1, f2) displays tbl according to the arguments given.
+<a name="20"/>#
+<a name="21"/>#  The arguments are:
+<a name="22"/>#
+<a name="23"/>#  position	name		meaning			default/alternative
+<a name="24"/>#
+<a name="25"/>#     1		title		heading title		""
+<a name="26"/>#     2		tbl		table to be shown
+<a name="27"/>#     3		sort_type	type of sorting		"ref"/"val"
+<a name="28"/>#     4		limit		lines of table output	essentially infinite
+<a name="29"/>#     5		sort_order	increasing/decreasing	"incr"/"decr"
+<a name="30"/>#     6		posit		first column		"val"/"ref"
+<a name="31"/>#     7		w1		width of 1st column	10
+<a name="32"/>#     8		w2		width of 2nd column	10
+<a name="33"/>#     9		gutter		width between columns	3
+<a name="34"/>#    10		f1		function of 1st column	left
+<a name="35"/>#    11		f2		function of 2nd column	right
+<a name="36"/>#
+<a name="37"/>#  showtbl() returns a record with the first element being a count of
+<a name="38"/>#  the size of the table and the second element the number of lines
+<a name="39"/>#  written.
+<a name="40"/>#
+<a name="41"/>############################################################################
+<a name="42"/>#
+<a name="43"/>#  This procedure just grew.  It needs rewriting.
+<a name="44"/>#  And it has far too manmy arguments.
+<a name="45"/>#
+<a name="46"/>############################################################################
+<a name="47"/>#
+<a name="48"/>#  Deficiencies:  Several features are not yet implemented.  sort_order
+<a name="49"/>#                 and posit have no effect.  In the case of sort_type
+<a name="50"/>#                 "val", the sorting order is decreasing.
+<a name="51"/>#
+<a name="52"/>############################################################################
+<a name="53"/>
+<a name="54"/>package ipl.showtbl
+<a name="55"/>
+<a name="56"/>import
+<a name="57"/>   io(write)
+<a name="58"/>
+<a name="59"/># show table contents
+<a name="60"/>procedure showtbl(title, tbl, sort_type,	
+<a name="61"/>   limit, sort_order, posit, w1, w2, gutter, f1, f2)
+<a name="62"/>      local count, lst, i, number
+<a name="63"/>
+<a name="64"/>   /title := ""
+<a name="65"/>   if type(tbl) ~== "table" then
+<a name="66"/>      runerr("*** invalid table argument to showtbl()", tbl)
+<a name="67"/>   sort_type := case sort_type of {
+<a name="68"/>      "ref" | &amp;null:  3
+<a name="69"/>      "val": 4
+<a name="70"/>      default:  runerr("*** invalid sort type in showtbl()", sort_type)
+<a name="71"/>      }
+<a name="72"/>   /limit := 2 ^ 30			# essentially infinite
+<a name="73"/>   sort_order := case sort_order of {
+<a name="74"/>      "incr" | &amp;null:  "incr"
+<a name="75"/>      "decr":  "decr"
+<a name="76"/>      default:  runerr("*** invalid sort order in showtbl()", sort_order)
+<a name="77"/>      }
+<a name="78"/>   posit := case posit of {
+<a name="79"/>      "val" | &amp;null:   "val"
+<a name="80"/>      "ref":  "ref"
+<a name="81"/>      default:  runerr("*** invalid column position in showtbl()", posit)
+<a name="82"/>      }
+<a name="83"/>   /w1 := 10
+<a name="84"/>   /w2 := 10
+<a name="85"/>   /gutter := repl(" ", 3)
+<a name="86"/>   /f1 := left
+<a name="87"/>   /f2 := right
+<a name="88"/>
+<a name="89"/>   number := 0
+<a name="90"/>
+<a name="91"/>   count := 0
+<a name="92"/>   every count +:= !tbl
+<a name="93"/>
+<a name="94"/>   write("\n", title, ":\n")
+<a name="95"/>
+<a name="96"/>   lst := sort(tbl, sort_type)
+<a name="97"/>
+<a name="98"/>   if sort_type = 3 then {
+<a name="99"/>      every i := 1 to *lst - 1 by 2 do {
+<a name="100"/>         number +:= 1
+<a name="101"/>         if number &gt; limit then break
+<a name="102"/>         else  write(f1(lst[i], w1), gutter, trim(f2(lst[i + 1], w2)))
+<a name="103"/>         }
+<a name="104"/>      }
+<a name="105"/>   else {
+<a name="106"/>      every i := *lst to 1 by -2 do {
+<a name="107"/>         number +:= 1
+<a name="108"/>         if number &gt; limit then break
+<a name="109"/>         else write(f1(lst[i - 1], w1), gutter, trim(f2(lst[i], w2)))
+<a name="110"/>         }
+<a name="111"/>      }
+<a name="112"/>
+<a name="113"/>   return [count, number]
+<a name="114"/>
+<a name="115"/>end
+</pre></body></html>

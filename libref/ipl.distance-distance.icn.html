@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>distance.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     distance.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to compute distance in n-dimensions
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     January 3, 1994
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  distance(d1, d2, d3, ...) returns the distance between points in n-space
+<a name="18"/>#  distances d1, d2, d3, ... from the origin.
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>
+<a name="22"/>package ipl.distance
+<a name="23"/>
+<a name="24"/>import 
+<a name="25"/>   util(Math)
+<a name="26"/>
+<a name="27"/>procedure distance(d[])
+<a name="28"/>   local sum
+<a name="29"/>
+<a name="30"/>   sum := 0
+<a name="31"/>
+<a name="32"/>   every sum +:= !d ^ 2
+<a name="33"/>
+<a name="34"/>   return Math.sqrt(sum)
+<a name="35"/>
+<a name="36"/>end
+</pre></body></html>

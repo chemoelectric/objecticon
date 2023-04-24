@@ -1,0 +1,243 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>popclient.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: popclient.icn 8823 2021-01-05 12:13:08Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package mail
+<a name="6"/>
+<a name="7"/>import net, util
+<a name="8"/>
+<a name="9"/>record PopStat(number, size)
+<a name="10"/>record PopList(number, size)
+<a name="11"/>record PopUID(number, uid)
+<a name="12"/>
+<a name="13"/>class PopClient(NetClient)
+<a name="14"/>   private
+<a name="15"/>      auth
+<a name="16"/>
+<a name="17"/>   #
+<a name="18"/>   # Flag the given message for deletion
+<a name="19"/>   # :Parameters :
+<a name="20"/>   # :  `n` - the message number
+<a name="21"/>   #
+<a name="22"/>   public dele(n)
+<a name="23"/>      send_command("DELE " || need_integer(n)) | fail
+<a name="24"/>      link
+<a name="25"/>   end
+<a name="26"/>
+<a name="27"/>   #
+<a name="28"/>   # Set the authentication for the session (user and password), as an
+<a name="29"/>   # `Authentication` instance.
+<a name="30"/>   #
+<a name="31"/>   public set_auth(a)
+<a name="32"/>      auth := a
+<a name="33"/>      link
+<a name="34"/>   end
+<a name="35"/>
+<a name="36"/>   #
+<a name="37"/>   # Open a connection; should be followed by `login()`
+<a name="38"/>   #
+<a name="39"/>   public open()
+<a name="40"/>      open_connection() | fail
+<a name="41"/>      unless read_response() then {
+<a name="42"/>         close_connection()
+<a name="43"/>         fail
+<a name="44"/>      }
+<a name="45"/>      link
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   #
+<a name="49"/>   # Authenticate the username, password combination
+<a name="50"/>   #
+<a name="51"/>   public login()
+<a name="52"/>      send_command("USER " || auth.username) | fail
+<a name="53"/>      send_command("PASS " || auth.password) | fail
+<a name="54"/>      link
+<a name="55"/>   end
+<a name="56"/>
+<a name="57"/>   #
+<a name="58"/>   # Disconnect using the QUIT command
+<a name="59"/>   #
+<a name="60"/>   public override close()
+<a name="61"/>      local f
+<a name="62"/>      send_command("QUIT") | (f := &amp;why)
+<a name="63"/>      close_connection() | (/f := &amp;why)
+<a name="64"/>      link error_if(f)
+<a name="65"/>   end
+<a name="66"/>
+<a name="67"/>   #
+<a name="68"/>   # Send the RSET command
+<a name="69"/>   #
+<a name="70"/>   public rset()
+<a name="71"/>      send_command("RSET") | fail
+<a name="72"/>      link
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   #
+<a name="76"/>   # Retrieve the given message; the result is a `Message` object
+<a name="77"/>   #
+<a name="78"/>   public retr(n)
+<a name="79"/>      local l, m, s
+<a name="80"/>      send_command("RETR " || need_integer(n)) | fail
+<a name="81"/>      l := read_multi_lines() | fail
+<a name="82"/>
+<a name="83"/>      s := ""
+<a name="84"/>      every s ||:= !l || "\r\n"
+<a name="85"/>
+<a name="86"/>      m := Message.parse(s) | fail
+<a name="87"/>
+<a name="88"/>      return m
+<a name="89"/>   end
+<a name="90"/>
+<a name="91"/>   private list1(s)
+<a name="92"/>      local num, size
+<a name="93"/>      s ? {
+<a name="94"/>         (num := integer(tab(many(&amp;digits))) &amp;
+<a name="95"/>          =" " &amp;
+<a name="96"/>          size := integer(tab(many(&amp;digits)))) | return error("Bad list: " || s)
+<a name="97"/>      }
+<a name="98"/>      return PopList(num, size)
+<a name="99"/>   end
+<a name="100"/>
+<a name="101"/>   #
+<a name="102"/>   # Return a list of `PopList` records, giving the current list of
+<a name="103"/>   # message numbers and sizes.
+<a name="104"/>   #
+<a name="105"/>   # :Parameters :
+<a name="106"/>   # :  `n` - optionally return the size of this message
+<a name="107"/>   #          number
+<a name="108"/>   #
+<a name="109"/>   public list(n)
+<a name="110"/>      local l, r, s
+<a name="111"/>      if /n then {
+<a name="112"/>         send_command("LIST") | fail
+<a name="113"/>         l := read_multi_lines() | fail
+<a name="114"/>         r := []
+<a name="115"/>         every s := !l do
+<a name="116"/>            put(r, list1(s)) | fail
+<a name="117"/>         return r
+<a name="118"/>      }
+<a name="119"/>      else {
+<a name="120"/>         n := need_integer(n)
+<a name="121"/>         s := send_command("LIST " || n) | fail
+<a name="122"/>         r := list1(s) | fail
+<a name="123"/>         return if r.number = n then
+<a name="124"/>            r.size
+<a name="125"/>         else
+<a name="126"/>            error("Mismatch in number of message")
+<a name="127"/>      }
+<a name="128"/>   end
+<a name="129"/>
+<a name="130"/>   private uidl1(s)
+<a name="131"/>      local num, id
+<a name="132"/>      s ? {
+<a name="133"/>         (num := integer(tab(many(&amp;digits))) &amp;
+<a name="134"/>          =" " &amp;
+<a name="135"/>          id := tab(0)) | return error("Bad UIDL list: " || s)
+<a name="136"/>      }
+<a name="137"/>      return PopUID(num, id)
+<a name="138"/>   end
+<a name="139"/>
+<a name="140"/>   #
+<a name="141"/>   # Return a list of `PopUID` records, giving the current list of
+<a name="142"/>   # message numbers and unique ids, using the UIDL command.
+<a name="143"/>   #
+<a name="144"/>   # :Parameters :
+<a name="145"/>   # :  `n` - optionally return the UID for this message
+<a name="146"/>   #          number
+<a name="147"/>   #
+<a name="148"/>   public uidl(n)
+<a name="149"/>      local l, r, s
+<a name="150"/>      if /n then {
+<a name="151"/>         send_command("UIDL") | fail
+<a name="152"/>         l := read_multi_lines() | fail
+<a name="153"/>         r := []
+<a name="154"/>         every s := !l do
+<a name="155"/>            put(r, uidl1(s)) | fail
+<a name="156"/>         return r
+<a name="157"/>      }
+<a name="158"/>      else {
+<a name="159"/>         n := need_integer(n)
+<a name="160"/>         s := send_command("UIDL " || n) | fail
+<a name="161"/>         r := uidl1(s) | fail
+<a name="162"/>         return if r.number = n then
+<a name="163"/>            r.uid
+<a name="164"/>         else
+<a name="165"/>            error("Mismatch in number of message")
+<a name="166"/>      }
+<a name="167"/>   end
+<a name="168"/>
+<a name="169"/>   #
+<a name="170"/>   # Read a multi-line response, ended with a "."
+<a name="171"/>   # 
+<a name="172"/>   private read_multi_lines()
+<a name="173"/>      local l, s
+<a name="174"/>      l := []
+<a name="175"/>      repeat {
+<a name="176"/>         s := expect_line() | fail
+<a name="177"/>         if s[1:3] == ".." then
+<a name="178"/>            s[1:3] := "."
+<a name="179"/>         if s == "." then
+<a name="180"/>            break
+<a name="181"/>         put(l, s)
+<a name="182"/>      }
+<a name="183"/>      return l
+<a name="184"/>   end
+<a name="185"/>
+<a name="186"/>   #
+<a name="187"/>   # Send a single command
+<a name="188"/>   # 
+<a name="189"/>   private send_command(msg)
+<a name="190"/>      write_line(msg) | fail
+<a name="191"/>      return read_response()
+<a name="192"/>   end
+<a name="193"/>
+<a name="194"/>   #
+<a name="195"/>   # Return a `PopStat` record giving the number of messages followed by the
+<a name="196"/>   # total size, obtained using the STAT command.
+<a name="197"/>   #
+<a name="198"/>   public stat()
+<a name="199"/>      local s, num_messages, total_size
+<a name="200"/>
+<a name="201"/>      s := send_command("STAT") | fail
+<a name="202"/>      s ? {
+<a name="203"/>         (num_messages := integer(tab(many(&amp;digits))) &amp;
+<a name="204"/>          =" " &amp;
+<a name="205"/>          total_size := integer(tab(many(&amp;digits)))) | return error("Bad stat listing: " || s)
+<a name="206"/>      }
+<a name="207"/>
+<a name="208"/>      return PopStat(num_messages, total_size)
+<a name="209"/>   end
+<a name="210"/>
+<a name="211"/>   #
+<a name="212"/>   # Read a response line (+OK or -ERR)
+<a name="213"/>   # 
+<a name="214"/>   private read_response()
+<a name="215"/>      local s
+<a name="216"/>
+<a name="217"/>      s := expect_line() | fail
+<a name="218"/>
+<a name="219"/>      s ? {
+<a name="220"/>         if ="+OK" then {
+<a name="221"/>            =" "
+<a name="222"/>            return tab(0)
+<a name="223"/>         }
+<a name="224"/>
+<a name="225"/>         if ="-ERR" then {
+<a name="226"/>            =" "
+<a name="227"/>            return error("POP error: " || tab(0))
+<a name="228"/>         }
+<a name="229"/>      }
+<a name="230"/>
+<a name="231"/>      return error("POP unrecognized response: " || s)
+<a name="232"/>   end
+<a name="233"/>
+<a name="234"/>   public override new()
+<a name="235"/>      NetClient.new()
+<a name="236"/>      set_port(110)
+<a name="237"/>      set_server("localhost")
+<a name="238"/>      return
+<a name="239"/>   end
+<a name="240"/>end
+</pre></body></html>

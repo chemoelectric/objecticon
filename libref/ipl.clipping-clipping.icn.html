@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>clipping.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     clipping.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for clipping lines
+<a name="6"/>#
+<a name="7"/>#	Authors:  William S. Evans and Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     June 16, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	ClipLine(W, L, x, y, w, h) clips the multisegment line specified
+<a name="18"/>#	by coordinates in L to the region (x, y, w, h), which defaults
+<a name="19"/>#	to the clipping region of the window W.  ClipLine() returns a
+<a name="20"/>#	list of coordinates suitable for calling DrawSegment().  If no
+<a name="21"/>#	segments remain after clipping, ClipLine() fails.
+<a name="22"/>#
+<a name="23"/>#	Coalesce(L) connects adjoining segments from a DrawSegment()
+<a name="24"/>#	argument list such as is produced by ClipLine().  Coalesce()
+<a name="25"/>#	returns a list of DrawLine() lists.
+<a name="26"/>#
+<a name="27"/>#	DrawClipped(W, x1, y1, x2, y2, ...) draws a line using ClipLine()
+<a name="28"/>#	with the clipping region of the window W.  DrawClipped() is
+<a name="29"/>#	superior to DrawLine() only when lines with extremely large
+<a name="30"/>#	coordinate values (beyond +/-32767) are involved.
+<a name="31"/>#
+<a name="32"/>############################################################################
+<a name="33"/>
+<a name="34"/> 
+<a name="35"/>#  DrawClipped(W, x1, y1, x2, y2, ...) -- draw line using ClipLine()
+<a name="36"/>
+<a name="37"/>package ipl.clipping
+<a name="38"/>
+<a name="39"/># draw line with clipping
+<a name="40"/>procedure DrawClipped(a[])		
+<a name="41"/>   local win, l
+<a name="42"/>
+<a name="43"/>   win := pop(a)
+<a name="44"/>   if l := ClipLine(win, a) then
+<a name="45"/>      while win.draw_line(pop(l), pop(l), pop(l), pop(l))
+<a name="46"/>
+<a name="47"/>   return win
+<a name="48"/>end
+<a name="49"/>
+<a name="50"/>
+<a name="51"/>#  ClipLine(W, L, x, y, w, h) -- clip polyline to region, returning segments.
+<a name="52"/>#
+<a name="53"/>#  Cyrus-Beck parametric line clipping with Liang-Barsky
+<a name="54"/>#  optimizations for axis-aligned rectangular clipping regions.
+<a name="55"/>
+<a name="56"/># clip line for DrawSegment
+<a name="57"/>procedure ClipLine(win, L, x, y, w, h)	
+<a name="58"/>   local i, ret, tin, tout, delx, dely, x0, x1, xmax, y0, y1, ymax, cr
+<a name="59"/>
+<a name="60"/>   cr := win.get_clip() | [ -win.get_dx(), -win.get_dy(), 65535, 65535]
+<a name="61"/>   /x := cr[1]
+<a name="62"/>   /y := cr[2]
+<a name="63"/>   /w := cr[3]
+<a name="64"/>   /h := cr[4]
+<a name="65"/>   if w &lt; 0 then
+<a name="66"/>      x -:= (w := -w)
+<a name="67"/>   if h &lt; 0 then
+<a name="68"/>      y -:= (h := -h)
+<a name="69"/>   xmax := x + w
+<a name="70"/>   ymax := y + h
+<a name="71"/>
+<a name="72"/>   ret := []
+<a name="73"/>   x1 := L[1]
+<a name="74"/>   y1 := L[2]
+<a name="75"/>
+<a name="76"/>   every i := 3 to *L by 2 do {
+<a name="77"/>      x0 := x1
+<a name="78"/>      y0 := y1
+<a name="79"/>      x1 := L[i]
+<a name="80"/>      y1 := L[i + 1]
+<a name="81"/>      tin := 0.0
+<a name="82"/>      tout := 1.0
+<a name="83"/>
+<a name="84"/>      delx := real(x1 - x0)
+<a name="85"/>      if delx &lt; 0.0 then {
+<a name="86"/>         tin &lt;:= (xmax - x0) / delx
+<a name="87"/>         tout &gt;:= (x - x0) / delx
+<a name="88"/>         }
+<a name="89"/>      else if delx &gt; 0.0 then {
+<a name="90"/>         tin &lt;:= (x - x0) / delx
+<a name="91"/>         tout &gt;:= (xmax - x0) / delx
+<a name="92"/>         }
+<a name="93"/>      else
+<a name="94"/>         x &lt;= x0 &lt;= xmax | next
+<a name="95"/>      if tout &lt; tin then next
+<a name="96"/>   
+<a name="97"/>      dely := real(y1 - y0)
+<a name="98"/>      if dely &lt; 0.0 then {
+<a name="99"/>         tin &lt;:= (ymax - y0) / dely
+<a name="100"/>         tout &gt;:= (y - y0) / dely
+<a name="101"/>         }
+<a name="102"/>      else if dely &gt; 0.0 then {
+<a name="103"/>         tin &lt;:= (y - y0) / dely
+<a name="104"/>         tout &gt;:= (ymax - y0) / dely
+<a name="105"/>         }
+<a name="106"/>      else
+<a name="107"/>         y &lt;= y0 &lt;= ymax | next
+<a name="108"/>      if tout &lt; tin then next
+<a name="109"/>
+<a name="110"/>      every put(ret, x0 + tin*delx | y0 + tin*dely | x0 + tout*delx | y0 + tout*dely)
+<a name="111"/>      }
+<a name="112"/>
+<a name="113"/>   if *ret &gt; 0 then
+<a name="114"/>      return ret
+<a name="115"/>   else
+<a name="116"/>      fail
+<a name="117"/>end
+<a name="118"/>
+<a name="119"/>
+<a name="120"/>#  Coalesce(L) -- connect adjoining segments
+<a name="121"/>
+<a name="122"/># connect adjoining segments
+<a name="123"/>procedure Coalesce(L)			
+<a name="124"/>   local i, all, seg, x1, y1, x2, y2
+<a name="125"/>
+<a name="126"/>   all := []
+<a name="127"/>   every i := 1 to *L by 4 do {
+<a name="128"/>      x1 := L[i]
+<a name="129"/>      y1 := L[i + 1]
+<a name="130"/>      if x1 ~=== x2 | y1 ~=== y2 then
+<a name="131"/>         put(all, seg := [x1, y1])
+<a name="132"/>      every put(seg, x2 := L[i + 2] | y2 := L[i + 3])
+<a name="133"/>      }
+<a name="134"/>
+<a name="135"/>   return all
+<a name="136"/>end
+</pre></body></html>

@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>HasUseWheel</title></head><body>
+<h1>HasUseWheel</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.Slider.html">gui.Slider</a><br>
+<a href="gui.ScrollBar.html">gui.ScrollBar</a><br>
+<a href="gui.ScrollArea.html">gui.ScrollArea</a><br>
+<a href="gui.Spin.html">gui.Spin</a><br>
+<a href="gui.DropDown.html">gui.DropDown</a><br>
+<a href="gui.Circulate.html">gui.Circulate</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+Helpful mixin-style class for a <code><a href="gui.Component.html" target="displayFrame">Component</a></code> which has an optional
+wheel capability.
+<p/><a href="gui-guiprocs.icn.html#922" target="displayFrame">Source - guiprocs.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.HasUseWheel.html">gui.HasUseWheel</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+<a href="util.Connectable.html#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#handle_wheel_down">handle_wheel_down()</a>
+<a href="#handle_wheel_left">handle_wheel_left()</a>
+<a href="#handle_wheel_right">handle_wheel_right()</a>
+<a href="#handle_wheel_up">handle_wheel_up()</a>
+<a href="#set_use_wheel">set_use_wheel()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#wheel_listeners">wheel_listeners</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="handle_wheel_down"/>
+<h3>handle_wheel_down(e)</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-guiprocs.icn.html#932" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_wheel_left"/>
+<h3>handle_wheel_left(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-guiprocs.icn.html#934" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_wheel_right"/>
+<h3>handle_wheel_right(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-guiprocs.icn.html#938" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_wheel_up"/>
+<h3>handle_wheel_up(e)</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-guiprocs.icn.html#930" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="set_use_wheel"/>
+<h3>set_use_wheel(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-guiprocs.icn.html#942" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="wheel_listeners"/>
+<h3>wheel_listeners</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-guiprocs.icn.html#927" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>run_prog2</title></head><body>
+<h1>run_prog2(prog, params, env)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.io-package.html" target="listFrame">ipl.io</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This procedure is very similar to <code><a href="ipl.io.run_prog.html" target="displayFrame">run_prog()</a></code> above, but provides
+better error reporting, by capturing standard error output.  This
+comes at a slight setup and performance cost, however.  For example :-
+<p/>
+<pre>
+   s := run_prog2("ls", ["-l", "/junk"])
+</pre>
+<p/>
+would fail and set <code>&amp;why</code> to something like :-
+<p/>
+<pre>
+  ls failed: Exited with status 2: ls: cannot access '/junk': No such file or directory
+</pre>
+<p/>
+whereas <code><a href="ipl.io.run_prog.html" target="displayFrame">run_prog()</a></code> would just report the status code.
+<p/><a href="ipl.io-iomisc.icn.html#143" target="displayFrame">Source - iomisc.icn </a>
+<p/>
+</body></html>

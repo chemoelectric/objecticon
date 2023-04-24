@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lpb</title></head><body>
+<h1>lpb(x, op)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Convenient function to get the binary operator <code>op</code>, partially
+applied with <code>x</code> as the left argument.  For example
+<pre>
+   lpb(2, "*")
+</pre>
+returns a function which doubles its argument, whilst
+<pre>
+   lpb(0, "&lt;")
+</pre>
+returns a function which succeeds and returns its argument if it is
+greater than 0.
+<p/><a href="ipl.functional-highorder.icn.html#137" target="displayFrame">Source - highorder.icn </a>
+<p/>
+</body></html>

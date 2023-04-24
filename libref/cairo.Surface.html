@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Surface</title></head><body>
+<h1>Surface</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="cairo.WindowSurface.html">cairo.WindowSurface</a><br>
+<a href="cairo.ImageSurface.html">cairo.ImageSurface</a><br>
+<a href="cairo.PagedSurface.html">cairo.PagedSurface</a><br>
+<a href="cairo.RecordingSurface.html">cairo.RecordingSurface</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="cairo-package.html" target="listFrame">cairo</a></dd>
+</dl><p/>
+This class wraps a cairo surface.  There can be several instances
+wrapping the same cairo object.  Each one has a reference to the
+underlying object and must be closed separately.
+<p/><a href="cairo-cairo.icn.html#598" target="displayFrame">Source - cairo.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="cairo.Surface.html">cairo.Surface</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#create_for_ptr">create_for_ptr()</a>
+<a href="#get_device_offset">get_device_offset()</a>
+<a href="#get_device_offset_impl">get_device_offset_impl()</a>
+<a href="#get_device_scale">get_device_scale()</a>
+<a href="#get_device_scale_impl">get_device_scale_impl()</a>
+<a href="#get_type">get_type()</a>
+<a href="#init">init()</a>
+<a href="#set_device_offset">set_device_offset()</a>
+<a href="#set_device_scale">set_device_scale()</a>
+<a href="#set_ptr">set_ptr()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ptr">ptr</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Close this instance, releasing the reference to the underlying
+cairo object.
+<p/><a href="cairo-cairo.icn.html#656" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="create_for_ptr"/>
+<h3>create_for_ptr(ptr)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#614" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_device_offset"/>
+<h3>get_device_offset()</h3>
+public<p/>
+<dl>
+<dd>
+Return the device offset set by <code><a href="cairo.Surface.html#set_device_offset">set_device_offset()</a></code>, as a
+<code><a href="cairo.DeviceOffset.html" target="displayFrame">DeviceOffset</a></code> record.
+<p/><a href="cairo-cairo.icn.html#639" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_device_offset_impl"/>
+<h3>get_device_offset_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#653" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_device_scale"/>
+<h3>get_device_scale()</h3>
+public<p/>
+<dl>
+<dd>
+Return the device offset set by <code><a href="cairo.Surface.html#set_device_scale">set_device_scale()</a></code>, as a
+<code><a href="cairo.DeviceScale.html" target="displayFrame">DeviceScale</a></code> record.
+<p/><a href="cairo-cairo.icn.html#646" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_device_scale_impl"/>
+<h3>get_device_scale_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#654" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_type"/>
+<h3>get_type(ptr)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#627" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#605" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_device_offset"/>
+<h3>set_device_offset(x_offset, y_offset)</h3>
+public native<p/>
+<dl>
+<dd>
+Sets an offset that is added to the device coordinates determined
+by the CTM when drawing to this surface.
+<p/><a href="cairo-cairo.icn.html#629" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_device_scale"/>
+<h3>set_device_scale(x_scale, y_scale)</h3>
+public native<p/>
+<dl>
+<dd>
+Sets a scale that is multiplied to the device coordinates
+determined by the CTM when drawing to this surface.
+<p/><a href="cairo-cairo.icn.html#634" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ptr"/>
+<h3>set_ptr(ptr)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#609" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ptr"/>
+<h3>ptr</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#603" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+</body></html>

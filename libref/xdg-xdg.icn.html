@@ -1,0 +1,1425 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>xdg.icn</title></head><body><pre>
+<a name="1"/>package xdg
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   io,
+<a name="5"/>   util,
+<a name="6"/>   lang,
+<a name="7"/>   gui,
+<a name="8"/>   cairo,
+<a name="9"/>   posix,
+<a name="10"/>   ipl.io,
+<a name="11"/>   ipl.childwait,
+<a name="12"/>   ipl.tables,
+<a name="13"/>   ipl.strings,
+<a name="14"/>   ipl.wildcard,
+<a name="15"/>   ipl.sort,
+<a name="16"/>   ipl.pdco,
+<a name="17"/>   ipl.lists,
+<a name="18"/>   ipl.functional
+<a name="19"/>
+<a name="20"/># An object for parsing and holding the parts of a locale string, like
+<a name="21"/># "en_GB.utf8".
+<a name="22"/>#
+<a name="23"/>class Locale()
+<a name="24"/>   public const
+<a name="25"/>      lang, country, encoding, modifier
+<a name="26"/>
+<a name="27"/>   public new(s)
+<a name="28"/>      s ? {
+<a name="29"/>         lang := tab(upto('_.@') | 0)
+<a name="30"/>         if ="_" then
+<a name="31"/>            country := tab(upto('.@') | 0)
+<a name="32"/>         if ="." then
+<a name="33"/>            encoding := tab(upto('@') | 0)
+<a name="34"/>         if ="@" then
+<a name="35"/>            modifier := tab(0)
+<a name="36"/>      }
+<a name="37"/>      return
+<a name="38"/>   end
+<a name="39"/>end
+<a name="40"/>
+<a name="41"/># An object for holding info about a theme and the icons in its
+<a name="42"/># various directories.
+<a name="43"/>#
+<a name="44"/>package class ThemeIndex()
+<a name="45"/>   public const
+<a name="46"/>      directories,   # A list of ThemeDirectory objects
+<a name="47"/>      parents        # A list of parent theme names (strings)
+<a name="48"/>
+<a name="49"/>   private const
+<a name="50"/>      ordered_directories_cache  # A table mapping a scale (real) to
+<a name="51"/>                                 # copies of directories sorted
+<a name="52"/>                                 # according to that scale
+<a name="53"/>
+<a name="54"/>   private static scale_dist(scale, x)
+<a name="55"/>      # Note that scale is a real, x.scale an integer.
+<a name="56"/>      return abs(scale - x.scale)
+<a name="57"/>   end
+<a name="58"/>
+<a name="59"/>   # Generate the directories, ordered by distance from scale (a
+<a name="60"/>   # real).
+<a name="61"/>   #
+<a name="62"/>   public ordered_directories(scale)
+<a name="63"/>      local l
+<a name="64"/>      unless l := member(ordered_directories_cache, scale) then {
+<a name="65"/>         l := isort(directories, lpartial(scale_dist, scale))
+<a name="66"/>         insert(ordered_directories_cache, scale, l)
+<a name="67"/>      }
+<a name="68"/>      suspend .!l
+<a name="69"/>   end
+<a name="70"/>
+<a name="71"/>   public new(directories, parents)
+<a name="72"/>      self.directories := directories
+<a name="73"/>      self.parents := parents
+<a name="74"/>      ordered_directories_cache := table()
+<a name="75"/>      return
+<a name="76"/>   end   
+<a name="77"/>end
+<a name="78"/>
+<a name="79"/># Encapsulates a directory in a theme.  This is not an actual directory,
+<a name="80"/># but gives the meta information about the several actual directories
+<a name="81"/># that it does relate to.  These actual directories are located under
+<a name="82"/># the various elements of the base directories path, and each one has
+<a name="83"/># an element in the cached_dirs member.
+<a name="84"/>#
+<a name="85"/># For example an index.theme file may contain the directory group:-
+<a name="86"/>#   [16x16/intl]
+<a name="87"/>#   Size=16
+<a name="88"/>#   Context=International
+<a name="89"/>#   Type=Threshold
+<a name="90"/>#
+<a name="91"/># This is represented by a ThemeDirectory.  Then, each element from
+<a name="92"/># gen_data_dirs() is taken and "icons" and the theme name are appended
+<a name="93"/># to give an actual directory :-
+<a name="94"/>#
+<a name="95"/>#   "/home/rparlett/.local/share/icons/theme/16x16/intl"
+<a name="96"/>#   "/usr/local/share/icons/theme/16x16/intl"
+<a name="97"/>#   "/usr/share/icons/theme/16x16/intl"
+<a name="98"/>#  
+<a name="99"/># and the cached contents of those directories are stored in CachedDir
+<a name="100"/># instances in the cached_dirs list.
+<a name="101"/>#
+<a name="102"/>package class ThemeDirectory()
+<a name="103"/>   public const
+<a name="104"/>      type,         # Type, a string
+<a name="105"/>      size,         # Sizes etc, all integers
+<a name="106"/>      minsize,      #         
+<a name="107"/>      maxsize,
+<a name="108"/>      threshold,
+<a name="109"/>      scale,
+<a name="110"/>      cached_dirs   # A list of CachedDir objects
+<a name="111"/>
+<a name="112"/>   public directory_size_distance(desired_size)
+<a name="113"/>      return case type of {
+<a name="114"/>         "Fixed": abs(desired_size - size)
+<a name="115"/>         "Threshold": {
+<a name="116"/>            if desired_size &lt; size - threshold then 
+<a name="117"/>               size - desired_size
+<a name="118"/>            else if desired_size &gt; size + threshold then 
+<a name="119"/>               desired_size - size
+<a name="120"/>            else
+<a name="121"/>               0
+<a name="122"/>         }
+<a name="123"/>         "Scalable": {
+<a name="124"/>            if desired_size &lt; minsize then
+<a name="125"/>               minsize - desired_size
+<a name="126"/>            else if desired_size &gt; maxsize  then
+<a name="127"/>               desired_size - maxsize 
+<a name="128"/>            else
+<a name="129"/>               0
+<a name="130"/>         }
+<a name="131"/>      }
+<a name="132"/>   end
+<a name="133"/>
+<a name="134"/>   public new(type, size, minsize, maxsize, threshold, scale, cached_dirs)
+<a name="135"/>      self.type := type
+<a name="136"/>      self.size := size * scale
+<a name="137"/>      self.minsize := minsize * scale
+<a name="138"/>      self.maxsize := maxsize * scale
+<a name="139"/>      self.threshold := threshold * scale
+<a name="140"/>      self.scale := scale
+<a name="141"/>      self.cached_dirs := cached_dirs
+<a name="142"/>      return
+<a name="143"/>   end
+<a name="144"/>end
+<a name="145"/>
+<a name="146"/>#
+<a name="147"/># Encapsulates cached info about a directory.
+<a name="148"/>#
+<a name="149"/>package class CachedDir()
+<a name="150"/>   public const
+<a name="151"/>      file_path,    # A FilePath, giving the directory
+<a name="152"/>      contents      # A set of strings, being the entries in the directory.
+<a name="153"/>
+<a name="154"/>   # If f (no path) is in the directory, return its full path.
+<a name="155"/>   #
+<a name="156"/>   public access(f)
+<a name="157"/>      if member(contents, f) then
+<a name="158"/>         return file_path.child(f).str()
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   public new(file_path, contents)
+<a name="162"/>      self.file_path := file_path
+<a name="163"/>      self.contents := contents
+<a name="164"/>      return
+<a name="165"/>   end
+<a name="166"/>end
+<a name="167"/>
+<a name="168"/>#
+<a name="169"/># This class holds the data needed to expand a `DesktopEntry`'s Exec or
+<a name="170"/># ExecLine into a command.
+<a name="171"/>#
+<a name="172"/>class Subst()
+<a name="173"/>   public const
+<a name="174"/>      file,
+<a name="175"/>      line,
+<a name="176"/>      col
+<a name="177"/>
+<a name="178"/>   #
+<a name="179"/>   # Create a `Subst` given a `URL`.  A `file:` URL will have its
+<a name="180"/>   # parameter string examined to extract valid line and col
+<a name="181"/>   # parameters.
+<a name="182"/>   #
+<a name="183"/>   # Fails and sets `&amp;why` if URL is not UTF-8 or a non-local file.
+<a name="184"/>   #
+<a name="185"/>   public static from_URL(url)
+<a name="186"/>      local t, file, line, col
+<a name="187"/>      if url.scheme == "file" then {
+<a name="188"/>         file := Files.url_to_file(url) | fail
+<a name="189"/>         file := ucs(file) | return error("File not UTF-8")
+<a name="190"/>         if t := url.extract_cgi_parameters() then {
+<a name="191"/>            if line := 0 &lt; integer(member(t, "line")[1]) then
+<a name="192"/>               col := 0 &lt; integer(member(t, "col")[1])
+<a name="193"/>         }
+<a name="194"/>      } else
+<a name="195"/>         file := url.ucs() | return error("URL not UTF-8")
+<a name="196"/>      return Subst(file, line, col)
+<a name="197"/>   end
+<a name="198"/>
+<a name="199"/>   #
+<a name="200"/>   # Create an instance from a file (ucs, an absolute path or a URL),
+<a name="201"/>   # a line (integer) and a column number (integer).  All fields are
+<a name="202"/>   # optional.
+<a name="203"/>   #
+<a name="204"/>   public new(file, line, col)
+<a name="205"/>      self.file := need_ucs(\file)
+<a name="206"/>      if self.line := need_integer(\line, 1) then
+<a name="207"/>         self.col := need_integer(\col, 1)
+<a name="208"/>      return
+<a name="209"/>   end
+<a name="210"/>end
+<a name="211"/>
+<a name="212"/>#
+<a name="213"/># Represents info from a ".desktop" file
+<a name="214"/>#
+<a name="215"/>final class DesktopEntry()
+<a name="216"/>   public const
+<a name="217"/>      name,                 # Descriptive name (ucs, mandatory)
+<a name="218"/>      icon,                 # Icon name (string)
+<a name="219"/>      source,               # Source file (string)
+<a name="220"/>      exec,                 # Exec entry (ucs, mandatory)
+<a name="221"/>      exec_line,            # optional ExecLine entry (ucs)
+<a name="222"/>      path,                 # Path entry (ucs)
+<a name="223"/>      terminal,             # Terminal entry (flag)
+<a name="224"/>      initial_preference    # InitialPreference entry (default 0)
+<a name="225"/>
+<a name="226"/>   public static const
+<a name="227"/>      # A command (including any flag) to prefix to the `subst_file`
+<a name="228"/>      # result for an entry with the terminal flag set.  It may be
+<a name="229"/>      # configured via the environment variable `OI_XDG_TERM_CMD`.  If
+<a name="230"/>      # unset, a search is made for a default.
+<a name="231"/>      #
+<a name="232"/>      TERM_CMD
+<a name="233"/>
+<a name="234"/>   private static find_term_cmd()
+<a name="235"/>      local s
+<a name="236"/>      every s := ["xterm" | "konsole" | "rxvt", "-e"] | ["gnome-terminal", "--"] do {
+<a name="237"/>         if Files.find_exe(s[1]) then
+<a name="238"/>            return s[1] || " " || s[2]
+<a name="239"/>      }
+<a name="240"/>      return "xterm -e"
+<a name="241"/>   end
+<a name="242"/>
+<a name="243"/>   private static init()
+<a name="244"/>      TERM_CMD := env_string("OI_XDG_TERM_CMD") | find_term_cmd()
+<a name="245"/>   end
+<a name="246"/>
+<a name="247"/>   #
+<a name="248"/>   # Helpful method to launch an application using this `DesktopEntry`
+<a name="249"/>   # with the given `Subst` values applied to its Exec entry.
+<a name="250"/>   #
+<a name="251"/>   public launch_prog(subst)
+<a name="252"/>      local pid, cmd, args
+<a name="253"/>      pid := System.fork() | fail
+<a name="254"/>      if pid &gt; 0 then {
+<a name="255"/>         # Parent
+<a name="256"/>         ChildWait.add_pid(pid)
+<a name="257"/>         return
+<a name="258"/>      }
+<a name="259"/>      # Set the working directory for the child process
+<a name="260"/>      Files.chdir(\path | Files.get_home())
+<a name="261"/>      # Get the command to run.
+<a name="262"/>      args := subst_file_list(subst)
+<a name="263"/>      cmd := pop(args) | stop("Empty command list")
+<a name="264"/>      System.setpgid()
+<a name="265"/>      null_stdio()
+<a name="266"/>      Files.bulk_close(50)
+<a name="267"/>      System.exec(cmd, args) | stop(&amp;why)
+<a name="268"/>      syserr("Not reached")
+<a name="269"/>   end
+<a name="270"/>
+<a name="271"/>   private static gen_args(s)
+<a name="272"/>      local t
+<a name="273"/>      static ch
+<a name="274"/>      initial ch := ~' \t\n'
+<a name="275"/>      s ? while tab(upto(ch)) do {
+<a name="276"/>         if ="\"" then {
+<a name="277"/>            t := ""
+<a name="278"/>            repeat {
+<a name="279"/>               t ||:= tab(upto('\\"') | 0)
+<a name="280"/>               if ="\\" then
+<a name="281"/>                  t ||:= move(1)
+<a name="282"/>               else {
+<a name="283"/>                  move(1)
+<a name="284"/>                  break
+<a name="285"/>               }
+<a name="286"/>            }
+<a name="287"/>         } else
+<a name="288"/>            t := tab(many(ch))
+<a name="289"/>         suspend t
+<a name="290"/>      }
+<a name="291"/>   end
+<a name="292"/>
+<a name="293"/>   private expand_code(s, subst)
+<a name="294"/>      local t, ch, iflag
+<a name="295"/>      t := ""
+<a name="296"/>      s ? {
+<a name="297"/>         while t ||:= tab(upto('%')) do {
+<a name="298"/>            move(1)
+<a name="299"/>            t ||:= case string(ch := move(1)) of {
+<a name="300"/>               "%": "%"
+<a name="301"/>               "i": 1("" ~== \icon, iflag := &amp;yes)
+<a name="302"/>               "c": name
+<a name="303"/>               "k": ucs(source) | "Not utf-8"
+<a name="304"/>               !"uUfF": \subst.file
+<a name="305"/>               "L": \subst.line
+<a name="306"/>               "C": \subst.col
+<a name="307"/>               "P": if \subst.line then if \subst.col then
+<a name="308"/>                       subst.line || ":" || subst.col
+<a name="309"/>                    else
+<a name="310"/>                       subst.line
+<a name="311"/>               !"dDnNvM": fail
+<a name="312"/>               default: ch
+<a name="313"/>            } | fail
+<a name="314"/>         }
+<a name="315"/>         if \iflag then
+<a name="316"/>            suspend u"--icon"
+<a name="317"/>         return t || tab(0)
+<a name="318"/>      }
+<a name="319"/>   end
+<a name="320"/>
+<a name="321"/>   #
+<a name="322"/>   # Substitute from the given `Subst`, into the Exec (or ExecLine)
+<a name="323"/>   # command, generating a sequence of resulting arguments.
+<a name="324"/>   #
+<a name="325"/>   public subst_file_args(subst)
+<a name="326"/>      local s
+<a name="327"/>      s := exec
+<a name="328"/>      if \subst.line then
+<a name="329"/>         s := \exec_line
+<a name="330"/>      if \terminal then
+<a name="331"/>         s := TERM_CMD || " " || s
+<a name="332"/>      suspend expand_code(gen_args(s), subst)
+<a name="333"/>   end
+<a name="334"/>
+<a name="335"/>   #
+<a name="336"/>   # Helpful method to return the results of `subst_file_args()`
+<a name="337"/>   # as a list.
+<a name="338"/>   #
+<a name="339"/>   public subst_file_list(subst)
+<a name="340"/>      return ipl.pdco.List{ subst_file_args(subst) }
+<a name="341"/>   end
+<a name="342"/>
+<a name="343"/>   #
+<a name="344"/>   # This takes the results of `subst_file_args()` and produces a
+<a name="345"/>   # single string suitable for execution by the shell.
+<a name="346"/>   #
+<a name="347"/>   public subst_file_shell(subst)
+<a name="348"/>      return String{ Format.shell_escape(subst_file_args(subst)), " " }
+<a name="349"/>   end
+<a name="350"/>
+<a name="351"/>   package new(name, icon, source, exec, exec_line, path, terminal, initial_preference)
+<a name="352"/>      self.name := name
+<a name="353"/>      self.icon := icon
+<a name="354"/>      self.source := source
+<a name="355"/>      self.exec := exec
+<a name="356"/>      self.exec_line := exec_line
+<a name="357"/>      self.path := path
+<a name="358"/>      self.terminal := terminal
+<a name="359"/>      self.initial_preference := initial_preference
+<a name="360"/>      return
+<a name="361"/>   end
+<a name="362"/>end
+<a name="363"/>
+<a name="364"/>#
+<a name="365"/># This class contains static methods relating to the base directory specification.
+<a name="366"/>#
+<a name="367"/>final abstract class BaseDir()
+<a name="368"/>   #
+<a name="369"/>   # Ensure XDG_DATA_HOME exists, or try and create it.
+<a name="370"/>   #
+<a name="371"/>   public static ensure_data_home()
+<a name="372"/>      local f, c, s
+<a name="373"/>      if s := env_string("XDG_DATA_HOME") then
+<a name="374"/>         Files.is_directory(s) | return error("File specified by XDG_DATA_HOME is not a directory")
+<a name="375"/>      else {
+<a name="376"/>         f := FilePath(Files.get_home())
+<a name="377"/>         every c := ".local" | "share" do {
+<a name="378"/>            f := f.child(c)
+<a name="379"/>            s := f.str()
+<a name="380"/>            Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create data directory " || s || ": " || &amp;why)
+<a name="381"/>         }
+<a name="382"/>      }
+<a name="383"/>      return s
+<a name="384"/>   end
+<a name="385"/>
+<a name="386"/>   #
+<a name="387"/>   # Ensure XDG_CONFIG_HOME exists, or try and create it.
+<a name="388"/>   #
+<a name="389"/>   public static ensure_config_home()
+<a name="390"/>      local s
+<a name="391"/>      if s := env_string("XDG_CONFIG_HOME") then
+<a name="392"/>         Files.is_directory(s) | return error("File specified by XDG_CONFIG_HOME is not a directory")
+<a name="393"/>      else {
+<a name="394"/>         s := FilePath(Files.get_home()).child(".config").str()
+<a name="395"/>         Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create config directory " || s || ": " || &amp;why)
+<a name="396"/>      }
+<a name="397"/>      return s
+<a name="398"/>   end
+<a name="399"/>
+<a name="400"/>   #
+<a name="401"/>   # Return the XDG_DATA_HOME directory
+<a name="402"/>   #
+<a name="403"/>   public static get_data_home()
+<a name="404"/>      return env_string("XDG_DATA_HOME") | FilePath(Files.get_home()).walk(".local", "share").str()
+<a name="405"/>   end
+<a name="406"/>
+<a name="407"/>   #
+<a name="408"/>   # Return the XDG_CONFIG_HOME directory
+<a name="409"/>   #
+<a name="410"/>   public static get_config_home()
+<a name="411"/>      return env_string("XDG_CONFIG_HOME") | FilePath(Files.get_home()).child(".config").str()
+<a name="412"/>   end
+<a name="413"/>
+<a name="414"/>   #
+<a name="415"/>   # Return the XDG_DATA_DIRS path
+<a name="416"/>   #
+<a name="417"/>   public static get_data_dirs()
+<a name="418"/>$if _MS_WIN32
+<a name="419"/>      return env_string("XDG_DATA_DIRS") | "C:\\usr\\local\\share;C:\\usr\\share"
+<a name="420"/>$else
+<a name="421"/>      return env_string("XDG_DATA_DIRS") | "/usr/local/share:/usr/share"
+<a name="422"/>$endif
+<a name="423"/>   end
+<a name="424"/>
+<a name="425"/>   #
+<a name="426"/>   # Return the XDG_CONFIG_DIRS path
+<a name="427"/>   #
+<a name="428"/>   public static get_config_dirs()
+<a name="429"/>$if _MS_WIN32
+<a name="430"/>      return env_string("XDG_CONFIG_DIRS") | "C:\\etc\\xdg"
+<a name="431"/>$else
+<a name="432"/>      return env_string("XDG_CONFIG_DIRS") | "/etc/xdg"
+<a name="433"/>$endif
+<a name="434"/>   end
+<a name="435"/>
+<a name="436"/>   #
+<a name="437"/>   # Generate the config directories, being `get_config_home()` followed
+<a name="438"/>   # by the elements of `get_config_dirs()`
+<a name="439"/>   #
+<a name="440"/>   public static gen_config_dirs()
+<a name="441"/>      suspend get_config_home() | Files.split_paths(get_config_dirs())
+<a name="442"/>   end
+<a name="443"/>
+<a name="444"/>   #
+<a name="445"/>   # Generate the base directories, being `get_data_home()` followed
+<a name="446"/>   # by the elements of `get_data_dirs()`
+<a name="447"/>   #
+<a name="448"/>   public static gen_data_dirs()
+<a name="449"/>      suspend get_data_home() | Files.split_paths(get_data_dirs())
+<a name="450"/>   end
+<a name="451"/>end
+<a name="452"/>
+<a name="453"/>#
+<a name="454"/># Some static helper methods.
+<a name="455"/>#
+<a name="456"/>package final abstract class Util()
+<a name="457"/>   private static const
+<a name="458"/>      LC_MESSAGES,        # A Locale object giving the LC_MESSAGES locale info
+<a name="459"/>      INI_LC_KEYS         # A list of strings used to choose locale-based keys in
+<a name="460"/>                          # ini files
+<a name="461"/>
+<a name="462"/>   private static init()
+<a name="463"/>      LC_MESSAGES := Locale(env_string("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
+<a name="464"/>      INI_LC_KEYS := ipl.pdco.List {
+<a name="465"/>                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
+<a name="466"/>                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country |
+<a name="467"/>                LC_MESSAGES.lang || "@" || \LC_MESSAGES.modifier |
+<a name="468"/>                LC_MESSAGES.lang |
+<a name="469"/>                &amp;null }
+<a name="470"/>   end
+<a name="471"/>
+<a name="472"/>   private static unescape(s)
+<a name="473"/>      local t, ch
+<a name="474"/>      t := ""
+<a name="475"/>      s ? {
+<a name="476"/>         while t ||:= string(tab(upto('\\'))) do {
+<a name="477"/>            move(1)
+<a name="478"/>            t ||:= case ch := string(move(1)) of {
+<a name="479"/>               "s": " "
+<a name="480"/>               "t": "\t"
+<a name="481"/>               "n": "\n"
+<a name="482"/>               "r": "\r"
+<a name="483"/>               default: ch
+<a name="484"/>            }
+<a name="485"/>         }
+<a name="486"/>         return t || tab(0)
+<a name="487"/>      }
+<a name="488"/>   end
+<a name="489"/>
+<a name="490"/>   # Note that this is more liberal than the desktop entry spec
+<a name="491"/>   # indicates, since we want to parse the mimeapps.list file, which
+<a name="492"/>   # has keys with chars outside &amp;letters ++ &amp;digits ++ '-'
+<a name="493"/>   #
+<a name="494"/>   private static parse_key_val(group)
+<a name="495"/>      local key, val, enc, t
+<a name="496"/>      key := trim(tab(upto('[='))) | fail
+<a name="497"/>      if ="[" then {
+<a name="498"/>         enc := string(tab(upto(']'))) | fail
+<a name="499"/>         move(1)
+<a name="500"/>         tab(many(' '))
+<a name="501"/>      }
+<a name="502"/>      ="=" | fail
+<a name="503"/>      tab(many(' '))
+<a name="504"/>      val := unescape(tab(0))
+<a name="505"/>      (t := member(group, key)) | insert(group, key, t := table())
+<a name="506"/>      insert(t, enc, val)
+<a name="507"/>   end
+<a name="508"/>
+<a name="509"/>   private static resolve_lc(group)
+<a name="510"/>      local key, sel, t
+<a name="511"/>      every key := default.key(group) do {
+<a name="512"/>         t := member(group, key)
+<a name="513"/>         if sel := member(t, !INI_LC_KEYS) then
+<a name="514"/>            insert(group, key, sel)
+<a name="515"/>         else
+<a name="516"/>            # No matching locale (or fallback without locale), so
+<a name="517"/>            # delete the key entirely.
+<a name="518"/>            delete(group, key)
+<a name="519"/>      }
+<a name="520"/>   end
+<a name="521"/>
+<a name="522"/>   private static parse_ini_file(s)
+<a name="523"/>      local group, groups, gn, l
+<a name="524"/>      groups := table()
+<a name="525"/>      every l := separate_lines(s) do l ? {
+<a name="526"/>         if pos(0) | match("#") then
+<a name="527"/>            next
+<a name="528"/>         if ="[" &amp; gn := tab(upto(']')) then {
+<a name="529"/>            group := table()
+<a name="530"/>            insert(groups, gn, group)
+<a name="531"/>         } else
+<a name="532"/>            parse_key_val(\group)
+<a name="533"/>      }
+<a name="534"/>      every resolve_lc(!groups)
+<a name="535"/>      return groups
+<a name="536"/>   end
+<a name="537"/>
+<a name="538"/>   public static load_ini_file(f)
+<a name="539"/>      return parse_ini_file(ucs(Files.file_to_string(f)))
+<a name="540"/>   end
+<a name="541"/>
+<a name="542"/>   public static cache_icon(f, size, exact)
+<a name="543"/>      # If it's an SVG file, then simply scale to the desired size and
+<a name="544"/>      # return the key.
+<a name="545"/>      return if endswith(f, ".svg" | ".svgz") then
+<a name="546"/>         ImageCache.get_scaled_svg_key(f, size, size)
+<a name="547"/>      else if /exact then
+<a name="548"/>         ImageCache.get_key(f)
+<a name="549"/>      else
+<a name="550"/>         ImageCache.get_key_with_resize(f, size, size)
+<a name="551"/>   end
+<a name="552"/>end
+<a name="553"/>
+<a name="554"/>#
+<a name="555"/># This class contains static methods for looking up XDG icon theme data.
+<a name="556"/>#
+<a name="557"/>final abstract class IconTheme()
+<a name="558"/>   private static
+<a name="559"/>      THEMES,             # A map of theme names (string) to ThemeIndex objects.
+<a name="560"/>      FIND_ICON_CACHE,    # A cache of find_icon() results, mapping string key to icon
+<a name="561"/>                          #   name (string)
+<a name="562"/>      ICON_FALLBACK_CACHED_DIRS  # A list of CachedDir objects
+<a name="563"/>
+<a name="564"/>   private static readable
+<a name="565"/>      theme
+<a name="566"/>
+<a name="567"/>   private static init()
+<a name="568"/>      refresh()
+<a name="569"/>   end
+<a name="570"/>
+<a name="571"/>   #
+<a name="572"/>   # Reload all the settings and reset everything.
+<a name="573"/>   #
+<a name="574"/>   public static refresh()
+<a name="575"/>      THEMES := table()
+<a name="576"/>      FIND_ICON_CACHE := table()
+<a name="577"/>      theme := get_current_theme()
+<a name="578"/>      ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
+<a name="579"/>   end
+<a name="580"/>
+<a name="581"/>   public static dump()
+<a name="582"/>      write("Current theme: ", theme)
+<a name="583"/>      write("\nTHEMES")
+<a name="584"/>      write("======")
+<a name="585"/>      to_stdout(THEMES, 3)
+<a name="586"/>      write("\N\NICON_FALLBACK_CACHED_DIRS")
+<a name="587"/>      write("=========================")
+<a name="588"/>      to_stdout(ICON_FALLBACK_CACHED_DIRS, 3)
+<a name="589"/>      write()
+<a name="590"/>   end
+<a name="591"/>
+<a name="592"/>   #
+<a name="593"/>   # Set the icon theme; fails if the theme is invalid.
+<a name="594"/>   #
+<a name="595"/>   public static set_theme(s)
+<a name="596"/>      s := need_string(s)
+<a name="597"/>      get_theme_index(s) | fail
+<a name="598"/>      theme := s
+<a name="599"/>      clear(FIND_ICON_CACHE)
+<a name="600"/>      link
+<a name="601"/>   end
+<a name="602"/>
+<a name="603"/>   private static dir_set1(f)
+<a name="604"/>      local s, res
+<a name="605"/>      res := set()
+<a name="606"/>      repeat {
+<a name="607"/>         s := f.read_line() | fail
+<a name="608"/>         if /s then
+<a name="609"/>            return res
+<a name="610"/>         insert(res, s)
+<a name="611"/>      }
+<a name="612"/>   end
+<a name="613"/>
+<a name="614"/>   private static dir_set(dir)
+<a name="615"/>      local f
+<a name="616"/>      return use {
+<a name="617"/>         f := DirStream(dir),
+<a name="618"/>         dir_set1(f)
+<a name="619"/>      }
+<a name="620"/>   end
+<a name="621"/>
+<a name="622"/>   private static gen_theme_directories(tm)
+<a name="623"/>      suspend separate(member(member(tm, u"Icon Theme"), u"Directories" | u"ScaledDirectories"))
+<a name="624"/>   end
+<a name="625"/>
+<a name="626"/>   private static gen_theme_parents(tm)
+<a name="627"/>      suspend string(separate(member(member(tm, u"Icon Theme"), u"Inherits")))
+<a name="628"/>   end
+<a name="629"/>
+<a name="630"/>   # Build a ThemeIndex object given the name and the ini table.
+<a name="631"/>   private static build_theme_index(theme, tm)
+<a name="632"/>      local d, subdir, f, dirs, ds, m, cd,
+<a name="633"/>         type, size, minsize, maxsize, threshold, scale
+<a name="634"/>      dirs := []
+<a name="635"/>      every subdir := gen_theme_directories(tm) do {
+<a name="636"/>         if m := member(tm, subdir) &amp;
+<a name="637"/>            size := (0 &lt; integer(member(m, u"Size"))) then 
+<a name="638"/>         {
+<a name="639"/>            type := string(member(m, u"Type")) | "Threshold"
+<a name="640"/>            threshold := (0 &lt;= integer(member(m, u"Threshold"))) | 2
+<a name="641"/>            scale := (0 &lt; integer(member(m, u"Scale"))) | 1
+<a name="642"/>            minsize := (0 &lt; integer(member(m, u"MinSize"))) | size
+<a name="643"/>            maxsize := (0 &lt; integer(member(m, u"MaxSize"))) | size
+<a name="644"/>            cd := []
+<a name="645"/>            every d := BaseDir.gen_data_dirs() do {
+<a name="646"/>               f := FilePath(d).walk("icons", theme).append(FilePath(subdir))
+<a name="647"/>               if ds := dir_set(f.str()) &amp; *ds &gt; 2 then
+<a name="648"/>                  put(cd, CachedDir(f, ds))
+<a name="649"/>            }
+<a name="650"/>            if *cd &gt; 0 then
+<a name="651"/>               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, scale, cd))
+<a name="652"/>         }
+<a name="653"/>      }
+<a name="654"/>      return ThemeIndex(dirs, ipl.pdco.List{gen_theme_parents(tm)})
+<a name="655"/>   end
+<a name="656"/>
+<a name="657"/>   private static setup_icon_fallback_cached_dirs()
+<a name="658"/>      local d, p, r, ds
+<a name="659"/>      r := []
+<a name="660"/>      every d := BaseDir.gen_data_dirs() do {
+<a name="661"/>         p := FilePath(d).child("icons")
+<a name="662"/>         if ds := dir_set(p.str()) &amp; *ds &gt; 2 then
+<a name="663"/>            put(r, CachedDir(p, ds))
+<a name="664"/>      }
+<a name="665"/>      return r
+<a name="666"/>   end
+<a name="667"/>
+<a name="668"/>   private static get_theme_index1(name)
+<a name="669"/>      local d, m
+<a name="670"/>      every d := BaseDir.gen_data_dirs() do {
+<a name="671"/>         if m := build_theme_index(name, Util.load_ini_file(FilePath(d).walk("icons", name, "index.theme").str())) then
+<a name="672"/>            return m
+<a name="673"/>      }
+<a name="674"/>   end
+<a name="675"/>
+<a name="676"/>   private static get_theme_index(name)
+<a name="677"/>      local m
+<a name="678"/>      unless m := member(THEMES, name) then {
+<a name="679"/>         m := get_theme_index1(name)
+<a name="680"/>         insert(THEMES, name, m)
+<a name="681"/>      }
+<a name="682"/>      return \m
+<a name="683"/>   end
+<a name="684"/>
+<a name="685"/>   #
+<a name="686"/>   # Find an icon given the icon name (string), integer size, and
+<a name="687"/>   # optional real scale, which defaults to `Gui.SCALE`.  Note that
+<a name="688"/>   # `size` is treated as an already-scaled value.
+<a name="689"/>   #
+<a name="690"/>   public static find_icon(icon, size, scale)
+<a name="691"/>      local k, v, tried
+<a name="692"/>      icon := need_string(icon)
+<a name="693"/>      size := need_integer(size, 1)
+<a name="694"/>      scale := need_real(\scale, 1.0) | Gui.SCALE
+<a name="695"/>      k := icon || "/" || size || "/" || scale
+<a name="696"/>      unless v := member(FIND_ICON_CACHE, k) then {
+<a name="697"/>         tried := set()
+<a name="698"/>         v := find_icon_helper(icon, size, scale, theme | "hicolor", tried) | lookup_fallback_icon(icon)
+<a name="699"/>         insert(FIND_ICON_CACHE, k, v)
+<a name="700"/>      }
+<a name="701"/>      return \v
+<a name="702"/>   end
+<a name="703"/>
+<a name="704"/>   #
+<a name="705"/>   # This is like `find_icon()`, but `icon` may optionally be an
+<a name="706"/>   # absolute path.  This is permitted in the case of a desktop file's
+<a name="707"/>   # "Icon" entry.
+<a name="708"/>   #
+<a name="709"/>   public static find_absolute_path_or_icon(icon, size, scale)
+<a name="710"/>      return if FilePath(icon).is_absolute() then
+<a name="711"/>                icon
+<a name="712"/>             else
+<a name="713"/>                find_icon(icon, size, scale)
+<a name="714"/>   end
+<a name="715"/>
+<a name="716"/>   #
+<a name="717"/>   # This calls `find_icon`, caches the result in `ImageCache`, and
+<a name="718"/>   # returns the cache key.  The parameter `exact` flag indicates
+<a name="719"/>   # whether the found icon should be resized to exactly `size`.
+<a name="720"/>   #
+<a name="721"/>   public static find_icon_and_cache(icon, size, scale, exact)
+<a name="722"/>      return Util.cache_icon(find_icon(icon, size, scale), size, exact)
+<a name="723"/>   end
+<a name="724"/>
+<a name="725"/>   #
+<a name="726"/>   # This is like `find_icon_and_cache()`, but calls
+<a name="727"/>   # `find_absolute_path_or_icon()` instead.
+<a name="728"/>   #
+<a name="729"/>   public static find_absolute_path_or_icon_and_cache(icon, size, scale, exact)
+<a name="730"/>      return Util.cache_icon(find_absolute_path_or_icon(icon, size, scale), size, exact)
+<a name="731"/>   end
+<a name="732"/>
+<a name="733"/>   private static get_current_theme()
+<a name="734"/>      local f, theme, d
+<a name="735"/>      every theme := env_string("OI_THEME") | "oxygen" | "gnome" do {
+<a name="736"/>         every d := BaseDir.gen_data_dirs() do {
+<a name="737"/>            f := FilePath(d).walk("icons", theme, "index.theme").str()
+<a name="738"/>            if Files.access(f) then
+<a name="739"/>               return theme
+<a name="740"/>         }
+<a name="741"/>      }
+<a name="742"/>      return "hicolor"
+<a name="743"/>   end
+<a name="744"/>
+<a name="745"/>   private static find_icon_helper(icon, size, scale, theme, tried)
+<a name="746"/>      local theme_index
+<a name="747"/>      if member(tried, theme) then
+<a name="748"/>         fail
+<a name="749"/>      insert(tried, theme)
+<a name="750"/>      theme_index := get_theme_index(theme) | fail
+<a name="751"/>
+<a name="752"/>      # Try this theme, failing that try recursively with the theme's parents.
+<a name="753"/>      return lookup_icon(theme_index, icon, size, scale) | 
+<a name="754"/>         find_icon_helper(icon, size, scale, !theme_index.parents, tried)
+<a name="755"/>   end
+<a name="756"/>
+<a name="757"/>   private static lookup_fallback_icon(icon)
+<a name="758"/>      return has_icon(!ICON_FALLBACK_CACHED_DIRS, icon)
+<a name="759"/>   end
+<a name="760"/>
+<a name="761"/>   private static has_icon(cached_dir, icon)
+<a name="762"/>      local ex, f
+<a name="763"/>      if f := cached_dir.access(icon || ".png") then
+<a name="764"/>         return f
+<a name="765"/>      every ex := ".svg" | ".svgz" do {
+<a name="766"/>         if f := cached_dir.access(icon || ex) then
+<a name="767"/>            return \Context.LOADED &amp; f
+<a name="768"/>      }
+<a name="769"/>   end
+<a name="770"/>
+<a name="771"/>   private static lookup_icon(theme_index, icon, size, scale)
+<a name="772"/>      local subdir, f, minimal_size, closest_filename, ms
+<a name="773"/>      # Search for best match
+<a name="774"/>      every subdir := theme_index.ordered_directories(scale) do {
+<a name="775"/>         ms := subdir.directory_size_distance(size)
+<a name="776"/>         if /minimal_size | (ms &lt; minimal_size) then {
+<a name="777"/>            if f := has_icon(!subdir.cached_dirs, icon) then {
+<a name="778"/>               # Early exit on an exact match
+<a name="779"/>               if ms = 0 then
+<a name="780"/>                  return f
+<a name="781"/>               closest_filename := f
+<a name="782"/>               minimal_size := ms
+<a name="783"/>            }
+<a name="784"/>         }
+<a name="785"/>      }
+<a name="786"/>      return \closest_filename
+<a name="787"/>   end
+<a name="788"/>end
+<a name="789"/>
+<a name="790"/>#
+<a name="791"/># Encapsulates the editing done by a mimeapps.list file
+<a name="792"/>#
+<a name="793"/>package record Edit(src,  # The source location
+<a name="794"/>                    add,  # A map of mime-type (string) to lists of IDs (strings)
+<a name="795"/>                    del)  #   - ditto -
+<a name="796"/>#
+<a name="797"/># This class contains static methods for looking up XDG mime data.
+<a name="798"/>#
+<a name="799"/>final abstract class Mime()
+<a name="800"/>   private static
+<a name="801"/>      GLOBS,              # A Globs instance for file pattern matching.
+<a name="802"/>      ICONS,              # A map of mime-type (string) to list of icon names (strings)
+<a name="803"/>      GENERIC_ICONS,      #   - ditto -
+<a name="804"/>      MIME_GRAPH,         # A map of mime-type (string) to lists of mime-types (strings)
+<a name="805"/>      MIME_ALTERNATIVES,  # A cache of alternative_mime_types() results,
+<a name="806"/>                          #   mapping mime-type (string) to lists of mime-types (strings)
+<a name="807"/>      FIFF_CACHE,         # A cache of find_icon_for_file() results, mapping string key to icon
+<a name="808"/>                          #   name (string)
+<a name="809"/>      PATHS,              # A map of ID (string) to path (string), (eg "gimp.desktop" -&gt;
+<a name="810"/>                          #   "/usr/share/applications/gimp.desktop")
+<a name="811"/>      EDITS,              # A list of Edit() records to be applied in order
+<a name="812"/>      DEFINED,            # A map of mime-type (string) to sets of IDs (strings), being
+<a name="813"/>                          #   the mappings found in the .desktop files
+<a name="814"/>      LOADED,             # A map of ID (string) to DesktopEntry or null
+<a name="815"/>      DESKTOP_ENTRIES,    # A map of mime-types (string) to list of DesktopEntry objects.
+<a name="816"/>      ALL_DESKTOP_ENTRIES # A map of mime-types (string) to list of DesktopEntry objects.
+<a name="817"/>
+<a name="818"/>   private static const
+<a name="819"/>      CACHE_DIRS
+<a name="820"/>
+<a name="821"/>   private static init()
+<a name="822"/>      local t
+<a name="823"/>      t := env_string("OI_XDG_MIMEINFO_CACHE_DIRS") | BaseDir.get_data_dirs()
+<a name="824"/>      CACHE_DIRS := Set{ Files.split_paths(t) }
+<a name="825"/>      refresh()
+<a name="826"/>   end
+<a name="827"/>
+<a name="828"/>   #
+<a name="829"/>   # Reload all the settings and reset everything.
+<a name="830"/>   #
+<a name="831"/>   public static refresh()
+<a name="832"/>      MIME_ALTERNATIVES := table()
+<a name="833"/>      FIFF_CACHE := table()
+<a name="834"/>      GLOBS := read_globs()
+<a name="835"/>      ICONS := read_icons()
+<a name="836"/>      GENERIC_ICONS := read_generic_icons()
+<a name="837"/>      MIME_GRAPH := read_mime_graph()
+<a name="838"/>      DESKTOP_ENTRIES := table()
+<a name="839"/>      ALL_DESKTOP_ENTRIES := table()
+<a name="840"/>      scan_desktop_entries()
+<a name="841"/>   end
+<a name="842"/>
+<a name="843"/>   public static use_mimeinfo_cache(d)
+<a name="844"/>      succeed member(CACHE_DIRS, d)
+<a name="845"/>   end
+<a name="846"/>
+<a name="847"/>   public static dump()
+<a name="848"/>      write("GLOBS")
+<a name="849"/>      write("=====")
+<a name="850"/>      to_stdout(GLOBS, 3)
+<a name="851"/>      write("\N\NMIME_GRAPH")
+<a name="852"/>      write("==========")
+<a name="853"/>      to_stdout(MIME_GRAPH, 3)
+<a name="854"/>      write("\N\NICONS")
+<a name="855"/>      write("=====")
+<a name="856"/>      to_stdout(ICONS, 3)
+<a name="857"/>      write("\N\NGENERIC_ICONS")
+<a name="858"/>      write("=============")
+<a name="859"/>      to_stdout(GENERIC_ICONS, 3)
+<a name="860"/>      write("\N\NEDITS")
+<a name="861"/>      write("=====")
+<a name="862"/>      to_stdout(EDITS, 3)
+<a name="863"/>      write("\N\NPATHS")
+<a name="864"/>      write("=====")
+<a name="865"/>      to_stdout(PATHS, 3, &amp;yes)
+<a name="866"/>      write("\N\NDEFINED")
+<a name="867"/>      write("=======")
+<a name="868"/>      to_stdout(DEFINED, 3)
+<a name="869"/>      write("\N\NLOADED")
+<a name="870"/>      write("======")
+<a name="871"/>      to_stdout(LOADED, 3, &amp;yes)
+<a name="872"/>      write("\N\NDESKTOP_ENTRIES")
+<a name="873"/>      write("===============")
+<a name="874"/>      to_stdout(DESKTOP_ENTRIES, 3)
+<a name="875"/>      write("\N\NALL_DESKTOP_ENTRIES")
+<a name="876"/>      write("===============")
+<a name="877"/>      to_stdout(ALL_DESKTOP_ENTRIES, 3)
+<a name="878"/>      write()
+<a name="879"/>   end
+<a name="880"/>
+<a name="881"/>   private static parse_glob_file(g, s)
+<a name="882"/>      local weight, type, pattern, flags, l
+<a name="883"/>      every l := separate_lines(s) do l ? {
+<a name="884"/>         if weight := integer(tab(upto(':'))) &amp; 
+<a name="885"/>            move(1) &amp;
+<a name="886"/>            type := string(tab(upto(':'))) &amp;
+<a name="887"/>            move(1)
+<a name="888"/>         then {
+<a name="889"/>            pattern := tab(upto(':') | 0)
+<a name="890"/>            move(1)
+<a name="891"/>            flags := tab(0)
+<a name="892"/>            g.add(pattern, flags, weight, type)
+<a name="893"/>         }
+<a name="894"/>      }
+<a name="895"/>   end
+<a name="896"/>
+<a name="897"/>   private static need_mime_type(mt)
+<a name="898"/>      return Text.lower(need_string(mt))
+<a name="899"/>   end
+<a name="900"/>
+<a name="901"/>   #
+<a name="902"/>   # Given a filename (not a path), return the corresponding mime
+<a name="903"/>   # type, or fail if no mime type could be deduced.
+<a name="904"/>   #
+<a name="905"/>   public static get_mime_type_for_file(f)
+<a name="906"/>      return GLOBS.lookup(f).mime_type
+<a name="907"/>   end
+<a name="908"/>
+<a name="909"/>   #
+<a name="910"/>   # Generate the icon names from the "generic-icons" files, defined
+<a name="911"/>   # for the given mime type.
+<a name="912"/>   #
+<a name="913"/>   public static gen_generic_icons(mt)
+<a name="914"/>      suspend .!member(GENERIC_ICONS, need_mime_type(mt))
+<a name="915"/>   end
+<a name="916"/>
+<a name="917"/>   #
+<a name="918"/>   # Generate the icon names from the "icons" files, defined for the
+<a name="919"/>   # given mime type.
+<a name="920"/>   #
+<a name="921"/>   public static gen_icons(mt)
+<a name="922"/>      suspend .!member(ICONS, need_mime_type(mt))
+<a name="923"/>   end
+<a name="924"/>
+<a name="925"/>   #
+<a name="926"/>   # Generate all the icons defined for the given mime type, namely
+<a name="927"/>   # any mappings from the "icons" files, then the default icon formed
+<a name="928"/>   # from substituting "/" for "-", and then any mappings from the
+<a name="929"/>   # "generic-icons" files.  This method will always generate at least
+<a name="930"/>   # one result.
+<a name="931"/>   #
+<a name="932"/>   public static gen_all_icons(mt)
+<a name="933"/>      mt := need_mime_type(mt)
+<a name="934"/>      suspend .!member(ICONS, mt) | map(mt, "/", "-") | .!member(GENERIC_ICONS, mt)
+<a name="935"/>   end
+<a name="936"/>
+<a name="937"/>   #
+<a name="938"/>   # Generate the alternative mime types for the given mime type.
+<a name="939"/>   # This traverses the graph formed from the subclasses and aliases
+<a name="940"/>   # files, in a breadth-first fashion, and generates all possible
+<a name="941"/>   # alternatives.
+<a name="942"/>   #
+<a name="943"/>   public static alternative_mime_types(mt)
+<a name="944"/>      local l
+<a name="945"/>      mt := need_string(mt)
+<a name="946"/>      unless l := member(MIME_ALTERNATIVES, mt) then {
+<a name="947"/>         l := ipl.pdco.List{ alternative_mime_types1(mt) }
+<a name="948"/>         insert(MIME_ALTERNATIVES, mt, l)
+<a name="949"/>      }
+<a name="950"/>      suspend .!l
+<a name="951"/>   end
+<a name="952"/>
+<a name="953"/>   private static alternative_mime_types1(mt)
+<a name="954"/>      local x, lx, seen, l
+<a name="955"/>      l := [mt]
+<a name="956"/>      seen := set(Text.lower(mt))
+<a name="957"/>      repeat {
+<a name="958"/>         while mt := pop(l) do {
+<a name="959"/>            suspend mt
+<a name="960"/>            every x := !member(MIME_GRAPH, Text.lower(mt)) do {
+<a name="961"/>               lx := Text.lower(x)
+<a name="962"/>               unless member(seen, lx) | (lx == "application/octet-stream") then {
+<a name="963"/>                  insert(seen, lx)
+<a name="964"/>                  put(l, x)
+<a name="965"/>               }
+<a name="966"/>            }
+<a name="967"/>         }
+<a name="968"/>         if ((not member(seen, x := "text/plain")) &amp; match("text/", !seen)) |
+<a name="969"/>            ((not member(seen, x := "application/octet-stream")) &amp;
+<a name="970"/>                  not match("inode/" | "x-scheme-handler/" | "x-content/", !seen))
+<a name="971"/>         then {
+<a name="972"/>            insert(seen, x)
+<a name="973"/>            put(l, x)
+<a name="974"/>         } else
+<a name="975"/>            fail
+<a name="976"/>      }
+<a name="977"/>   end
+<a name="978"/>
+<a name="979"/>   #
+<a name="980"/>   # This calls `find_icon_for_file`, caches the result in
+<a name="981"/>   # `ImageCache`, and returns the cache key.
+<a name="982"/>   #
+<a name="983"/>   # The `exact` parameter has the same effect as in
+<a name="984"/>   # `find_icon_and_cache`.
+<a name="985"/>   #
+<a name="986"/>   public static find_icon_for_file_and_cache(file, size, scale, exact)
+<a name="987"/>      return Util.cache_icon(find_icon_for_file(file, size, scale), size, exact)
+<a name="988"/>   end
+<a name="989"/>
+<a name="990"/>   private static read_generic_icons()
+<a name="991"/>      local d, t, s, k, v, l
+<a name="992"/>      t := table()
+<a name="993"/>      every d := BaseDir.gen_data_dirs() do {
+<a name="994"/>         if s := Files.file_to_string(FilePath(d).walk("mime", "generic-icons").str()) then {
+<a name="995"/>            every l := separate_lines(s) do l ? {
+<a name="996"/>               if k := Text.lower(tab(upto(':'))) &amp;
+<a name="997"/>                  move(1) &amp;
+<a name="998"/>                  v := tab(0) then
+<a name="999"/>               {
+<a name="1000"/>                  inserts(t, k, v)
+<a name="1001"/>               }
+<a name="1002"/>            }
+<a name="1003"/>         }
+<a name="1004"/>      }
+<a name="1005"/>      return t
+<a name="1006"/>   end
+<a name="1007"/>
+<a name="1008"/>   private static read_icons()
+<a name="1009"/>      local d, t, s, k, v, l
+<a name="1010"/>      t := table()
+<a name="1011"/>      every d := BaseDir.gen_data_dirs() do {
+<a name="1012"/>         if s := Files.file_to_string(FilePath(d).walk("mime", "icons").str()) then {
+<a name="1013"/>            every l := separate_lines(s) do l ? {
+<a name="1014"/>               if k := Text.lower(tab(upto(':'))) &amp;
+<a name="1015"/>                  move(1) &amp;
+<a name="1016"/>                  v := tab(0) then
+<a name="1017"/>               {
+<a name="1018"/>                  inserts(t, k, v)
+<a name="1019"/>               }
+<a name="1020"/>            }
+<a name="1021"/>         }
+<a name="1022"/>      }
+<a name="1023"/>      return t
+<a name="1024"/>   end
+<a name="1025"/>
+<a name="1026"/>   private static read_mime_graph()
+<a name="1027"/>      local d, t, s, k, v, l
+<a name="1028"/>      t := table()
+<a name="1029"/>      #
+<a name="1030"/>      # Loop over all aliases first, so that they have priority over
+<a name="1031"/>      # subclasses (ie they come first in the table entry lists).
+<a name="1032"/>      #
+<a name="1033"/>      every d := BaseDir.gen_data_dirs() do {
+<a name="1034"/>         if s := Files.file_to_string(FilePath(d).walk("mime", "aliases").str()) then {
+<a name="1035"/>            every l := separate_lines(s) do l ? {
+<a name="1036"/>               if k := Text.lower(tab(upto(' '))) &amp;
+<a name="1037"/>                  move(1) &amp;
+<a name="1038"/>                  v := tab(0) then
+<a name="1039"/>               {
+<a name="1040"/>                  inserts(t, k, v)
+<a name="1041"/>                  inserts(t, v, k)
+<a name="1042"/>               }
+<a name="1043"/>            }
+<a name="1044"/>         }
+<a name="1045"/>      }
+<a name="1046"/>      every d := BaseDir.gen_data_dirs() do {
+<a name="1047"/>         if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
+<a name="1048"/>            every l := separate_lines(s) do l ? {
+<a name="1049"/>               if k := Text.lower(tab(upto(' '))) &amp;
+<a name="1050"/>                  move(1) &amp;
+<a name="1051"/>                  v := tab(0) then
+<a name="1052"/>               {
+<a name="1053"/>                  inserts(t, k, v)
+<a name="1054"/>               }
+<a name="1055"/>            }
+<a name="1056"/>         }
+<a name="1057"/>      }
+<a name="1058"/>      return t
+<a name="1059"/>   end
+<a name="1060"/>
+<a name="1061"/>   private static read_globs()
+<a name="1062"/>      local d, g, s
+<a name="1063"/>      g := Globs()
+<a name="1064"/>      every d := Reverse{ BaseDir.gen_data_dirs() } do {
+<a name="1065"/>         if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "globs2").str())) then
+<a name="1066"/>            parse_glob_file(g, s)
+<a name="1067"/>      }
+<a name="1068"/>      return g
+<a name="1069"/>   end
+<a name="1070"/>
+<a name="1071"/>   #
+<a name="1072"/>   # Find an icon given a filename (not a path), integer size, and
+<a name="1073"/>   # optional scale (see `IconTheme.find_icon()`).
+<a name="1074"/>   #
+<a name="1075"/>   public static find_icon_for_file(file, size, scale)
+<a name="1076"/>      local mt, v, k
+<a name="1077"/>      if mt := get_mime_type_for_file(file) then {
+<a name="1078"/>         k := mt || "/" || image(size)  || "/" || image(scale)
+<a name="1079"/>         unless v := member(FIFF_CACHE, k) then {
+<a name="1080"/>            v := IconTheme.find_icon(gen_all_icons(alternative_mime_types(mt)),
+<a name="1081"/>                                     size, scale)
+<a name="1082"/>            insert(FIFF_CACHE, k, v)
+<a name="1083"/>         }
+<a name="1084"/>         return \v
+<a name="1085"/>      }
+<a name="1086"/>   end
+<a name="1087"/>
+<a name="1088"/>   private static true_key(dm, key)
+<a name="1089"/>      succeed Text.lower(member(dm, key)) == "true"
+<a name="1090"/>   end
+<a name="1091"/>
+<a name="1092"/>   private static build_desktop_entry(dm, src)
+<a name="1093"/>      local name, icon, exec, path, terminal, try_exec, 
+<a name="1094"/>         initial_preference, exec_line
+<a name="1095"/>      member(dm, u"Type") == "Application" | fail
+<a name="1096"/>      name := member(dm, u"Name") | fail
+<a name="1097"/>      # A TryExec entry means testing if such an exe is on the path;
+<a name="1098"/>      # if not ignore the entry
+<a name="1099"/>      if try_exec := member(dm, u"TryExec") then
+<a name="1100"/>         Files.find_exe(try_exec) | fail
+<a name="1101"/>
+<a name="1102"/>      icon := string(member(dm, u"Icon"))
+<a name="1103"/>      exec := member(dm, u"Exec") | fail
+<a name="1104"/>      exec_line := member(dm, u"ExecLine")
+<a name="1105"/>      path := member(dm, u"Path")
+<a name="1106"/>      terminal := Yes{ true_key(dm, u"Terminal") }
+<a name="1107"/>      initial_preference := integer(member(dm, u"InitialPreference")) | 0
+<a name="1108"/>
+<a name="1109"/>      return DesktopEntry(name, icon, src, exec, exec_line, path, terminal, initial_preference)
+<a name="1110"/>   end
+<a name="1111"/>
+<a name="1112"/>   private static gen_desktop_mime_types(dm)
+<a name="1113"/>      suspend "" ~== Text.lower(string(separate(member(dm, u"MimeType"), ';')))
+<a name="1114"/>   end
+<a name="1115"/>
+<a name="1116"/>   private static scan_application_dir(p, prefix, N)
+<a name="1117"/>      local l, e, id, path
+<a name="1118"/>      l := Files.list(p.str()) | fail
+<a name="1119"/>      every e := !l do {
+<a name="1120"/>         unless Files.is_hidden(e.name) then {
+<a name="1121"/>            if e.stat.mode_str[1] == "d" then {
+<a name="1122"/>               scan_application_dir(p.child(e.name), prefix || e.name || "-", N)
+<a name="1123"/>            } else if endswith(e.name, ".desktop") then {
+<a name="1124"/>               id := prefix || e.name
+<a name="1125"/>               unless member(PATHS, id) then {
+<a name="1126"/>                  path := p.child(e.name).str()
+<a name="1127"/>                  insert(PATHS, id, path)
+<a name="1128"/>                  insert(N, id)
+<a name="1129"/>               }
+<a name="1130"/>            }
+<a name="1131"/>         }
+<a name="1132"/>      }
+<a name="1133"/>   end
+<a name="1134"/>
+<a name="1135"/>   private static process_mimeapps_list(f, mm)
+<a name="1136"/>      local a, k, mime_type, r, id
+<a name="1137"/>      r := Edit(f, table(), table())
+<a name="1138"/>      every a := member(mm, u"Default Applications" | u"Added Associations") do {
+<a name="1139"/>         every k := key(a) do {
+<a name="1140"/>            mime_type := Text.lower(string(k))
+<a name="1141"/>            every id := "" ~== separate(string(member(a, k)), ';') do {
+<a name="1142"/>               # The entry may not refer to a desktop id from an
+<a name="1143"/>               # earlier (higher precedence) directory.
+<a name="1144"/>               unless member(PATHS, id) then
+<a name="1145"/>                  inserts(r.add, mime_type, id)
+<a name="1146"/>            }
+<a name="1147"/>         }
+<a name="1148"/>      }
+<a name="1149"/>      if a := member(mm, u"Removed Associations") then {
+<a name="1150"/>         every k := key(a) do {
+<a name="1151"/>            mime_type := Text.lower(string(k))
+<a name="1152"/>            every id := "" ~== separate(string(member(a, k)), ';') do {
+<a name="1153"/>               unless member(PATHS, id) then
+<a name="1154"/>                  inserts(r.del, mime_type, id)
+<a name="1155"/>            }
+<a name="1156"/>         }
+<a name="1157"/>      }
+<a name="1158"/>      push(EDITS, r)
+<a name="1159"/>   end
+<a name="1160"/>
+<a name="1161"/>   private static prefcmp(d1, d2)
+<a name="1162"/>      local i
+<a name="1163"/>      i := Internal.compare(d2.initial_preference, d1.initial_preference)
+<a name="1164"/>      if i = 0 then {
+<a name="1165"/>         i := Text.caseless_compare(d1.name, d2.name)
+<a name="1166"/>         # As a tie-breaker, use the entry's source path.
+<a name="1167"/>         if i = 0 then
+<a name="1168"/>            i := Internal.compare(d1.source, d2.source)
+<a name="1169"/>      }
+<a name="1170"/>      return i
+<a name="1171"/>   end
+<a name="1172"/>
+<a name="1173"/>   private static load_DE_ini(path)
+<a name="1174"/>      local dm
+<a name="1175"/>      if dm := Util.load_ini_file(path) &amp;
+<a name="1176"/>         dm := member(dm, u"Desktop Entry") &amp;
+<a name="1177"/>         not true_key(dm, u"Hidden")
+<a name="1178"/>      then
+<a name="1179"/>         return dm
+<a name="1180"/>   end
+<a name="1181"/>
+<a name="1182"/>   private static ensure_DE(id)
+<a name="1183"/>      local de, path, dm
+<a name="1184"/>      unless de := member(LOADED, id) then {
+<a name="1185"/>         if path := member(PATHS, id) &amp;
+<a name="1186"/>            dm := load_DE_ini(path)
+<a name="1187"/>         then
+<a name="1188"/>            de := build_desktop_entry(dm, path)
+<a name="1189"/>         insert(LOADED, id, de)
+<a name="1190"/>      }
+<a name="1191"/>      return \de
+<a name="1192"/>   end
+<a name="1193"/>
+<a name="1194"/>   private static scan_desktop_entries()
+<a name="1195"/>      local d, dm, id, mt, N, f, mm, app, cf, k
+<a name="1196"/>      EDITS := []
+<a name="1197"/>      PATHS := table()
+<a name="1198"/>      DEFINED := table()
+<a name="1199"/>      LOADED := table()
+<a name="1200"/>
+<a name="1201"/>      # Load customisations from the mimeapps.lists files.
+<a name="1202"/>      every d := BaseDir.gen_config_dirs() do {
+<a name="1203"/>         f := FilePath(d).child("mimeapps.list").str()
+<a name="1204"/>         if mm := Util.load_ini_file(f) then
+<a name="1205"/>            process_mimeapps_list(f, mm)
+<a name="1206"/>      }
+<a name="1207"/>
+<a name="1208"/>      every d := BaseDir.gen_data_dirs() do {
+<a name="1209"/>         app := FilePath(d).child("applications")
+<a name="1210"/>
+<a name="1211"/>         # Load customisations from the mimeapps.lists file.
+<a name="1212"/>         f := app.child("mimeapps.list").str()
+<a name="1213"/>         if mm := Util.load_ini_file(f) then
+<a name="1214"/>            process_mimeapps_list(f, mm)
+<a name="1215"/>
+<a name="1216"/>         # Scan the applications directory recursively, recording new
+<a name="1217"/>         # entries added to PATHS, in N (note that existing entries in
+<a name="1218"/>         # PATHS are never overwritten).
+<a name="1219"/>         scan_application_dir(app, "", N := set())
+<a name="1220"/>         if use_mimeinfo_cache(d) &amp;
+<a name="1221"/>            cf := Util.load_ini_file(app.child("mimeinfo.cache").str()) &amp;
+<a name="1222"/>            cf := member(cf, u"MIME Cache")
+<a name="1223"/>         then {
+<a name="1224"/>            # Cache in use.  Read each mime-type-&gt;id pair.
+<a name="1225"/>            every k := key(cf) do {
+<a name="1226"/>               mt := Text.lower(string(k))
+<a name="1227"/>               every id := "" ~== separate(string(member(cf, k)), ';') do {
+<a name="1228"/>                  # Make sure the name matches with one added in this
+<a name="1229"/>                  # tree.
+<a name="1230"/>                  if member(N, id) then
+<a name="1231"/>                     inserts_set(DEFINED, mt, id)
+<a name="1232"/>               }
+<a name="1233"/>            }
+<a name="1234"/>         } else {
+<a name="1235"/>            # No cache.  For each new name in the tree, load its
+<a name="1236"/>            # corresponding ini file and process the mime types.
+<a name="1237"/>            every id := !N do {
+<a name="1238"/>               if dm := load_DE_ini(PATHS[id]) then {
+<a name="1239"/>                  every mt := gen_desktop_mime_types(dm) do
+<a name="1240"/>                     inserts_set(DEFINED, mt, id)
+<a name="1241"/>               }
+<a name="1242"/>            }
+<a name="1243"/>         }
+<a name="1244"/>      }
+<a name="1245"/>      tidy()
+<a name="1246"/>   end
+<a name="1247"/>
+<a name="1248"/>   private static tidy()
+<a name="1249"/>      local s, k
+<a name="1250"/>      s := Set{ !!DEFINED | !!((!EDITS).add) }
+<a name="1251"/>      every k := key(PATHS) do {
+<a name="1252"/>         unless member(s, k) then
+<a name="1253"/>            delete(PATHS, k)
+<a name="1254"/>      }
+<a name="1255"/>   end
+<a name="1256"/>
+<a name="1257"/>   #
+<a name="1258"/>   # Given a file path (as a string), if the path represents an
+<a name="1259"/>   # existing directory, then the desktop entries for mime type
+<a name="1260"/>   # "inode/directory" (and its alternatives) are returned; otherwise
+<a name="1261"/>   # `gen_desktop_entries_for_file()` is called on the last path
+<a name="1262"/>   # component.
+<a name="1263"/>   #
+<a name="1264"/>   public static gen_desktop_entries_for_path(file)
+<a name="1265"/>      suspend if Files.is_directory(file) then
+<a name="1266"/>         gen_all_desktop_entries("inode/directory")
+<a name="1267"/>      else
+<a name="1268"/>         gen_desktop_entries_for_file(FilePath(file).get(-1))
+<a name="1269"/>   end
+<a name="1270"/>
+<a name="1271"/>   #
+<a name="1272"/>   # Generate the `DesktopEntry` objects suitable for a particular
+<a name="1273"/>   # filename (without path), with the most suitable first.
+<a name="1274"/>   #
+<a name="1275"/>   public static gen_desktop_entries_for_file(file)
+<a name="1276"/>      suspend gen_all_desktop_entries(get_mime_type_for_file(file))
+<a name="1277"/>   end
+<a name="1278"/>
+<a name="1279"/>   #
+<a name="1280"/>   # Convenient method to call `gen_all_desktop_entries()` for the
+<a name="1281"/>   # mime type `x-scheme-handler/` with subtype `s`.
+<a name="1282"/>   #
+<a name="1283"/>   public static gen_desktop_entries_for_scheme(s)
+<a name="1284"/>      suspend gen_all_desktop_entries("x-scheme-handler/" || s)
+<a name="1285"/>   end
+<a name="1286"/>
+<a name="1287"/>   #
+<a name="1288"/>   # Given a mime type (string), generate the corresponding
+<a name="1289"/>   # `DesktopEntry` objects, for that type, in preference order, and
+<a name="1290"/>   # then likewise for all the alternative mime types.
+<a name="1291"/>   #
+<a name="1292"/>   public static gen_all_desktop_entries(mt)
+<a name="1293"/>      local l
+<a name="1294"/>      mt := need_mime_type(mt)
+<a name="1295"/>      unless l := member(ALL_DESKTOP_ENTRIES, mt) then {
+<a name="1296"/>         l := ipl.pdco.List{ Unique{ gen_desktop_entries(alternative_mime_types(mt)) } }
+<a name="1297"/>         insert(ALL_DESKTOP_ENTRIES, mt, l)
+<a name="1298"/>      }
+<a name="1299"/>      suspend .!l
+<a name="1300"/>   end
+<a name="1301"/>
+<a name="1302"/>   #
+<a name="1303"/>   # Given a mime type (string), generate the corresponding
+<a name="1304"/>   # `DesktopEntry` objects, in preference order.
+<a name="1305"/>   #
+<a name="1306"/>   public static gen_desktop_entries(mt)
+<a name="1307"/>      local l, de, r
+<a name="1308"/>      mt := need_mime_type(mt)
+<a name="1309"/>      unless l := member(DESKTOP_ENTRIES, mt) then {
+<a name="1310"/>         # Make the initial list from the ordered association
+<a name="1311"/>         # definitions, sorted by preference/name.
+<a name="1312"/>         l := ipl.pdco.List{ ensure_DE(!member(DEFINED, mt)) }
+<a name="1313"/>         qsort(l, prefcmp)
+<a name="1314"/>         # Now apply the edits, with each pair of additions and
+<a name="1315"/>         # removals being applied together, in turn.  This gives the
+<a name="1316"/>         # same outcome as the algorithm in the mime-apps spec, since,
+<a name="1317"/>         #   (((S &amp; ~r2) | a2) &amp; ~r1 |a1) = a1 | (a2 &amp; ~r1) | (S &amp; ~r1 &amp; ~r2),
+<a name="1318"/>         # where S is the current set, r1 the first removal, a1, the first
+<a name="1319"/>         # addition, etc.
+<a name="1320"/>         every r := !EDITS do {
+<a name="1321"/>            every de := ensure_DE(!member(r.del, mt)) do
+<a name="1322"/>               ldel(l, de)
+<a name="1323"/>            every de := ensure_DE(back(member(r.add, mt))) do
+<a name="1324"/>               push(l, de)
+<a name="1325"/>         }
+<a name="1326"/>         # Finally, remove any duplicates.
+<a name="1327"/>         lunique_mod(l)
+<a name="1328"/>         insert(DESKTOP_ENTRIES, mt, l)
+<a name="1329"/>      }
+<a name="1330"/>      suspend .!l
+<a name="1331"/>   end
+<a name="1332"/>end
+<a name="1333"/>
+<a name="1334"/>#
+<a name="1335"/># An entry in the `Globs` object.
+<a name="1336"/>#
+<a name="1337"/>package record GlobMatch(weight,      # The integer weight
+<a name="1338"/>                         mime_type,   # The mime mime_type (string)
+<a name="1339"/>                         cs,          # Case-sensitive flag
+<a name="1340"/>                         pattern      # An optional wildcard pattern.
+<a name="1341"/>                         )
+<a name="1342"/>
+<a name="1343"/># A helper class used to store wildcard ("globbing") information
+<a name="1344"/># associated with mime-types.
+<a name="1345"/>#
+<a name="1346"/>package class Globs()
+<a name="1347"/>   private const
+<a name="1348"/>      literal,
+<a name="1349"/>      simple,
+<a name="1350"/>      other
+<a name="1351"/>
+<a name="1352"/>   public lookup(f)
+<a name="1353"/>      local i, v
+<a name="1354"/>      need_text(f)
+<a name="1355"/>      f := ucs(f) | fail
+<a name="1356"/>      if v := member(literal, f) then
+<a name="1357"/>         return v
+<a name="1358"/>      every i := upto('.', f) do {
+<a name="1359"/>         if v := member(simple, f[i + 1:0]) then
+<a name="1360"/>            return v
+<a name="1361"/>      }
+<a name="1362"/>      every v := !other do {
+<a name="1363"/>         if v.pattern.match_all(f) then
+<a name="1364"/>            return v
+<a name="1365"/>      }
+<a name="1366"/>      if f ~==:= Text.lower(f) then {
+<a name="1367"/>         if v := member(literal, f) then
+<a name="1368"/>            return /v.cs &amp; v
+<a name="1369"/>         every i := upto('.', f) do {
+<a name="1370"/>            if v := member(simple, f[i + 1:0]) then
+<a name="1371"/>               return /v.cs &amp; v
+<a name="1372"/>         }
+<a name="1373"/>         every v := !other do {
+<a name="1374"/>            if /v.cs &amp; v.pattern.match_all(f) then
+<a name="1375"/>               return v
+<a name="1376"/>         }
+<a name="1377"/>      }
+<a name="1378"/>   end
+<a name="1379"/>
+<a name="1380"/>   #
+<a name="1381"/>   # Add an entry.  p is the pattern (ucs), weight an integer and mime_type
+<a name="1382"/>   # the mime type (string).
+<a name="1383"/>   #
+<a name="1384"/>   public add(p, flags, weight, mime_type)
+<a name="1385"/>      local x, t, k, cs
+<a name="1386"/>      if p == "__NOGLOBS__" then {
+<a name="1387"/>         every t := literal | simple | other do {
+<a name="1388"/>            every k := key(t) do {
+<a name="1389"/>               if Text.caseless_compare(t[k].mime_type, mime_type) = 0 then
+<a name="1390"/>                  delete(t, k)
+<a name="1391"/>            }
+<a name="1392"/>         }
+<a name="1393"/>      } else {
+<a name="1394"/>         if match("cs", flags) then
+<a name="1395"/>            cs := &amp;yes
+<a name="1396"/>         if upto('*?[', p) then {
+<a name="1397"/>            if match("*.", p) &amp; not upto('*?[', p[3:0]) then {
+<a name="1398"/>               p := p[3:0]
+<a name="1399"/>               x := member(simple, p)
+<a name="1400"/>               if /x | (weight &gt; x.weight) then
+<a name="1401"/>                  insert(simple, p, GlobMatch(weight, mime_type, cs))
+<a name="1402"/>            } else {
+<a name="1403"/>               x := member(other, p)
+<a name="1404"/>               if /x | (weight &gt; x.weight) then
+<a name="1405"/>                  insert(other, p, GlobMatch(weight, mime_type, cs, Wildcard(p)))
+<a name="1406"/>            }
+<a name="1407"/>         } else {
+<a name="1408"/>            x := member(literal, p)
+<a name="1409"/>            if /x | (weight &gt; x.weight) then
+<a name="1410"/>               insert(literal, p, GlobMatch(weight, mime_type, cs))
+<a name="1411"/>         }
+<a name="1412"/>      }
+<a name="1413"/>      link
+<a name="1414"/>   end
+<a name="1415"/>
+<a name="1416"/>   public new()
+<a name="1417"/>      literal := table()
+<a name="1418"/>      simple := table()
+<a name="1419"/>      other := table()
+<a name="1420"/>      return
+<a name="1421"/>   end
+<a name="1422"/>end
+</pre></body></html>

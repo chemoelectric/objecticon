@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>checkboxtablecolumn.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import util
+<a name="4"/>
+<a name="5"/>#
+<a name="6"/># A table column that provides on/off checkbox-like behaviour for
+<a name="7"/># each of its lines.   The corresponding data items are &amp;yes or &amp;no
+<a name="8"/># strings, representing on or off button states respectively.
+<a name="9"/>#
+<a name="10"/>class CheckBoxTableColumn(BaseTableColumn)
+<a name="11"/>   public 
+<a name="12"/>      single_selection_flag,
+<a name="13"/>      unchecked_paint, 
+<a name="14"/>      checked_paint,
+<a name="15"/>      mouse_down_listener
+<a name="16"/>
+<a name="17"/>   public override calculate_line_height()
+<a name="18"/>      return unchecked_paint.h + scale(8)
+<a name="19"/>   end
+<a name="20"/>
+<a name="21"/>   #
+<a name="22"/>   # Set whether or not we select one item in the column; the behaviour
+<a name="23"/>   # is then like a column of radio buttons rather than a column of
+<a name="24"/>   # checkboxes.
+<a name="25"/>   #
+<a name="26"/>   public set_single_selection(s)
+<a name="27"/>      self.single_selection_flag := need_flag(s)
+<a name="28"/>      link
+<a name="29"/>   end
+<a name="30"/>
+<a name="31"/>   #
+<a name="32"/>   # Set the up/down icons to the given (distinct) `Paint` instances.
+<a name="33"/>   # The two images must have the same dimensions.
+<a name="34"/>   # :Parameters :
+<a name="35"/>   # :  `x` - The up image
+<a name="36"/>   # :  `y` - The down image
+<a name="37"/>   #
+<a name="38"/>   public set_box_paint(x, y)
+<a name="39"/>      if is_initialized() then {
+<a name="40"/>         (\self.unchecked_paint).finally()
+<a name="41"/>         (\self.checked_paint).finally()
+<a name="42"/>         self.unchecked_paint := x
+<a name="43"/>         self.checked_paint := y
+<a name="44"/>         self.unchecked_paint.initially(self)
+<a name="45"/>         self.checked_paint.initially(self)
+<a name="46"/>         self.invalidate()
+<a name="47"/>         unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
+<a name="48"/>         unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
+<a name="49"/>      } else {
+<a name="50"/>         self.unchecked_paint := x
+<a name="51"/>         self.checked_paint := y
+<a name="52"/>      }
+<a name="53"/>      link
+<a name="54"/>   end
+<a name="55"/>
+<a name="56"/>   public mouse_down(e)
+<a name="57"/>      local line, col
+<a name="58"/>      self.x &lt;= e.x &lt; self.x + self.w | fail
+<a name="59"/>      line := get_table_content().get_line_under_pointer(e) | fail
+<a name="60"/>      col := get_column_index()
+<a name="61"/>      if \self.single_selection_flag then {
+<a name="62"/>         every get_table_content().slice(col) := &amp;no
+<a name="63"/>         get_table_content().get_cell(line, col) := &amp;yes
+<a name="64"/>      } else
+<a name="65"/>         get_table_content().get_cell(line, col) := 
+<a name="66"/>                     toggle_flag(get_table_content().get_cell(line, col))
+<a name="67"/>      get_table_content().contents_changed()
+<a name="68"/>      fire(Event.VALUE_CHANGED, line)
+<a name="69"/>   end
+<a name="70"/>
+<a name="71"/>   public override initially()
+<a name="72"/>      #
+<a name="73"/>      # Set the icons if necessary
+<a name="74"/>      #
+<a name="75"/>      if /self.unchecked_paint then {
+<a name="76"/>         if /self.single_selection_flag then
+<a name="77"/>            self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
+<a name="78"/>         else
+<a name="79"/>            self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
+<a name="80"/>      }
+<a name="81"/>      mouse_down_listener := get_table_content().connect(self.mouse_down, Event.MOUSE_LEFT_PRESS).last_listener
+<a name="82"/>      BaseTableColumn.initially()
+<a name="83"/>      self.unchecked_paint.initially(self)
+<a name="84"/>      self.checked_paint.initially(self)
+<a name="85"/>      unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
+<a name="86"/>      unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
+<a name="87"/>   end
+<a name="88"/>
+<a name="89"/>   public override finally()
+<a name="90"/>      BaseTableColumn.finally()
+<a name="91"/>      mouse_down_listener.disconnect()
+<a name="92"/>      unchecked_paint.finally()
+<a name="93"/>      checked_paint.finally()
+<a name="94"/>   end
+<a name="95"/>
+<a name="96"/>   public override draw_cell(W, data, line, col, cy, ch)
+<a name="97"/>      local x1, y1, i
+<a name="98"/>      x1 := case border.x_align of {
+<a name="99"/>         Align.R : self.tx + self.tw - unchecked_paint.w
+<a name="100"/>         Align.C : self.tx + (self.tw - unchecked_paint.w)/2
+<a name="101"/>         Align.L : self.tx
+<a name="102"/>         default : runerr("Bad column alignment", border.x_align)
+<a name="103"/>      }
+<a name="104"/>      y1 := cy + (ch - unchecked_paint.h) / 2
+<a name="105"/>      i := if \data then checked_paint else unchecked_paint
+<a name="106"/>      i.draw(W, x1, y1)
+<a name="107"/>   end
+<a name="108"/>end
+</pre></body></html>

@@ -1,0 +1,225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Shm</title></head><body>
+<h1>Shm</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipc-package.html" target="listFrame">ipc</a></dd>
+</dl><p/>
+This class provides an inter process shared variable facility.  The
+implementation requires the accompanying native library to be on the
+library path.
+<p/>
+Instances of this class should not be created directly, but rather
+using the static methods <code><a href="ipc.Shm.html#open_public">open_public</a></code>, <code><a href="ipc.Shm.html#create_public">create_public</a></code> and
+<code><a href="ipc.Shm.html#create_private">create_private</a></code>
+<p/><a href="ipc-shm.icn.html#13" target="displayFrame">Source - shm.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="ipc.Shm.html">ipc.Shm</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#create_private">create_private()</a>
+<a href="#create_private_impl">create_private_impl()</a>
+<a href="#create_public">create_public()</a>
+<a href="#create_public_impl">create_public_impl()</a>
+<a href="#get_id">get_id()</a>
+<a href="#get_value">get_value()</a>
+<a href="#get_value_impl">get_value_impl()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#open_public">open_public()</a>
+<a href="#open_public_impl">open_public_impl()</a>
+<a href="#set_value">set_value()</a>
+<a href="#set_value_impl">set_value_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#id">id</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Clean up the resources used by the variable.  This should be called by
+the parent process after the shared variable is no longer needed.
+<p/><a href="ipc-shm.icn.html#47" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="create_private"/>
+<h3>create_private(o)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new private shared variable with the given initial value
+<p/><a href="ipc-shm.icn.html#92" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="create_private_impl"/>
+<h3>create_private_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#63" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="create_public"/>
+<h3>create_public(key, o)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new public shared variable with the given key and
+initial value
+<p/><a href="ipc-shm.icn.html#83" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="create_public_impl"/>
+<h3>create_public_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#62" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="get_id"/>
+<h3>get_id()</h3>
+public<p/>
+<dl>
+<dd>
+Return the underlying id of the shared variable; fails if the
+resource is closed.
+<p/><a href="ipc-shm.icn.html#53" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="get_value"/>
+<h3>get_value()</h3>
+public<p/>
+<dl>
+<dd>
+Get the value of the object.
+<p/><a href="ipc-shm.icn.html#38" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="get_value_impl"/>
+<h3>get_value_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#45" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#65" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(id)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#69" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="open_public"/>
+<h3>open_public(key)</h3>
+public static<p/>
+<dl>
+<dd>
+Get an existing public shared variable with the given key, or fail
+if no such shared variable exists.
+<p/><a href="ipc-shm.icn.html#74" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="open_public_impl"/>
+<h3>open_public_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#61" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="set_value"/>
+<h3>set_value(o)</h3>
+public<p/>
+<dl>
+<dd>
+Set the value to the given object.  The object may be an arbitrary
+Icon structure, and will be encoded into a string by the <code><a href="lang.encode.html" target="displayFrame">encode()</a></code>
+procedure.  This method will fail if the given object is not
+encodable, and set <code>&amp;why</code> appropriately.
+<p/><a href="ipc-shm.icn.html#26" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<a name="set_value_impl"/>
+<h3>set_value_impl(s)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#36" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="id"/>
+<h3>id</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipc-shm.icn.html#23" target="displayFrame">Source - shm.icn </a>
+</dd>
+</dl><hr>
+</body></html>

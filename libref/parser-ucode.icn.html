@@ -1,0 +1,471 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ucode.icn</title></head><body><pre>
+<a name="1"/>package parser
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   util(error),
+<a name="5"/>   lang(UcodeOp)
+<a name="6"/>
+<a name="7"/>final class UFile()
+<a name="8"/>   private readable
+<a name="9"/>      pack,
+<a name="10"/>      declend_offset,
+<a name="11"/>      strinv,
+<a name="12"/>      methinv,
+<a name="13"/>      version
+<a name="14"/>
+<a name="15"/>   private const
+<a name="16"/>      imports,
+<a name="17"/>      invocables,
+<a name="18"/>      symbols
+<a name="19"/>
+<a name="20"/>   package set_package(pack)
+<a name="21"/>      self.pack := pack
+<a name="22"/>   end
+<a name="23"/>
+<a name="24"/>   package add_symbol(obj)
+<a name="25"/>      put(symbols, obj)
+<a name="26"/>   end
+<a name="27"/>
+<a name="28"/>   public get_symbols()
+<a name="29"/>      suspend .!symbols
+<a name="30"/>   end
+<a name="31"/>
+<a name="32"/>   package add_import(i)
+<a name="33"/>      put(imports, i)
+<a name="34"/>   end
+<a name="35"/>
+<a name="36"/>   public get_imports()
+<a name="37"/>      suspend .!imports
+<a name="38"/>   end
+<a name="39"/>
+<a name="40"/>   package add_invocable(s)
+<a name="41"/>      put(invocables, s)
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   public get_invocables()
+<a name="45"/>      suspend .!invocables
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   package set_declend_offset(p)
+<a name="49"/>      self.declend_offset := p
+<a name="50"/>   end
+<a name="51"/>
+<a name="52"/>   package set_strinv(v)
+<a name="53"/>      self.strinv := v
+<a name="54"/>   end
+<a name="55"/>
+<a name="56"/>   package set_methinv(v)
+<a name="57"/>      self.methinv := v
+<a name="58"/>   end
+<a name="59"/>
+<a name="60"/>   package set_version(s)
+<a name="61"/>      self.version := s
+<a name="62"/>   end
+<a name="63"/>
+<a name="64"/>   package new()
+<a name="65"/>      self.symbols := []
+<a name="66"/>      self.invocables := []
+<a name="67"/>      self.imports := []
+<a name="68"/>      return
+<a name="69"/>   end
+<a name="70"/>end
+<a name="71"/>
+<a name="72"/>protected class UObject()
+<a name="73"/>   public const
+<a name="74"/>      name,
+<a name="75"/>      file,
+<a name="76"/>      line
+<a name="77"/>
+<a name="78"/>   package new(name, file, line)
+<a name="79"/>      self.name := name
+<a name="80"/>      self.file := file
+<a name="81"/>      self.line := line
+<a name="82"/>      return
+<a name="83"/>   end
+<a name="84"/>end
+<a name="85"/>
+<a name="86"/>class UTopLevel(UObject)
+<a name="87"/>   public const
+<a name="88"/>      package_flag
+<a name="89"/>
+<a name="90"/>   package override new(name, package_flag, file, line)
+<a name="91"/>      UObject.new(name, file, line)
+<a name="92"/>      self.package_flag := package_flag
+<a name="93"/>      return
+<a name="94"/>   end
+<a name="95"/>end
+<a name="96"/>
+<a name="97"/>class UClass(UTopLevel)
+<a name="98"/>   public const
+<a name="99"/>      supers,
+<a name="100"/>      fields,
+<a name="101"/>      flags
+<a name="102"/>
+<a name="103"/>   package add_field(o)
+<a name="104"/>      put(fields, o)
+<a name="105"/>   end
+<a name="106"/>
+<a name="107"/>   public get_fields()
+<a name="108"/>      suspend .!fields
+<a name="109"/>   end
+<a name="110"/>
+<a name="111"/>   package add_super(s)
+<a name="112"/>      put(supers, s)
+<a name="113"/>   end
+<a name="114"/>
+<a name="115"/>   public get_supers()
+<a name="116"/>      suspend .!supers
+<a name="117"/>   end
+<a name="118"/>
+<a name="119"/>   package override new(name, package_flag, file, line, flags)
+<a name="120"/>      UTopLevel.new(name, package_flag, file, line)
+<a name="121"/>      self.flags := flags
+<a name="122"/>      self.supers := []
+<a name="123"/>      self.fields := []
+<a name="124"/>      return
+<a name="125"/>   end
+<a name="126"/>end
+<a name="127"/>
+<a name="128"/>class UVariable(UObject)
+<a name="129"/>   public const
+<a name="130"/>      flags
+<a name="131"/>
+<a name="132"/>   package override new(name, file, line, flags)
+<a name="133"/>      UObject.new(name, file, line)
+<a name="134"/>      self.flags := flags
+<a name="135"/>      return
+<a name="136"/>   end
+<a name="137"/>end
+<a name="138"/>
+<a name="139"/>class ULocal()
+<a name="140"/>   public static const
+<a name="141"/>      # variable declared local dynamic 
+<a name="142"/>      Dynamic,
+<a name="143"/>      # variable declared local static 
+<a name="144"/>      Static,
+<a name="145"/>      # variable is a formal parameter 
+<a name="146"/>      Argument,
+<a name="147"/>      # argument is a vararg
+<a name="148"/>      Vararg
+<a name="149"/>
+<a name="150"/>   public const
+<a name="151"/>      flags,
+<a name="152"/>      id
+<a name="153"/>
+<a name="154"/>   private static init()
+<a name="155"/>      Dynamic := 8r020
+<a name="156"/>      Static := 8r040
+<a name="157"/>      Argument := 8r01000
+<a name="158"/>      Vararg := 8r0200
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   package new(id, flags)
+<a name="162"/>      self.id := id
+<a name="163"/>      self.flags := flags
+<a name="164"/>      return
+<a name="165"/>   end
+<a name="166"/>end
+<a name="167"/>
+<a name="168"/>class UConst()
+<a name="169"/>   public const
+<a name="170"/>      flags,
+<a name="171"/>      val
+<a name="172"/>
+<a name="173"/>   public static const
+<a name="174"/>      # literal is an integer 
+<a name="175"/>      IntLit,
+<a name="176"/>      # literal is a real 
+<a name="177"/>      RealLit,
+<a name="178"/>      # literal is a string 
+<a name="179"/>      StrLit,
+<a name="180"/>      # literal is a cset 
+<a name="181"/>      CsetLit,
+<a name="182"/>      # literal is a ucs 
+<a name="183"/>      UcsLit,
+<a name="184"/>      # literal is a large int
+<a name="185"/>      LrgintLit
+<a name="186"/>
+<a name="187"/>   private static init()
+<a name="188"/>      IntLit := 8r02000
+<a name="189"/>      RealLit := 8r04000
+<a name="190"/>      StrLit := 8r010000
+<a name="191"/>      CsetLit := 8r020000
+<a name="192"/>      UcsLit := 8r040000
+<a name="193"/>      LrgintLit := 8r0100000
+<a name="194"/>   end
+<a name="195"/>
+<a name="196"/>   package new(val, flags)
+<a name="197"/>      self.val := val
+<a name="198"/>      self.flags := flags
+<a name="199"/>      return
+<a name="200"/>   end
+<a name="201"/>end
+<a name="202"/>
+<a name="203"/>class UFunction()
+<a name="204"/>   private readable
+<a name="205"/>      locals,
+<a name="206"/>      consts
+<a name="207"/>
+<a name="208"/>   package add_local(l)
+<a name="209"/>      put(locals, l)
+<a name="210"/>   end
+<a name="211"/>
+<a name="212"/>   public get_locals()
+<a name="213"/>      suspend .!locals
+<a name="214"/>   end
+<a name="215"/>
+<a name="216"/>   package add_const(l)
+<a name="217"/>      put(consts, l)
+<a name="218"/>   end
+<a name="219"/>
+<a name="220"/>   public get_consts()
+<a name="221"/>      suspend .!consts
+<a name="222"/>   end
+<a name="223"/>
+<a name="224"/>   package new()
+<a name="225"/>      self.locals := []
+<a name="226"/>      self.consts := []
+<a name="227"/>      return
+<a name="228"/>   end
+<a name="229"/>end
+<a name="230"/>
+<a name="231"/>class UMethod(UObject, UFunction)
+<a name="232"/>   public const
+<a name="233"/>      flags
+<a name="234"/>
+<a name="235"/>   package override new(name, file, line, flags)
+<a name="236"/>      UObject.new(name, file, line)
+<a name="237"/>      UFunction.new()
+<a name="238"/>      self.flags := flags
+<a name="239"/>      return
+<a name="240"/>   end
+<a name="241"/>end
+<a name="242"/>
+<a name="243"/>class UProcedure(UTopLevel, UFunction)
+<a name="244"/>   package override new(name, package_flag, file, line)
+<a name="245"/>      UTopLevel.new(name, package_flag, file, line)
+<a name="246"/>      UFunction.new()
+<a name="247"/>      self.package_flag := package_flag
+<a name="248"/>      return
+<a name="249"/>   end
+<a name="250"/>end
+<a name="251"/>
+<a name="252"/>class URecord(UTopLevel)
+<a name="253"/>   private
+<a name="254"/>      fields
+<a name="255"/>
+<a name="256"/>   public get_fields()
+<a name="257"/>      suspend .!fields
+<a name="258"/>   end
+<a name="259"/>
+<a name="260"/>   package add_field(s)
+<a name="261"/>      put(fields, s)
+<a name="262"/>   end
+<a name="263"/>
+<a name="264"/>   package override new(name, package_flag, file, line)
+<a name="265"/>      UTopLevel.new(name, package_flag, file, line)
+<a name="266"/>      self.fields := []
+<a name="267"/>      return
+<a name="268"/>   end
+<a name="269"/>end
+<a name="270"/>
+<a name="271"/>class UGlobal(UTopLevel)
+<a name="272"/>   public const
+<a name="273"/>      readable_flag
+<a name="274"/>
+<a name="275"/>   package override new(name, package_flag, readable_flag, file, line)
+<a name="276"/>      UTopLevel.new(name, package_flag, file, line)
+<a name="277"/>      self.readable_flag := readable_flag
+<a name="278"/>      return
+<a name="279"/>   end
+<a name="280"/>end
+<a name="281"/>
+<a name="282"/>class UReader()
+<a name="283"/>   public scan_decls()
+<a name="284"/>      local uf, file, line, uop, s, n, curr_import, curr_class, 
+<a name="285"/>         curr_record, curr_func
+<a name="286"/>      uf := UFile()
+<a name="287"/>      uop := uin_expectop() | fail
+<a name="288"/>      uop == UcodeOp.Version | return error("Missing version identification")
+<a name="289"/>      s := uin_str() | fail
+<a name="290"/>      uf.set_version(s)
+<a name="291"/>      repeat {
+<a name="292"/>         uop := uin_expectop() | fail
+<a name="293"/>         case uop of {
+<a name="294"/>            UcodeOp.Filen:
+<a name="295"/>               file := uin_str() | fail
+<a name="296"/>
+<a name="297"/>            UcodeOp.Line:
+<a name="298"/>               line := uin_16() | fail
+<a name="299"/>
+<a name="300"/>            UcodeOp.Declend: {
+<a name="301"/>               uf.set_declend_offset(&amp;pos)
+<a name="302"/>               break
+<a name="303"/>            }
+<a name="304"/>
+<a name="305"/>            UcodeOp.Package: {
+<a name="306"/>               s := uin_str() | fail
+<a name="307"/>               uf.set_package(s)
+<a name="308"/>            }
+<a name="309"/>
+<a name="310"/>            UcodeOp.Import: {
+<a name="311"/>               s := uin_str() | fail
+<a name="312"/>               n := uin_16() | fail
+<a name="313"/>               curr_import := ImportDec(s, n)
+<a name="314"/>               uf.add_import(curr_import)
+<a name="315"/>            }
+<a name="316"/>
+<a name="317"/>            UcodeOp.Importsym: {
+<a name="318"/>               s := uin_str() | fail
+<a name="319"/>               curr_import.add(s)
+<a name="320"/>            }
+<a name="321"/>
+<a name="322"/>            UcodeOp.Class: {
+<a name="323"/>               n := uin_32() | fail
+<a name="324"/>               s := uin_str() | fail
+<a name="325"/>               curr_class := UClass(s, &amp;no, file, line, n)
+<a name="326"/>               uf.add_symbol(curr_class)
+<a name="327"/>            }
+<a name="328"/>
+<a name="329"/>            UcodeOp.PkClass: {
+<a name="330"/>               n := uin_32() | fail
+<a name="331"/>               s := uin_str() | fail
+<a name="332"/>               curr_class := UClass(s, &amp;yes, file, line, n)
+<a name="333"/>               uf.add_symbol(curr_class)
+<a name="334"/>            }
+<a name="335"/>
+<a name="336"/>            UcodeOp.Super: {
+<a name="337"/>               s := uin_str() | fail
+<a name="338"/>               curr_class.add_super(s)
+<a name="339"/>            }
+<a name="340"/>
+<a name="341"/>            UcodeOp.Classfield: {
+<a name="342"/>               n := uin_32() | fail
+<a name="343"/>               s := uin_str() | fail
+<a name="344"/>               if iand(n, lang.Class.Method) ~= 0 then {
+<a name="345"/>                  curr_func := UMethod(s, file, line, n)
+<a name="346"/>                  curr_class.add_field(curr_func)
+<a name="347"/>               } else
+<a name="348"/>                  curr_class.add_field(UVariable(s, file, line, n))
+<a name="349"/>            }
+<a name="350"/>
+<a name="351"/>            UcodeOp.Recordfield: {
+<a name="352"/>                s := uin_str() | fail
+<a name="353"/>                curr_record.add_field(s)
+<a name="354"/>             }
+<a name="355"/>
+<a name="356"/>             UcodeOp.Record: {
+<a name="357"/>                s := uin_str() | fail
+<a name="358"/>                curr_record := URecord(s, &amp;no, file, line)
+<a name="359"/>                uf.add_symbol(curr_record)
+<a name="360"/>             }
+<a name="361"/>
+<a name="362"/>             UcodeOp.PkRecord: {
+<a name="363"/>                s := uin_str() | fail
+<a name="364"/>                curr_record := URecord(s, &amp;yes, file, line)
+<a name="365"/>                uf.add_symbol(curr_record)
+<a name="366"/>             }
+<a name="367"/>
+<a name="368"/>             UcodeOp.Procdecl: {
+<a name="369"/>                s := uin_str() | fail
+<a name="370"/>                curr_func := UProcedure(s, &amp;no, file, line)
+<a name="371"/>                uf.add_symbol(curr_func)
+<a name="372"/>             }
+<a name="373"/>
+<a name="374"/>             UcodeOp.PkProcdecl: {
+<a name="375"/>                s := uin_str() | fail
+<a name="376"/>                curr_func := UProcedure(s, &amp;yes, file, line)
+<a name="377"/>                uf.add_symbol(curr_func)
+<a name="378"/>             }
+<a name="379"/>
+<a name="380"/>             UcodeOp.Local: {
+<a name="381"/>                n := uin_32() | fail
+<a name="382"/>                s := uin_str() | fail
+<a name="383"/>                curr_func.add_local(ULocal(s, n))
+<a name="384"/>             }
+<a name="385"/>
+<a name="386"/>             UcodeOp.Ldata: {
+<a name="387"/>                n := uin_32() | fail
+<a name="388"/>                s := uin_lbin() | fail
+<a name="389"/>                curr_func.add_const(UConst(s, n))
+<a name="390"/>             }
+<a name="391"/>
+<a name="392"/>             UcodeOp.Sdata: {
+<a name="393"/>                n := uin_32() | fail
+<a name="394"/>                s := uin_sbin() | fail
+<a name="395"/>                curr_func.add_const(UConst(s, n))
+<a name="396"/>             }
+<a name="397"/>
+<a name="398"/>             UcodeOp.Global: {
+<a name="399"/>                s := uin_str() | fail
+<a name="400"/>                uf.add_symbol(UGlobal(s, &amp;no, &amp;no, file, line))
+<a name="401"/>             }
+<a name="402"/>             UcodeOp.PkGlobal: {
+<a name="403"/>                s := uin_str() | fail
+<a name="404"/>                uf.add_symbol(UGlobal(s, &amp;yes, &amp;no, file, line))
+<a name="405"/>             }
+<a name="406"/>             UcodeOp.PkRdGlobal: {
+<a name="407"/>                s := uin_str() | fail
+<a name="408"/>                uf.add_symbol(UGlobal(s, &amp;yes, &amp;yes, file, line))
+<a name="409"/>             }
+<a name="410"/>
+<a name="411"/>             UcodeOp.Invocable: {
+<a name="412"/>                s := uin_str() | fail
+<a name="413"/>                case s of {
+<a name="414"/>                   "0": uf.set_strinv(&amp;yes)
+<a name="415"/>                   "1": uf.set_methinv(&amp;yes)
+<a name="416"/>                   default: uf.add_invocable(s)
+<a name="417"/>                }
+<a name="418"/>             }
+<a name="419"/>
+<a name="420"/>            default:
+<a name="421"/>               return error("Ill-formed ufile, op " || uop)
+<a name="422"/>         }
+<a name="423"/>      }
+<a name="424"/>
+<a name="425"/>      return uf
+<a name="426"/>   end
+<a name="427"/>
+<a name="428"/>   private uin_expectop()
+<a name="429"/>      return uin_op() | error("Unexpected EOF")
+<a name="430"/>   end
+<a name="431"/>
+<a name="432"/>   private uin_op()
+<a name="433"/>      return ord(move(1))
+<a name="434"/>   end
+<a name="435"/>
+<a name="436"/>   private uin_str()
+<a name="437"/>      local s
+<a name="438"/>      s := tab(upto('\0')) | return error("Unexpected EOF")
+<a name="439"/>      move(1)
+<a name="440"/>      return s
+<a name="441"/>   end
+<a name="442"/>
+<a name="443"/>   private uin_16()
+<a name="444"/>      local i
+<a name="445"/>      i := raw_convert(move(2)) | return error("Unexpected EOF")
+<a name="446"/>      if i &gt; 16r7fff then
+<a name="447"/>         i -:= 16r10000
+<a name="448"/>      return i
+<a name="449"/>   end
+<a name="450"/>
+<a name="451"/>   private uin_32()
+<a name="452"/>      local i
+<a name="453"/>      i := raw_convert(move(4)) | return error("Unexpected EOF")
+<a name="454"/>      if i &gt; 16r7fffffff then
+<a name="455"/>         i -:= 16r100000000
+<a name="456"/>      return i
+<a name="457"/>   end
+<a name="458"/>
+<a name="459"/>   private uin_sbin()
+<a name="460"/>      return move(ord(move(1))) | error("Unexpected EOF")
+<a name="461"/>   end
+<a name="462"/>
+<a name="463"/>   private uin_lbin()
+<a name="464"/>      return move(raw_convert(move(4))) | error("Unexpected EOF")
+<a name="465"/>   end
+<a name="466"/>
+<a name="467"/>   private static native raw_convert(s)
+<a name="468"/>end
+</pre></body></html>

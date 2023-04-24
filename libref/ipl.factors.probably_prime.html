@@ -1,0 +1,16 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>probably_prime</title></head><body>
+<h1>probably_prime(n, c)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.factors-package.html" target="listFrame">ipl.factors</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Probabilistic prime testing.  Succeeds if <code>n</code> is "probably" prime.
+Adapted from Knuth vol. 2, 2nd ed. sec 4.5.4.
+<p/>
+<code>c</code> is the confidence level (default 50).  The algorithm will give a
+false positive (ie say a number is prime when it isn't) with
+probability about <code>(1/4)^c</code> (for c=50 this is about 10^-30).
+<p/><a href="ipl.factors-factors.icn.html#266" target="displayFrame">Source - factors.icn </a>
+<p/>
+</body></html>

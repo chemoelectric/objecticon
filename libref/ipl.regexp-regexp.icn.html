@@ -1,0 +1,941 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>regexp.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     regexp.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure for regular-expression pattern matching
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     May 19, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>
+<a name="17"/>package ipl.regexp
+<a name="18"/>
+<a name="19"/>import
+<a name="20"/>   ipl.scan(caseless_match, caseless_find, begin_analysis),
+<a name="21"/>   lang(Prog, Text),
+<a name="22"/>   util(need_flag, need_string, need_cset)
+<a name="23"/>
+<a name="24"/>package record Pos(n)
+<a name="25"/>package record Move(n)
+<a name="26"/>package record Alt(pat1,pat2)
+<a name="27"/>package record Arb()
+<a name="28"/>package record OneOrMore(tok)
+<a name="29"/>package record ArbNo(tok)
+<a name="30"/>package record TabAny(cset)
+<a name="31"/>package record MatchReg(pat,n)
+<a name="32"/>package record WordBoundary()
+<a name="33"/>package record NonWordBoundary()
+<a name="34"/>package record NToMTimes(tok,n,m)
+<a name="35"/>package record NOrMoreTimes(tok,n)
+<a name="36"/>package record NTimes(tok,n)
+<a name="37"/>package record ZeroOrOneTimes(tok)
+<a name="38"/>package record TabMatch(str)
+<a name="39"/>package record MatchParenGroup(n)
+<a name="40"/>
+<a name="41"/>#
+<a name="42"/>#  This is a kit of procedures to deal with UNIX-like regular expression
+<a name="43"/>#  patterns.
+<a name="44"/>#
+<a name="45"/>#  These procedures are interesting partly because of the "recursive
+<a name="46"/>#  suspension" (or "suspensive recursion" :-) technique used to simulate
+<a name="47"/>#  conjunction of an arbitrary number of computed expressions (see
+<a name="48"/>#  notes, below).
+<a name="49"/>#
+<a name="50"/>#  Create a regexp pattern with default options using the constructor :-
+<a name="51"/>#
+<a name="52"/>#  p := Pattern(re)
+<a name="53"/>#
+<a name="54"/>#  The public search methods are:
+<a name="55"/>#
+<a name="56"/>#  p.match(s,i1,i2) : i3,i4,...,iN
+<a name="57"/>#  p.find(s,i1,i2) : i3,i4,...,iN
+<a name="58"/>#
+<a name="59"/>#  Alternatively, create a Pattern instance with custom options as follows :-
+<a name="60"/>#
+<a name="61"/>#  p := Pattern().
+<a name="62"/>#         set_word_chars('whatever you like').
+<a name="63"/>#         set_leftmost_shortest(&amp;yes).
+<a name="64"/>#         parse(re)
+<a name="65"/>#
+<a name="66"/>#  Note that setter methods cannot be called after a string has been parsed
+<a name="67"/>#  into the regular expression - you have to create a new instance.
+<a name="68"/>#
+<a name="69"/>############################################################################
+<a name="70"/>#
+<a name="71"/>#  match() produces the sequence of positions in "s" past a substring
+<a name="72"/>#  starting at "i1" that matches "pattern", but fails if there is no
+<a name="73"/>#  such position.  Similar to match(), but is capable of generating
+<a name="74"/>#  multiple positions.
+<a name="75"/>#
+<a name="76"/>#  find() produces the sequence of positions in "s" where substrings
+<a name="77"/>#  begin that match "pattern", but fails if there is no such position.
+<a name="78"/>#  Similar to find().  Each position is produced only once, even if
+<a name="79"/>#  several possible matches are possible at that position.
+<a name="80"/>#
+<a name="81"/>#  Default values of s, i1, and i2 are handled as for Icon's built-in
+<a name="82"/>#  string scanning procedures such as match().
+<a name="83"/>#
+<a name="84"/>############################################################################
+<a name="85"/>#
+<a name="86"/>#  Patttern(s)
+<a name="87"/>#
+<a name="88"/>#  Creates a pattern from pattern string "s", but fails if
+<a name="89"/>#  the pattern string is not syntactically correct.
+<a name="90"/>#
+<a name="91"/>############################################################################
+<a name="92"/>#
+<a name="93"/>#  p.set_case_dependent(flag)
+<a name="94"/>#
+<a name="95"/>#  Set mode for case-independent or case-dependent matching.  The initial
+<a name="96"/>#  mode is case-dependent.
+<a name="97"/>#
+<a name="98"/>############################################################################
+<a name="99"/>#
+<a name="100"/>#  Accessible Global Variables
+<a name="101"/>#
+<a name="102"/>#  After a match, the strings matched by parenthesized regular
+<a name="103"/>#  expressions are left in a list which can be retrieved by the
+<a name="104"/>#  method "p.get_paren_groups()", and can be accessed by
+<a name="105"/>#  subscripting in using the same number as the \N construct.
+<a name="106"/>#
+<a name="107"/>#  If it is desired that regular expression format be similar to UNIX
+<a name="108"/>#  filename generation patterns but still retain the power of full
+<a name="109"/>#  regular expressions, make the following assignments prior to
+<a name="110"/>#  compiling the pattern string:
+<a name="111"/>#
+<a name="112"/>#       p.set_arb_string("*")     # Defaults to ".*"
+<a name="113"/>#
+<a name="114"/>#  The sets of characters (csets) that define a word, digits, and white
+<a name="115"/>#  space can be modified.  The following assignments can be made before
+<a name="116"/>#  compiling the pattern string.  The character sets are captured when
+<a name="117"/>#  the pattern is compiled, so changing them after pattern compilation
+<a name="118"/>#  will not alter the behavior of matches unless the pattern string is
+<a name="119"/>#  recompiled.
+<a name="120"/>#
+<a name="121"/>#       p.set_word_chars('whatever you like')
+<a name="122"/>#                       # Defaults to &amp;letters ++ &amp;digits ++ "_"
+<a name="123"/>#       p.set_digit_chars(&amp;digits ++ 'ABCDEFabcdef')
+<a name="124"/>#                       # Defaults to &amp;digits
+<a name="125"/>#       p.set_space_chars('whatever you like')
+<a name="126"/>#                       # Defaults to ' \t\v\n\r\f'
+<a name="127"/>#
+<a name="128"/>############################################################################
+<a name="129"/>#
+<a name="130"/>#  Characters compiled into patterns can be passed through a
+<a name="131"/>#  user-supplied filter procedure, set via p.set_filter()
+<a name="132"/>#  The filtering is done before the characters are bound
+<a name="133"/>#  into the pattern.  The filter proc is passed one argument, the string
+<a name="134"/>#  to filter, and it must return the filtered string as its result.  If
+<a name="135"/>#  the filter proc fails, the string will be used unfiltered.  The
+<a name="136"/>#  filter proc is called with an argument of either type string (for
+<a name="137"/>#  characters in the pattern) or cset (for character classes [...]).
+<a name="138"/>#
+<a name="139"/>#  Filtering is done only as the pattern is compiled.  Any filtering of
+<a name="140"/>#  strings to be matched must be explicitly done.
+<a name="141"/>#
+<a name="142"/>############################################################################
+<a name="143"/>#
+<a name="144"/>#  By default, individual pattern elements are matched in a "leftmost-
+<a name="145"/>#  longest-first" sequence, which is the order observed by perl, egrep,
+<a name="146"/>#  and most other regular expression matchers.  If the order of matching
+<a name="147"/>#  is not important a performance improvement might be seen if pattern
+<a name="148"/>#  elements are matched in "shortest-first" order.  The following global
+<a name="149"/>#  variable setting causes the matcher to operate in leftmost-shortest-
+<a name="150"/>#  first order.
+<a name="151"/>#
+<a name="152"/>#   p.set_leftmost_shortest(&amp;yes)
+<a name="153"/>#  
+<a name="154"/>############################################################################
+<a name="155"/>#
+<a name="156"/>#  In the case of patterns containing alternation, find() will
+<a name="157"/>#  generally not produce positions in increasing order, but will produce
+<a name="158"/>#  all positions from the first term of the alternation (in increasing
+<a name="159"/>#  order) followed by all positions from the second (in increasing
+<a name="160"/>#  order).  If it is necessary that the positions be generated in
+<a name="161"/>#  strictly increasing order, with no duplicates, call
+<a name="162"/>#
+<a name="163"/>#       p.set_ordered(&amp;yes)
+<a name="164"/>#
+<a name="165"/>#  If the ordered option is chosen, there is a *small* penalty in
+<a name="166"/>#  efficiency in some cases.
+<a name="167"/>#  
+<a name="168"/>############################################################################
+<a name="169"/>#
+<a name="170"/>#  Regular Expression Characters and Features Supported
+<a name="171"/>#
+<a name="172"/>#  The regular expression format supported by procedures in this file
+<a name="173"/>#  model very closely those supported by the UNIX "egrep" program, with
+<a name="174"/>#  modifications as described in the Perl programming language
+<a name="175"/>#  definition.  Following is a brief description of the special
+<a name="176"/>#  characters used in regular expressions.  In the description, the
+<a name="177"/>#  abbreviation RE means regular expression.
+<a name="178"/>#
+<a name="179"/>#  c            An ordinary character (not one of the special characters
+<a name="180"/>#               discussed below) is a one-character RE that matches that
+<a name="181"/>#               character.
+<a name="182"/>#
+<a name="183"/>#  \c           A backslash followed by any special character is a one-
+<a name="184"/>#               character RE that matches the special character itself.
+<a name="185"/>#
+<a name="186"/>#               Note that backslash escape sequences representing
+<a name="187"/>#               non-graphic characters are not supported directly
+<a name="188"/>#               by these procedures.  Of course, strings coded in an
+<a name="189"/>#               Icon program will have such escapes handled by the
+<a name="190"/>#               Icon translator.  If such escapes must be supported
+<a name="191"/>#               in strings read from the run-time environment (e.g.
+<a name="192"/>#               files), they will have to be converted by other means,
+<a name="193"/>#               such as the Icon Program Library procedure "escape()".
+<a name="194"/>#
+<a name="195"/>#  .            A period is a one-character RE that matches any
+<a name="196"/>#               character.
+<a name="197"/>#
+<a name="198"/>#  [string]     A non-empty string enclosed in square brackets is a one-
+<a name="199"/>#               character RE that matches any *one* character of that
+<a name="200"/>#               string.  If, the first character is "^" (circumflex),
+<a name="201"/>#               the RE matches any character not in the remaining
+<a name="202"/>#               characters of the string.  The "-" (minus), when between
+<a name="203"/>#               two other characters, may be used to indicate a range of
+<a name="204"/>#               consecutive ASCII characters (e.g. [0-9] is equivalent to
+<a name="205"/>#               [0123456789]).  Other special characters stand for
+<a name="206"/>#               themselves in a bracketed string.
+<a name="207"/>#
+<a name="208"/>#  *            Matches zero or more occurrences of the RE to its left.
+<a name="209"/>#
+<a name="210"/>#  +            Matches one or more occurrences of the RE to its left.
+<a name="211"/>#
+<a name="212"/>#  ?            Matches zero or one occurrences of the RE to its left.
+<a name="213"/>#
+<a name="214"/>#  {N}          Matches exactly N occurrences of the RE to its left.
+<a name="215"/>#
+<a name="216"/>#  {N,}         Matches at least N occurrences of the RE to its left.
+<a name="217"/>#
+<a name="218"/>#  {N,M}        Matches at least N occurrences but at most M occurrences
+<a name="219"/>#               of the RE to its left.
+<a name="220"/>#
+<a name="221"/>#  ^            A caret at the beginning of an entire RE constrains
+<a name="222"/>#               that RE to match an initial substring of the subject
+<a name="223"/>#               string.
+<a name="224"/>#
+<a name="225"/>#  $            A currency symbol at the end of an entire RE constrains
+<a name="226"/>#               that RE to match a final substring of the subject string.
+<a name="227"/>#
+<a name="228"/>#  |            Alternation: two REs separated by "|" match either a
+<a name="229"/>#               match for the first or a match for the second.
+<a name="230"/>#
+<a name="231"/>#  ()           A RE enclosed in parentheses matches a match for the
+<a name="232"/>#               regular expression (parenthesized groups are used
+<a name="233"/>#               for grouping, and for accessing the matched string
+<a name="234"/>#               subsequently in the match using the \N expression).
+<a name="235"/>#
+<a name="236"/>#  \N           Where N is a digit in the range 1-9, matches the same
+<a name="237"/>#               string of characters as was matched by a parenthesized
+<a name="238"/>#               RE to the left in the same RE.  The sub-expression
+<a name="239"/>#               specified is that beginning with the Nth occurrence
+<a name="240"/>#               of "(" counting from the left.  E.g., ^(.*)\1$ matches
+<a name="241"/>#               a string consisting of two consecutive occurrences of
+<a name="242"/>#               the same string.
+<a name="243"/>#
+<a name="244"/>############################################################################
+<a name="245"/>#
+<a name="246"/>#  Extensions beyond UNIX egrep
+<a name="247"/>#
+<a name="248"/>#  The following extensions to UNIX REs, as specified in the Perl
+<a name="249"/>#  programming language, are supported.
+<a name="250"/>#
+<a name="251"/>#  \w           Matches any alphanumeric (including "_").
+<a name="252"/>#  \W           Matches any non-alphanumeric.
+<a name="253"/>#
+<a name="254"/>#  \b           Matches only at a word-boundary (word defined as a string
+<a name="255"/>#               of alphanumerics as in \w).
+<a name="256"/>#  \B           Matches only non-word-boundaries.
+<a name="257"/>#
+<a name="258"/>#  \s           Matches any white-space character.
+<a name="259"/>#  \S           Matches any non-white-space character.
+<a name="260"/>#
+<a name="261"/>#  \d           Matches any digit [0-9].
+<a name="262"/>#  \D           Matches any non-digit.
+<a name="263"/>#
+<a name="264"/>#  \w, \W, \s, \S, \d, \D can be used within [string] REs.
+<a name="265"/>#
+<a name="266"/>############################################################################
+<a name="267"/>#
+<a name="268"/>#  Notes on computed conjunction expressions by "suspensive recursion"
+<a name="269"/>#
+<a name="270"/>#  A conjunction expression of an arbitrary number of terms can be
+<a name="271"/>#  computed in a looping fashion by the following recursive technique:
+<a name="272"/>#
+<a name="273"/>#       procedure Conjunct(v)
+<a name="274"/>#          if &lt;there is another term to be appended to the conjunction&gt; then
+<a name="275"/>#             suspend Conjunct(&lt;the next term expression&gt;)
+<a name="276"/>#          else
+<a name="277"/>#             suspend v
+<a name="278"/>#       end
+<a name="279"/>#
+<a name="280"/>#  The argument "v" is needed for producing the value of the last term
+<a name="281"/>#  as the value of the conjunction expression, accurately modeling Icon
+<a name="282"/>#  conjunction.  If the value of the conjunction is not needed, the
+<a name="283"/>#  technique can be slightly simplified by eliminating "v":
+<a name="284"/>#
+<a name="285"/>#       procedure ConjunctAndProduceNull()
+<a name="286"/>#          if &lt;there is another term to be appended to the conjunction&gt; then
+<a name="287"/>#             suspend ConjunctAndProduceNull(&lt;the next term expression&gt;)
+<a name="288"/>#          else
+<a name="289"/>#             suspend
+<a name="290"/>#       end
+<a name="291"/>#
+<a name="292"/>#  Note that &lt;the next term expression&gt; must still remain in the suspend
+<a name="293"/>#  expression to test for failure of the term, although its value is not
+<a name="294"/>#  passed to the recursive invocation.  This could have been coded as
+<a name="295"/>#
+<a name="296"/>#             suspend &lt;the next term expression&gt; &amp; ConjunctAndProduceNull()
+<a name="297"/>#
+<a name="298"/>#  but wouldn't have been as provocative.
+<a name="299"/>#
+<a name="300"/>#  Since the computed conjunctions in this program are evaluated only for
+<a name="301"/>#  their side effects, the second technique is used in two situations:
+<a name="302"/>#
+<a name="303"/>#       (1)     To compute the conjunction of all of the elements in the
+<a name="304"/>#               regular expression pattern list (Re_match1()).
+<a name="305"/>#
+<a name="306"/>#       (2)     To evaluate the "exactly N times" and "N to M times"
+<a name="307"/>#               control operations (Re_NTimes()).
+<a name="308"/>#
+<a name="309"/>class Pattern()
+<a name="310"/>   private plist
+<a name="311"/>
+<a name="312"/>   private Re_ParenGroups,Re_Filter,Re_Ordered
+<a name="313"/>   private Re_WordChars,Re_NonWordChars
+<a name="314"/>   private Re_Space,Re_NonSpace
+<a name="315"/>   private Re_Digits,Re_NonDigits
+<a name="316"/>   private Re_ArbString,Re_AnyString
+<a name="317"/>   private Re_LeftmostShortest
+<a name="318"/>   private Re__find,Re__any,Re__upto,Re__tabmatch
+<a name="319"/>   private parenNbr
+<a name="320"/>
+<a name="321"/>   private check_open()
+<a name="322"/>      /plist | runerr("Can't change Pattern config after parsing")
+<a name="323"/>   end
+<a name="324"/>
+<a name="325"/>   private check_plist()
+<a name="326"/>      \plist | runerr("Can't call find or match without setting a valid regex string")
+<a name="327"/>   end
+<a name="328"/>
+<a name="329"/>   public get_paren_group(n)
+<a name="330"/>      return .Re_ParenGroups[n]
+<a name="331"/>   end
+<a name="332"/>
+<a name="333"/>   public get_paren_groups()
+<a name="334"/>      return .Re_ParenGroups
+<a name="335"/>   end
+<a name="336"/>
+<a name="337"/>   public set_ordered(f)
+<a name="338"/>      check_open()
+<a name="339"/>      Re_Ordered := need_flag(f)
+<a name="340"/>      link
+<a name="341"/>   end
+<a name="342"/>
+<a name="343"/>   public set_leftmost_shortest(f)
+<a name="344"/>      check_open()
+<a name="345"/>      Re_LeftmostShortest := need_flag(f)
+<a name="346"/>      link
+<a name="347"/>   end
+<a name="348"/>
+<a name="349"/>   public set_case_dependent(f)
+<a name="350"/>      check_open()
+<a name="351"/>      if /need_flag(f) then {
+<a name="352"/>         Re__find := caseless_find
+<a name="353"/>         Re__any := Re_c_any
+<a name="354"/>         Re__upto := Re_c_upto
+<a name="355"/>         Re__tabmatch := Re_c_tabmatch
+<a name="356"/>      } else {
+<a name="357"/>         Re__find := default.find
+<a name="358"/>         Re__any := any
+<a name="359"/>         Re__upto := upto
+<a name="360"/>         Re__tabmatch := Prog.get_operator("=",1)
+<a name="361"/>      }
+<a name="362"/>      link
+<a name="363"/>   end
+<a name="364"/>
+<a name="365"/>   public set_filter(p)
+<a name="366"/>      check_open()
+<a name="367"/>      Re_Filter := p
+<a name="368"/>      link
+<a name="369"/>   end
+<a name="370"/>
+<a name="371"/>   public set_word_chars(c)
+<a name="372"/>      check_open()
+<a name="373"/>      Re_WordChars := need_cset(c)
+<a name="374"/>      Re_NonWordChars := ~Re_WordChars
+<a name="375"/>      link
+<a name="376"/>   end
+<a name="377"/>
+<a name="378"/>   public set_space_chars(c)
+<a name="379"/>      check_open()
+<a name="380"/>      Re_Space := need_cset(c)
+<a name="381"/>      Re_NonSpace := ~Re_Space
+<a name="382"/>      link
+<a name="383"/>   end
+<a name="384"/>
+<a name="385"/>   public set_digit_chars(c)
+<a name="386"/>      check_open()
+<a name="387"/>      Re_Digits := need_cset(c)
+<a name="388"/>      Re_NonDigits := ~Re_Digits
+<a name="389"/>      link
+<a name="390"/>   end
+<a name="391"/>
+<a name="392"/>   public set_arb_string(s)
+<a name="393"/>      check_open()
+<a name="394"/>      Re_ArbString := need_string(s)
+<a name="395"/>      link
+<a name="396"/>   end
+<a name="397"/>
+<a name="398"/>   public set_any_string(s)
+<a name="399"/>      check_open()
+<a name="400"/>      Re_AnyString := need_string(s)
+<a name="401"/>      link
+<a name="402"/>   end
+<a name="403"/>
+<a name="404"/>
+<a name="405"/>   ###################  Pattern Translation Procedures  ###################
+<a name="406"/>
+<a name="407"/>   #
+<a name="408"/>   # Create new instance with regular expression string {s}.  If {s} is omitted, it
+<a name="409"/>   # must be set subsequently via {parse(s)}.  If any setter methods are to be used,
+<a name="410"/>   # {s} must be omitted, and the setters called before {parse()}.
+<a name="411"/>   #
+<a name="412"/>   public new(s)
+<a name="413"/>      set_word_chars(&amp;letters ++ &amp;digits ++ '_')
+<a name="414"/>      set_space_chars(' \t\v\n\r\f')
+<a name="415"/>      set_digit_chars(&amp;digits)
+<a name="416"/>      set_arb_string(".*")
+<a name="417"/>      set_any_string(".")
+<a name="418"/>      set_case_dependent(&amp;yes)
+<a name="419"/>      if \s then
+<a name="420"/>         parse(s) | fail
+<a name="421"/>      return
+<a name="422"/>   end
+<a name="423"/>
+<a name="424"/>   # Set the regular expression pattern for this instance.  May be
+<a name="425"/>   # called several times if desired.
+<a name="426"/>   public parse(s)	
+<a name="427"/>      #
+<a name="428"/>      #  Produce pattern list representing pattern string s.
+<a name="429"/>      #
+<a name="430"/>      #
+<a name="431"/>      #  Create a list of pattern elements.  Pattern strings are parsed
+<a name="432"/>      #  and converted into list elements as shown in the following table.
+<a name="433"/>      #  Since some list elements reference other pattern lists, the
+<a name="434"/>      #  structure is really a tree.
+<a name="435"/>      #
+<a name="436"/>      # Token      Generates                       Matches...
+<a name="437"/>      # -----      ---------                       ----------
+<a name="438"/>      #  ^         Pos(1)                          Start of string or line
+<a name="439"/>      #  $         Pos(0)                          End of string or line
+<a name="440"/>      #  .         Move(1)                         Any single character
+<a name="441"/>      #  +         OneOrMore(tok)                  At least one occurrence of
+<a name="442"/>      #                                            previous token
+<a name="443"/>      #  *         ArbNo(tok)                      Zero or more occurrences of
+<a name="444"/>      #                                            previous token
+<a name="445"/>      #  |         Alt(pattern,pattern)            Either of prior expression
+<a name="446"/>      #                                            or next expression
+<a name="447"/>      #  [...]     TabAny(cset)                    Any single character in
+<a name="448"/>      #                                            specified set (see below)
+<a name="449"/>      #  (...)     MatchReg(pattern,n)             Parenthesized pattern as
+<a name="450"/>      #                                            single token
+<a name="451"/>      #  &lt;string of non-special characters&gt;        The string of no-special
+<a name="452"/>      #            TabMatch(string)                characters
+<a name="453"/>      #  \b        WordBoundary()
+<a name="454"/>      #                                            A word-boundary
+<a name="455"/>      #                                              (word default: [A-Za-z0-9_]+)
+<a name="456"/>      #  \B        NonWordBoundary()
+<a name="457"/>      #                                            A non-word-boundary
+<a name="458"/>      #  \w        TabAny(Re_WordChars)            A word-character
+<a name="459"/>      #  \W        TabAny(Re_NonWordChars)         A non-word-character
+<a name="460"/>      #  \s        TabAny(Re_Space)                A space-character
+<a name="461"/>      #  \S        TabAny(Re_NonSpace)             A non-space-character
+<a name="462"/>      #  \d        TabAny(Re_Digits)               A digit
+<a name="463"/>      #  \D        TabAny(Re_NonDigits)            A non-digit
+<a name="464"/>      #  {n,m}     NToMTimes(tok,n,m)              n to m occurrences of
+<a name="465"/>      #                                            previous token
+<a name="466"/>      #  {n,}      NOrMoreTimes(tok,n)             n or more occurrences of
+<a name="467"/>      #                                            previous token
+<a name="468"/>      #  {n}       NTimes(tok,n)                   exactly n occurrences of
+<a name="469"/>      #                                            previous token
+<a name="470"/>      #  ?         ZeroOrOneTimes(tok)             one or zero occurrences of
+<a name="471"/>      #                                            previous token
+<a name="472"/>      #  \&lt;digit&gt;  MatchParenGroup(n)              The string matched by
+<a name="473"/>      #                                            parenthesis group &lt;digit&gt;
+<a name="474"/>      #
+<a name="475"/>      s ? (plist := Re_pat1(0)) | fail
+<a name="476"/>      link
+<a name="477"/>   end
+<a name="478"/>
+<a name="479"/>
+<a name="480"/>   # L
+<a name="481"/>   private Re_pat1(level) 
+<a name="482"/>      #
+<a name="483"/>      #  Recursive portion of RePat()
+<a name="484"/>      #
+<a name="485"/>      local plist,n,m,c,comma
+<a name="486"/>      if level = 0 then parenNbr := 0
+<a name="487"/>      plist := []
+<a name="488"/>      #
+<a name="489"/>      #  Loop to put pattern elements on list.
+<a name="490"/>      #
+<a name="491"/>      until pos(0) do {
+<a name="492"/>         (="|",plist := [Alt(plist,Re_pat1(level + 1) | fail)]) |
+<a name="493"/>            put(plist,
+<a name="494"/>                (="^",pos(2) | &amp;subject[-2] == ("|" | "("),Pos(1)) |
+<a name="495"/>                (="$",pos(0) | default.match("|" | ")"),Pos(0)) |
+<a name="496"/>                (default.match(")"),level &gt; 0,break) |
+<a name="497"/>                (=Re_ArbString,Arb()) |
+<a name="498"/>                (=Re_AnyString,Move(1)) |
+<a name="499"/>                (="+",OneOrMore(Re_prevTok(plist) | fail)) |
+<a name="500"/>                (="*",ArbNo(Re_prevTok(plist) | fail)) |
+<a name="501"/>                1(TabAny(c := Re_cset()),\c | fail) |
+<a name="502"/>                3(="(",n := parenNbr +:= 1,
+<a name="503"/>                  MatchReg(Re_pat1(level + 1) | fail,n),
+<a name="504"/>                  move(1) | fail) |
+<a name="505"/>                  (="\\b",WordBoundary()) |
+<a name="506"/>                  (="\\B",NonWordBoundary()) |
+<a name="507"/>                  (="\\w",TabAny(Re_WordChars)) |
+<a name="508"/>                  (="\\W",TabAny(Re_NonWordChars)) |
+<a name="509"/>                  (="\\s",TabAny(Re_Space)) |
+<a name="510"/>                  (="\\S",TabAny(Re_NonSpace)) |
+<a name="511"/>                  (="\\d",TabAny(Re_Digits)) |
+<a name="512"/>                  (="\\D",TabAny(Re_NonDigits)) |
+<a name="513"/>                  (="{",(n := tab(many(&amp;digits)),comma := =(",") | &amp;null,
+<a name="514"/>                         m := tab(many(&amp;digits)) | &amp;null,="}") | fail,
+<a name="515"/>                         if \m then NToMTimes(Re_prevTok(plist),integer(n),integer(m))
+<a name="516"/>                         else if \comma then NOrMoreTimes(Re_prevTok(plist),integer(n))
+<a name="517"/>                         else NTimes(Re_prevTok(plist),integer(n)) ) |
+<a name="518"/>                         (="?",ZeroOrOneTimes(Re_prevTok(plist) | fail)) |
+<a name="519"/>                         TabMatch(Re_string(level)) |
+<a name="520"/>                         (="\\",n := tab(any(&amp;digits)),MatchParenGroup(integer(n)))
+<a name="521"/>                         ) |
+<a name="522"/>                            fail
+<a name="523"/>      }
+<a name="524"/>      return plist
+<a name="525"/>   end
+<a name="526"/>
+<a name="527"/>
+<a name="528"/>   private Re_prevTok(plist)
+<a name="529"/>      #
+<a name="530"/>      #  Pull previous token from the pattern list.  This procedure must take
+<a name="531"/>      #  into account the fact that successive character tokens have been
+<a name="532"/>      #  optimized into a single string token.
+<a name="533"/>      #
+<a name="534"/>      local lastTok,s,r
+<a name="535"/>      lastTok := pull(plist) | fail
+<a name="536"/>      if is(lastTok,TabMatch) then {
+<a name="537"/>         s := lastTok.str
+<a name="538"/>         r := TabMatch(s[-1])
+<a name="539"/>         s[-1] := ""
+<a name="540"/>         if *s &gt; 0 then {
+<a name="541"/>            put(plist,lastTok)
+<a name="542"/>            lastTok.str  := s
+<a name="543"/>         }
+<a name="544"/>         return r
+<a name="545"/>      }
+<a name="546"/>      return lastTok
+<a name="547"/>   end
+<a name="548"/>
+<a name="549"/>
+<a name="550"/>   private Re_cset()
+<a name="551"/>      #
+<a name="552"/>      #  Matches a [...] construct and returns a cset.
+<a name="553"/>      #
+<a name="554"/>      local complement,c,e,ch,chars
+<a name="555"/>      ="[" | fail
+<a name="556"/>      (complement := ="^" | &amp;null,c := move(1) || tab(default.find("]")),move(1)) |
+<a name="557"/>         return &amp;null
+<a name="558"/>      c ? {
+<a name="559"/>         e := (="-" | "")
+<a name="560"/>         while chars := tab(upto('\-\\')) do {
+<a name="561"/>            e ++:= case string(move(1)) of {
+<a name="562"/>               "-": chars[1:-1] ++
+<a name="563"/>                  &amp;uset[ord(chars[-1]) + 1:ord(move(1)) + 2] | return &amp;null
+<a name="564"/>               "\\": case string(ch := move(1)) of {
+<a name="565"/>                  "w": Re_WordChars
+<a name="566"/>                  "W": Re_NonWordChars
+<a name="567"/>                  "s": Re_Space
+<a name="568"/>                  "S": Re_NonSpace
+<a name="569"/>                  "d": Re_Digits
+<a name="570"/>                  "D": Re_NonDigits
+<a name="571"/>                  default: ch
+<a name="572"/>               }
+<a name="573"/>            }
+<a name="574"/>         }
+<a name="575"/>         e ++:= tab(0)
+<a name="576"/>         if \complement then e := ~e
+<a name="577"/>      }
+<a name="578"/>      e := (\Re_Filter)(e)
+<a name="579"/>      return cset(e)
+<a name="580"/>   end
+<a name="581"/>
+<a name="582"/>
+<a name="583"/>   private Re_string(level)
+<a name="584"/>      #
+<a name="585"/>      #  Matches a string of non-special characters, returning a string.
+<a name="586"/>      #
+<a name="587"/>      local special,s,p
+<a name="588"/>      static nondigits
+<a name="589"/>      initial nondigits := ~&amp;digits
+<a name="590"/>      special := if level = 0 then '\\.+*|[({?' else  '\\.+*|[({?)'
+<a name="591"/>      s := tab(upto(special) | 0)
+<a name="592"/>      while ="\\" do {
+<a name="593"/>         p := &amp;pos
+<a name="594"/>         if tab(any('wWbBsSdD')) |
+<a name="595"/>            (tab(any('123456789')) &amp; (pos(0) | any(nondigits))) then {
+<a name="596"/>               tab(p - 1)
+<a name="597"/>               break
+<a name="598"/>            }
+<a name="599"/>         s ||:= move(1) || tab(upto(special) | 0)
+<a name="600"/>      }
+<a name="601"/>      if pos(0) &amp; s[-1] == "$" then {
+<a name="602"/>         move(-1)
+<a name="603"/>         s[-1] := ""
+<a name="604"/>      }
+<a name="605"/>      s := text((\Re_Filter)(s))
+<a name="606"/>      return "" ~== s
+<a name="607"/>   end
+<a name="608"/>
+<a name="609"/>
+<a name="610"/>   #####################  Matching Engine Procedures  ########################
+<a name="611"/>
+<a name="612"/>
+<a name="613"/>   #
+<a name="614"/>   #  Produce the sequence of positions in s past a string starting at
+<a name="615"/>   #  i1 that matches the pattern, but fails if there is no such
+<a name="616"/>   #  position.  Similar to match(), but is capable of generating
+<a name="617"/>   #  multiple positions.
+<a name="618"/>   #
+<a name="619"/>   public match(s,i1,i2) 
+<a name="620"/>      local a
+<a name="621"/>      check_plist()
+<a name="622"/>      a := begin_analysis(s,i1,i2) | fail
+<a name="623"/>      s := a.s; i1 := a.i; i2 := a.j
+<a name="624"/>      Re_ParenGroups := []
+<a name="625"/>      suspend s[i1:i2] ? (Re_match1(plist,1),i1 - 1 + &amp;pos)
+<a name="626"/>   end
+<a name="627"/>
+<a name="628"/>
+<a name="629"/>   #
+<a name="630"/>   #  Like `match()` above, but only succeed if the entire string
+<a name="631"/>   #  `s[i1:i2]` matches the pattern.
+<a name="632"/>   #
+<a name="633"/>   public match_all(s,i1,i2) 
+<a name="634"/>      local a
+<a name="635"/>      check_plist()
+<a name="636"/>      a := begin_analysis(s,i1,i2) | fail
+<a name="637"/>      s := a.s; i1 := a.i; i2 := a.j
+<a name="638"/>      Re_ParenGroups := []
+<a name="639"/>      return s[i1:i2] ? (Re_match1(plist,1), pos(0), i1 - 1 + &amp;pos)
+<a name="640"/>   end
+<a name="641"/>
+<a name="642"/>
+<a name="643"/>   # s1,s2,...,sN
+<a name="644"/>   private Re_match1(tokList,i) 
+<a name="645"/>      #
+<a name="646"/>      #  Used privately by match() to simulate a computed conjunction
+<a name="647"/>      #  expression via recursive generation.
+<a name="648"/>      #
+<a name="649"/>      local tok
+<a name="650"/>      suspend if tok := tokList[i] then
+<a name="651"/>         Re_tok_match(tok,tokList,i) &amp; Re_match1(tokList,i + 1) else &amp;null
+<a name="652"/>   end
+<a name="653"/>
+<a name="654"/>
+<a name="655"/>   #
+<a name="656"/>   #  Produce the sequence of positions in s where strings begin that match
+<a name="657"/>   #  the pattern, but fails if there is no such position.  Similar
+<a name="658"/>   #  to find().
+<a name="659"/>   #
+<a name="660"/>   public find(s,i1,i2) 
+<a name="661"/>      local p,a
+<a name="662"/>      check_plist()
+<a name="663"/>      a := begin_analysis(s,i1,i2) | fail
+<a name="664"/>      s := a.s; i1 := a.i; i2 := a.j
+<a name="665"/>      Re_ParenGroups := []
+<a name="666"/>      s[i1:i2] ? suspend (
+<a name="667"/>                          tab(Re_skip(plist)) &amp;
+<a name="668"/>                          p := &amp;pos &amp;
+<a name="669"/>                          Re_match1(plist,1)\1 &amp;
+<a name="670"/>                          i1 -1 + p)
+<a name="671"/>   end
+<a name="672"/>
+<a name="673"/>
+<a name="674"/>   private Re_tok_match(tok,tokList,i)
+<a name="675"/>      #
+<a name="676"/>      #  Match a single token.  Can be recursively called by the token
+<a name="677"/>      #  procedure.
+<a name="678"/>      #
+<a name="679"/>      local results,result
+<a name="680"/>      if \Re_LeftmostShortest then
+<a name="681"/>         suspend Re_tok_match1(tok,tokList,i)
+<a name="682"/>      else {
+<a name="683"/>         results := []
+<a name="684"/>         every Re_tok_match1(tok,tokList,i) do
+<a name="685"/>            push(results,[&amp;pos,copy(Re_ParenGroups)])
+<a name="686"/>         every result := !results do {
+<a name="687"/>            Re_ParenGroups := result[2]
+<a name="688"/>            suspend tab(result[1])
+<a name="689"/>         }
+<a name="690"/>      }
+<a name="691"/>   end
+<a name="692"/>
+<a name="693"/>   private Re_tok_match1(tok,tokList,i)
+<a name="694"/>      suspend case classof(tok) of {
+<a name="695"/>         Pos: pos(tok.n)
+<a name="696"/>         Move: move(tok.n)
+<a name="697"/>         Alt: Re_Alt(tok.pat1,tok.pat2)
+<a name="698"/>         Arb: Re_Arb(tokList,i)
+<a name="699"/>         OneOrMore: Re_OneOrMore(tok.tok)
+<a name="700"/>         ArbNo: Re_ArbNo(tok.tok)
+<a name="701"/>         TabAny: Re_TabAny(tok.cset)
+<a name="702"/>         MatchReg: Re_MatchReg(tok.pat,tok.n)
+<a name="703"/>         WordBoundary: Re_WordBoundary()
+<a name="704"/>         NonWordBoundary: Re_NonWordBoundary()
+<a name="705"/>         NToMTimes: Re_NToMTimes(tok.tok,tok.n,tok.m)
+<a name="706"/>         NOrMoreTimes: Re_NOrMoreTimes(tok.tok,tok.n)
+<a name="707"/>         NTimes: Re_NTimes(tok.tok,tok.n)
+<a name="708"/>         ZeroOrOneTimes: Re_ZeroOrOneTimes(tok.tok)
+<a name="709"/>         TabMatch: Re_TabMatch(tok.str)
+<a name="710"/>         MatchParenGroup: Re_MatchParenGroup(tok.n)
+<a name="711"/>         default: syserr("Invalid proc for Re_Tok")
+<a name="712"/>      }
+<a name="713"/>   end
+<a name="714"/>
+<a name="715"/>   ##########  Heuristic Code for Matching Arbitrary Characters  ##########
+<a name="716"/>
+<a name="717"/>
+<a name="718"/>   # s1,s2,...,sN
+<a name="719"/>   private Re_skip(tokList,i) 
+<a name="720"/>      #
+<a name="721"/>      #  Used privately -- match a sequence of strings in s past which a match
+<a name="722"/>      #  of the first pattern element in tokList is likely to succeed.  This
+<a name="723"/>      #  procedure is used for heuristic performance improvement by match()
+<a name="724"/>      #  for the ".*" pattern element, and by find().
+<a name="725"/>      #
+<a name="726"/>      local x,s,p
+<a name="727"/>      /i := 1
+<a name="728"/>      x := if type(tokList) == "list" then tokList[i] else tokList
+<a name="729"/>      if /x then suspend default.find("")
+<a name="730"/>      else {
+<a name="731"/>         suspend case classof(x) of {
+<a name="732"/>            TabMatch: Re__find(x.str)
+<a name="733"/>            TabAny: Re__upto(x.cset)
+<a name="734"/>            Pos: x.n
+<a name="735"/>            WordBoundary :
+<a name="736"/>               p := &amp;pos &amp; tab(Re_skip(tokList,i + 1)) &amp; Re_WordBoundary() &amp; untab(p)
+<a name="737"/>            NonWordBoundary:
+<a name="738"/>               p := &amp;pos &amp; tab(Re_skip(tokList,i + 1)) &amp; Re_NonWordBoundary() &amp; untab(p)
+<a name="739"/>            MatchParenGroup: if s := \ (\Re_ParenGroups)[x.n] then
+<a name="740"/>               default.find(s) else default.find("")
+<a name="741"/>            NToMTimes | NOrMoreTimes | NTimes:
+<a name="742"/>               if x.n &gt; 0 then Re_skip(x.tok) else default.find("")
+<a name="743"/>            OneOrMore : Re_skip(x.tok)
+<a name="744"/>            MatchReg: Re_skip(x.pat)
+<a name="745"/>            Alt:
+<a name="746"/>               if \Re_Ordered then
+<a name="747"/>                  Re_result_merge{Re_skip(x.pat1),Re_skip(x.pat2)}
+<a name="748"/>               else
+<a name="749"/>                  Re_skip(x.pat1 | x.pat2)
+<a name="750"/>            default: default.find("")
+<a name="751"/>         }
+<a name="752"/>      }
+<a name="753"/>   end
+<a name="754"/>
+<a name="755"/>
+<a name="756"/>   private Re_result_merge(e1, e2)
+<a name="757"/>      #
+<a name="758"/>      #  Programmer-defined control operation to merge the result sequences of
+<a name="759"/>      #  two integer-producing generators.  Both generators must produce their
+<a name="760"/>      #  result sequences in numerically increasing order with no duplicates,
+<a name="761"/>      #  and the output sequence will be in increasing order with no
+<a name="762"/>      #  duplicates.
+<a name="763"/>      #
+<a name="764"/>      local r1,r2
+<a name="765"/>      r1 := @e1 ; r2 := @e2
+<a name="766"/>      while \(r1 | r2) do
+<a name="767"/>         if /r2 | \r1 &lt; r2 then
+<a name="768"/>            suspend r1 do r1 := @e1 | &amp;null
+<a name="769"/>         else if /r1 | r1 &gt; r2 then
+<a name="770"/>            suspend r2 do r2 := @e2 | &amp;null
+<a name="771"/>         else
+<a name="772"/>            r2 := @e2 | &amp;null
+<a name="773"/>   end
+<a name="774"/>
+<a name="775"/>
+<a name="776"/>   private untab(origPos)
+<a name="777"/>      #
+<a name="778"/>      #  Converts a string scanning expression that moves the cursor to one
+<a name="779"/>      #  that produces a cursor position and doesn't move the cursor (converts
+<a name="780"/>      #  something like tab(find(x)) to find(x).  The template for using this
+<a name="781"/>      #  procedure is
+<a name="782"/>      #
+<a name="783"/>      #       origPos := &amp;pos ; tab(x) &amp; ... &amp; untab(origPos)
+<a name="784"/>      #
+<a name="785"/>      local newPos
+<a name="786"/>      newPos := &amp;pos
+<a name="787"/>      tab(origPos)
+<a name="788"/>      suspend newPos
+<a name="789"/>      tab(newPos)
+<a name="790"/>   end
+<a name="791"/>
+<a name="792"/>
+<a name="793"/>   #######################  Matching Procedures #######################
+<a name="794"/>
+<a name="795"/>
+<a name="796"/>   private Re_Arb(tokList,i)
+<a name="797"/>      #
+<a name="798"/>      #  Match arbitrary characters (.*)
+<a name="799"/>      #
+<a name="800"/>      suspend tab(if tokList[i + 1] then Re_skip(tokList,i + 1) else Re__find(""))
+<a name="801"/>   end
+<a name="802"/>
+<a name="803"/>
+<a name="804"/>   private Re_TabAny(C)
+<a name="805"/>      #
+<a name="806"/>      #  Match a character of a character set ([...],\w,\W,\s,\S,\d,\D)
+<a name="807"/>      #
+<a name="808"/>      suspend tab(Re__any(C))
+<a name="809"/>   end
+<a name="810"/>
+<a name="811"/>
+<a name="812"/>   private Re_MatchReg(tokList,groupNbr)
+<a name="813"/>      #
+<a name="814"/>      #  Match parenthesized group and assign matched string to list Re_ParenGroup
+<a name="815"/>      #
+<a name="816"/>      local p,s
+<a name="817"/>      p := &amp;pos
+<a name="818"/>      /Re_ParenGroups := []
+<a name="819"/>      every Re_match1(tokList,1) do {
+<a name="820"/>         while *Re_ParenGroups &lt; groupNbr do put(Re_ParenGroups)
+<a name="821"/>         s := &amp;subject[p:&amp;pos]
+<a name="822"/>         Re_ParenGroups[groupNbr] := s
+<a name="823"/>         suspend s
+<a name="824"/>      }
+<a name="825"/>      Re_ParenGroups[groupNbr] := &amp;null
+<a name="826"/>   end
+<a name="827"/>
+<a name="828"/>
+<a name="829"/>   private Re_WordBoundary()
+<a name="830"/>      #
+<a name="831"/>      #  Match word-boundary (\b)
+<a name="832"/>      #
+<a name="833"/>      suspend ((pos(1),any(Re_WordChars)) | 
+<a name="834"/>               (pos(0),move(-1),tab(any(Re_WordChars))) | 
+<a name="835"/>               (move(-1),(tab(any(Re_WordChars)),any(Re_NonWordChars)) | 
+<a name="836"/>                (tab(any(Re_NonWordChars)),any(Re_WordChars))),"")
+<a name="837"/>   end
+<a name="838"/>
+<a name="839"/>
+<a name="840"/>   private Re_NonWordBoundary()
+<a name="841"/>      #
+<a name="842"/>      #  Match non-word-boundary (\B)
+<a name="843"/>      #
+<a name="844"/>      suspend ((pos(1),any(Re_NonWordChars)) |
+<a name="845"/>               (pos(0),move(-1),tab(any(Re_NonWordChars))) |
+<a name="846"/>               (move(-1),(tab(any(Re_WordChars)),any(Re_WordChars)) |
+<a name="847"/>                (tab(any(Re_NonWordChars)),any(Re_NonWordChars)),""))
+<a name="848"/>   end
+<a name="849"/>
+<a name="850"/>
+<a name="851"/>   private Re_MatchParenGroup(n)
+<a name="852"/>      #
+<a name="853"/>      #  Match same string matched by previous parenthesized group (\N)
+<a name="854"/>      #
+<a name="855"/>      local s
+<a name="856"/>      suspend if s := \Re_ParenGroups[n] then =s else ""
+<a name="857"/>   end
+<a name="858"/>
+<a name="859"/>
+<a name="860"/>   ###################  Control Operation Procedures  ###################
+<a name="861"/>
+<a name="862"/>
+<a name="863"/>   private Re_ArbNo(tok)
+<a name="864"/>      #
+<a name="865"/>      #  Match any number of times (*)
+<a name="866"/>      #
+<a name="867"/>      suspend "" | (Re_tok_match(tok) &amp; Re_ArbNo(tok))
+<a name="868"/>   end
+<a name="869"/>
+<a name="870"/>
+<a name="871"/>   private Re_OneOrMore(tok)
+<a name="872"/>      #
+<a name="873"/>      #  Match one or more times (+)
+<a name="874"/>      #
+<a name="875"/>      suspend Re_tok_match(tok) &amp; Re_ArbNo(tok)
+<a name="876"/>   end
+<a name="877"/>
+<a name="878"/>
+<a name="879"/>   private Re_NToMTimes(tok,n,m)
+<a name="880"/>      #
+<a name="881"/>      #  Match n to m times ({n,m}
+<a name="882"/>      #
+<a name="883"/>      suspend Re_NTimes(tok,n) &amp; Re_ArbNo(tok)\(m - n + 1)
+<a name="884"/>   end
+<a name="885"/>
+<a name="886"/>
+<a name="887"/>   private Re_NOrMoreTimes(tok,n)
+<a name="888"/>      #
+<a name="889"/>      #  Match n or more times ({n,})
+<a name="890"/>      #
+<a name="891"/>      suspend Re_NTimes(tok,n) &amp; Re_ArbNo(tok)
+<a name="892"/>   end
+<a name="893"/>
+<a name="894"/>
+<a name="895"/>   private Re_NTimes(tok,n)
+<a name="896"/>      #
+<a name="897"/>      #  Match exactly n times ({n})
+<a name="898"/>      #
+<a name="899"/>      if n &gt; 0 then
+<a name="900"/>         suspend Re_tok_match(tok) &amp; Re_NTimes(tok,n - 1)
+<a name="901"/>      else suspend
+<a name="902"/>   end
+<a name="903"/>
+<a name="904"/>
+<a name="905"/>   private Re_ZeroOrOneTimes(tok)
+<a name="906"/>      #
+<a name="907"/>      #  Match zero or one times (?)
+<a name="908"/>      #
+<a name="909"/>      suspend "" | Re_tok_match(tok)
+<a name="910"/>   end
+<a name="911"/>
+<a name="912"/>
+<a name="913"/>   private Re_Alt(tokList1,tokList2)
+<a name="914"/>      #
+<a name="915"/>      #  Alternation (|)
+<a name="916"/>      #
+<a name="917"/>      suspend Re_match1(tokList1 | tokList2,1)
+<a name="918"/>   end
+<a name="919"/>
+<a name="920"/>   private Re_TabMatch(s)
+<a name="921"/>      suspend Re__tabmatch(s)
+<a name="922"/>   end
+<a name="923"/>
+<a name="924"/>   ###################  Case Independence Procedures  ###################
+<a name="925"/>
+<a name="926"/>   private static Re_c_tabmatch(s)
+<a name="927"/>      suspend tab(caseless_match(s))
+<a name="928"/>   end
+<a name="929"/>
+<a name="930"/>   private static Re_c_any(c)
+<a name="931"/>      return any(Text.caseless_cset(c, &amp;subject))
+<a name="932"/>   end
+<a name="933"/>
+<a name="934"/>   private static Re_c_upto(c)
+<a name="935"/>      suspend upto(Text.caseless_cset(c, &amp;subject))
+<a name="936"/>   end
+<a name="937"/>
+<a name="938"/>end
+</pre></body></html>

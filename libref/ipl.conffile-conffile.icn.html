@@ -1,0 +1,470 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>conffile.icn</title></head><body><pre>
+<a name="1"/>#############################################################################
+<a name="2"/>#
+<a name="3"/>#       File:     conffile.icn
+<a name="4"/>#
+<a name="5"/>#       Subject:  Procedures to read initialization directives
+<a name="6"/>#
+<a name="7"/>#       Author:   David A. Gamey
+<a name="8"/>#
+<a name="9"/>#       Date:     May 3, 2001
+<a name="10"/>#
+<a name="11"/>#############################################################################
+<a name="12"/>#                 
+<a name="13"/>#       Thanks to Clint Jeffery for suggesting the Directive wrapper and
+<a name="14"/>#       making defining a specification much cleaner looking and easier!
+<a name="15"/>#
+<a name="16"/>#############################################################################
+<a name="17"/>#
+<a name="18"/>#   This file is in the public domain.
+<a name="19"/>#
+<a name="20"/>#############################################################################
+<a name="21"/>#
+<a name="22"/>#   Description:
+<a name="23"/>#
+<a name="24"/>#      At Some point certain procedures become indispensable.  Anyone who
+<a name="25"/>#      has used 'options' from the Icon program library will probably agree.
+<a name="26"/>#      I found a need to be able to quickly, change the format and
+<a name="27"/>#      interpretation of a set of configuration and rules files.  And so, I 
+<a name="28"/>#      hope this collection of procedures will become similarly indispensable. 
+<a name="29"/>#
+<a name="30"/>#
+<a name="31"/>#   Directive( p1, p2, i1, i2 ) : r1
+<a name="32"/>#
+<a name="33"/>#      returns a specification record for a table required by ReadDirectives
+<a name="34"/>#
+<a name="35"/>#      p1 is the build procedure used to extract the data from the file.
+<a name="36"/>#         The table below describes the build procedures and the default
+<a name="37"/>#         minimum and maximum number of arguments for each.  If the included
+<a name="38"/>#         procedures don't meet your needs then you can easily add your own
+<a name="39"/>#         and still use Directive to build the specification.
+<a name="40"/>#
+<a name="41"/>#            build procedure              minargs     maxargs
+<a name="42"/>#
+<a name="43"/>#            Directive_table_of_sets         2            -     
+<a name="44"/>#            Directive_table                 2            -
+<a name="45"/>#            Directive_value                 1            1
+<a name="46"/>#            Directive_set                   1            -
+<a name="47"/>#            Directive_list                  1            -
+<a name="48"/>#            &lt; user defined &gt;                1            -
+<a name="49"/>#            Directive_exists                0            0
+<a name="50"/>#            Directive_ignore                0            -
+<a name="51"/>#            Directive_warning               0            -
+<a name="52"/>#            
+<a name="53"/>#      p2 is an edit procedure that allows you to preprocess the data or null
+<a name="54"/>#      i1 is the minimum number of arguments for this directive, default is 1
+<a name="55"/>#      i2 is the maximum number of arguments for this directive
+<a name="56"/>#
+<a name="57"/>#      Run-time Errors:
+<a name="58"/>#      - 123 if p1 isn't a procedure
+<a name="59"/>#      - 123 if p2 isn't null or a procedure
+<a name="60"/>#      - 101 if i1, i2 aren't integers and not ( 0 &lt;= i1 &lt;= i2 ) after defaults
+<a name="61"/>#
+<a name="62"/>#
+<a name="63"/>#   ReadDirectives( l1, t1, s1, s2, c1, c2, p1 ) : t2
+<a name="64"/>#
+<a name="65"/>#      returns a table containing parsed directives for the specified file
+<a name="66"/>#
+<a name="67"/>#      l1 is a list of file names or open files, each element of l1 is tried 
+<a name="68"/>#         in turn until a file is opened or an open file is encountered.
+<a name="69"/>#
+<a name="70"/>#            For example: [ "my/rules", "/etc/rules"]
+<a name="71"/>#
+<a name="72"/>#      t1 is a table of specifications for parsing and handling each directive
+<a name="73"/>#      s1 the comment character, default "#"
+<a name="74"/>#      s2 the continuation character, default "_"
+<a name="75"/>#      c1 the escape character, default "\"
+<a name="76"/>#      c2 the cset of whitespace, default ' \b\t\v\f\r'	
+<a name="77"/>#      p1 stop | an error procedure to be called, fail if null
+<a name="78"/>#
+<a name="79"/>#      t2 is a table containing the parsed results keyed by tag
+<a name="80"/>#
+<a name="81"/>#      Notes:
+<a name="82"/>#         - the special key "*file*" is a list containing the original 
+<a name="83"/>#           text of input file with interspersed diagnostic messages. 
+<a name="84"/>#         - the comment, escape, continuation and whitespace characters 
+<a name="85"/>#           must not overlap (unpredictable)
+<a name="86"/>#         - the end of a directive statement will forcibly close an open 
+<a name="87"/>#           quote (no warning)
+<a name="88"/>#         - the end of file will forcibly close a continuation (no warning)
+<a name="89"/>#
+<a name="90"/>#      Run-time Errors: 
+<a name="91"/>#         - 103, 104, 107, 108, 500
+<a name="92"/>#           500 errors occur if:
+<a name="93"/>#           - arguments are too big/small
+<a name="94"/>#           - the specification table is improper    
+<a name="95"/>#
+<a name="96"/>#   Directive file syntax:
+<a name="97"/>#
+<a name="98"/>#      - blank lines are ignored
+<a name="99"/>#      - all syntactic characters are parameterized
+<a name="100"/>#      - everything after a comment character is ignored (discarded)
+<a name="101"/>#      - to include a comment character in the directive, 
+<a name="102"/>#        precede it with an escape 
+<a name="103"/>#      - to continue a directive, 
+<a name="104"/>#        place a continue character at the end of the line (before comments)
+<a name="105"/>#      - trailing whitespace is NOT ignored in continuations
+<a name="106"/>#      - quoted strings are supported, 
+<a name="107"/>#      - to include a quote within a quoted string,  
+<a name="108"/>#        precede the enclosed quote with an escape
+<a name="109"/>#
+<a name="110"/>#   Usage:
+<a name="111"/>#
+<a name="112"/>#   -- Config file, example: --
+<a name="113"/>#
+<a name="114"/>#      # comment line
+<a name="115"/>#
+<a name="116"/>#      var1 "This string, w/o quotes, will be in cfgspec[\"var\"]"
+<a name="117"/>#      cset1 "abcdefffffffffffff"   # type of quotes isn't important
+<a name="118"/>#      int1  12345
+<a name="119"/>#      lcase1 "Hello There THIs iS CasE inSENsITive"
+<a name="120"/>#      list1 one two three _ # continues
+<a name="121"/>#           four five one three zero 
+<a name="122"/>#      set1 one one one two three 3 'a b c' # one two three 3 'a b c'
+<a name="123"/>#      table1 k1 v1
+<a name="124"/>#      table1 k2 v2
+<a name="125"/>#      t/set1 key1 v1 v2 v3 v4
+<a name="126"/>#      t/set1 key2 v5 v6
+<a name="127"/>#      t/set1 key3 "1 2 \#3"  # comment
+<a name="128"/>#      warn1  this will produce _
+<a name="129"/>#             a warning 
+<a name="130"/>#
+<a name="131"/>#   -- Coding example: --
+<a name="132"/>#
+<a name="133"/>#      # 1. Define a specification table using Directive.
+<a name="134"/>#      #    Directive has four fields:
+<a name="135"/>#      #    - the procedure to handle the tag
+<a name="136"/>#      #    - an optional edit procedure to preprocess the data 
+<a name="137"/>#      #    - the minimum number of values following the tag, 
+<a name="138"/>#      #      default is dependant on the &amp;null is treated as 0 
+<a name="139"/>#      #    - the maximum number of values following the tag,
+<a name="140"/>#      #      &amp;null is treated as unlimited 
+<a name="141"/>#      #    The table's keys are the directives of the configuration file 
+<a name="142"/>#      #    The default specification should be either warning of ignore
+<a name="143"/>#
+<a name="144"/>#           cfgspec    := table( Directive( Directive_warning ) )
+<a name="145"/>#           cfgspec["var1"]   := Directive( Directive_value )
+<a name="146"/>#           cfgspec["cset1"]  := Directive( Directive_value, cset )
+<a name="147"/>#           cfgspec["int1"]   := Directive( Directive_value, integer )
+<a name="148"/>#           cfgspec["lcase1"] := Directive( Directive_value, map )
+<a name="149"/>#           cfgspec["list1"]  := Directive( Directive_list )
+<a name="150"/>#           cfgspec["set1"]   := Directive( Directive_set )
+<a name="151"/>#           cfgspec["table1"] := Directive( Directive_table )
+<a name="152"/>#           cfgspec["t/set1"] := Directive( Directive_table_of_sets )
+<a name="153"/>#
+<a name="154"/>#      # 2. Read, parse and build a table based upon the spec and the file
+<a name="155"/>#
+<a name="156"/>#           cfg := ReadDirectives( ["my.conf"], cfgspec )
+<a name="157"/>#
+<a name="158"/>#      # 3. Process the output 
+<a name="159"/>#
+<a name="160"/>#           write("Input:\n")
+<a name="161"/>#           every write(!cfg["*file*"])
+<a name="162"/>#           write("\nBuilt:\n")
+<a name="163"/>#           every  k :=key(cfg) do 
+<a name="164"/>#           if k ~== "*file*" then write(k, " := ",ximage(cfg[k]))
+<a name="165"/>#
+<a name="166"/>#   -- Output: --
+<a name="167"/>#
+<a name="168"/>#      Input:
+<a name="169"/>#
+<a name="170"/>#      # comment line
+<a name="171"/>#
+<a name="172"/>#      var1 "This string, w/o quotes, will be in cfgspec[\"var\"]"
+<a name="173"/>#      cset1 "abcdefffffffffffff"   # type of quotes isn't important
+<a name="174"/>#      int1  12345
+<a name="175"/>#      lcase1 "Hello There THIs iS CasE inSENsITive"
+<a name="176"/>#      list1 one two three _ # continues
+<a name="177"/>#          four five one three zero 
+<a name="178"/>#      set1 one one one two three 3 'a b c' # one two three 3 'a b c'
+<a name="179"/>#            table1 k1 v1
+<a name="180"/>#            table1 k2 v2
+<a name="181"/>#            t/set1 key1 v1 v2 v3 v4
+<a name="182"/>#            t/set1 key2 v5 v6
+<a name="183"/>#            t/set1 key3 "1 2 \#3"  # comment
+<a name="184"/>#      warn This will produce a _
+<a name="185"/>#           warning
+<a name="186"/>#      -- Directive isn't defined in specification.
+<a name="187"/>#
+<a name="188"/>#      Built:
+<a name="189"/>#
+<a name="190"/>#      set1 := S1 := set()
+<a name="191"/>#         insert(S1,"3")
+<a name="192"/>#         insert(S1,"a b c")
+<a name="193"/>#         insert(S1,"one")
+<a name="194"/>#         insert(S1,"three")
+<a name="195"/>#         insert(S1,"two")
+<a name="196"/>#      cset1 := 'abcdef'
+<a name="197"/>#      t/set1 := T4 := table(&amp;null)
+<a name="198"/>#         T4["key1"] := S2 := set()
+<a name="199"/>#            insert(S2,"v1")
+<a name="200"/>#            insert(S2,"v2")
+<a name="201"/>#            insert(S2,"v3")
+<a name="202"/>#            insert(S2,"v4")
+<a name="203"/>#         T4["key2"] := S3 := set()
+<a name="204"/>#            insert(S3,"v5")
+<a name="205"/>#            insert(S3,"v6")
+<a name="206"/>#         T4["key3"] := S4 := set()
+<a name="207"/>#            insert(S4,"1 2 #3")
+<a name="208"/>#      list1 := L12 := list(8)
+<a name="209"/>#         L12[1] := "one"
+<a name="210"/>#         L12[2] := "two"
+<a name="211"/>#         L12[3] := "three"
+<a name="212"/>#         L12[4] := "four"
+<a name="213"/>#         L12[5] := "five"
+<a name="214"/>#         L12[6] := "one"
+<a name="215"/>#         L12[7] := "three"
+<a name="216"/>#         L12[8] := "zero"
+<a name="217"/>#      lcase1 := "hello there this is case insensitive"
+<a name="218"/>#      int1 := 12345
+<a name="219"/>#      var1 := "This string, w/o quotes, will be in cfgspec[\"var\"]"
+<a name="220"/>#      table1 := T3 := table(&amp;null)
+<a name="221"/>#         T3["k1"] := "v1"
+<a name="222"/>#         T3["k2"] := "v2"
+<a name="223"/>#
+<a name="224"/>#############################################################################
+<a name="225"/>
+<a name="226"/>package ipl.conffile
+<a name="227"/>
+<a name="228"/>import
+<a name="229"/>   io(ewrite, open, read, Stream),
+<a name="230"/>   ipl.lastc(findp),
+<a name="231"/>   util(need_cset, need_string)
+<a name="232"/>
+<a name="233"/>record _DirectivesSpec_(classproc,editproc,minargs,maxargs)
+<a name="234"/>
+<a name="235"/>
+<a name="236"/># Wrapper to build directive specification
+<a name="237"/>procedure Directive(p,e,mi,mx)    
+<a name="238"/>
+<a name="239"/>   if type(p) ~== "procedure" then runerr(615,p)
+<a name="240"/>   if type(\e) ~== "procedure" then runerr(615,e) else /e := 1
+<a name="241"/>
+<a name="242"/>   case p of 
+<a name="243"/>   {
+<a name="244"/>      Directive_table | Directive_table_of_sets:  /mi := 2
+<a name="245"/>      Directive_value  :  { /mi := 1 ; /mx := 1 }
+<a name="246"/>      Directive_exists :  { /mi := 0 ; /mx := 0 }
+<a name="247"/>      default          :  /mi := 1
+<a name="248"/>   }
+<a name="249"/>
+<a name="250"/>   unless integer(mi) &gt;= 0 then runerr(101,mi)
+<a name="251"/>   if \mx &amp; not ( integer(mx) &gt;= mi ) then runerr(101,mx)
+<a name="252"/>
+<a name="253"/>   return _DirectivesSpec_(p,e,mi,mx)
+<a name="254"/>end
+<a name="255"/>
+<a name="256"/>
+<a name="257"/># Builds icon data structures from a config file
+<a name="258"/>procedure ReadDirectives( 
+<a name="259"/>                         fnL,spec,comment,continue,escape,quotes,whitespace,errp)
+<a name="260"/>
+<a name="261"/>   local notescape, eof, line, wip, x, y, q,  d
+<a name="262"/>   local sL, sLL, f, fn, fL, action,  DirectiveT
+<a name="263"/>
+<a name="264"/>   #   1. defaults, type checking and setup
+<a name="265"/>
+<a name="266"/>   /comment    := "#"
+<a name="267"/>   /continue   := "_"
+<a name="268"/>   /escape     := '\\'
+<a name="269"/>   /quotes     := '\'"'
+<a name="270"/>   /whitespace := ' \b\t\v\f\r'
+<a name="271"/>
+<a name="272"/>   comment := need_string(comment)
+<a name="273"/>   if *comment ~= 1 then runerr("Comment not of length 1",comment)
+<a name="274"/>
+<a name="275"/>   continue := need_string(continue)
+<a name="276"/>   if *continue ~= 1 then runerr("Continue not of length 1",continue)
+<a name="277"/>
+<a name="278"/>   escape := need_cset(escape)
+<a name="279"/>   if *escape ~= 1 then runerr("Escape not of length 1",escape)
+<a name="280"/>   notescape := ~escape
+<a name="281"/>
+<a name="282"/>   quotes := need_cset(quotes)
+<a name="283"/>   if *quotes = 0 then runerr("Quotes is empty",quotes)
+<a name="284"/>
+<a name="285"/>   whitespace :=  need_cset(whitespace)
+<a name="286"/>   if *whitespace = 0 then runerr("Whitespace is empty",whitespace)
+<a name="287"/>
+<a name="288"/>   if type(fnL) ~== "list" then runerr(108,fnL)
+<a name="289"/>
+<a name="290"/>   if type(spec) ~== "table" then runerr(124,spec)
+<a name="291"/>
+<a name="292"/>   fL := []                 # list of original config file
+<a name="293"/>   sL := []                 # list of lists corresponding to each directive
+<a name="294"/>   DirectiveT := table()    # results
+<a name="295"/>
+<a name="296"/>   #   2. locate (and open) a file
+<a name="297"/>
+<a name="298"/>   every fn := !fnL do
+<a name="299"/>   {
+<a name="300"/>      if /fn then next
+<a name="301"/>      if is(fn, Stream) then break f := fn
+<a name="302"/>      if f := open(fn) then break
+<a name="303"/>   }
+<a name="304"/>   if /f then
+<a name="305"/>   {
+<a name="306"/>      ewrite("ReadDirectives: no open(able) files in: ",every image(!fnL) )
+<a name="307"/>      \errp() | fail
+<a name="308"/>   }
+<a name="309"/>
+<a name="310"/>   #   3. input, tokenizing and processing of directives 
+<a name="311"/>
+<a name="312"/>   while /eof do 
+<a name="313"/>   {
+<a name="314"/>
+<a name="315"/>      #  3.1 gather complete directive statements
+<a name="316"/>
+<a name="317"/>      wip := ""
+<a name="318"/>      repeat 
+<a name="319"/>      {
+<a name="320"/>         unless line := read(f) then eof := line := ""
+<a name="321"/>         else
+<a name="322"/>         {
+<a name="323"/>            put(fL,line)                                  # save original line
+<a name="324"/>            line ?:=  2( tab(many(whitespace)), tab(0) )  # discard leading w/s 
+<a name="325"/>            line ?:=  tab(findp(notescape,comment))       # discard comment 
+<a name="326"/>            line := trim(line,whitespace)
+<a name="327"/>         }
+<a name="328"/>         wip ||:= line
+<a name="329"/>         if wip[-1] == continue then 
+<a name="330"/>         {
+<a name="331"/>            wip := wip[1:-1]
+<a name="332"/>            next
+<a name="333"/>         }
+<a name="334"/>         else break
+<a name="335"/>      }
+<a name="336"/>
+<a name="337"/>      #  3.2 tokenize directive
+<a name="338"/>
+<a name="339"/>      put( sL, sLL := [] )                   # start a list of words
+<a name="340"/>      wip ? repeat 
+<a name="341"/>      {
+<a name="342"/>         tab( many(whitespace) )             # kill leading white space
+<a name="343"/>         if pos(0) then break                # deal with trailing whitespace here
+<a name="344"/>
+<a name="345"/>         ( q := tab(any(quotes)), 
+<a name="346"/>          ( x := 1( tab(findp(notescape,q)), =q ) | tab(0) ) 
+<a name="347"/>          ) | ( x := tab(upto(whitespace) | 0) )  
+<a name="348"/>
+<a name="349"/>         y := ""
+<a name="350"/>         x ?                                 # strip imbedded escape characters
+<a name="351"/>         { 
+<a name="352"/>            while y ||:= tab(upto(escape)) do move(1)
+<a name="353"/>            y ||:= tab(0)
+<a name="354"/>         }
+<a name="355"/>         put( sLL, y )                       # save token 
+<a name="356"/>      }
+<a name="357"/>
+<a name="358"/>      if *sLL = 0 then                       # remove and skip null lines
+<a name="359"/>         pull(sL) &amp; next
+<a name="360"/>      
+<a name="361"/>      #  3.3 process directive
+<a name="362"/>      
+<a name="363"/>      action :=  get(sLL)                    # peel off the action tag
+<a name="364"/>      d := spec[action]
+<a name="365"/>
+<a name="366"/>      if /d | /d.classproc then runerr("d or d.classproc is null",d)
+<a name="367"/>
+<a name="368"/>      if *sLL &lt;  \d.minargs then put( fL, "-- Fewer arguments than spec allows.")
+<a name="369"/>      if *sLL &gt;  \d.maxargs then put( fL, "-- More arguments than spec allows.")
+<a name="370"/>
+<a name="371"/>      (d.classproc)(fL,DirectiveT,action,sLL,d.editproc) # call build procedure
+<a name="372"/>   }
+<a name="373"/>
+<a name="374"/>   DirectiveT["*file*"] := fL                     # save original text
+<a name="375"/>   return DirectiveT
+<a name="376"/>end
+<a name="377"/>
+<a name="378"/>#  Build support procedures
+<a name="379"/>
+<a name="380"/># build table of sets: action key value(s)
+<a name="381"/>procedure Directive_table_of_sets( 
+<a name="382"/>                                  fileL,DirectiveT,action,argL,editproc)
+<a name="383"/>   local tag
+<a name="384"/>
+<a name="385"/>   if *argL &lt; 2 then 
+<a name="386"/>      put(fileL,"-- Too few arguments for (table_of_sets): action key value(s)") 
+<a name="387"/>   /DirectiveT[action] := table() 
+<a name="388"/>   /DirectiveT[action][tag := get(argL) ] := set()
+<a name="389"/>   while insert(DirectiveT[action][tag],editproc(get(argL)) )
+<a name="390"/>   return
+<a name="391"/>end
+<a name="392"/>
+<a name="393"/>
+<a name="394"/># build table: action key value
+<a name="395"/>procedure Directive_table( 
+<a name="396"/>                          fileL,DirectiveT,action,argL,editproc)
+<a name="397"/>
+<a name="398"/>   if *argL ~= 2 then 
+<a name="399"/>      put(fileL,"-- Wrong number of arguments for (table): action key value") 
+<a name="400"/>   /DirectiveT[action] := table()
+<a name="401"/>   DirectiveT[action][get(argL)] := editproc(get(argL)) 
+<a name="402"/>   return
+<a name="403"/>end
+<a name="404"/>
+<a name="405"/>
+<a name="406"/># build set: action value(s)
+<a name="407"/>procedure Directive_set( 
+<a name="408"/>                        fileL,DirectiveT,action,argL,editproc)
+<a name="409"/>
+<a name="410"/>   if *argL &lt; 1 then 
+<a name="411"/>      put(fileL,"-- Too few arguments for (set): action value(s)") 
+<a name="412"/>   /DirectiveT[action] := set()
+<a name="413"/>   while insert( DirectiveT[action], editproc(get(argL)) )
+<a name="414"/>   return
+<a name="415"/>end
+<a name="416"/>
+<a name="417"/>
+<a name="418"/># build list: action value(s)
+<a name="419"/>procedure Directive_list( 
+<a name="420"/>                         fileL,DirectiveT,action,argL,editproc)
+<a name="421"/>
+<a name="422"/>   if *argL &lt; 1 then 
+<a name="423"/>      put(fileL,"-- Too few arguments for (list): action value(s)") 
+<a name="424"/>   /DirectiveT[action] := [] 
+<a name="425"/>   while put( DirectiveT[action], editproc(get(argL)) )
+<a name="426"/>   return
+<a name="427"/>end
+<a name="428"/>
+<a name="429"/>
+<a name="430"/># build value: action value
+<a name="431"/>procedure Directive_value( 
+<a name="432"/>                          fileL,DirectiveT,action,argL,editproc)
+<a name="433"/>
+<a name="434"/>   if *argL = 0 then 
+<a name="435"/>      DirectiveT[action] := &amp;null 
+<a name="436"/>   else 
+<a name="437"/>      DirectiveT[action] := editproc(get(argL)) 
+<a name="438"/>   return
+<a name="439"/>end
+<a name="440"/>
+<a name="441"/># build existence flag: action
+<a name="442"/>procedure Directive_exists( 
+<a name="443"/>                           fileL,DirectiveT,action,argL,editproc)
+<a name="444"/>
+<a name="445"/>   if *argL = 0 then 
+<a name="446"/>      DirectiveT[action] := 1
+<a name="447"/>   else 
+<a name="448"/>      DirectiveT[action] := editproc(get(argL)) 
+<a name="449"/>   return
+<a name="450"/>end
+<a name="451"/>
+<a name="452"/>
+<a name="453"/># quietly ignore any directive
+<a name="454"/>procedure Directive_ignore( 
+<a name="455"/>                           fileL,DirectiveT,action,argL,editproc)
+<a name="456"/>
+<a name="457"/>   return
+<a name="458"/>end
+<a name="459"/>
+<a name="460"/>
+<a name="461"/># flag directive with a warning
+<a name="462"/>procedure Directive_warning( 
+<a name="463"/>                            fileL,DirectiveT,action,argL,editproc)
+<a name="464"/>
+<a name="465"/>   put(fileL,"-- Directive isn't defined in specification." )
+<a name="466"/>   return
+<a name="467"/>end
+</pre></body></html>

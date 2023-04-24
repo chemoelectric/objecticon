@@ -1,0 +1,335 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>imrutils.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     imrutils.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to deal with image records
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     June 10, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#  This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  Procedures to manipulate image strings as records.  
+<a name="18"/>#
+<a name="19"/>#	imrcath(imr1, imr2)
+<a name="20"/>#			concatenates imr1 and imr2 horizontally
+<a name="21"/>#
+<a name="22"/>#	imrcatv(imr1, imr2)
+<a name="23"/>#			concatenates imr1 and imr2 vertically
+<a name="24"/>#
+<a name="25"/>#	imrcopy(imr)	create copy of imr
+<a name="26"/>#
+<a name="27"/>#	imrdraw(win, x, y, imr)
+<a name="28"/>#			draws an image record
+<a name="29"/>#
+<a name="30"/>#	imrfliph(imr)	flips an image record horizontally
+<a name="31"/>#
+<a name="32"/>#	imrflipv(imr)	flips an image record vertically
+<a name="33"/>#
+<a name="34"/>#	imrnegative(imr)
+<a name="35"/>#			produces "negative" of image; intended for
+<a name="36"/>#			grayscale palettes
+<a name="37"/>#
+<a name="38"/>#	imropen(imr)	opens a hidden window with an image record
+<a name="39"/>#
+<a name="40"/>#	imrpshift(imr, ir)
+<a name="41"/>#			shifts colors by mapping rotated palette
+<a name="42"/>#
+<a name="43"/>#	imrrot180(imr)
+<a name="44"/>#			rotates an image record 180 degrees
+<a name="45"/>#
+<a name="46"/>#	imrrot90cw(imr)
+<a name="47"/>#			rotates an image record 90 degrees clockwise
+<a name="48"/>#
+<a name="49"/>#	imrshifth(imr, i)
+<a name="50"/>#			shifts an image record horizontally by i pixels
+<a name="51"/>#			with wrap-around; positive i to the right,
+<a name="52"/>#			negative to the left.
+<a name="53"/>#
+<a name="54"/>#	imrshiftv(imr, i)
+<a name="55"/>#			shifts an image record vertically by i pixels
+<a name="56"/>#			with wrap-around; positive i to the top,
+<a name="57"/>#			negative to the bottom.
+<a name="58"/>#
+<a name="59"/>#	imstoimr(s)	converts an image string to an image record
+<a name="60"/>#
+<a name="61"/>#	imrtoims(imr)	converts an image record to an image string
+<a name="62"/>#
+<a name="63"/>#  Note:  All the procedures that produce image records modify their
+<a name="64"/>#  argument records; they do not return modified copies.
+<a name="65"/>#
+<a name="66"/>############################################################################
+<a name="67"/>#
+<a name="68"/>#  Possible additions:
+<a name="69"/>#
+<a name="70"/>#	Make stripes from one (or more) rows/columns.
+<a name="71"/>#
+<a name="72"/>#	Convert from one palette to another.
+<a name="73"/>#
+<a name="74"/>############################################################################
+<a name="75"/>#
+<a name="76"/>#  Requires:  Version 9 graphics  
+<a name="77"/>#
+<a name="78"/>############################################################################
+<a name="79"/>#
+<a name="80"/>#  Links:  strings, wopen
+<a name="81"/>#
+<a name="82"/>############################################################################
+<a name="83"/>
+<a name="84"/>package ipl.imrutils
+<a name="85"/>
+<a name="86"/>import
+<a name="87"/>   graphics(Window),
+<a name="88"/>   ipl.strings(rotate)
+<a name="89"/>
+<a name="90"/>record ImageRecord(width, palette, pixels)
+<a name="91"/>
+<a name="92"/># horizontally concatenate image records
+<a name="93"/>procedure imrcath(imr1, imr2)	
+<a name="94"/>   local imr, i, rows1, rows2
+<a name="95"/>
+<a name="96"/>   if *imr1.pixels / imr1.width ~= *imr2.pixels / imr2.width then fail
+<a name="97"/>   if imr1.palette ~== imr2.palette then fail
+<a name="98"/>
+<a name="99"/>   imr := ImageRecord()
+<a name="100"/>   imr.width := imr1.width + imr2.width
+<a name="101"/>   imr.palette := imr1.palette
+<a name="102"/>
+<a name="103"/>   rows1 := []
+<a name="104"/>
+<a name="105"/>   imr1.pixels ? {
+<a name="106"/>      while put(rows1, move(imr1.width))
+<a name="107"/>      }
+<a name="108"/>
+<a name="109"/>   rows2 := []
+<a name="110"/>
+<a name="111"/>   imr2.pixels ? {
+<a name="112"/>      while put(rows2, move(imr2.width))
+<a name="113"/>      }
+<a name="114"/>
+<a name="115"/>   imr.pixels := ""
+<a name="116"/>
+<a name="117"/>   every i := 1 to *rows1 do
+<a name="118"/>      imr.pixels ||:= rows1[i] || rows2[i]
+<a name="119"/>
+<a name="120"/>   return imr
+<a name="121"/>
+<a name="122"/>end
+<a name="123"/>
+<a name="124"/># vertically concatenate image records
+<a name="125"/>procedure imrcatv(imr1, imr2)		
+<a name="126"/>   local imr
+<a name="127"/>
+<a name="128"/>   if imr1.width ~= imr2.width then fail
+<a name="129"/>   if imr1.palette ~== imr2.palette then fail
+<a name="130"/>
+<a name="131"/>   imr := ImageRecord()
+<a name="132"/>   imr.width := imr1.width
+<a name="133"/>   imr.palette := imr1.palette		# CHECK
+<a name="134"/>   imr.pixels := imr1.pixels || imr2.pixels
+<a name="135"/>
+<a name="136"/>   return imr
+<a name="137"/>
+<a name="138"/>end
+<a name="139"/>
+<a name="140"/>procedure imrcopy(imr)
+<a name="141"/>
+<a name="142"/>   return copy(imr)
+<a name="143"/>
+<a name="144"/>end
+<a name="145"/>
+<a name="146"/># draw image record
+<a name="147"/>procedure imrdraw(win, x, y, imr)	
+<a name="148"/>
+<a name="149"/>
+<a name="150"/>   /x := 0
+<a name="151"/>   /y := 0
+<a name="152"/>
+<a name="153"/>   return win.draw_image(x, y, imrtoims(imr))
+<a name="154"/>
+<a name="155"/>end
+<a name="156"/>
+<a name="157"/># flip image record diagonally
+<a name="158"/>procedure imrflipd(imr)			
+<a name="159"/>   local height, columns, i, row
+<a name="160"/>
+<a name="161"/>   height := *imr.pixels / imr.width
+<a name="162"/>   columns := list(height, "")
+<a name="163"/>
+<a name="164"/>   imr.pixels ? {
+<a name="165"/>      while row := move(imr.width) do
+<a name="166"/>         every i := 1 to imr.width do
+<a name="167"/>            columns[i] ||:= row[i]
+<a name="168"/>      }
+<a name="169"/>
+<a name="170"/>   imr.pixels := ""
+<a name="171"/>
+<a name="172"/>   every imr.pixels ||:= !columns
+<a name="173"/>
+<a name="174"/>   imr.width := height
+<a name="175"/>
+<a name="176"/>   return imr
+<a name="177"/>
+<a name="178"/>end
+<a name="179"/>
+<a name="180"/># flip image record horizontally
+<a name="181"/>procedure imrfliph(imr)			
+<a name="182"/>   local pixels
+<a name="183"/>
+<a name="184"/>   pixels := ""
+<a name="185"/>
+<a name="186"/>   imr.pixels ? {
+<a name="187"/>      while pixels ||:= reverse(move(imr.width))
+<a name="188"/>      }
+<a name="189"/>
+<a name="190"/>   imr.pixels := pixels
+<a name="191"/>
+<a name="192"/>   return imr
+<a name="193"/>
+<a name="194"/>end
+<a name="195"/>
+<a name="196"/># flip image record vertically
+<a name="197"/>procedure imrflipv(imr)			
+<a name="198"/>   local pixels
+<a name="199"/>
+<a name="200"/>   pixels := ""
+<a name="201"/>
+<a name="202"/>   imr.pixels ? {
+<a name="203"/>      while pixels := move(imr.width) || pixels
+<a name="204"/>      }
+<a name="205"/>
+<a name="206"/>   imr.pixels := pixels
+<a name="207"/>
+<a name="208"/>   return imr
+<a name="209"/>
+<a name="210"/>end
+<a name="211"/>
+<a name="212"/># form negative of image record
+<a name="213"/>procedure imrnegative(imr)		
+<a name="214"/>   local chars
+<a name="215"/>
+<a name="216"/>   chars := Window.palette_chars(imr.palette)
+<a name="217"/>
+<a name="218"/>   imr.pixels := map(imr.pixels, chars, reverse(chars))
+<a name="219"/>
+<a name="220"/>   return imr
+<a name="221"/>
+<a name="222"/>end
+<a name="223"/>
+<a name="224"/># open window with image record
+<a name="225"/>procedure imropen(imr)			
+<a name="226"/>   local win
+<a name="227"/>
+<a name="228"/>   win := Window().set_size(imr.width, *imr.pixels / imr.width)
+<a name="229"/>
+<a name="230"/>   unless imrdraw(win, 0, 0, imr) then {
+<a name="231"/>      win.close()
+<a name="232"/>      fail
+<a name="233"/>      }
+<a name="234"/>
+<a name="235"/>   return win
+<a name="236"/>   
+<a name="237"/>end
+<a name="238"/>
+<a name="239"/># map shifted palette
+<a name="240"/>procedure imrpshift(imr, i)		
+<a name="241"/>   local chars
+<a name="242"/>
+<a name="243"/>   chars := Window.palette_chars(imr.palette)
+<a name="244"/>
+<a name="245"/>   imr.pixels := map(imr.pixels, chars, rotate(chars, i))
+<a name="246"/>
+<a name="247"/>   return imr
+<a name="248"/>
+<a name="249"/>end
+<a name="250"/>
+<a name="251"/># rotate image record 180 degrees
+<a name="252"/>procedure imrrot180(imr)		
+<a name="253"/>
+<a name="254"/>   imr.pixels := reverse(imr.pixels)
+<a name="255"/>
+<a name="256"/>   return imr
+<a name="257"/>
+<a name="258"/>end
+<a name="259"/>
+<a name="260"/># rotate image record 90 deg. clockwise
+<a name="261"/>procedure imrrot90cw(imr)		
+<a name="262"/>   local height, columns, i, row
+<a name="263"/>
+<a name="264"/>   height := *imr.pixels / imr.width
+<a name="265"/>   columns := list(imr.width, "")
+<a name="266"/>
+<a name="267"/>   imr.pixels ? {
+<a name="268"/>      while row := move(imr.width) do
+<a name="269"/>         every i := 1 to imr.width do
+<a name="270"/>            columns[i] := row[i] || columns[i]
+<a name="271"/>      }
+<a name="272"/>
+<a name="273"/>   imr.pixels := ""
+<a name="274"/>
+<a name="275"/>   every imr.pixels ||:= !columns
+<a name="276"/>
+<a name="277"/>   imr.width := height
+<a name="278"/>
+<a name="279"/>   return imr
+<a name="280"/>
+<a name="281"/>end
+<a name="282"/>
+<a name="283"/>#  Note:  Since shifted out pixels enter in the top or bottom row, depending
+<a name="284"/>#  on the direction of the shift, one full pass over the width raises the
+<a name="285"/>#  image one pixel.
+<a name="286"/>
+<a name="287"/># shift image record horizontally
+<a name="288"/>procedure imrshifth(imr, i)		
+<a name="289"/>
+<a name="290"/>   imr.pixels := rotate(imr.pixels, i)
+<a name="291"/>
+<a name="292"/>   return imr
+<a name="293"/>
+<a name="294"/>end
+<a name="295"/>
+<a name="296"/>#  See note on imrshifth()
+<a name="297"/>
+<a name="298"/># shift image record vertically
+<a name="299"/>procedure imrshiftv(imr, i)		
+<a name="300"/>
+<a name="301"/>   /i := 1
+<a name="302"/>
+<a name="303"/>   imr.pixels := rotate(imr.pixels, i * imr.width)
+<a name="304"/>
+<a name="305"/>   return imr
+<a name="306"/>
+<a name="307"/>end
+<a name="308"/>
+<a name="309"/># convert image record to image string
+<a name="310"/>procedure imrtoims(imr)			
+<a name="311"/>
+<a name="312"/>   return imr.width || "," || imr.palette || "," || imr.pixels
+<a name="313"/>
+<a name="314"/>end
+<a name="315"/>
+<a name="316"/># convert image string to image record
+<a name="317"/>procedure imstoimr(s)			
+<a name="318"/>   local imr
+<a name="319"/>
+<a name="320"/>   imr := ImageRecord()
+<a name="321"/>
+<a name="322"/>   s ? {
+<a name="323"/>      imr.width := tab(upto(',')) | fail
+<a name="324"/>      move(1)
+<a name="325"/>      imr.palette := tab(upto(',')) | fail
+<a name="326"/>      move(1)
+<a name="327"/>      imr.pixels := tab(0)
+<a name="328"/>      }
+<a name="329"/>
+<a name="330"/>   return imr
+<a name="331"/>
+<a name="332"/>end
+</pre></body></html>

@@ -1,0 +1,22 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>altlists</title></head><body>
+<h1>altlists(l, alts)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.lists-package.html" target="listFrame">ipl.lists</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Given a list l and a table (int-&gt;list) of alternative elements,
+generate all possible modified lists.  For example, given l=[1,2,3]
+and t={1-&gt;a,b 3-&gt;c,d} we generate :-
+<p/>
+[a,2,c],[a,2,d],[a,2,3],[b,2,c],[b,2,d],[b,2,3],[1,2,c],[1,2,d]
+<p/>
+Note that the original list l is not generated, only modifications.
+The same list is returned each time.
+<p/>
+The no. of results generated is :-
+(product of (*!alts + 1)) - 1
+For the example above, (2+1)*(2+1) - 1 = 8.
+<p/><a href="ipl.lists-lists.icn.html#977" target="displayFrame">Source - lists.icn </a>
+<p/>
+</body></html>

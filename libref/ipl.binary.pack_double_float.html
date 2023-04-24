@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>pack_double_float</title></head><body>
+<h1>pack_double_float(v)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.binary-package.html" target="listFrame">ipl.binary</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Procedures for converting real values from input streams.  These
+procedures accept standard IEEE floating point values as strings,
+usually as read from a file, and return their numeric equivalent as a
+"real".  The degree of accuracy is likely to vary with different
+implementations of Icon.
+<p/>
+Requires large integers.
+<p/>
+Parameter	    Float   Double  Extended Extended96
+=================================================================
+Size (bytes:bits)	4:32	8:64	10:80	12:96
+<p/>
+Range of binary exponents
+Minimum	    -126    -1022   -16383  -16383
+Maximum	    +127    +1023   +16383  +16383
+Exponent width in bits   8	11  15	15
+Exponent bias	+127	+1023	+16383	+16383
+<p/>
+Significand precision
+Bits	    24	53  64	64
+Decimal digits	7-8 15-16   18-19   18-19
+<p/>
+Decimal range approximate
+Maximum positive	      3.4E+38	1.7E+308   1.1E+4932
+Minimum positive norm     1.2E-38	2.3E-308   1.7E-4932
+Minimum positive denorm   1.5E-45	5.0E-324   1.9E-4951
+Maximum negative denorm  -1.5E-45  -5.0E-324  -1.9E-4951
+Maximum negative norm    -1.2E-38  -2.3E-308  -1.7E-4932
+Minimum negative	     -3.4E+38  -1.7E+308  -1.1E+4932
+<p/>
+<p/>
+"d"
+<p/><a href="ipl.binary-binary.icn.html#682" target="displayFrame">Source - binary.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,493 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>FormWeekField</title></head><body>
+<h1>FormWeekField</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="ipl.timegui.WeekField.html" target="displayFrame">ipl.timegui.WeekField</a><br>
+<a href="ipl.browser.FormEntry.html" target="displayFrame">ipl.browser.FormEntry</a><br>
+<a href="ipl.browser.HasAscent.html" target="displayFrame">ipl.browser.HasAscent</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-browser.icn.html#1952" target="displayFrame">Source - browser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.HasAscent.html">ipl.browser.HasAscent</a>
+<a href="ipl.browser.FormEntry.html">ipl.browser.FormEntry</a>
+<a href="gui.MenuMode.html">gui.MenuMode</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.HasUseWheel.html">gui.HasUseWheel</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="gui.DropDown.html">gui.DropDown</a>
+<a href="ipl.timegui.WeekField.html">ipl.timegui.WeekField</a>
+<a href="ipl.browser.FormWeekField.html">ipl.browser.FormWeekField</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from ipl.browser.FormEntry</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.FormEntry.html#get_save_key">get_save_key()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from ipl.browser.FormEntry</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.FormEntry.html#form_id">form_id</a>
+<a href="ipl.browser.FormEntry.html#form_name">form_name</a>
+<a href="ipl.browser.FormEntry.html#form_save_key">form_save_key</a>
+<a href="ipl.browser.FormEntry.html#form_tabindex">form_tabindex</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#handle_wheel_left">handle_wheel_left()</a>
+<a href="gui.HasUseWheel.html#handle_wheel_right">handle_wheel_right()</a>
+<a href="gui.HasUseWheel.html#set_use_wheel">set_use_wheel()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#wheel_listeners">wheel_listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#add">add()</a>
+<a href="gui.Component.html#add_list">add_list()</a>
+<a href="gui.Component.html#build_point_chain">build_point_chain()</a>
+<a href="gui.Component.html#can_drag">can_drag()</a>
+<a href="gui.Component.html#can_drop">can_drop()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#drag_event">drag_event()</a>
+<a href="gui.Component.html#drag_reset">drag_reset()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_index">get_index()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip">get_tooltip()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#handle_accel">handle_accel()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#keeps">keeps()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#match_accel">match_accel()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove">remove()</a>
+<a href="gui.Component.html#remove_all">remove_all()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_index">remove_index()</a>
+<a href="gui.Component.html#remove_list">remove_list()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reposition">reposition()</a>
+<a href="gui.Component.html#reposition_index">reposition_index()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout">reset_layout()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_geometry">set_geometry()</a>
+<a href="gui.Component.html#set_height">set_height()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_pos">set_pos()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_size">set_size()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_width">set_width()</a>
+<a href="gui.Component.html#set_x">set_x()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y">set_y()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#shift">shift()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.DropDown</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.DropDown.html#allow_nested">allow_nested()</a>
+<a href="gui.DropDown.html#close_all">close_all()</a>
+<a href="gui.DropDown.html#close_popup">close_popup()</a>
+<a href="gui.DropDown.html#create_button">create_button()</a>
+<a href="gui.DropDown.html#display">display()</a>
+<a href="gui.DropDown.html#end_change">end_change()</a>
+<a href="gui.DropDown.html#finally">finally()</a>
+<a href="gui.DropDown.html#focus_changed">focus_changed()</a>
+<a href="gui.DropDown.html#forward_key">forward_key()</a>
+<a href="gui.DropDown.html#gen_popup_components">gen_popup_components()</a>
+<a href="gui.DropDown.html#get_default_height">get_default_height()</a>
+<a href="gui.DropDown.html#get_default_width">get_default_width()</a>
+<a href="gui.DropDown.html#get_nesting_component">get_nesting_component()</a>
+<a href="gui.DropDown.html#go_down">go_down()</a>
+<a href="gui.DropDown.html#go_up">go_up()</a>
+<a href="gui.DropDown.html#handle_wheel_down">handle_wheel_down()</a>
+<a href="gui.DropDown.html#handle_wheel_up">handle_wheel_up()</a>
+<a href="gui.DropDown.html#layout">layout()</a>
+<a href="gui.DropDown.html#on_button_press">on_button_press()</a>
+<a href="gui.DropDown.html#open_popup">open_popup()</a>
+<a href="gui.DropDown.html#set_direction">set_direction()</a>
+<a href="gui.DropDown.html#should_close">should_close()</a>
+<a href="gui.DropDown.html#start_change">start_change()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.DropDown</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.DropDown.html#b">b</a>
+<a href="gui.DropDown.html#direction">direction</a>
+<a href="gui.DropDown.html#old_focus">old_focus</a>
+<a href="gui.DropDown.html#popup">popup</a>
+<a href="gui.DropDown.html#view">view</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from ipl.timegui.WeekField</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.timegui.WeekField.html#assign_value">assign_value()</a>
+<a href="ipl.timegui.WeekField.html#create_popup">create_popup()</a>
+<a href="ipl.timegui.WeekField.html#create_view">create_view()</a>
+<a href="ipl.timegui.WeekField.html#do_decrement">do_decrement()</a>
+<a href="ipl.timegui.WeekField.html#do_increment">do_increment()</a>
+<a href="ipl.timegui.WeekField.html#get_value">get_value()</a>
+<a href="ipl.timegui.WeekField.html#got_date">got_date()</a>
+<a href="ipl.timegui.WeekField.html#initially">initially()</a>
+<a href="ipl.timegui.WeekField.html#on_textfield">on_textfield()</a>
+<a href="ipl.timegui.WeekField.html#set_value">set_value()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from ipl.timegui.WeekField</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.timegui.WeekField.html#format">format</a>
+<a href="ipl.timegui.WeekField.html#last_val">last_val</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_ascent">get_ascent()</a>
+<a href="#get_form_value">get_form_value()</a>
+<a href="#get_save_value">get_save_value()</a>
+<a href="#new">new()</a>
+<a href="#parse">parse()</a>
+<a href="#reset_form">reset_form()</a>
+<a href="#restore_value">restore_value()</a>
+<a href="#validate_form">validate_form()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#init_val">init_val</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_ascent"/>
+<h3>get_ascent()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.HasAscent.html#get_ascent">get_ascent()</a> in <a href="ipl.browser.HasAscent.html" target="displayFrame">ipl.browser.HasAscent</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1956" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_form_value"/>
+<h3>get_form_value()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.FormEntry.html#get_form_value">get_form_value()</a> in <a href="ipl.browser.FormEntry.html" target="displayFrame">ipl.browser.FormEntry</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1968" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_save_value"/>
+<h3>get_save_value()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.FormEntry.html#get_save_value">get_save_value()</a> in <a href="ipl.browser.FormEntry.html" target="displayFrame">ipl.browser.FormEntry</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1985" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(init_val)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.timegui.WeekField.html#new">new()</a> in <a href="ipl.timegui.WeekField.html" target="displayFrame">ipl.timegui.WeekField</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1993" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1972" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_form"/>
+<h3>reset_form()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.FormEntry.html#reset_form">reset_form()</a> in <a href="ipl.browser.FormEntry.html" target="displayFrame">ipl.browser.FormEntry</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1960" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="restore_value"/>
+<h3>restore_value(val)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.FormEntry.html#restore_value">restore_value()</a> in <a href="ipl.browser.FormEntry.html" target="displayFrame">ipl.browser.FormEntry</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1989" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_form"/>
+<h3>validate_form()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.FormEntry.html#validate_form">validate_form()</a> in <a href="ipl.browser.FormEntry.html" target="displayFrame">ipl.browser.FormEntry</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1964" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="init_val"/>
+<h3>init_val</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1953" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

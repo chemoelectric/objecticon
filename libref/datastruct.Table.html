@@ -1,0 +1,501 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Table</title></head><body>
+<h1>Table</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.HasMode.html" target="displayFrame">util.HasMode</a><br>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+<a href="lang.ObjectHash.html" target="displayFrame">lang.ObjectHash</a><br>
+<a href="lang.ObjectEquals.html" target="displayFrame">lang.ObjectEquals</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="datastruct.OrderTableImpl1.html">datastruct.OrderTableImpl1</a><br>
+<a href="datastruct.OrderTableImpl2.html">datastruct.OrderTableImpl2</a><br>
+<a href="datastruct.InsertTableImpl1.html">datastruct.InsertTableImpl1</a><br>
+<a href="datastruct.InsertTableImpl2.html">datastruct.InsertTableImpl2</a><br>
+<a href="datastruct.UnmodifiableTable.html">datastruct.UnmodifiableTable</a><br>
+<a href="datastruct.UnmodifiableBuiltinTable.html">datastruct.UnmodifiableBuiltinTable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+This is a common superclass for several table-like data structures.
+<p/>
+A subclass must implement different optional methods depending on
+its capability mode, as follows :-
+<p/>
+<ul>
+<li>
+<code><a href="datastruct.Table.html#ORDER">ORDER</a></code> - <code><a href="datastruct.Table.html#back_key">back_key()</a></code>, <code><a href="datastruct.Table.html#rank">rank()</a></code> and <code><a href="datastruct.Table.html#select">select()</a></code>
+</li>
+<li>
+<code><a href="datastruct.Table.html#INSERT">INSERT</a></code> - <code><a href="datastruct.Table.html#insert">insert()</a></code>, <code><a href="datastruct.Table.html#add">add()</a></code>
+</li>
+<li>
+<code><a href="datastruct.Table.html#DELETE">DELETE</a></code> - <code><a href="datastruct.Table.html#delete">delete()</a></code>
+<p/>
+</li>
+</ul>
+There are several other abstract methods which all classes must of
+course implement, and others which may be overridden to provide more
+efficient implementations than the default.
+<p/>
+Note that the behaviour of the various generator methods should the
+table be concurrently modified during the course of generation,
+depends upon the particular table implementation.
+<p/><a href="datastruct-tables.icn.html#16" target="displayFrame">Source - tables.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="datastruct.Table.html">datastruct.Table</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+<a href="util.HasMode.html#get_mode">get_mode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#back">back()</a>
+<a href="#back_key">back_key()</a>
+<a href="#back_keyval">back_keyval()</a>
+<a href="#clear">clear()</a>
+<a href="#delete">delete()</a>
+<a href="#empty">empty()</a>
+<a href="#entries">entries()</a>
+<a href="#entry_list">entry_list()</a>
+<a href="#flatten">flatten()</a>
+<a href="#gen">gen()</a>
+<a href="#get">get()</a>
+<a href="#init">init()</a>
+<a href="#init_entries">init_entries()</a>
+<a href="#insert">insert()</a>
+<a href="#key">key()</a>
+<a href="#key_list">key_list()</a>
+<a href="#key_member">key_member()</a>
+<a href="#key_sort">key_sort()</a>
+<a href="#keyval">keyval()</a>
+<a href="#member">member()</a>
+<a href="#object_equals">object_equals()</a>
+<a href="#object_hash">object_hash()</a>
+<a href="#object_output">object_output()</a>
+<a href="#random">random()</a>
+<a href="#random_key">random_key()</a>
+<a href="#rank">rank()</a>
+<a href="#select">select()</a>
+<a href="#size">size()</a>
+<a href="#sort">sort()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#def">def</a>
+<a href="#DELETE">DELETE</a>
+<a href="#EMPTY_TABLE">EMPTY_TABLE</a>
+<a href="#INSERT">INSERT</a>
+<a href="#MODIFY">MODIFY</a>
+<a href="#ORDER">ORDER</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(key)</h3>
+public optional<p/>
+<dl>
+<dd>
+Like <code><a href="datastruct.Table.html#member">member</a></code>, but if the key is not present a new entry is added
+(with the default value).  If the table has MODIFY capability, a
+variable for the new entry is returned, otherwise a value is
+returned.  Only implemented with INSERT capability.
+<p/>
+Example :-
+<pre>
+   # Word counting
+   t := SortTable(0)
+   every w := words() do
+      t.add(w) +:= 1
+</pre>
+<p/><a href="datastruct-tables.icn.html#87" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="back"/>
+<h3>back(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the values in reverse order, starting with the value
+corresponding to the key before index <code>i</code> (thus generating the
+values in the range 1:i); <code>i</code> defaults to 0.  Only implemented
+with ORDER capability.  If the table has MODIFY capability,
+variables are generated, otherwise values are generated.
+<p/><a href="datastruct-tables.icn.html#189" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="back_key"/>
+<h3>back_key(i)</h3>
+public optional<p/>
+<dl>
+<dd>
+Generate the keys in reverse order, starting with the key before
+index <code>i</code> (thus generating the elements in the range 1:i); <code>i</code>
+defaults to 0.  Only implemented with ORDER capability.
+<p/><a href="datastruct-tables.icn.html#139" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="back_keyval"/>
+<h3>back_keyval(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate alternating key/value pairs, starting with the key
+before index <code>i</code> (thus generating the elements in the range 1:i);
+<code>i</code> defaults to 0.  If the table has MODIFY capability, the entry
+values will be generated as variables, otherwise as values.  Only
+implemented with ORDER capability.
+<p/><a href="datastruct-tables.icn.html#153" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="clear"/>
+<h3>clear()</h3>
+public<p/>
+<dl>
+<dd>
+Clear the table of all elements. Always succeeds and returns
+<code>self</code>.  Only implemented with DELETE capability.
+<p/><a href="datastruct-tables.icn.html#229" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="delete"/>
+<h3>delete(key)</h3>
+public optional<p/>
+<dl>
+<dd>
+Delete the entry with the given key.  Fails if the key was not
+present, otherwise succeeds and returns <code>self</code>.  Only implemented
+with DELETE capability.
+<p/><a href="datastruct-tables.icn.html#72" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="empty"/>
+<h3>empty()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the size is zero.
+<p/><a href="datastruct-tables.icn.html#205" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="entries"/>
+<h3>entries()</h3>
+public<p/>
+<dl>
+<dd>
+Generate key-value pairs as a sequence of <code><a href="datastruct.Entry.html" target="displayFrame">Entry</a></code> records.  NB -
+for each invocation, the same record is returned every time, with
+the values replaced.
+<p/><a href="datastruct-tables.icn.html#238" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="entry_list"/>
+<h3>entry_list()</h3>
+public<p/>
+<dl>
+<dd>
+Return a list of pairs of key-values; it will be sorted by key if
+the table has ORDER capability.
+<p/><a href="datastruct-tables.icn.html#262" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="flatten"/>
+<h3>flatten()</h3>
+public<p/>
+<dl>
+<dd>
+Return a flat list, with alternating key-value entries.
+<p/><a href="datastruct-tables.icn.html#247" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the values (cf !t for a table).  If the table has MODIFY
+capability, variables are generated, otherwise values are
+generated.  With ORDER capability, the values are generated in
+the order corresponding to the sorted key order, starting with
+the key at index <code>i</code> (default 1).
+<p/><a href="datastruct-tables.icn.html#178" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="get"/>
+<h3>get(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the value with the given key, or the default value if
+the key is not present.  Equivalent to <code>.t[k]</code> for a table.
+<p/><a href="datastruct-tables.icn.html#79" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#51" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="init_entries"/>
+<h3>init_entries(entries)</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#339" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="insert"/>
+<h3>insert(key, val)</h3>
+public optional<p/>
+<dl>
+<dd>
+Insert a new entry, or change an existing one.  Always succeeds
+and returns <code>self</code>.  Only implemented with INSERT capability.
+<p/><a href="datastruct-tables.icn.html#59" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="key"/>
+<h3>key(i)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Generate the keys (cf the builtin key() function).  With ORDER
+capability, the keys are generated in sorted order, starting with
+the key at index <code>i</code> (default 1).
+<p/><a href="datastruct-tables.icn.html#121" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="key_list"/>
+<h3>key_list()</h3>
+public<p/>
+<dl>
+<dd>
+Return a list of the keys; it will be sorted if the table has
+ORDER capability.
+<p/><a href="datastruct-tables.icn.html#254" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="key_member"/>
+<h3>key_member(k)</h3>
+public<p/>
+<dl>
+<dd>
+Helper method to suspend the key <code>k</code> and its corresponding entry.
+<p/><a href="datastruct-tables.icn.html#146" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="key_sort"/>
+<h3>key_sort()</h3>
+public<p/>
+<dl>
+<dd>
+Return a sorted list of keys.
+<p/><a href="datastruct-tables.icn.html#111" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="keyval"/>
+<h3>keyval(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate alternating key/value pairs (cf the builtin keyval()
+function.)  If the table has MODIFY capability, the entry values
+will be generated as variables, otherwise as values.  With ORDER
+capability, the pairs are generated in sorted key order, starting
+with the key at index <code>i</code> (default 1).
+<p/><a href="datastruct-tables.icn.html#128" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="member"/>
+<h3>member(key)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return the value for the given key if it is in the table, or fail
+if it is not present.  If the table has MODIFY capability, a
+variable is returned; otherwise the value.
+<p/><a href="datastruct-tables.icn.html#65" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="object_equals"/>
+<h3>object_equals(other, seen)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectEquals.html#object_equals">object_equals()</a> in <a href="lang.ObjectEquals.html" target="displayFrame">lang.ObjectEquals</a></dd>
+<dd>
+Custom equals mirrors the <code><a href="lang.equals.html" target="displayFrame">equals()</a></code> behaviour for builtin tables.
+<p/><a href="datastruct-tables.icn.html#270" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="object_hash"/>
+<h3>object_hash(depth)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectHash.html#object_hash">object_hash()</a> in <a href="lang.ObjectHash.html" target="displayFrame">lang.ObjectHash</a></dd>
+<dd>
+Custom hash mirrors the <code><a href="lang.hash.html" target="displayFrame">hash()</a></code> behaviour for builtin tables.
+<p/><a href="datastruct-tables.icn.html#279" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+Output object
+<p/><a href="datastruct-tables.icn.html#292" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="random"/>
+<h3>random()</h3>
+public<p/>
+<dl>
+<dd>
+Return a random value (cf ?t for a table).  If the table has MODIFY
+capability, a variable is returned, otherwise a value is returned.
+<p/><a href="datastruct-tables.icn.html#212" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="random_key"/>
+<h3>random_key()</h3>
+public<p/>
+<dl>
+<dd>
+Return a random key.
+<p/><a href="datastruct-tables.icn.html#220" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rank"/>
+<h3>rank(key)</h3>
+public optional<p/>
+<dl>
+<dd>
+Return the rank of the given key, ie its order number in the
+table; fails if there is no matching key in the table.  Only
+implemented for tables with ORDER capability.
+<p/><a href="datastruct-tables.icn.html#164" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="select"/>
+<h3>select(i)</h3>
+public optional<p/>
+<dl>
+<dd>
+Return the <code>i</code>th key, in order, in the table.  Fails if <code>i</code> is
+out of range, using standard icon indexing semantics.  Only
+implemented for tables with ORDER capability.
+<p/><a href="datastruct-tables.icn.html#171" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return the size of the table.
+<p/><a href="datastruct-tables.icn.html#200" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="sort"/>
+<h3>sort()</h3>
+public<p/>
+<dl>
+<dd>
+Return a sorted list of key-value pairs.
+<p/><a href="datastruct-tables.icn.html#102" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="def"/>
+<h3>def</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#35" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="DELETE"/>
+<h3>DELETE</h3>
+public static const<p/>
+<dl>
+<dd>
+Constant indicating delete capability
+<p/><a href="datastruct-tables.icn.html#46" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="EMPTY_TABLE"/>
+<h3>EMPTY_TABLE</h3>
+public static const<p/>
+<dl>
+<dd>
+Empty table implementation
+<p/><a href="datastruct-tables.icn.html#40" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="INSERT"/>
+<h3>INSERT</h3>
+public static const<p/>
+<dl>
+<dd>
+Constant indicating insert capability
+<p/><a href="datastruct-tables.icn.html#44" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="MODIFY"/>
+<h3>MODIFY</h3>
+public static const<p/>
+<dl>
+<dd>
+Constant indicating modifiable capability
+<p/><a href="datastruct-tables.icn.html#42" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="ORDER"/>
+<h3>ORDER</h3>
+public static const<p/>
+<dl>
+<dd>
+Constant indicating keys are stored in order
+<p/><a href="datastruct-tables.icn.html#48" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+</body></html>

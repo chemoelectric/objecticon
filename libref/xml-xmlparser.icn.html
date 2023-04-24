@@ -1,0 +1,2350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>xmlparser.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: xmlparser.icn 9139 2021-07-01 22:30:09Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>import lang, util, ipl.scan, exception
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># Holds detail of a parse position in a file
+<a name="15"/>#
+<a name="16"/>package class Diversion()
+<a name="17"/>   public const
+<a name="18"/>      base,
+<a name="19"/>      id,
+<a name="20"/>      subject, 
+<a name="21"/>      pos
+<a name="22"/>
+<a name="23"/>   public new(base, id)
+<a name="24"/>      self.base := base
+<a name="25"/>      self.id := id
+<a name="26"/>      self.subject := &amp;subject
+<a name="27"/>      self.pos := &amp;pos
+<a name="28"/>      return
+<a name="29"/>   end
+<a name="30"/>end
+<a name="31"/>
+<a name="32"/>#
+<a name="33"/># Instances of this class are fired to listeners on a parse problem.
+<a name="34"/>#
+<a name="35"/>final class ProblemDetail()
+<a name="36"/>   public const
+<a name="37"/>      stack,
+<a name="38"/>      msg
+<a name="39"/>
+<a name="40"/>   package new(stack, msg)
+<a name="41"/>      self.stack := stack
+<a name="42"/>      self.msg := msg
+<a name="43"/>      return
+<a name="44"/>   end
+<a name="45"/>end
+<a name="46"/>
+<a name="47"/>#
+<a name="48"/># Holds a attribute usage of IDREF.  Just used for validation.
+<a name="49"/>#
+<a name="50"/>package class IdAttributeRef()
+<a name="51"/>   public const
+<a name="52"/>      val,
+<a name="53"/>      pos
+<a name="54"/>
+<a name="55"/>   public new(val, pos)
+<a name="56"/>      self.val := val
+<a name="57"/>      self.pos := pos
+<a name="58"/>      return
+<a name="59"/>   end
+<a name="60"/>end
+<a name="61"/>
+<a name="62"/>#
+<a name="63"/># An XML Parser
+<a name="64"/>#
+<a name="65"/>class XmlParser(Connectable)
+<a name="66"/>   public static const
+<a name="67"/>      SPACE,
+<a name="68"/>      CHAR,
+<a name="69"/>      INVALID_CHAR,
+<a name="70"/>      NAME_START, 
+<a name="71"/>      NAME_CHAR,
+<a name="72"/>      PUBID_CHAR,
+<a name="73"/>      WARNING_EVENT,
+<a name="74"/>      VALIDITY_ERROR_EVENT, 
+<a name="75"/>      FATAL_ERROR_EVENT
+<a name="76"/>
+<a name="77"/>   private
+<a name="78"/>      doc,
+<a name="79"/>      current_divert_id,
+<a name="80"/>      divert_stack,
+<a name="81"/>      current_base,
+<a name="82"/>      in_ext_subset,
+<a name="83"/>      id_attribute_refs,
+<a name="84"/>      dtd_insert_shown_error
+<a name="85"/>
+<a name="86"/>   private readable
+<a name="87"/>      resolver, 
+<a name="88"/>      do_namespaces_flag,
+<a name="89"/>      preserve_insignificant_whitespace_flag,
+<a name="90"/>      preserve_comments_flag,
+<a name="91"/>      validate_flag,
+<a name="92"/>      utf8_flag
+<a name="93"/>
+<a name="94"/>   #
+<a name="95"/>   # Set the resolver
+<a name="96"/>   #
+<a name="97"/>   public set_resolver(r)
+<a name="98"/>      self.resolver := r
+<a name="99"/>      link
+<a name="100"/>   end
+<a name="101"/>
+<a name="102"/>   #
+<a name="103"/>   # Get the resolver being used
+<a name="104"/>   #
+<a name="105"/>   public get_resolver()
+<a name="106"/>      return .resolver
+<a name="107"/>   end
+<a name="108"/>
+<a name="109"/>   #
+<a name="110"/>   # Configure whether the parser does namespace post-processing (the
+<a name="111"/>   # default is yes).
+<a name="112"/>   #
+<a name="113"/>   public set_do_namespaces(s)
+<a name="114"/>      self.do_namespaces_flag := need_flag(s)
+<a name="115"/>      link
+<a name="116"/>   end
+<a name="117"/>
+<a name="118"/>   #
+<a name="119"/>   # Configure whether the parser validates (the default is yes).
+<a name="120"/>   #
+<a name="121"/>   public set_validate(s)
+<a name="122"/>      self.validate_flag := need_flag(s)
+<a name="123"/>      link
+<a name="124"/>   end
+<a name="125"/>
+<a name="126"/>   #
+<a name="127"/>   # Configure whether the parser preserves comments (the default is yes).
+<a name="128"/>   #
+<a name="129"/>   public set_preserve_comments(s)
+<a name="130"/>      preserve_comments_flag := need_flag(s)
+<a name="131"/>      link
+<a name="132"/>   end
+<a name="133"/>
+<a name="134"/>   #
+<a name="135"/>   # Configure whether the parser always keeps insignificant whitespace
+<a name="136"/>   # in the output document.  Generally only useful for testing purposes;
+<a name="137"/>   # XML canonical form needs this flag to be set because it is a byte
+<a name="138"/>   # for byte output which needs to include insignificate whitespace.
+<a name="139"/>   #
+<a name="140"/>   # The default is off.
+<a name="141"/>   #
+<a name="142"/>   public set_preserve_insignificant_whitespace(s)
+<a name="143"/>      preserve_insignificant_whitespace_flag := need_flag(s)
+<a name="144"/>      link
+<a name="145"/>   end
+<a name="146"/>
+<a name="147"/>   #
+<a name="148"/>   # Parse the string `s` returning an `XmlDocument` object.  `base` is an
+<a name="149"/>   # optional string parameter giving the URL of the source of `s`.  Providing
+<a name="150"/>   # it can help resolve relative paths within the document.
+<a name="151"/>   #
+<a name="152"/>   # [1] document ::= prolog element Misc*
+<a name="153"/>   #
+<a name="154"/>   public parse(s, base)
+<a name="155"/>      s := need_text(s)
+<a name="156"/>      doc := XmlDocument()
+<a name="157"/>
+<a name="158"/>      utf8_flag := Yes{ type(s) == "ucs" }
+<a name="159"/>
+<a name="160"/>      # The predefined entities.  Note that the values are in each case valid content.
+<a name="161"/>      # The chars "&amp;" and "&lt;" on their own would not be valid content.
+<a name="162"/>      if \utf8_flag then {
+<a name="163"/>         insert(doc.general_entities, u"lt", EntityDef(u"&amp;#60;"))
+<a name="164"/>         insert(doc.general_entities, u"gt", EntityDef(u"&gt;"))
+<a name="165"/>         insert(doc.general_entities, u"amp", EntityDef(u"&amp;#38;"))
+<a name="166"/>         insert(doc.general_entities, u"apos", EntityDef(u"\'"))
+<a name="167"/>         insert(doc.general_entities, u"quot", EntityDef(u"\""))
+<a name="168"/>      } else {
+<a name="169"/>         insert(doc.general_entities, "lt", EntityDef("&amp;#60;"))
+<a name="170"/>         insert(doc.general_entities, "gt", EntityDef("&gt;"))
+<a name="171"/>         insert(doc.general_entities, "amp", EntityDef("&amp;#38;"))
+<a name="172"/>         insert(doc.general_entities, "apos", EntityDef("\'"))
+<a name="173"/>         insert(doc.general_entities, "quot", EntityDef("\""))
+<a name="174"/>      }
+<a name="175"/>
+<a name="176"/>      dtd_insert_shown_error := &amp;null
+<a name="177"/>      current_divert_id := "input"
+<a name="178"/>      current_base := base
+<a name="179"/>      divert_stack := []
+<a name="180"/>      id_attribute_refs := []
+<a name="181"/>
+<a name="182"/>      normalize_eol(s) ? try1{{
+<a name="183"/>         parse_prolog()
+<a name="184"/>         doc.add(parse_element())
+<a name="185"/>         parse_misc_star()
+<a name="186"/>         pos(0) | throw("Invalid content at end of input")
+<a name="187"/>         validate_docname()
+<a name="188"/>         validate_idrefs()
+<a name="189"/>         validate_ndata_decls()
+<a name="190"/>         validate_attribute_definitions()
+<a name="191"/>         if \self.do_namespaces_flag then
+<a name="192"/>            do_namespace_processing()
+<a name="193"/>         cleanup_source_refs()
+<a name="194"/>      }} | {
+<a name="195"/>         save_why{fire(FATAL_ERROR_EVENT, ProblemDetail(where(), &amp;why))}
+<a name="196"/>         doc := id_attribute_refs := &amp;null
+<a name="197"/>         fail
+<a name="198"/>      }
+<a name="199"/>      return 1(.doc, doc := &amp;null)
+<a name="200"/>   end
+<a name="201"/>
+<a name="202"/>   #
+<a name="203"/>   # Remove any unwanted references to the source string from
+<a name="204"/>   # self and doc.
+<a name="205"/>   #
+<a name="206"/>   private cleanup_source_refs()
+<a name="207"/>      id_attribute_refs := &amp;null
+<a name="208"/>      every (!doc.general_entities).pos := &amp;null
+<a name="209"/>      every (!(!doc.attribute_lists).attribute_defs).pos := &amp;null
+<a name="210"/>   end
+<a name="211"/>
+<a name="212"/>   private validate_ndata_decls()
+<a name="213"/>      local x
+<a name="214"/>      every x := !sort(doc.general_entities) do {
+<a name="215"/>         if \x[2].notation then
+<a name="216"/>            member(doc.notation_declarations, x[2].notation) | 
+<a name="217"/>               invalid("ENTITY " || x[1] ||
+<a name="218"/>                       ": NDATA declaration " || x[2].notation || " not declared as a NOTATION",
+<a name="219"/>                       x[2].pos)
+<a name="220"/>      }
+<a name="221"/>   end
+<a name="222"/>
+<a name="223"/>   private validate_attribute_definitions()
+<a name="224"/>      local x, y, z
+<a name="225"/>      every x := !sort(doc.attribute_lists) do  {
+<a name="226"/>         every y := !sort(x[2].attribute_defs) do {
+<a name="227"/>            case y[2].def_type of {
+<a name="228"/>               "NOTATION": {
+<a name="229"/>                  # Check for EMPTY/NOTATION clash.
+<a name="230"/>                  if (\doc.element_declarations[x[1]]).content_spec.op == "EMPTY" then
+<a name="231"/>                     invalid("ATTLIST for element " || x[1] || ", attribute " ||
+<a name="232"/>                             y[1] || ": An EMPTY element can't have a NOTATION attribute",
+<a name="233"/>                             y[2].pos)
+<a name="234"/>
+<a name="235"/>                  # Check all notations declared.
+<a name="236"/>                  every z := !y[2].def_set do {
+<a name="237"/>                     member(doc.notation_declarations, z) | 
+<a name="238"/>                        invalid("ATTLIST for element " || x[1] || ", attribute " ||
+<a name="239"/>                                y[1] || ": " || z || " not declared as a NOTATION",
+<a name="240"/>                                y[2].pos)
+<a name="241"/>                  }
+<a name="242"/>               }
+<a name="243"/>               "ENTITY" | "ENTITIES" : {
+<a name="244"/>                  # Check default value refers to an ENTITY.
+<a name="245"/>                  if \y[2].default_value then {
+<a name="246"/>                     member(doc.general_entities, y[2].default_value) | 
+<a name="247"/>                        invalid("ATTLIST for element " || x[1] || ", attribute " ||
+<a name="248"/>                                y[1] || ": default value " || y[2].default_value ||
+<a name="249"/>                                " not declared as an ENTITY",
+<a name="250"/>                                y[2].pos)
+<a name="251"/>                  }
+<a name="252"/>               }
+<a name="253"/>            }
+<a name="254"/>         }
+<a name="255"/>      }
+<a name="256"/>   end
+<a name="257"/>
+<a name="258"/>   #
+<a name="259"/>   # Validate idrefs
+<a name="260"/>   #
+<a name="261"/>   private validate_idrefs()
+<a name="262"/>      local x
+<a name="263"/>      every x := !id_attribute_refs do
+<a name="264"/>         member(doc.id_attribute_values, x.val) | invalid("An IDREF(S) attribute " ||
+<a name="265"/>                                                          x.val || " was used, which does not match any IDs",
+<a name="266"/>                                                          x.pos)
+<a name="267"/>   end
+<a name="268"/>
+<a name="269"/>   private validate_docname()
+<a name="270"/>      local docname, e
+<a name="271"/>
+<a name="272"/>      every e := !doc.children do {
+<a name="273"/>         if is(e, DocType) then {
+<a name="274"/>            docname := e.get_name()
+<a name="275"/>            break
+<a name="276"/>         }
+<a name="277"/>      }
+<a name="278"/>
+<a name="279"/>      if \docname ~== doc.get_root_element().get_name() then
+<a name="280"/>         invalid("The document name in the DOCTYPE declaration must match the name of the root element")
+<a name="281"/>   end
+<a name="282"/>
+<a name="283"/>   #
+<a name="284"/>   # [3] S ::= (#x20 | #x9 | #xD | #xA)+
+<a name="285"/>   #
+<a name="286"/>   private spaces()
+<a name="287"/>      any(SPACE) | throw("Space expected")
+<a name="288"/>      return tab(many(SPACE))
+<a name="289"/>   end
+<a name="290"/>
+<a name="291"/>   private dtd_spaces()
+<a name="292"/>      dtd_any(SPACE) | throw("Space expected")
+<a name="293"/>      return tab(dtd_many(SPACE))
+<a name="294"/>   end
+<a name="295"/>
+<a name="296"/>   #
+<a name="297"/>   # [5] Name ::= (Letter | '_' | ':') (NameChar)*
+<a name="298"/>   #
+<a name="299"/>   private parse_name(quiet)
+<a name="300"/>      any(NAME_START) | throw("Valid name start character expected")
+<a name="301"/>      return move(1) || tab(many0(NAME_CHAR))
+<a name="302"/>   end
+<a name="303"/>
+<a name="304"/>   #
+<a name="305"/>   # Same as parse_name, but within a DTD
+<a name="306"/>   #
+<a name="307"/>   private dtd_parse_name()
+<a name="308"/>      dtd_any(NAME_START) | throw("Valid name start character expected")
+<a name="309"/>      return move(1) ||  tab(dtd_many0(NAME_CHAR))
+<a name="310"/>   end
+<a name="311"/>
+<a name="312"/>   #
+<a name="313"/>   # [6] Names ::= Name (S Name)*
+<a name="314"/>   #
+<a name="315"/>   private parse_names() 
+<a name="316"/>      local l
+<a name="317"/>
+<a name="318"/>      l := []
+<a name="319"/>      repeat {
+<a name="320"/>         put(l, parse_name()) | fail
+<a name="321"/>         looking_at_space_then_cset(NAME_START) | break
+<a name="322"/>         spaces()
+<a name="323"/>      }
+<a name="324"/>      
+<a name="325"/>      return l
+<a name="326"/>   end
+<a name="327"/>
+<a name="328"/>   #
+<a name="329"/>   # Succeed iff a string is a valid Name.
+<a name="330"/>   #
+<a name="331"/>   private valid_name(s)
+<a name="332"/>      return s ? 2(any(NAME_START), parse_name(), pos(0))
+<a name="333"/>   end
+<a name="334"/>
+<a name="335"/>   #
+<a name="336"/>   # Succeed iff a string is a valid Names.
+<a name="337"/>   #
+<a name="338"/>   private valid_names(s)
+<a name="339"/>      return s ? 2(any(NAME_START), parse_names(), pos(0))
+<a name="340"/>   end
+<a name="341"/>
+<a name="342"/>   #
+<a name="343"/>   # [7] Nmtoken ::= (NameChar)+
+<a name="344"/>   #
+<a name="345"/>   private parse_nmtoken()
+<a name="346"/>      any(NAME_CHAR) | throw("Valid name character expected")
+<a name="347"/>      return tab(many(NAME_CHAR))
+<a name="348"/>   end
+<a name="349"/>
+<a name="350"/>   #
+<a name="351"/>   # Same as parse_nmtoken, but within a DTD
+<a name="352"/>   #
+<a name="353"/>   private dtd_parse_nmtoken()
+<a name="354"/>      dtd_any(NAME_CHAR) | throw("Valid name character expected")
+<a name="355"/>      return tab(dtd_many(NAME_CHAR))
+<a name="356"/>   end
+<a name="357"/>
+<a name="358"/>   #
+<a name="359"/>   # [8] Nmtokens ::=  Nmtoken (S Nmtoken)*
+<a name="360"/>   #
+<a name="361"/>   private parse_nmtokens() 
+<a name="362"/>      local l
+<a name="363"/>
+<a name="364"/>      l := []
+<a name="365"/>      repeat {
+<a name="366"/>         put(l, parse_nmtoken()) | fail
+<a name="367"/>         looking_at_space_then_cset(NAME_CHAR) | break
+<a name="368"/>         spaces()
+<a name="369"/>      }
+<a name="370"/>      
+<a name="371"/>      return l
+<a name="372"/>   end
+<a name="373"/>
+<a name="374"/>   #
+<a name="375"/>   # Succeed iff a string is a valid Nmtoken.
+<a name="376"/>   #
+<a name="377"/>   private valid_nmtoken(s)
+<a name="378"/>      return s ? 2(any(NAME_CHAR), parse_nmtoken(), pos(0))
+<a name="379"/>   end
+<a name="380"/>
+<a name="381"/>   #
+<a name="382"/>   # Succeed iff a string is a valid Nmtokens.
+<a name="383"/>   #
+<a name="384"/>   private valid_nmtokens(s)
+<a name="385"/>      return s ? 2(any(NAME_CHAR), parse_nmtokens(), pos(0))
+<a name="386"/>   end
+<a name="387"/>
+<a name="388"/>   #
+<a name="389"/>   # [9] EntityValue ::= '"' ([^%&amp;"] | PEReference | Reference)* '"' |  "'" ([^%&amp;'] | PEReference | Reference)* "'"
+<a name="390"/>   #
+<a name="391"/>   private parse_entity_value()
+<a name="392"/>      local res, c
+<a name="393"/>      c := tab(any('\'\"')) | throw("\' or \" expected")
+<a name="394"/>      res := move(0)  # Empty string, same type as &amp;subject
+<a name="395"/>      repeat {
+<a name="396"/>         if any('%') then {
+<a name="397"/>            # Can't reference a pe in the internal subset; see ibm test ibm29n04.xml
+<a name="398"/>            if /in_ext_subset then 
+<a name="399"/>               throw("Cannnot reference a parameter entity in the internal subset")
+<a name="400"/>            # In an entity value, perefs (%..;) are always expanded
+<a name="401"/>            res ||:= resolve_entity(lookup_pe_reference(parse_pe_reference()))
+<a name="402"/>         } else if match("&amp;#") then
+<a name="403"/>            # Char refs are expanded
+<a name="404"/>            res ||:= parse_char_ref(&amp;yes)
+<a name="405"/>         else if any('&amp;') then
+<a name="406"/>            # General refs aren't
+<a name="407"/>            res ||:= parse_entity_ref()
+<a name="408"/>         else if =c then
+<a name="409"/>            break
+<a name="410"/>         else
+<a name="411"/>            res ||:= tab(upto('%&amp;' ++ c)) | throw("Unexpected eof")
+<a name="412"/>      }
+<a name="413"/>      check_is_char_data(res, "entity value data")
+<a name="414"/>      return res
+<a name="415"/>   end
+<a name="416"/>   
+<a name="417"/>   #
+<a name="418"/>   # [10] AttValue ::= '"' ([^&lt;&amp;"] | Reference)* '"' |  "'" ([^&lt;&amp;'] | Reference)* "'"
+<a name="419"/>   #
+<a name="420"/>   private parse_attvalue()
+<a name="421"/>      local res, c
+<a name="422"/>      c := tab(any('\'\"')) | throw("\' or \" expected")
+<a name="423"/>      res := move(0)  # Empty string, same type as &amp;subject
+<a name="424"/>      repeat {
+<a name="425"/>         if any('&amp;') then
+<a name="426"/>            res ||:= parse_reference()
+<a name="427"/>         else if any('&lt;') then
+<a name="428"/>            throw("'&lt;' not allowed here")
+<a name="429"/>         else if =c then
+<a name="430"/>            break
+<a name="431"/>         else
+<a name="432"/>            res ||:= tab(upto('&lt;&amp;' ++ c)) | throw("Unexpected eof")
+<a name="433"/>      }
+<a name="434"/>      check_is_char_data(res, "attribute value data")
+<a name="435"/>      return res
+<a name="436"/>   end
+<a name="437"/>
+<a name="438"/>   #
+<a name="439"/>   # see s3.3.3 - attribute value normalization.
+<a name="440"/>   # attlist is the attributelist for this element, or &amp;null if unknown.
+<a name="441"/>   # att is the name of the attribute.
+<a name="442"/>   #
+<a name="443"/>   private normalize_attvalue(s, attdef)
+<a name="444"/>      local res
+<a name="445"/>
+<a name="446"/>      #
+<a name="447"/>      # Need to divert because the normalize_attvalue1 uses string scanning, and
+<a name="448"/>      # returns errors.
+<a name="449"/>      #
+<a name="450"/>      start_divert(current_base, "attvalue")
+<a name="451"/>      res := normalize_attvalue1(s)
+<a name="452"/>      end_divert()
+<a name="453"/>
+<a name="454"/>      #
+<a name="455"/>      # Decide if it's a CDATA element.
+<a name="456"/>      #
+<a name="457"/>      if (\attdef).def_type == "CDATA" then
+<a name="458"/>         return res
+<a name="459"/>
+<a name="460"/>      #
+<a name="461"/>      # Not a CDATA, so do extra processing on it.
+<a name="462"/>      #
+<a name="463"/>      res ? {
+<a name="464"/>         tab(many(' '))
+<a name="465"/>         res := ""
+<a name="466"/>         while res ||:= tab(upto(' ')) do {
+<a name="467"/>            tab(many(' '))
+<a name="468"/>            # No trailing spaces.
+<a name="469"/>            unless pos(0) then
+<a name="470"/>               res ||:= " "
+<a name="471"/>         }
+<a name="472"/>         res ||:= tab(0)
+<a name="473"/>      }
+<a name="474"/>
+<a name="475"/>      return res
+<a name="476"/>   end
+<a name="477"/>
+<a name="478"/>   private normalize_attvalue1(s, circle)
+<a name="479"/>      local res, ref, c2, o
+<a name="480"/>      res := ""
+<a name="481"/>      s ? {
+<a name="482"/>         while res ||:= tab(upto('&amp;' ++ SPACE)) do {
+<a name="483"/>            if tab(any(SPACE)) then {
+<a name="484"/>               res ||:= " "
+<a name="485"/>            } else {   # an '&amp;'
+<a name="486"/>               # Char refs aren't recursively treated; entity refs are.
+<a name="487"/>               if match("&amp;#") then
+<a name="488"/>                  res ||:= parse_char_ref(&amp;yes)
+<a name="489"/>               else {
+<a name="490"/>                  ref := parse_entity_ref()
+<a name="491"/>                  if member(\circle, ref) then
+<a name="492"/>                     throw("Circular entity replacement")
+<a name="493"/>                  c2 := copy(\circle) | set()
+<a name="494"/>                  insert(c2, ref)
+<a name="495"/>                  o := lookup_entity_ref(ref)
+<a name="496"/>
+<a name="497"/>                  #
+<a name="498"/>                  # If standalone "yes", then we can't reference the
+<a name="499"/>                  # entity if it was defined in the external subset
+<a name="500"/>                  #
+<a name="501"/>                  if \doc.standalone &amp; \o.in_ext_subset then
+<a name="502"/>                     throw("Cannot reference an entity declared externally, in a standalone document")
+<a name="503"/>                  #
+<a name="504"/>                  # Can't have an external reference here.  See s3.1
+<a name="505"/>                  #
+<a name="506"/>                  \o.str | throw("Reference to external entity in attribute value")
+<a name="507"/>                  #
+<a name="508"/>                  # Can't have a &lt; char; s3.1
+<a name="509"/>                  #
+<a name="510"/>                  if upto('&lt;', o.str) then
+<a name="511"/>                     throw("The replacement text in an attribute value cannot contain a '&lt;' char")
+<a name="512"/>                  #
+<a name="513"/>                  # Recursively normalize the entity ref's value
+<a name="514"/>                  #
+<a name="515"/>                  res ||:= normalize_attvalue1(o.str, c2)
+<a name="516"/>               }
+<a name="517"/>            }
+<a name="518"/>         }
+<a name="519"/>         return res || tab(0)
+<a name="520"/>      }
+<a name="521"/>   end
+<a name="522"/>
+<a name="523"/>   #
+<a name="524"/>   # Normalize end-of-line characters.
+<a name="525"/>   # \r\n combinations are replaced with \n
+<a name="526"/>   # \rx combinations are replaced with \nx where x is any character other than \n
+<a name="527"/>   #
+<a name="528"/>   private normalize_eol(s)
+<a name="529"/>      local res
+<a name="530"/>      res := ""
+<a name="531"/>      s ? {
+<a name="532"/>         while res ||:= string(tab(upto('\r'))) do {
+<a name="533"/>            move(1)
+<a name="534"/>            if any('\n') then
+<a name="535"/>               move(1)
+<a name="536"/>            res ||:= "\n"
+<a name="537"/>         }
+<a name="538"/>         return res || tab(0)
+<a name="539"/>      }
+<a name="540"/>   end
+<a name="541"/>
+<a name="542"/>   #
+<a name="543"/>   # [11] SystemLiteral ::= ('"' [^"]* '"') | ("'" [^']* "'") 
+<a name="544"/>   #
+<a name="545"/>   private parse_system_literal()
+<a name="546"/>      local c, res
+<a name="547"/>      c := tab(any('\'\"')) | throw("\' or \" expected")
+<a name="548"/>      res := tab(upto(c)) | throw("Couldn't find " || c)
+<a name="549"/>      move(1)
+<a name="550"/>      check_is_char_data(res, "system literal value")
+<a name="551"/>      return res
+<a name="552"/>   end
+<a name="553"/>
+<a name="554"/>   #
+<a name="555"/>   # [12] PubidLiteral ::= '"' PubidChar* '"' | "'" (PubidChar - "'")* "'"
+<a name="556"/>   #
+<a name="557"/>   private parse_pubid_literal()
+<a name="558"/>      local c, res, t
+<a name="559"/>      if any('\'') then
+<a name="560"/>         t := PUBID_CHAR -- '\''
+<a name="561"/>      else if any('\"') then
+<a name="562"/>         t := PUBID_CHAR
+<a name="563"/>      else
+<a name="564"/>         throw("\' or \" expected")
+<a name="565"/>      c := move(1)
+<a name="566"/>      res := tab(many(t)) | ""
+<a name="567"/>      =c | throw(c || " expected")
+<a name="568"/>
+<a name="569"/>      return res
+<a name="570"/>   end
+<a name="571"/>
+<a name="572"/>   #
+<a name="573"/>   # [15] Comment ::= '&lt;!--' ((Char - '-') | ('-' (Char - '-')))* '--&gt;'
+<a name="574"/>   #
+<a name="575"/>   # Assume "&lt;!--" already matched.
+<a name="576"/>   #
+<a name="577"/>   private parse_comment()
+<a name="578"/>      local res, s, t
+<a name="579"/>      res := Comment()
+<a name="580"/>      s := ""
+<a name="581"/>      repeat {
+<a name="582"/>         t := tab(upto('-')) | throw("- expected")
+<a name="583"/>         check_is_char_data(t, "comment")
+<a name="584"/>         s ||:= t
+<a name="585"/>         # A double-hypen cannot be within the comment and must signify the end.
+<a name="586"/>         if match("--") then
+<a name="587"/>            break
+<a name="588"/>         s ||:= move(1)
+<a name="589"/>      }
+<a name="590"/>      ="--&gt;" | throw("'--&gt;' expected")
+<a name="591"/>      res.comment := s
+<a name="592"/>      return res
+<a name="593"/>   end
+<a name="594"/>
+<a name="595"/>   #
+<a name="596"/>   # [16] PI ::= '&lt;?' PITarget (S (Char* - (Char* '?&gt;' Char*)))? '?&gt;'
+<a name="597"/>   #
+<a name="598"/>   #  Assume "&lt;?" already matched.
+<a name="599"/>   #
+<a name="600"/>   private parse_pi()
+<a name="601"/>      local res
+<a name="602"/>      res := ProcessingInstruction()
+<a name="603"/>      res.target := parse_pi_target()
+<a name="604"/>      if any(SPACE) then {
+<a name="605"/>         spaces()
+<a name="606"/>         res.content := tab(find("?&gt;")) | throw("Missing '?&gt;'")
+<a name="607"/>         check_is_char_data(res.content, "PI")
+<a name="608"/>      }
+<a name="609"/>      ="?&gt;" | throw("'?&gt;' expected")
+<a name="610"/>      return res
+<a name="611"/>   end
+<a name="612"/>
+<a name="613"/>   #
+<a name="614"/>   # [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
+<a name="615"/>   #
+<a name="616"/>   private parse_pi_target()
+<a name="617"/>      local s
+<a name="618"/>      s := parse_name()
+<a name="619"/>      if Text.lower(s) == "xml" then
+<a name="620"/>         throw("Can't have 'xml' here")
+<a name="621"/>      return s
+<a name="622"/>   end
+<a name="623"/>
+<a name="624"/>   #
+<a name="625"/>   # [18] CDSect ::= CDStart CData CDEnd
+<a name="626"/>   # [19] CDStart ::= '&lt;![CDATA['
+<a name="627"/>   # [20] CData ::= (Char* - (Char* ']]&gt;' Char*)) 
+<a name="628"/>   # [21] CDEnd ::= ']]&gt;'
+<a name="629"/>   #
+<a name="630"/>   # Assume "&lt;![CDATA[" already matched.
+<a name="631"/>   #
+<a name="632"/>   private parse_cdsect()
+<a name="633"/>      local res
+<a name="634"/>      res := CData()
+<a name="635"/>      res.content := tab(find("]]&gt;")) | throw("No corresponding ']]&gt;' in CDATA section")
+<a name="636"/>      check_is_char_data(res.content, "CDATA")
+<a name="637"/>      ="]]&gt;"
+<a name="638"/>      return res
+<a name="639"/>   end
+<a name="640"/>
+<a name="641"/>   #
+<a name="642"/>   # [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
+<a name="643"/>   #
+<a name="644"/>   private parse_prolog()
+<a name="645"/>      if ="&lt;?xml" then
+<a name="646"/>         doc.add(parse_xml_decl())
+<a name="647"/>
+<a name="648"/>      parse_misc_star()
+<a name="649"/>
+<a name="650"/>      if ="&lt;!DOCTYPE" then {
+<a name="651"/>         doc.add(parse_doctype_decl())
+<a name="652"/>         parse_misc_star()
+<a name="653"/>      }
+<a name="654"/>
+<a name="655"/>      return
+<a name="656"/>   end
+<a name="657"/>
+<a name="658"/>   #
+<a name="659"/>   # [23] XMLDecl ::= '&lt;?xml' VersionInfo EncodingDecl? SDDecl? S? '?&gt;'
+<a name="660"/>   #
+<a name="661"/>   # Assume "&lt;?xml" already matched
+<a name="662"/>   #
+<a name="663"/>   private parse_xml_decl() 
+<a name="664"/>      local res
+<a name="665"/>      res := XmlDecl()
+<a name="666"/>      res.version := parse_version_info()
+<a name="667"/>
+<a name="668"/>      if looking_at_space_then("encoding") then
+<a name="669"/>         res.encoding := parse_encoding_decl()
+<a name="670"/>
+<a name="671"/>      if looking_at_space_then("standalone") then
+<a name="672"/>         res.standalone := parse_sdecl()
+<a name="673"/>
+<a name="674"/>      opt_spaces()
+<a name="675"/>
+<a name="676"/>      ="?&gt;" | throw("'?&gt;' expected")
+<a name="677"/>
+<a name="678"/>      return res
+<a name="679"/>   end
+<a name="680"/>
+<a name="681"/>   #
+<a name="682"/>   # [24] VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
+<a name="683"/>   #
+<a name="684"/>   private parse_version_info()
+<a name="685"/>      local c, res
+<a name="686"/>      spaces()
+<a name="687"/>      ="version" | throw("'version' expected")
+<a name="688"/>
+<a name="689"/>      parse_eq()
+<a name="690"/>
+<a name="691"/>      c := tab(any('\'\"')) | throw("\' or \" expected")
+<a name="692"/>
+<a name="693"/>      res := parse_version_num()
+<a name="694"/>
+<a name="695"/>      =c | throw(c || " expected")
+<a name="696"/>
+<a name="697"/>      return res
+<a name="698"/>   end
+<a name="699"/>
+<a name="700"/>   #
+<a name="701"/>   # [25] Eq ::= S? '=' S?
+<a name="702"/>   #
+<a name="703"/>   private parse_eq()
+<a name="704"/>      opt_spaces()
+<a name="705"/>      ="=" | throw("'=' expected")
+<a name="706"/>      opt_spaces()
+<a name="707"/>      return
+<a name="708"/>   end      
+<a name="709"/>
+<a name="710"/>   #
+<a name="711"/>   # [26] VersionNum ::= ([a-zA-Z0-9_.:] | '-')+
+<a name="712"/>   #
+<a name="713"/>   private parse_version_num()
+<a name="714"/>      local c
+<a name="715"/>      c := 'a-zA-Z0-9_.:\-'
+<a name="716"/>      any(c) | throwf("Expected %i", c)
+<a name="717"/>      return tab(many(c))
+<a name="718"/>   end
+<a name="719"/>
+<a name="720"/>   #
+<a name="721"/>   # Misc*
+<a name="722"/>   # [27] Misc ::= Comment | PI | S
+<a name="723"/>   #
+<a name="724"/>   private parse_misc_star()
+<a name="725"/>      repeat {
+<a name="726"/>         if ="&lt;!--" then
+<a name="727"/>            parse_and_maybe_add_comment(doc)
+<a name="728"/>         else if ="&lt;?" then
+<a name="729"/>            doc.add(parse_pi())
+<a name="730"/>         else if any(SPACE) then
+<a name="731"/>            spaces()
+<a name="732"/>         else
+<a name="733"/>            break
+<a name="734"/>      }
+<a name="735"/>      return
+<a name="736"/>   end
+<a name="737"/>
+<a name="738"/>   #
+<a name="739"/>   # Parse and add a comment to the parent node, but only if the
+<a name="740"/>   # preserve_comments_flag is set.
+<a name="741"/>   #
+<a name="742"/>   private parse_and_maybe_add_comment(parent)
+<a name="743"/>      local c
+<a name="744"/>
+<a name="745"/>      c := parse_comment()
+<a name="746"/>
+<a name="747"/>      if \preserve_comments_flag then
+<a name="748"/>         parent.add(c)
+<a name="749"/>
+<a name="750"/>      return c
+<a name="751"/>   end
+<a name="752"/>
+<a name="753"/>   #
+<a name="754"/>   # [28] doctypedecl ::= '&lt;!DOCTYPE' S Name (S ExternalID)? S? ('[' (markupdecl | DeclSep)* ']' S?)? '&gt;'
+<a name="755"/>   #
+<a name="756"/>   # Assume "&lt;!DOCTYPE" already matched.
+<a name="757"/>   #
+<a name="758"/>   private parse_doctype_decl()
+<a name="759"/>      local res, r
+<a name="760"/>      res := DocType()
+<a name="761"/>      spaces()
+<a name="762"/>      res.name := parse_name()
+<a name="763"/>      if looking_at_space_then("SYSTEM" | "PUBLIC") then {
+<a name="764"/>         spaces()
+<a name="765"/>         res.external_id := parse_external_id(res)
+<a name="766"/>      }
+<a name="767"/>      opt_spaces()
+<a name="768"/>      if ="[" then {
+<a name="769"/>         parse_markup_decls(res)
+<a name="770"/>         ="]" | throw("']' expected")
+<a name="771"/>         opt_spaces()
+<a name="772"/>      }
+<a name="773"/>      ="&gt;" | throw("'&gt;' expected")
+<a name="774"/>
+<a name="775"/>      if \res.external_id then {
+<a name="776"/>         # Resolve and parse the external subset 
+<a name="777"/>         r := resolve(current_base, res.external_id)
+<a name="778"/>         start_divert(r.base, to_string(res.external_id))
+<a name="779"/>         in_ext_subset := &amp;yes
+<a name="780"/>         r.content ? {
+<a name="781"/>            parse_ext_subset()
+<a name="782"/>            pos(0) | throw("Extraneous content")
+<a name="783"/>         }
+<a name="784"/>         in_ext_subset := &amp;null
+<a name="785"/>         end_divert()
+<a name="786"/>      } 
+<a name="787"/>
+<a name="788"/>      return res
+<a name="789"/>   end
+<a name="790"/>
+<a name="791"/>   #
+<a name="792"/>   # Parse (markupdecl | DeclSep) *
+<a name="793"/>   #
+<a name="794"/>   # [28a] DeclSep ::= PEReference | S
+<a name="795"/>   # [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment 
+<a name="796"/>   #
+<a name="797"/>   private parse_markup_decls()
+<a name="798"/>      local ref, o, r
+<a name="799"/>      repeat {
+<a name="800"/>         if ="&lt;!ELEMENT" then
+<a name="801"/>            parse_element_decl()
+<a name="802"/>         else if ="&lt;!ATTLIST" then
+<a name="803"/>            parse_attlist_decl()
+<a name="804"/>         else if ="&lt;!ENTITY" then
+<a name="805"/>            parse_entity_decl()
+<a name="806"/>         else if ="&lt;!NOTATION" then
+<a name="807"/>            parse_notation_decl()
+<a name="808"/>         else if ="&lt;?" then
+<a name="809"/>            doc.add(parse_pi())
+<a name="810"/>         else if ="&lt;!--" then
+<a name="811"/>            parse_and_maybe_add_comment(doc)
+<a name="812"/>         else if any('%') then {
+<a name="813"/>            # Recursively parse the value of the pe.
+<a name="814"/>            ref := parse_pe_reference()
+<a name="815"/>            o := lookup_pe_reference(ref)
+<a name="816"/>            if \o.str then { 
+<a name="817"/>               start_divert(current_base, "macro")
+<a name="818"/>               o.str ? {
+<a name="819"/>                  parse_markup_decls()
+<a name="820"/>                  pos(0) | throw("Extraneous content")
+<a name="821"/>               }
+<a name="822"/>               end_divert()
+<a name="823"/>            } else {
+<a name="824"/>               if \o.notation then
+<a name="825"/>                  throw("Unparsed entity not allowed")
+<a name="826"/>               # Resolve the external entity, parse it appropriately.
+<a name="827"/>               r := resolve(current_base, o.external_id)
+<a name="828"/>               start_divert(r.base, to_string(o.external_id))
+<a name="829"/>               r.content ? {
+<a name="830"/>                  parse_markup_decls()
+<a name="831"/>                  pos(0) | throw("Extraneous content")
+<a name="832"/>               }
+<a name="833"/>               end_divert()
+<a name="834"/>            }
+<a name="835"/>         } else if any(SPACE) then
+<a name="836"/>            spaces()
+<a name="837"/>         else 
+<a name="838"/>            break
+<a name="839"/>      }
+<a name="840"/>      return
+<a name="841"/>   end
+<a name="842"/>   
+<a name="843"/>   #
+<a name="844"/>   # [30] extSubset ::= TextDecl? extSubsetDecl
+<a name="845"/>   #
+<a name="846"/>   private parse_ext_subset()
+<a name="847"/>      if ="&lt;?xml" then
+<a name="848"/>         parse_text_decl()
+<a name="849"/>      return parse_ext_subset_decl()
+<a name="850"/>   end
+<a name="851"/>
+<a name="852"/>   #
+<a name="853"/>   # [31] extSubsetDecl ::= ( markupdecl | conditionalSect | DeclSep)*
+<a name="854"/>   #
+<a name="855"/>   private parse_ext_subset_decl()
+<a name="856"/>      local ref, o, r
+<a name="857"/>      repeat {
+<a name="858"/>         if ="&lt;![" then
+<a name="859"/>            parse_conditional_sect()
+<a name="860"/>         else if ="&lt;!ELEMENT" then
+<a name="861"/>            parse_element_decl()
+<a name="862"/>         else if ="&lt;!ATTLIST" then
+<a name="863"/>            parse_attlist_decl()
+<a name="864"/>         else if ="&lt;!ENTITY" then
+<a name="865"/>            parse_entity_decl()
+<a name="866"/>         else if ="&lt;!NOTATION" then
+<a name="867"/>            parse_notation_decl()
+<a name="868"/>         else if ="&lt;?" then
+<a name="869"/>            doc.add(parse_pi())
+<a name="870"/>         else if ="&lt;!--" then
+<a name="871"/>            parse_and_maybe_add_comment(doc)
+<a name="872"/>         else if any('%') then {
+<a name="873"/>            # Recursively parse the value of the pe.
+<a name="874"/>            ref := parse_pe_reference()
+<a name="875"/>            o := lookup_pe_reference(ref)
+<a name="876"/>            if \o.str then { 
+<a name="877"/>               start_divert(current_base, "macro")
+<a name="878"/>               o.str ? {
+<a name="879"/>                  parse_ext_subset_decl()
+<a name="880"/>                  pos(0) | throw("Extraneous content")
+<a name="881"/>               }
+<a name="882"/>               end_divert()
+<a name="883"/>            } else {
+<a name="884"/>               if \o.notation then
+<a name="885"/>                  throw("Unparsed entity not allowed")
+<a name="886"/>               # Resolve the external entity, parse it appropriately.
+<a name="887"/>               r := resolve(current_base, o.external_id)
+<a name="888"/>               start_divert(r.base, to_string(o.external_id))
+<a name="889"/>               r.content ? {
+<a name="890"/>                  parse_ext_subset_decl()
+<a name="891"/>                  pos(0) | throw("Extraneous content")
+<a name="892"/>               }
+<a name="893"/>               end_divert()
+<a name="894"/>            }
+<a name="895"/>         } else if any(SPACE) then
+<a name="896"/>            spaces()
+<a name="897"/>         else 
+<a name="898"/>            break
+<a name="899"/>      }
+<a name="900"/>      return
+<a name="901"/>   end
+<a name="902"/>
+<a name="903"/>   #
+<a name="904"/>   # [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) 
+<a name="905"/>   #
+<a name="906"/>   private parse_sdecl()
+<a name="907"/>      local c, res
+<a name="908"/>      spaces()
+<a name="909"/>      ="standalone" | throw("'standalone' expected")
+<a name="910"/>
+<a name="911"/>      parse_eq()
+<a name="912"/>
+<a name="913"/>      c := tab(any('\'\"')) | throw("\' or \" expected")
+<a name="914"/>
+<a name="915"/>      res := ="yes" | ="no" | throw("'yes' or 'no' expected")
+<a name="916"/>
+<a name="917"/>      if res == "yes" then
+<a name="918"/>         doc.standalone := &amp;yes
+<a name="919"/>
+<a name="920"/>      =c | throw(c || " expected")
+<a name="921"/>
+<a name="922"/>      return res
+<a name="923"/>   end
+<a name="924"/>
+<a name="925"/>   #
+<a name="926"/>   # [39] element ::= EmptyElemTag | STag content ETag
+<a name="927"/>   # [40] STag ::= '&lt;' Name (S Attribute)* S? '&gt;'
+<a name="928"/>   # [44] EmptyElemTag ::= '&lt;' Name (S Attribute)* S? '/&gt;'
+<a name="929"/>   #
+<a name="930"/>   private parse_element(parent_el)
+<a name="931"/>      local res, attlist, xs
+<a name="932"/>      res := XmlElement()
+<a name="933"/>      ="&lt;" | throw("'&lt;' expected")
+<a name="934"/>      res.name := parse_name()
+<a name="935"/>
+<a name="936"/>      #
+<a name="937"/>      # Get a reference to the attlist for this element.  This is convenient here
+<a name="938"/>      # to avoid doing it many times during parse_attribute()'s call to
+<a name="939"/>      # normalize_attvalue.
+<a name="940"/>      #
+<a name="941"/>      attlist := doc.attribute_lists[res.name]
+<a name="942"/>
+<a name="943"/>      while looking_at_space_then_cset(NAME_START) do {
+<a name="944"/>         spaces()
+<a name="945"/>         parse_attribute(res, attlist)
+<a name="946"/>      }
+<a name="947"/>      opt_spaces()
+<a name="948"/>
+<a name="949"/>      #
+<a name="950"/>      # Validate the attributes
+<a name="951"/>      #
+<a name="952"/>      if \validate_flag then
+<a name="953"/>         validate_attributes(res)
+<a name="954"/>
+<a name="955"/>      #
+<a name="956"/>      # Process the xml:space attribute.
+<a name="957"/>      #
+<a name="958"/>      if xs := member(res.attributes, "xml:space" | u"xml:space") then {
+<a name="959"/>         if xs == "preserve" then
+<a name="960"/>            res.xml_space_preserve := &amp;yes
+<a name="961"/>         else if xs ~== "default" then
+<a name="962"/>            throw("xml:space has invalid value")
+<a name="963"/>      } else {
+<a name="964"/>         #
+<a name="965"/>         # Not present, so the value is inherited from the parent
+<a name="966"/>         #
+<a name="967"/>         res.xml_space_preserve := (\parent_el).xml_space_preserve
+<a name="968"/>      }
+<a name="969"/>
+<a name="970"/>      if ="&gt;" then {
+<a name="971"/>         parse_content(res)
+<a name="972"/>         res.children := res.get_compacted_children()
+<a name="973"/>         parse_etag(res)
+<a name="974"/>      } else {
+<a name="975"/>         ="/&gt;" | throw("'&gt;' or '/&gt;' expected")
+<a name="976"/>      }
+<a name="977"/>
+<a name="978"/>      #
+<a name="979"/>      # By default the whitespace_children is the same as the children, but validation
+<a name="980"/>      # may change this by removing "insignificant" whitespace.
+<a name="981"/>      #
+<a name="982"/>      res.whitespace_children := res.children
+<a name="983"/>
+<a name="984"/>      if \validate_flag then
+<a name="985"/>         validate_children(res)
+<a name="986"/>
+<a name="987"/>      return res
+<a name="988"/>   end
+<a name="989"/>
+<a name="990"/>   #
+<a name="991"/>   # [41] Attribute ::= Name Eq AttValue
+<a name="992"/>   #
+<a name="993"/>   private parse_attribute(el, attlist)
+<a name="994"/>      local att, val, attdef
+<a name="995"/>      att := parse_name()
+<a name="996"/>      parse_eq()
+<a name="997"/>
+<a name="998"/>      #
+<a name="999"/>      # Try to get the AttributeDef for this attribute.  
+<a name="1000"/>      #
+<a name="1001"/>      attdef := (\attlist).attribute_defs[att]
+<a name="1002"/>
+<a name="1003"/>      val := normalize_attvalue(parse_attvalue(), attdef)
+<a name="1004"/>      if member(el.attributes, att) then
+<a name="1005"/>         throw("Duplicated attribute declaration: " || att)
+<a name="1006"/>      insert(el.attributes, att, val)
+<a name="1007"/>      return
+<a name="1008"/>   end
+<a name="1009"/>
+<a name="1010"/>   #
+<a name="1011"/>   # [42] ETag ::= '&lt;/' Name S? '&gt;'
+<a name="1012"/>   #
+<a name="1013"/>   private parse_etag(el)
+<a name="1014"/>      local t
+<a name="1015"/>      ="&lt;/" | throw("'&lt;/' expected")
+<a name="1016"/>      t := parse_name()
+<a name="1017"/>      t == el.name | throw("Mismatched tags: " || el.name || " expected")
+<a name="1018"/>      opt_spaces()
+<a name="1019"/>      ="&gt;" | throw("'&gt;' expected")
+<a name="1020"/>      return
+<a name="1021"/>   end
+<a name="1022"/>
+<a name="1023"/>   #
+<a name="1024"/>   # [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
+<a name="1025"/>   # [14] CharData ::= [^&lt;&amp;]* - ([^&lt;&amp;]* ']]&gt;' [^&lt;&amp;]*)
+<a name="1026"/>   #
+<a name="1027"/>   private parse_content(parent, circle)
+<a name="1028"/>      local r, o, c2, ref, cd
+<a name="1029"/>
+<a name="1030"/>      until pos(0) do {
+<a name="1031"/>         if any('&amp;') then {
+<a name="1032"/>            if match("&amp;#") then
+<a name="1033"/>               parent.add(parse_char_ref(&amp;yes))
+<a name="1034"/>            else {
+<a name="1035"/>               ref := parse_entity_ref()
+<a name="1036"/>               if member(\circle, ref) then
+<a name="1037"/>                  throw("Circular entity replacement")
+<a name="1038"/>               c2 := copy(\circle) | set()
+<a name="1039"/>               insert(c2, ref)
+<a name="1040"/>               o := lookup_entity_ref(ref)
+<a name="1041"/>               #
+<a name="1042"/>               # If standalone "yes", then can't reference the entity if it was defined in the external subset
+<a name="1043"/>               #
+<a name="1044"/>               if \doc.standalone &amp; \o.in_ext_subset then
+<a name="1045"/>                  throw("Cannot reference an entity declared externally, in a standalone document")
+<a name="1046"/>               if \o.str then { 
+<a name="1047"/>                  # Simple expansion, parsed as content.
+<a name="1048"/>                  start_divert(current_base, "macro")
+<a name="1049"/>                  o.str ? {
+<a name="1050"/>                     parse_content(parent, c2)
+<a name="1051"/>                     pos(0) | throw("Extraneous content")
+<a name="1052"/>                  }
+<a name="1053"/>                  end_divert()
+<a name="1054"/>               } else {
+<a name="1055"/>                  if \o.notation then
+<a name="1056"/>                     throw("Unparsed entity not allowed")
+<a name="1057"/>                  # Resolve the external entity, parse it appropriately.
+<a name="1058"/>                  r := resolve(current_base, o.external_id)
+<a name="1059"/>                  start_divert(r.base, to_string(o.external_id))
+<a name="1060"/>                  r.content ? {
+<a name="1061"/>                     parse_external_parsed_entity(parent, c2)
+<a name="1062"/>                     pos(0) | throw("Extraneous content")
+<a name="1063"/>                  }
+<a name="1064"/>                  end_divert()
+<a name="1065"/>               }
+<a name="1066"/>            }
+<a name="1067"/>         } else if ="&lt;!--" then
+<a name="1068"/>            parse_and_maybe_add_comment(parent)
+<a name="1069"/>         else if ="&lt;?" then
+<a name="1070"/>            parent.add(parse_pi())
+<a name="1071"/>         else if ="&lt;![CDATA[" then
+<a name="1072"/>            parent.add(parse_cdsect())
+<a name="1073"/>         else if any('&lt;') then {
+<a name="1074"/>            if match("&lt;/") then
+<a name="1075"/>               break
+<a name="1076"/>            parent.add(parse_element(parent))
+<a name="1077"/>         } else {
+<a name="1078"/>            #
+<a name="1079"/>            # Must have more chars and initially not a &lt; or an &amp;
+<a name="1080"/>            #
+<a name="1081"/>            cd := tab(many(~'&lt;&amp;'))
+<a name="1082"/>            if find("]]&gt;", cd) then
+<a name="1083"/>               throw("Cannot have ']]&gt;' in character content")
+<a name="1084"/>
+<a name="1085"/>            check_is_char_data(cd, "content character data")
+<a name="1086"/>
+<a name="1087"/>            parent.add(cd)
+<a name="1088"/>         }
+<a name="1089"/>      }
+<a name="1090"/>      return parent
+<a name="1091"/>   end
+<a name="1092"/>
+<a name="1093"/>   private check_is_char_data(s, msg)
+<a name="1094"/>      local j
+<a name="1095"/>      if j := upto(INVALID_CHAR, s) then
+<a name="1096"/>         throwf("Invalid char (%i) in %s", s[j], msg)
+<a name="1097"/>      return
+<a name="1098"/>   end
+<a name="1099"/>
+<a name="1100"/>   #
+<a name="1101"/>   # [45] elementdecl ::=  '&lt;!ELEMENT' S Name S contentspec S? '&gt;'
+<a name="1102"/>   #
+<a name="1103"/>   # Assume "&lt;!ELEMENT" already matched
+<a name="1104"/>   #
+<a name="1105"/>   private parse_element_decl()
+<a name="1106"/>      local name, content_spec, element_decl
+<a name="1107"/>
+<a name="1108"/>      dtd_spaces()
+<a name="1109"/>      name := dtd_parse_name()
+<a name="1110"/>      dtd_spaces()
+<a name="1111"/>      content_spec := parse_content_spec()
+<a name="1112"/>      dtd_opt_spaces()
+<a name="1113"/>      ="&gt;" | throw("'&gt;' expected")
+<a name="1114"/>      element_decl := ElementDecl()
+<a name="1115"/>      element_decl.in_ext_subset := in_ext_subset
+<a name="1116"/>      element_decl.content_spec := content_spec
+<a name="1117"/>      if member(doc.element_declarations, name) then
+<a name="1118"/>         invalid("Multiple element declarations for element " || name)
+<a name="1119"/>      else
+<a name="1120"/>         insert(doc.element_declarations, name, element_decl)
+<a name="1121"/>      return 
+<a name="1122"/>   end
+<a name="1123"/>
+<a name="1124"/>   #
+<a name="1125"/>   # [46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children 
+<a name="1126"/>   #
+<a name="1127"/>   private parse_content_spec()
+<a name="1128"/>      local a, i
+<a name="1129"/>      if dtd_tabmat("EMPTY") then
+<a name="1130"/>         return ContentSpec("EMPTY")
+<a name="1131"/>      else if dtd_tabmat("ANY") then {
+<a name="1132"/>         a := ContentSpec("ANY")
+<a name="1133"/>         a.is_mixed_flag := &amp;yes
+<a name="1134"/>         return a
+<a name="1135"/>      }
+<a name="1136"/>      else if dtd_match("(") then {
+<a name="1137"/>         # Awkward lookahead.
+<a name="1138"/>         i := &amp;pos
+<a name="1139"/>         if dtd_tabmat("(") &amp; tab(dtd_many0(SPACE)) &amp; dtd_match("#PCDATA") then {
+<a name="1140"/>            &amp;pos := i
+<a name="1141"/>            return parse_mixed()
+<a name="1142"/>         } else {
+<a name="1143"/>            &amp;pos := i
+<a name="1144"/>            return parse_children()
+<a name="1145"/>         }
+<a name="1146"/>      } else
+<a name="1147"/>         throw("'EMPTY', 'ANY' or '(' expected")
+<a name="1148"/>   end
+<a name="1149"/>
+<a name="1150"/>   #
+<a name="1151"/>   # [47] children ::= (choice | seq) ('?' | '*' | '+')?
+<a name="1152"/>   #
+<a name="1153"/>   private parse_children()
+<a name="1154"/>      local x, op
+<a name="1155"/>      x := parse_choiceseq()
+<a name="1156"/>      return if op := tab(dtd_any('?*+')) then
+<a name="1157"/>         ContentSpec(string(op), x)
+<a name="1158"/>      else
+<a name="1159"/>         x
+<a name="1160"/>   end
+<a name="1161"/>
+<a name="1162"/>   #
+<a name="1163"/>   # [48] cp ::= (Name | choice | seq) ('?' | '*' | '+')?
+<a name="1164"/>   #
+<a name="1165"/>   private parse_cp()
+<a name="1166"/>      local x, op
+<a name="1167"/>
+<a name="1168"/>      if dtd_any('(') then
+<a name="1169"/>         x := parse_choiceseq()
+<a name="1170"/>      else if dtd_any(NAME_START) then
+<a name="1171"/>         x := ContentSpec("name", dtd_parse_name())
+<a name="1172"/>      else
+<a name="1173"/>         throw("Name or ( expected")
+<a name="1174"/>      return if op := tab(dtd_any('?*+')) then
+<a name="1175"/>         return ContentSpec(string(op), x)
+<a name="1176"/>      else
+<a name="1177"/>         x
+<a name="1178"/>   end
+<a name="1179"/>
+<a name="1180"/>   #
+<a name="1181"/>   # [49] choice ::= '(' S? cp ( S? '|' S? cp )+ S? ')'
+<a name="1182"/>   # [50] seq ::= '(' S? cp ( S? ',' S? cp )* S? ')'
+<a name="1183"/>   #
+<a name="1184"/>   private parse_choiceseq()
+<a name="1185"/>      local res, op, a, t
+<a name="1186"/>
+<a name="1187"/>      dtd_tabmat("(") | throw("'(' expected")
+<a name="1188"/>      dtd_opt_spaces()
+<a name="1189"/>      a := parse_cp()
+<a name="1190"/>      dtd_opt_spaces()
+<a name="1191"/>
+<a name="1192"/>      if op := tab(dtd_any('|,')) then {
+<a name="1193"/>         res := t := ContentSpec(string(op), a)
+<a name="1194"/>         repeat {
+<a name="1195"/>            dtd_opt_spaces()
+<a name="1196"/>            a := parse_cp()
+<a name="1197"/>            dtd_opt_spaces()
+<a name="1198"/>            dtd_tabmat(op) | break
+<a name="1199"/>            t.arg2 := ContentSpec(string(op), a)
+<a name="1200"/>            t := t.arg2
+<a name="1201"/>         }
+<a name="1202"/>         t.arg2 := a
+<a name="1203"/>      } else
+<a name="1204"/>         res := a
+<a name="1205"/>
+<a name="1206"/>      dtd_tabmat(")") | throw("')' expected")
+<a name="1207"/>      return res
+<a name="1208"/>   end
+<a name="1209"/>
+<a name="1210"/>   #
+<a name="1211"/>   # [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' 
+<a name="1212"/>   # Converts to a string with spaces removed.
+<a name="1213"/>   #
+<a name="1214"/>   private parse_mixed()
+<a name="1215"/>      local res, t, a, seen, n
+<a name="1216"/>
+<a name="1217"/>      dtd_tabmat("(") | throw("( expected")
+<a name="1218"/>      dtd_opt_spaces()
+<a name="1219"/>      a := ContentSpec(string(dtd_tabmat("#PCDATA"))) | throw("'#PCDATA' expected")
+<a name="1220"/>       
+<a name="1221"/>      dtd_opt_spaces()
+<a name="1222"/>
+<a name="1223"/>      seen := set()
+<a name="1224"/>
+<a name="1225"/>      if dtd_tabmat("|") then {
+<a name="1226"/>         res := t := ContentSpec("|", a)
+<a name="1227"/>         repeat {
+<a name="1228"/>            dtd_opt_spaces()
+<a name="1229"/>            n := dtd_parse_name()
+<a name="1230"/>            if member(seen, n) then
+<a name="1231"/>               invalid("Name " || n || " appeared multiple times in mixed content spec")
+<a name="1232"/>            else
+<a name="1233"/>               insert(seen, n)
+<a name="1234"/>            a := ContentSpec("name", n)
+<a name="1235"/>            dtd_opt_spaces()
+<a name="1236"/>            dtd_tabmat("|") | break
+<a name="1237"/>            t.arg2 := ContentSpec("|", a)
+<a name="1238"/>            t := t.arg2
+<a name="1239"/>         }
+<a name="1240"/>         t.arg2 := a
+<a name="1241"/>
+<a name="1242"/>         dtd_tabmat(")*") | throw("')*' expected")
+<a name="1243"/>         a := ContentSpec("*", res)
+<a name="1244"/>      } else {
+<a name="1245"/>         dtd_tabmat(")") | throw("')' expected")
+<a name="1246"/>         if dtd_tabmat("*") then
+<a name="1247"/>            a :=  ContentSpec("*", a)
+<a name="1248"/>      }
+<a name="1249"/>
+<a name="1250"/>      a.is_mixed_flag := &amp;yes
+<a name="1251"/>
+<a name="1252"/>      return a
+<a name="1253"/>   end
+<a name="1254"/>
+<a name="1255"/>   #
+<a name="1256"/>   # [52] AttlistDecl ::= '&lt;!ATTLIST' S Name AttDef* S? '&gt;'
+<a name="1257"/>   # [53] AttDef ::= S Name S AttType S DefaultDecl
+<a name="1258"/>   #
+<a name="1259"/>   # Assume "&lt;!ATTLIST" already matched.
+<a name="1260"/>   #
+<a name="1261"/>   private parse_attlist_decl()
+<a name="1262"/>      local element_name, t, attr_name, attribute_def, res
+<a name="1263"/>      dtd_spaces()
+<a name="1264"/>      element_name := dtd_parse_name()
+<a name="1265"/>      #
+<a name="1266"/>      # See if we already have an AttList defined for this element.  If so,
+<a name="1267"/>      # new AttDefs are merged into it.  In any case, multiple defs generate
+<a name="1268"/>      # a warning.
+<a name="1269"/>      #
+<a name="1270"/>      if t := member(doc.attribute_lists, element_name) then
+<a name="1271"/>         warn("Multiple ATTLIST definitions for element " || element_name)
+<a name="1272"/>      else {
+<a name="1273"/>         t := AttList()
+<a name="1274"/>         insert(doc.attribute_lists, element_name, t)
+<a name="1275"/>      }
+<a name="1276"/>
+<a name="1277"/>      repeat {
+<a name="1278"/>         dtd_looking_at_space_then_cset(NAME_START) | break
+<a name="1279"/>         dtd_spaces()
+<a name="1280"/>         attr_name := dtd_parse_name()
+<a name="1281"/>         dtd_spaces()
+<a name="1282"/>         attribute_def := AttributeDef()
+<a name="1283"/>         attribute_def.pos := where()
+<a name="1284"/>         attribute_def.in_ext_subset := in_ext_subset
+<a name="1285"/>         parse_att_type(attribute_def)
+<a name="1286"/>         dtd_spaces()
+<a name="1287"/>         parse_default_decl(attribute_def)
+<a name="1288"/>
+<a name="1289"/>         # Check for multiple IDs
+<a name="1290"/>         if attribute_def.def_type == "ID" &amp; \t.has_id then
+<a name="1291"/>            invalid("Multiple ID declarations for this element type")
+<a name="1292"/>
+<a name="1293"/>         #
+<a name="1294"/>         # Second and subsequent definitions are ignored, but this generates a warning.
+<a name="1295"/>         #
+<a name="1296"/>         if member(t.attribute_defs, attr_name) then
+<a name="1297"/>            warn("Multiple attribute defs for attribute " || attr_name || " in element " || element_name)
+<a name="1298"/>         else
+<a name="1299"/>            t.add_attribute_def(attr_name, attribute_def)
+<a name="1300"/>      }
+<a name="1301"/>      dtd_opt_spaces()
+<a name="1302"/>      dtd_tabmat("&gt;") | throw("'&gt;' expected")
+<a name="1303"/>
+<a name="1304"/>      return res
+<a name="1305"/>   end
+<a name="1306"/>
+<a name="1307"/>   #
+<a name="1308"/>   # [54] AttType ::= StringType | TokenizedType | EnumeratedType 
+<a name="1309"/>   # [55] StringType ::= 'CDATA'
+<a name="1310"/>   # [56] TokenizedType ::= 'ID' | 'IDREF'| 'IDREFS' | 'ENTITY' | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
+<a name="1311"/>   # [57] EnumeratedType ::= NotationType | Enumeration 
+<a name="1312"/>   #
+<a name="1313"/>   private parse_att_type(attribute_def)
+<a name="1314"/>      local s
+<a name="1315"/>
+<a name="1316"/>      if s := dtd_tabmat("CDATA" | "IDREFS" | "IDREF"| "ID" | "ENTITY" | "ENTITIES" | "NMTOKENS" | "NMTOKEN") then
+<a name="1317"/>         attribute_def.def_type := string(s)
+<a name="1318"/>      else if dtd_match("NOTATION") then {
+<a name="1319"/>         attribute_def.def_type := "NOTATION"
+<a name="1320"/>         attribute_def.def_set := parse_notation_type()
+<a name="1321"/>      } else if dtd_any('(') then {
+<a name="1322"/>         attribute_def.def_type := "ENUMERATION"
+<a name="1323"/>         attribute_def.def_set := parse_enumeration()
+<a name="1324"/>      } else
+<a name="1325"/>         throw("Syntax error")
+<a name="1326"/>
+<a name="1327"/>      return attribute_def
+<a name="1328"/>   end
+<a name="1329"/>
+<a name="1330"/>   #
+<a name="1331"/>   # [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' 
+<a name="1332"/>   #
+<a name="1333"/>   private parse_notation_type()
+<a name="1334"/>      local res, t
+<a name="1335"/>
+<a name="1336"/>      res := set()
+<a name="1337"/>      dtd_tabmat("NOTATION") | throw("'NOTATION' expected")
+<a name="1338"/>      dtd_spaces()
+<a name="1339"/>      dtd_tabmat("(") | throw("'(' expected")
+<a name="1340"/>      repeat {
+<a name="1341"/>         dtd_opt_spaces()
+<a name="1342"/>         t := dtd_parse_name()
+<a name="1343"/>         if member(res, t) then
+<a name="1344"/>            invalid("Duplicated name in notation enumeration declaration: " || t)
+<a name="1345"/>         insert(res, t)
+<a name="1346"/>         dtd_opt_spaces()
+<a name="1347"/>         dtd_tabmat("|") | break
+<a name="1348"/>      }
+<a name="1349"/>      opt_spaces()
+<a name="1350"/>      dtd_tabmat(")") | throw("')' expected")
+<a name="1351"/>
+<a name="1352"/>      return res
+<a name="1353"/>   end
+<a name="1354"/>
+<a name="1355"/>   #
+<a name="1356"/>   # [59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
+<a name="1357"/>   #
+<a name="1358"/>   private parse_enumeration()
+<a name="1359"/>      local res, t
+<a name="1360"/>
+<a name="1361"/>      res := set()
+<a name="1362"/>      dtd_tabmat("(") | throw("'(' expected")
+<a name="1363"/>      repeat {
+<a name="1364"/>         dtd_opt_spaces()
+<a name="1365"/>         t := dtd_parse_nmtoken()
+<a name="1366"/>         if member(res, t) then
+<a name="1367"/>            invalid("Duplicated token in enumeration declaration: " || t)
+<a name="1368"/>         insert(res, t)
+<a name="1369"/>         dtd_opt_spaces()
+<a name="1370"/>         dtd_tabmat("|") | break
+<a name="1371"/>      }
+<a name="1372"/>      dtd_opt_spaces()
+<a name="1373"/>      dtd_tabmat(")") | throw("')' expected")
+<a name="1374"/>
+<a name="1375"/>      return res
+<a name="1376"/>   end
+<a name="1377"/>
+<a name="1378"/>   #
+<a name="1379"/>   # [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
+<a name="1380"/>   #
+<a name="1381"/>   private parse_default_decl(attribute_def)
+<a name="1382"/>      local s, val
+<a name="1383"/>      if s := dtd_tabmat("#REQUIRED" | "#IMPLIED") then
+<a name="1384"/>         attribute_def.default_decl := string(s)
+<a name="1385"/>      else {
+<a name="1386"/>         if s := dtd_tabmat("#FIXED") then {
+<a name="1387"/>            attribute_def.default_decl := string(s)
+<a name="1388"/>            dtd_spaces()
+<a name="1389"/>         }
+<a name="1390"/>         val := attribute_def.default_value := normalize_attvalue(parse_attvalue(), attribute_def)
+<a name="1391"/>
+<a name="1392"/>         if attribute_def.def_type == "ID" then
+<a name="1393"/>            invalid("An attribute with type ID must have a default declaration of #IMPLIED or #REQUIRED")
+<a name="1394"/>
+<a name="1395"/>         #
+<a name="1396"/>         # Validate default value
+<a name="1397"/>         #
+<a name="1398"/>         case attribute_def.def_type of {
+<a name="1399"/>            "CDATA" : {
+<a name="1400"/>            }
+<a name="1401"/>            "ID" : {
+<a name="1402"/>               valid_name(val) |
+<a name="1403"/>                  invalid("Default attribute value " || val || " must be a valid name")
+<a name="1404"/>            }
+<a name="1405"/>            "IDREF" : {
+<a name="1406"/>               valid_name(val) |
+<a name="1407"/>                  invalid("Default attribute value " || val || " must be a valid name")
+<a name="1408"/>            }
+<a name="1409"/>            "IDREFS" : {
+<a name="1410"/>               valid_names(val) |
+<a name="1411"/>                  invalid("Default attribute value " || val || " must be comprised of valid names")
+<a name="1412"/>            }
+<a name="1413"/>            "ENTITY" : {
+<a name="1414"/>               valid_name(val) |
+<a name="1415"/>                  invalid("Default attribute value " || val || " must be a valid name")
+<a name="1416"/>            }
+<a name="1417"/>            "ENTITIES" : {
+<a name="1418"/>               valid_names(val) |
+<a name="1419"/>                  invalid("Default attribute value " || val || " must be comprised of valid names")
+<a name="1420"/>            }
+<a name="1421"/>            "NMTOKEN" : {
+<a name="1422"/>               valid_nmtoken(val) |
+<a name="1423"/>                  invalid("Default attribute value " || val || " must be a valid nmtoken")
+<a name="1424"/>            }
+<a name="1425"/>            "NMTOKENS" : {
+<a name="1426"/>               valid_nmtokens(val) |
+<a name="1427"/>                  invalid("Default attribute value " || val || " must be comprised of valid nmtokens")
+<a name="1428"/>            }
+<a name="1429"/>            "ENUMERATION" : { 
+<a name="1430"/>               member(attribute_def.def_set, val) |
+<a name="1431"/>                  invalid("Default attribute value " || val || " is not one of the declared enumerations")
+<a name="1432"/>            }
+<a name="1433"/>            "NOTATION" : { 
+<a name="1434"/>               member(attribute_def.def_set, val) |
+<a name="1435"/>                  invalid("Default attribute value " || val || " is not one of the declared notations")
+<a name="1436"/>            }
+<a name="1437"/>         }
+<a name="1438"/>      }
+<a name="1439"/>      return attribute_def
+<a name="1440"/>   end
+<a name="1441"/>
+<a name="1442"/>   #
+<a name="1443"/>   # [61] conditionalSect ::= includeSect | ignoreSect 
+<a name="1444"/>   # [62] includeSect ::= '&lt;![' S? 'INCLUDE' S? '[' extSubsetDecl ']]&gt;' 
+<a name="1445"/>   # [63] ignoreSect ::= '&lt;![' S? 'IGNORE' S? '[' ignoreSectContents* ']]&gt;'
+<a name="1446"/>   #
+<a name="1447"/>   # Assume "&lt;![" already matched.
+<a name="1448"/>   #
+<a name="1449"/>   private parse_conditional_sect()
+<a name="1450"/>      dtd_opt_spaces()
+<a name="1451"/>      if dtd_tabmat("INCLUDE") then {
+<a name="1452"/>         dtd_opt_spaces()
+<a name="1453"/>         dtd_tabmat("[") | throw("'[' expected")
+<a name="1454"/>         parse_ext_subset_decl()
+<a name="1455"/>      } else if dtd_tabmat("IGNORE") then {
+<a name="1456"/>         dtd_opt_spaces()
+<a name="1457"/>         dtd_tabmat("[") | throw("'[' expected")
+<a name="1458"/>         parse_ignore_sect_contents()
+<a name="1459"/>      } else 
+<a name="1460"/>         throw("'INCLUDE' or 'IGNORE' expected")
+<a name="1461"/>
+<a name="1462"/>      dtd_tabmat("]]&gt;") | throw("']]&gt;' expected")
+<a name="1463"/>
+<a name="1464"/>      return
+<a name="1465"/>   end
+<a name="1466"/>
+<a name="1467"/>   #
+<a name="1468"/>   # [64] ignoreSectContents ::= Ignore ('&lt;![' ignoreSectContents ']]&gt;' Ignore)*
+<a name="1469"/>   # [65] Ignore ::= Char* - (Char* ('&lt;![' | ']]&gt;') Char*) 
+<a name="1470"/>   #
+<a name="1471"/>   private parse_ignore_sect_contents()
+<a name="1472"/>      repeat {
+<a name="1473"/>         tab(upto('&lt;]')) | throw("Ignore section not closed")
+<a name="1474"/>         if match("]]&gt;") then 
+<a name="1475"/>            return
+<a name="1476"/>         else if ="&lt;![" then {
+<a name="1477"/>            parse_ignore_sect_contents()
+<a name="1478"/>            ="]]&gt;" | throw("']]&gt;' expected")
+<a name="1479"/>         } else
+<a name="1480"/>            move(1)
+<a name="1481"/>      }
+<a name="1482"/>   end
+<a name="1483"/>
+<a name="1484"/>   #
+<a name="1485"/>   # [66] CharRef ::= '&amp;#' [0-9]+ ';' | '&amp;#x' [0-9a-fA-F]+ ';'
+<a name="1486"/>   # [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+<a name="1487"/>   #
+<a name="1488"/>   private parse_char_ref(expand)
+<a name="1489"/>      local digs, i, j
+<a name="1490"/>      j := &amp;pos
+<a name="1491"/>      ="&amp;#" | throw("'&amp;#' expected")
+<a name="1492"/>      if ="x" then {
+<a name="1493"/>         digs := tab(many('0-9a-fA-F')) | throw("Hex digit expected")
+<a name="1494"/>         i := Format.string_to_int(digs)
+<a name="1495"/>      } else {
+<a name="1496"/>         digs := tab(many(&amp;digits)) | throw("Digit expected")
+<a name="1497"/>         i := integer(digs)
+<a name="1498"/>      }
+<a name="1499"/>      =";" | throw("';' expected")
+<a name="1500"/>
+<a name="1501"/>      if /expand then
+<a name="1502"/>         return &amp;subject[j:&amp;pos]
+<a name="1503"/>      else {
+<a name="1504"/>         if Text.has_ord(CHAR, i) then {
+<a name="1505"/>            return if \utf8_flag then
+<a name="1506"/>               uchar(i)
+<a name="1507"/>            else
+<a name="1508"/>               char(256 &gt; i | 63)
+<a name="1509"/>         }
+<a name="1510"/>         throw("Invalid char number: " || digs)
+<a name="1511"/>      }
+<a name="1512"/>   end
+<a name="1513"/>
+<a name="1514"/>   #
+<a name="1515"/>   # [67] Reference ::= EntityRef | CharRef
+<a name="1516"/>   #
+<a name="1517"/>   private parse_reference()
+<a name="1518"/>      if match("&amp;#") then
+<a name="1519"/>         return parse_char_ref()
+<a name="1520"/>      if any('&amp;') then
+<a name="1521"/>         return parse_entity_ref()
+<a name="1522"/>      else
+<a name="1523"/>         throw("'&amp;' expected")
+<a name="1524"/>   end
+<a name="1525"/>
+<a name="1526"/>   #
+<a name="1527"/>   # [68] EntityRef ::= '&amp;' Name ';'
+<a name="1528"/>   #
+<a name="1529"/>   private parse_entity_ref()
+<a name="1530"/>      local res
+<a name="1531"/>      res := ="&amp;" | throw("'&amp;' expected")
+<a name="1532"/>      res ||:= parse_name()
+<a name="1533"/>      res ||:= =";" | throw("';' expected")
+<a name="1534"/>      return res
+<a name="1535"/>   end
+<a name="1536"/>
+<a name="1537"/>   #
+<a name="1538"/>   # [69] PEReference ::= '%' Name ';'
+<a name="1539"/>   #
+<a name="1540"/>   private parse_pe_reference()
+<a name="1541"/>      local res
+<a name="1542"/>      res := ="%" | throw("'%' expected")
+<a name="1543"/>      res ||:= parse_name()
+<a name="1544"/>      res ||:= =";" | throw("';' expected")
+<a name="1545"/>      return res
+<a name="1546"/>   end
+<a name="1547"/>
+<a name="1548"/>   #
+<a name="1549"/>   # Lookup a pe in the table, returning its value.
+<a name="1550"/>   #
+<a name="1551"/>   private lookup_pe_reference(s)
+<a name="1552"/>      local name
+<a name="1553"/>      name := s[2:-1]
+<a name="1554"/>      return member(doc.parameter_entities, name) |
+<a name="1555"/>         throw("No such parameter entity defined: " || name)
+<a name="1556"/>   end
+<a name="1557"/>
+<a name="1558"/>   #
+<a name="1559"/>   # Lookup a general entity in the table, returning its value.
+<a name="1560"/>   #
+<a name="1561"/>   private lookup_entity_ref(s)
+<a name="1562"/>      local name
+<a name="1563"/>      name := s[2:-1]
+<a name="1564"/>      return member(doc.general_entities, name) |
+<a name="1565"/>         throw("No such general entity defined: " || name)
+<a name="1566"/>   end
+<a name="1567"/>
+<a name="1568"/>   #
+<a name="1569"/>   # Convenience method to take a value from one of the entity tables and return it
+<a name="1570"/>   # as a string, resolving it externally if necessary.
+<a name="1571"/>   #
+<a name="1572"/>   private resolve_entity(o)
+<a name="1573"/>      if \o.str then
+<a name="1574"/>         return o.str
+<a name="1575"/>      if \o.notation then
+<a name="1576"/>         throw("Unparsed entity not allowed")
+<a name="1577"/>      # Resolve with base set to the current_base of the place where defined.
+<a name="1578"/>      return resolve(o.pos[1].base, o.external_id).content
+<a name="1579"/>   end
+<a name="1580"/>
+<a name="1581"/>   #
+<a name="1582"/>   # [70] EntityDecl ::= GEDecl | PEDecl
+<a name="1583"/>   # [71] GEDecl ::= '&lt;!ENTITY' S Name S EntityDef S? '&gt;'
+<a name="1584"/>   # [72] PEDecl ::= '&lt;!ENTITY' S '%' S Name S PEDef S? '&gt;'
+<a name="1585"/>   #
+<a name="1586"/>   # Assume "&lt;!ENTITY" already matched.
+<a name="1587"/>   #
+<a name="1588"/>   private parse_entity_decl()
+<a name="1589"/>      local name, val
+<a name="1590"/>      #
+<a name="1591"/>      # This could be more sophisticated to try to cover for example
+<a name="1592"/>      # &lt;!ENTITY%x; abc 'def &gt;   where %x -&gt; ' %'
+<a name="1593"/>      #
+<a name="1594"/>      spaces()
+<a name="1595"/>      if ="%" then {
+<a name="1596"/>         dtd_spaces()
+<a name="1597"/>         name := dtd_parse_name()
+<a name="1598"/>         dtd_spaces()
+<a name="1599"/>         val := parse_pe_def()
+<a name="1600"/>         # Second and subsequent definitions generate a warning, and are ignored.
+<a name="1601"/>         if member(doc.parameter_entities, name) then
+<a name="1602"/>            warn("Multiple parameter entity definitions for " || name)
+<a name="1603"/>         else
+<a name="1604"/>            insert(doc.parameter_entities, name, val)
+<a name="1605"/>      } else {
+<a name="1606"/>         name := dtd_parse_name()
+<a name="1607"/>         dtd_spaces()
+<a name="1608"/>         val := parse_entity_def()
+<a name="1609"/>         # Second and subsequent definitions generate a warning, and are ignored.
+<a name="1610"/>         if member(doc.general_entities, name) then
+<a name="1611"/>            warn("Multiple parameter entity definitions for " || name)
+<a name="1612"/>         else
+<a name="1613"/>            insert(doc.general_entities, name, val)
+<a name="1614"/>      }         
+<a name="1615"/>      dtd_opt_spaces()
+<a name="1616"/>      dtd_tabmat("&gt;") | throw("'&gt;' expected")
+<a name="1617"/>      return
+<a name="1618"/>   end
+<a name="1619"/>
+<a name="1620"/>   #
+<a name="1621"/>   # [73] EntityDef ::= EntityValue | (ExternalID NDataDecl?)
+<a name="1622"/>   # return a string or an ExternalID
+<a name="1623"/>   #
+<a name="1624"/>   private parse_entity_def()
+<a name="1625"/>      local res
+<a name="1626"/>
+<a name="1627"/>      res := EntityDef()
+<a name="1628"/>      res.pos := where()
+<a name="1629"/>      res.in_ext_subset := in_ext_subset
+<a name="1630"/>      if dtd_match("SYSTEM" | "PUBLIC") then {
+<a name="1631"/>         res.external_id := parse_external_id()
+<a name="1632"/>         if looking_at_space_then("NDATA") then
+<a name="1633"/>            res.notation := parse_ndata_decl()
+<a name="1634"/>      } else 
+<a name="1635"/>         res.str := parse_entity_value()
+<a name="1636"/>      return res
+<a name="1637"/>   end
+<a name="1638"/>   
+<a name="1639"/>   #
+<a name="1640"/>   # [74] PEDef ::= EntityValue | ExternalID
+<a name="1641"/>   # return a string or an ExternalID
+<a name="1642"/>   #
+<a name="1643"/>   private parse_pe_def()
+<a name="1644"/>      local res
+<a name="1645"/>         
+<a name="1646"/>      res := EntityDef()
+<a name="1647"/>      res.pos := where()
+<a name="1648"/>      res.in_ext_subset := in_ext_subset
+<a name="1649"/>      if dtd_match("SYSTEM" | "PUBLIC") then
+<a name="1650"/>         res.external_id := parse_external_id()
+<a name="1651"/>      else 
+<a name="1652"/>         res.str := parse_entity_value()
+<a name="1653"/>      return res
+<a name="1654"/>   end
+<a name="1655"/>
+<a name="1656"/>   #
+<a name="1657"/>   #
+<a name="1658"/>   # [75] ExternalID ::= 'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral S SystemLiteral 
+<a name="1659"/>   #
+<a name="1660"/>   private parse_external_id()
+<a name="1661"/>      local res
+<a name="1662"/>      res := ExternalID()
+<a name="1663"/>      if dtd_tabmat("SYSTEM") then {
+<a name="1664"/>         dtd_spaces()
+<a name="1665"/>         res.system_id := parse_system_literal()
+<a name="1666"/>      } else if dtd_tabmat("PUBLIC") then {
+<a name="1667"/>         dtd_spaces()
+<a name="1668"/>         res.public_id := parse_pubid_literal()
+<a name="1669"/>         dtd_spaces()
+<a name="1670"/>         res.system_id := parse_system_literal()
+<a name="1671"/>      } else
+<a name="1672"/>         throw("SYSTEM or PUBLIC expected")
+<a name="1673"/>      return res
+<a name="1674"/>   end
+<a name="1675"/>
+<a name="1676"/>   #
+<a name="1677"/>   # [76] NDataDecl ::= S 'NDATA' S Name
+<a name="1678"/>   #
+<a name="1679"/>   private parse_ndata_decl()
+<a name="1680"/>      local n
+<a name="1681"/>      dtd_spaces()
+<a name="1682"/>      dtd_tabmat("NDATA") | throw("'NDATA' expected")
+<a name="1683"/>      dtd_spaces()
+<a name="1684"/>      n := dtd_parse_name()
+<a name="1685"/>      return n
+<a name="1686"/>   end
+<a name="1687"/>
+<a name="1688"/>   #
+<a name="1689"/>   # [77] TextDecl ::= '&lt;?xml' VersionInfo? EncodingDecl S? '?&gt;'
+<a name="1690"/>   #
+<a name="1691"/>   # Assume "&lt;?xml" already matched.
+<a name="1692"/>   #
+<a name="1693"/>   private parse_text_decl()
+<a name="1694"/>      if looking_at_space_then("version") then
+<a name="1695"/>         parse_version_info()
+<a name="1696"/>      
+<a name="1697"/>      parse_encoding_decl()
+<a name="1698"/>
+<a name="1699"/>      opt_spaces()
+<a name="1700"/>
+<a name="1701"/>      ="?&gt;" | throw("'?&gt;' expected")
+<a name="1702"/>
+<a name="1703"/>      return
+<a name="1704"/>   end
+<a name="1705"/>
+<a name="1706"/>   #
+<a name="1707"/>   # [78] extParsedEnt ::= TextDecl? content
+<a name="1708"/>   #
+<a name="1709"/>   private parse_external_parsed_entity(parent, circle)
+<a name="1710"/>      if ="&lt;?xml" then
+<a name="1711"/>         parse_text_decl()
+<a name="1712"/>      return parse_content(parent, circle)
+<a name="1713"/>   end
+<a name="1714"/>
+<a name="1715"/>   #
+<a name="1716"/>   # [80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" ) 
+<a name="1717"/>   #
+<a name="1718"/>   private parse_encoding_decl()
+<a name="1719"/>      local c, res
+<a name="1720"/>      spaces()
+<a name="1721"/>      ="encoding" | throw("'encoding' expected")
+<a name="1722"/>
+<a name="1723"/>      parse_eq()
+<a name="1724"/>
+<a name="1725"/>      c := tab(any('\'\"')) | throw("\' or \" expected")
+<a name="1726"/>
+<a name="1727"/>      res := parse_enc_name()
+<a name="1728"/>
+<a name="1729"/>      =c | throw(c || " expected")
+<a name="1730"/>
+<a name="1731"/>      return res
+<a name="1732"/>   end
+<a name="1733"/>
+<a name="1734"/>   #
+<a name="1735"/>   # [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
+<a name="1736"/>   #
+<a name="1737"/>   private parse_enc_name()
+<a name="1738"/>      local c1, c2
+<a name="1739"/>      c1 := 'A-Za-z'
+<a name="1740"/>      c2 := 'A-Za-z0-9._\-'
+<a name="1741"/>      any(c1) | throw("Letter expected")
+<a name="1742"/>      return tab(many(c2))
+<a name="1743"/>   end
+<a name="1744"/>
+<a name="1745"/>   #
+<a name="1746"/>   # [82] NotationDecl ::= '&lt;!NOTATION' S Name S (ExternalID | PublicID) S? '&gt;'
+<a name="1747"/>   # [83] PublicID ::= 'PUBLIC' S PubidLiteral 
+<a name="1748"/>   #
+<a name="1749"/>   # Assume "&lt;!NOTATION" already matched.
+<a name="1750"/>   #
+<a name="1751"/>   private parse_notation_decl()
+<a name="1752"/>      local res, name, pub, sys
+<a name="1753"/>      res := NotationDecl()
+<a name="1754"/>      dtd_spaces()
+<a name="1755"/>      name := dtd_parse_name()
+<a name="1756"/>      dtd_spaces()
+<a name="1757"/>      if dtd_tabmat("PUBLIC") then {
+<a name="1758"/>         dtd_spaces()
+<a name="1759"/>         pub := parse_pubid_literal()
+<a name="1760"/>         if looking_at_space_then_cset('\'\"') then {
+<a name="1761"/>            dtd_spaces()
+<a name="1762"/>            sys := parse_system_literal()
+<a name="1763"/>            res.external_id := ExternalID(sys, pub)
+<a name="1764"/>         } else
+<a name="1765"/>            res.public_id := pub
+<a name="1766"/>      } else if dtd_match("SYSTEM") then
+<a name="1767"/>         res.external_id := parse_external_id()
+<a name="1768"/>      else
+<a name="1769"/>         throw("SYSTEM or PUBLIC expected")
+<a name="1770"/>      dtd_opt_spaces()
+<a name="1771"/>      dtd_tabmat("&gt;") | throw("'&gt;' expected")
+<a name="1772"/>
+<a name="1773"/>      /doc.notation_declarations[name] := res
+<a name="1774"/>
+<a name="1775"/>      return res
+<a name="1776"/>   end
+<a name="1777"/>
+<a name="1778"/>   #
+<a name="1779"/>   # S?
+<a name="1780"/>   #
+<a name="1781"/>   private opt_spaces()
+<a name="1782"/>      return if any(SPACE) then
+<a name="1783"/>         spaces()
+<a name="1784"/>      else
+<a name="1785"/>         ""
+<a name="1786"/>   end
+<a name="1787"/>
+<a name="1788"/>   private dtd_opt_spaces()
+<a name="1789"/>      return if dtd_any(SPACE) then
+<a name="1790"/>         dtd_spaces()
+<a name="1791"/>      else
+<a name="1792"/>         ""
+<a name="1793"/>   end
+<a name="1794"/>
+<a name="1795"/>   #
+<a name="1796"/>   # Validate the given element child content; this may fail on error or just emit a warning
+<a name="1797"/>   #
+<a name="1798"/>   private validate_children(el) 
+<a name="1799"/>      local element_decl, tl
+<a name="1800"/>
+<a name="1801"/>      #
+<a name="1802"/>      # Validate the element structure
+<a name="1803"/>      #
+<a name="1804"/>      unless member(doc.element_declarations, el.name) then {
+<a name="1805"/>         invalid(el.name || " is an undeclared element name")
+<a name="1806"/>         return 
+<a name="1807"/>      }
+<a name="1808"/>
+<a name="1809"/>      element_decl := doc.element_declarations[el.name]
+<a name="1810"/>
+<a name="1811"/>      #
+<a name="1812"/>      # If the spec isn't a mixed spec (ie one which contains #PCDATA),
+<a name="1813"/>      # then we remove all whitespace-only string elements in the child list.
+<a name="1814"/>      #
+<a name="1815"/>      if element_decl.content_spec.isnt_mixed() then {
+<a name="1816"/>         #
+<a name="1817"/>         # Possibly change children to be a new list with the whitespace-only
+<a name="1818"/>         # element removed.
+<a name="1819"/>         #
+<a name="1820"/>         tl := el.get_children_no_whitespace()
+<a name="1821"/>         if *tl ~= *el.children then {
+<a name="1822"/>            el.children := tl
+<a name="1823"/>            #
+<a name="1824"/>            # A standalone document is not allowed to have w/s removed for an element
+<a name="1825"/>            # when that occurs as a result of a ELEMENT declaration in an external subset.
+<a name="1826"/>            #
+<a name="1827"/>            if \doc.standalone &amp; \element_decl.in_ext_subset then
+<a name="1828"/>               invalid(el.name || " had insignificant whitespace removed in a standalone document")
+<a name="1829"/>         }
+<a name="1830"/>      }
+<a name="1831"/>
+<a name="1832"/>      element_decl.content_spec.pattern_match_element(el) |
+<a name="1833"/>         invalid(el.name || " does not match the declared pattern: " || element_decl.content_spec.str())
+<a name="1834"/>
+<a name="1835"/>      #
+<a name="1836"/>      # If appropriate, put the children back to equal to the original whitespace_children;
+<a name="1837"/>      # the former may have changed above.
+<a name="1838"/>      #
+<a name="1839"/>      if \el.xml_space_preserve | \self.preserve_insignificant_whitespace_flag then {
+<a name="1840"/>         el.children := el.whitespace_children
+<a name="1841"/>      }
+<a name="1842"/>   end
+<a name="1843"/>
+<a name="1844"/>   #
+<a name="1845"/>   # Validate the attributes of an element
+<a name="1846"/>   #
+<a name="1847"/>   private validate_attributes(el)
+<a name="1848"/>      local attlist, x
+<a name="1849"/>
+<a name="1850"/>      unless member(doc.attribute_lists, el.name) then {
+<a name="1851"/>         if *el.attributes ~= 0 then
+<a name="1852"/>            invalid(el.name || " has attributes but none were declared")
+<a name="1853"/>         return
+<a name="1854"/>      }
+<a name="1855"/>
+<a name="1856"/>      #
+<a name="1857"/>      # The AttList for this particular element type.
+<a name="1858"/>      #
+<a name="1859"/>      attlist := doc.attribute_lists[el.name]
+<a name="1860"/>
+<a name="1861"/>      #
+<a name="1862"/>      # Check for any missing required attributes, and add any default attributes.
+<a name="1863"/>      #
+<a name="1864"/>      every x := !sort(attlist.attribute_defs) do {
+<a name="1865"/>         if member(el.attributes, x[1]) then {
+<a name="1866"/>            # A #FIXED attribute value must match the default.
+<a name="1867"/>            if x[2].default_decl === "#FIXED" then {
+<a name="1868"/>               if el.attributes[x[1]] ~=== x[2].default_value then
+<a name="1869"/>                  invalid("Attribute value " || el.attributes[x[1]] || " doesn't match the defined FIXED value " || x[2].default_value)
+<a name="1870"/>            }
+<a name="1871"/>         } else {
+<a name="1872"/>            # A #REQUIRED attribute must be present.
+<a name="1873"/>            if x[2].default_decl === "#REQUIRED" then
+<a name="1874"/>               invalid("The attribute " || x[1] || " is required, but not present")
+<a name="1875"/>            else {
+<a name="1876"/>               # Cannot insert a default from an attdef defined in the external subset, if standalone is "yes"
+<a name="1877"/>               if \doc.standalone &amp; \x[2].in_ext_subset then
+<a name="1878"/>                  invalid("Cannot use a default from an attribute declared externally, in a standalone document")
+<a name="1879"/>               # Insert any default value.
+<a name="1880"/>               insert(el.attributes, x[1], \x[2].default_value)
+<a name="1881"/>            }
+<a name="1882"/>         }       
+<a name="1883"/>      }
+<a name="1884"/>
+<a name="1885"/>      #
+<a name="1886"/>      # Validate each of the attributes values.
+<a name="1887"/>      #
+<a name="1888"/>      every x := !sort(el.attributes) do {
+<a name="1889"/>         if member(attlist.attribute_defs, x[1]) then {
+<a name="1890"/>            validate_attribute_value(el.name, attlist.attribute_defs[x[1]], x[1], x[2])
+<a name="1891"/>         } else {
+<a name="1892"/>            invalid(x[1] || " is not a defined attribute for element " || el.name)
+<a name="1893"/>         }
+<a name="1894"/>      }
+<a name="1895"/>   end
+<a name="1896"/>
+<a name="1897"/>   private validate_attribute_value(element_name, attdef, name, val) 
+<a name="1898"/>      local l, entity_def, n
+<a name="1899"/>      case attdef.def_type of {
+<a name="1900"/>         "CDATA" : {
+<a name="1901"/>         }
+<a name="1902"/>         "ID" : {
+<a name="1903"/>            valid_name(val) |
+<a name="1904"/>               invalid("Attribute value " || val || " must be a valid name")
+<a name="1905"/>            # Store the value of the id
+<a name="1906"/>            if member(doc.id_attribute_values, val) then
+<a name="1907"/>               invalid("Duplicated ID attribute value: " || val)
+<a name="1908"/>            else
+<a name="1909"/>               insert(doc.id_attribute_values, val)
+<a name="1910"/>         }
+<a name="1911"/>         "IDREF" : {
+<a name="1912"/>            valid_name(val) |
+<a name="1913"/>               invalid("Attribute value " || val || " must be a valid name")
+<a name="1914"/>            put(id_attribute_refs, IdAttributeRef(val, where()))
+<a name="1915"/>         }
+<a name="1916"/>         "IDREFS" : {
+<a name="1917"/>            if l := valid_names(val) then
+<a name="1918"/>               every put(id_attribute_refs, IdAttributeRef(!l, where()))
+<a name="1919"/>            else
+<a name="1920"/>               invalid("Attribute value " || val || " must be comprised of valid names")
+<a name="1921"/>         }
+<a name="1922"/>         "ENTITY" : {
+<a name="1923"/>            if valid_name(val) then {
+<a name="1924"/>               if member(doc.general_entities, val) then {
+<a name="1925"/>                  entity_def := doc.general_entities[val]
+<a name="1926"/>                  if /entity_def.notation then
+<a name="1927"/>                     invalid("Attribute val " || val || " does not match an external entity")
+<a name="1928"/>               } else
+<a name="1929"/>                  invalid("Attribute val " || val || " does not match an external entity")
+<a name="1930"/>            } else
+<a name="1931"/>               invalid("Attribute value " || val || " must be a valid name")
+<a name="1932"/>         }
+<a name="1933"/>         "ENTITIES" : {
+<a name="1934"/>            if l := valid_names(val) then {
+<a name="1935"/>               every n := !l do {
+<a name="1936"/>                  if member(doc.general_entities, n) then {
+<a name="1937"/>                     entity_def := doc.general_entities[n]
+<a name="1938"/>                     if /entity_def.notation then
+<a name="1939"/>                        invalid("Attribute val " || n || " does not match an external entity")
+<a name="1940"/>                  } else
+<a name="1941"/>                     invalid("Attribute val " || n || " does not match an external entity")
+<a name="1942"/>               }
+<a name="1943"/>            } else
+<a name="1944"/>               invalid("Attribute value " || val || " must be comprised of valid names")
+<a name="1945"/>         }
+<a name="1946"/>         "NMTOKEN" : {
+<a name="1947"/>            valid_nmtoken(val) |
+<a name="1948"/>               invalid("Attribute value " || val || " must be a valid nmtoken")
+<a name="1949"/>         }
+<a name="1950"/>         "NMTOKENS" : {
+<a name="1951"/>            valid_nmtokens(val) |
+<a name="1952"/>               invalid("Attribute value " || val || " must be comprised of valid nmtokens")
+<a name="1953"/>         }
+<a name="1954"/>         "ENUMERATION" : { 
+<a name="1955"/>            member(attdef.def_set, val) |
+<a name="1956"/>               invalid("Attribute value " || val || " is not one of the declared enumerations")
+<a name="1957"/>         }
+<a name="1958"/>         "NOTATION" : { 
+<a name="1959"/>            member(attdef.def_set, val) |
+<a name="1960"/>               invalid("Attribute value " || val || " is not one of the declared notations")
+<a name="1961"/>         }
+<a name="1962"/>      }
+<a name="1963"/>   end
+<a name="1964"/>
+<a name="1965"/>   private start_divert(base, id) 
+<a name="1966"/>      push(divert_stack, Diversion(current_base, current_divert_id))
+<a name="1967"/>      current_divert_id := id
+<a name="1968"/>      current_base := base
+<a name="1969"/>   end
+<a name="1970"/>
+<a name="1971"/>   private end_divert()
+<a name="1972"/>      local t
+<a name="1973"/>      t := pop(divert_stack)
+<a name="1974"/>      current_divert_id := t.id
+<a name="1975"/>      current_base := t.base
+<a name="1976"/>   end
+<a name="1977"/>
+<a name="1978"/>   private where()
+<a name="1979"/>      local stack
+<a name="1980"/>      stack := copy(divert_stack)
+<a name="1981"/>      push(stack, Diversion(current_base, current_divert_id))
+<a name="1982"/>      return stack
+<a name="1983"/>   end
+<a name="1984"/>
+<a name="1985"/>   #
+<a name="1986"/>   # A warning
+<a name="1987"/>   #
+<a name="1988"/>   private warn(s, loc)
+<a name="1989"/>      /loc := where()
+<a name="1990"/>      fire(WARNING_EVENT, ProblemDetail(loc, s))
+<a name="1991"/>      doc.warnings +:= 1
+<a name="1992"/>   end
+<a name="1993"/>
+<a name="1994"/>   #
+<a name="1995"/>   # A validity error
+<a name="1996"/>   #
+<a name="1997"/>   private invalid(s, loc)
+<a name="1998"/>      # Ignore if not validating
+<a name="1999"/>      if /validate_flag then
+<a name="2000"/>         fail
+<a name="2001"/>      /loc := where()
+<a name="2002"/>      fire(VALIDITY_ERROR_EVENT, ProblemDetail(loc, s))
+<a name="2003"/>      doc.validity_errors +:= 1
+<a name="2004"/>   end
+<a name="2005"/>
+<a name="2006"/>   #
+<a name="2007"/>   # Utility: succeed if we are looking at S s, fail otherwise.
+<a name="2008"/>   # Does not change &amp;pos.
+<a name="2009"/>   #
+<a name="2010"/>   private looking_at_space_then(s)
+<a name="2011"/>      local res, i
+<a name="2012"/>      any(SPACE) | fail
+<a name="2013"/>      i := &amp;pos
+<a name="2014"/>      tab(many(SPACE))
+<a name="2015"/>      res := match(s)
+<a name="2016"/>      &amp;pos := i
+<a name="2017"/>      return \res
+<a name="2018"/>   end
+<a name="2019"/>
+<a name="2020"/>   #
+<a name="2021"/>   # DTD version of above
+<a name="2022"/>   #
+<a name="2023"/>   private dtd_looking_at_space_then(s)
+<a name="2024"/>      local res, i
+<a name="2025"/>      dtd_any(SPACE) | fail
+<a name="2026"/>      i := &amp;pos
+<a name="2027"/>      tab(dtd_many(SPACE))
+<a name="2028"/>      res := dtd_match(s)
+<a name="2029"/>      &amp;pos := i
+<a name="2030"/>      return \res
+<a name="2031"/>   end
+<a name="2032"/>
+<a name="2033"/>   #
+<a name="2034"/>   # As above, but looks for chars in the set.
+<a name="2035"/>   #
+<a name="2036"/>   private looking_at_space_then_cset(c)
+<a name="2037"/>      local res, i
+<a name="2038"/>      any(SPACE) | fail
+<a name="2039"/>      i := &amp;pos
+<a name="2040"/>      tab(many(SPACE))
+<a name="2041"/>      res := any(c)
+<a name="2042"/>      &amp;pos := i
+<a name="2043"/>      return \res
+<a name="2044"/>   end
+<a name="2045"/>
+<a name="2046"/>   #
+<a name="2047"/>   # DTD version of above
+<a name="2048"/>   #
+<a name="2049"/>   private dtd_looking_at_space_then_cset(c)
+<a name="2050"/>      local res, i
+<a name="2051"/>      dtd_any(SPACE) | fail
+<a name="2052"/>      i := &amp;pos
+<a name="2053"/>      tab(dtd_many(SPACE))
+<a name="2054"/>      res := dtd_any(c)
+<a name="2055"/>      &amp;pos := i
+<a name="2056"/>      return \res
+<a name="2057"/>   end
+<a name="2058"/>
+<a name="2059"/>   #
+<a name="2060"/>   # Equivalent to match(), but checks for pe expansions
+<a name="2061"/>   #
+<a name="2062"/>   private dtd_match(s)
+<a name="2063"/>      local i, x, c
+<a name="2064"/>      i := &amp;pos
+<a name="2065"/>      repeat {
+<a name="2066"/>         if x := match(s) then
+<a name="2067"/>            return x
+<a name="2068"/>         every c := !s do
+<a name="2069"/>            =c | break
+<a name="2070"/>         try_dtd_insert(i) | fail
+<a name="2071"/>      }
+<a name="2072"/>   end
+<a name="2073"/>
+<a name="2074"/>   #
+<a name="2075"/>   # Equivalent to =s, but checks for pe expansions
+<a name="2076"/>   #
+<a name="2077"/>   private dtd_tabmat(s)
+<a name="2078"/>      local i, x, c
+<a name="2079"/>      i := &amp;pos
+<a name="2080"/>      repeat {
+<a name="2081"/>         if x := =s then
+<a name="2082"/>            return x
+<a name="2083"/>         every c := !s do
+<a name="2084"/>            =c | break
+<a name="2085"/>         try_dtd_insert(i) | fail
+<a name="2086"/>      }
+<a name="2087"/>   end
+<a name="2088"/>   
+<a name="2089"/>   #
+<a name="2090"/>   # Equivalent to any(), but checks for pe expansions
+<a name="2091"/>   #
+<a name="2092"/>   private dtd_any(c)
+<a name="2093"/>      local i, x
+<a name="2094"/>      i := &amp;pos
+<a name="2095"/>      repeat {
+<a name="2096"/>         if x := any(c) then
+<a name="2097"/>            return x
+<a name="2098"/>         try_dtd_insert(i) | fail
+<a name="2099"/>      }
+<a name="2100"/>   end
+<a name="2101"/>
+<a name="2102"/>   #
+<a name="2103"/>   # Equivalent to many(), but checks for pe expansions
+<a name="2104"/>   #
+<a name="2105"/>   private dtd_many(c)
+<a name="2106"/>      local i, x
+<a name="2107"/>      i := &amp;pos
+<a name="2108"/>      repeat {
+<a name="2109"/>         if x := many(c) then {
+<a name="2110"/>            tab(x)
+<a name="2111"/>            try_dtd_insert(i) | return x
+<a name="2112"/>         }
+<a name="2113"/>         else
+<a name="2114"/>            try_dtd_insert(i) | fail
+<a name="2115"/>      }
+<a name="2116"/>   end
+<a name="2117"/>
+<a name="2118"/>   #
+<a name="2119"/>   # Equivalent to many0(), but checks for pe expansions
+<a name="2120"/>   #
+<a name="2121"/>   private dtd_many0(c)
+<a name="2122"/>      return dtd_many(c) | .&amp;pos
+<a name="2123"/>   end
+<a name="2124"/>
+<a name="2125"/>   #
+<a name="2126"/>   # If the current char is %, try and insert a pe value.  If successful, return
+<a name="2127"/>   # otherwise fail.  &amp;pos is always set to i on exit.
+<a name="2128"/>   #
+<a name="2129"/>   private try_dtd_insert(i)
+<a name="2130"/>      local j, t
+<a name="2131"/>      if any('%') then {
+<a name="2132"/>         if \in_ext_subset then {
+<a name="2133"/>            j := &amp;pos
+<a name="2134"/>            t := resolve_entity(lookup_pe_reference(parse_pe_reference()))
+<a name="2135"/>            # The entity is expanded by one leading and one trailing space (4.4.8)
+<a name="2136"/>            &amp;subject := &amp;subject[1:j] || " " || t || " " || &amp;subject[&amp;pos:0]
+<a name="2137"/>            &amp;pos := i
+<a name="2138"/>            return
+<a name="2139"/>         }
+<a name="2140"/>         # Only show an error once; this prevents the same error message
+<a name="2141"/>         # being produced several times.
+<a name="2142"/>         if /dtd_insert_shown_error then 
+<a name="2143"/>            invalid("Cannot reference a pe except in the external dtd")
+<a name="2144"/>         dtd_insert_shown_error := &amp;yes
+<a name="2145"/>      }
+<a name="2146"/>      &amp;pos := i
+<a name="2147"/>   end
+<a name="2148"/>
+<a name="2149"/>   #
+<a name="2150"/>   # Resolve the given external_id, using the current resolver
+<a name="2151"/>   #
+<a name="2152"/>   private resolve(base, external_id)
+<a name="2153"/>      local t
+<a name="2154"/>      t := resolver.resolve(base, external_id)  | throwf("Couldn't resolve: %t: %w", external_id)
+<a name="2155"/>      if \utf8_flag then
+<a name="2156"/>         t.content := ucs(t.content) | throwf("Couldn't convert %t to UTF-8", external_id)
+<a name="2157"/>      t.content := normalize_eol(t.content)
+<a name="2158"/>      return t
+<a name="2159"/>   end
+<a name="2160"/>
+<a name="2161"/>   #
+<a name="2162"/>   # This method post-processes the parsed tree to fill in the 
+<a name="2163"/>   # global names in the XmlElement structures.
+<a name="2164"/>   #
+<a name="2165"/>   private do_namespace_processing()
+<a name="2166"/>      local t
+<a name="2167"/>      
+<a name="2168"/>      t := table()
+<a name="2169"/>      if \utf8_flag then
+<a name="2170"/>         insert(t, u"xml", u"http://www.w3.org/XML/1998/namespace")
+<a name="2171"/>      else
+<a name="2172"/>         insert(t, "xml", "http://www.w3.org/XML/1998/namespace")
+<a name="2173"/>
+<a name="2174"/>      return do_namespace_processing_element(t, doc.get_root_element())
+<a name="2175"/>   end
+<a name="2176"/>
+<a name="2177"/>   #
+<a name="2178"/>   # Do namespace processing for a single element.
+<a name="2179"/>   # :Parameters :
+<a name="2180"/>   # :  `resolve_table` - a table of mappings from namespace prefixes
+<a name="2181"/>   #        to URI's to use for the conversion.
+<a name="2182"/>   # :Parameters :
+<a name="2183"/>   # :  `el` - the element to process
+<a name="2184"/>   #
+<a name="2185"/>   private do_namespace_processing_element(resolve_table, el)
+<a name="2186"/>      local k, sub
+<a name="2187"/>      #
+<a name="2188"/>      # Could be comment, cdata
+<a name="2189"/>      #
+<a name="2190"/>      unless is(el, Element) then
+<a name="2191"/>         return
+<a name="2192"/>
+<a name="2193"/>      #
+<a name="2194"/>      # Make the map from namespace prefixes -&gt; uri's
+<a name="2195"/>      #
+<a name="2196"/>      el.namespace_declarations := make_declarations_map(el)
+<a name="2197"/>
+<a name="2198"/>      if *el.namespace_declarations &gt; 0 then {
+<a name="2199"/>         #
+<a name="2200"/>         # Create a new resolve_table for this level.  It is a copy of the
+<a name="2201"/>         # parent, plus any defs at this level.
+<a name="2202"/>         #
+<a name="2203"/>         resolve_table := copy(resolve_table)
+<a name="2204"/>         every k := key(el.namespace_declarations) do {
+<a name="2205"/>            insert(resolve_table, k, el.namespace_declarations[k])
+<a name="2206"/>         }
+<a name="2207"/>      }
+<a name="2208"/>
+<a name="2209"/>      #
+<a name="2210"/>      # Convert the element to create the global name and attribute
+<a name="2211"/>      # table.
+<a name="2212"/>      #
+<a name="2213"/>      convert_element(resolve_table, el)
+<a name="2214"/>
+<a name="2215"/>      #
+<a name="2216"/>      # Process the children
+<a name="2217"/>      #
+<a name="2218"/>      every sub := !el.children do
+<a name="2219"/>         text(sub) | do_namespace_processing_element(resolve_table, sub)
+<a name="2220"/>
+<a name="2221"/>      return el
+<a name="2222"/>   end
+<a name="2223"/>
+<a name="2224"/>   #
+<a name="2225"/>   # Convert a single element.  This completes the global name field and
+<a name="2226"/>   # sets up the global attributes.
+<a name="2227"/>   #
+<a name="2228"/>   private convert_element(resolve_table, el)
+<a name="2229"/>      local k
+<a name="2230"/>      el.global_name := convert_name(resolve_table, el.name)
+<a name="2231"/>
+<a name="2232"/>      every k := key(el.attributes) do {
+<a name="2233"/>         k ? {
+<a name="2234"/>            if ="xmlns" then {
+<a name="2235"/>               next
+<a name="2236"/>            }
+<a name="2237"/>            insert(el.attributes_global_name, 
+<a name="2238"/>                   convert_name(resolve_table, k), el.attributes[k])
+<a name="2239"/>         }
+<a name="2240"/>      }
+<a name="2241"/>
+<a name="2242"/>      return
+<a name="2243"/>   end
+<a name="2244"/>
+<a name="2245"/>   #
+<a name="2246"/>   # Given a name "eg SOAP-ENV:Envelope", return the global name, using the 
+<a name="2247"/>   # given resolve table for the conversion.  The returned value is a
+<a name="2248"/>   # GlobalName instance.
+<a name="2249"/>   #
+<a name="2250"/>   private convert_name(resolve_table, name)
+<a name="2251"/>      local prefix, local_name, uri
+<a name="2252"/>
+<a name="2253"/>      name ? {
+<a name="2254"/>         if prefix := tab(upto(':')) then {
+<a name="2255"/>            move(1)
+<a name="2256"/>            local_name := tab(0)
+<a name="2257"/>            member(resolve_table, prefix) | throw("Couldn't resolve namespace: " || prefix)
+<a name="2258"/>            uri := resolve_table[prefix]
+<a name="2259"/>            return GlobalName(local_name, uri)
+<a name="2260"/>         }
+<a name="2261"/>
+<a name="2262"/>         if uri := member(resolve_table, "") then {
+<a name="2263"/>            if *uri &gt; 0 then
+<a name="2264"/>               return GlobalName(name, uri)
+<a name="2265"/>         }
+<a name="2266"/>
+<a name="2267"/>         return GlobalName(name)
+<a name="2268"/>      }
+<a name="2269"/>   end
+<a name="2270"/>
+<a name="2271"/>   # 
+<a name="2272"/>   # Make a map of namespace id's to uri's from the attributes in the
+<a name="2273"/>   # given element.  
+<a name="2274"/>   #
+<a name="2275"/>   private make_declarations_map(el)
+<a name="2276"/>      local k, uri, prefix, t
+<a name="2277"/>
+<a name="2278"/>      t := table()
+<a name="2279"/>
+<a name="2280"/>      every k := key(el.attributes) do {
+<a name="2281"/>         k ? {
+<a name="2282"/>            if ="xmlns" then {
+<a name="2283"/>               uri := el.attributes[k]
+<a name="2284"/>               if pos(0) then {
+<a name="2285"/>                  insert(t, "", uri)
+<a name="2286"/>               }
+<a name="2287"/>               else if =":" then {
+<a name="2288"/>                  prefix := tab(0)
+<a name="2289"/>                  if *prefix = 0 then
+<a name="2290"/>                     throw("Badly formed xmlns attribute: " || k)
+<a name="2291"/>                  if match("xml", Text.lower(prefix)) then
+<a name="2292"/>                     throw("xmlns namespace can't start with 'xml': " || k)
+<a name="2293"/>                  insert(t, prefix, uri)
+<a name="2294"/>               }
+<a name="2295"/>               else
+<a name="2296"/>                  throw("Badly formed xmlns attribute: " || k)
+<a name="2297"/>            }
+<a name="2298"/>         }
+<a name="2299"/>      }
+<a name="2300"/>
+<a name="2301"/>      return t
+<a name="2302"/>   end
+<a name="2303"/>
+<a name="2304"/>   private static init()
+<a name="2305"/>      #
+<a name="2306"/>      # [3] S ::= (#x20 | #x9 | #xD | #xA)+
+<a name="2307"/>      #
+<a name="2308"/>      SPACE := '\x20\x09\x0D\x0A'
+<a name="2309"/>
+<a name="2310"/>      #
+<a name="2311"/>      # [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | 
+<a name="2312"/>      #                     [#x10000-#x10FFFF]
+<a name="2313"/>      CHAR := '\x09\x0A\x0D\x20-\ud7ff\ue000-\ufffd\U10000-\U10ffff'
+<a name="2314"/>      INVALID_CHAR := ~CHAR
+<a name="2315"/>
+<a name="2316"/>      #
+<a name="2317"/>      # [4] NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | 
+<a name="2318"/>      #                       [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | 
+<a name="2319"/>      #                       [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | 
+<a name="2320"/>      #                       [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+<a name="2321"/>      NAME_START := 
+<a name="2322"/>        ':A-Z_a-z\xC0-\xD6\xD8-\xF6\xF8-\u02FF\u0370-\u037D\u037F-\u1FFF_
+<a name="2323"/>         \u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF_
+<a name="2324"/>         \uFDF0-\uFFFD\U10000-\UEFFFF'
+<a name="2325"/>
+<a name="2326"/>      #
+<a name="2327"/>      # [4a] NameChar ::= NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+<a name="2328"/>      #
+<a name="2329"/>      NAME_CHAR := NAME_START ++ '\-.0-9\xB7\u0300-\u036F\u203F-\u2040'
+<a name="2330"/>
+<a name="2331"/>      # [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%]
+<a name="2332"/>      PUBID_CHAR := '\x20\x0D\x0Aa-zA-Z0-9\-\'()+,./:=?;!*#@$_%'
+<a name="2333"/>
+<a name="2334"/>      WARNING_EVENT := "Warning"
+<a name="2335"/>      VALIDITY_ERROR_EVENT := "Validity error"
+<a name="2336"/>      FATAL_ERROR_EVENT := "Fatal error"
+<a name="2337"/>   end
+<a name="2338"/>
+<a name="2339"/>   public override new()
+<a name="2340"/>      Connectable.new()
+<a name="2341"/>      resolver := DefaultResolver()
+<a name="2342"/>      do_namespaces_flag := &amp;yes
+<a name="2343"/>      validate_flag := &amp;yes
+<a name="2344"/>      preserve_comments_flag := &amp;yes
+<a name="2345"/>      return
+<a name="2346"/>   end
+<a name="2347"/>end
+</pre></body></html>

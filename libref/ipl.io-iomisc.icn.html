@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>iomisc.icn</title></head><body><pre>
+<a name="1"/>package ipl.io
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   io(Files, FileOpt, FileStream, DirStream, ProgInputStream,
+<a name="5"/>      FilterInputStream, FilePath), 
+<a name="6"/>   util(use),
+<a name="7"/>   ipl.printf(stopf),
+<a name="8"/>   exception(throwf)
+<a name="9"/>
+<a name="10"/>#
+<a name="11"/># Return an open file to /dev/null.  The returned file is shared
+<a name="12"/># and so should not be closed.
+<a name="13"/>#
+<a name="14"/>procedure get_null()
+<a name="15"/>   static nul
+<a name="16"/>   initial
+<a name="17"/>      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | stopf("Can't open %s: %w", Files.NULL_FILE)
+<a name="18"/>   return nul
+<a name="19"/>end
+<a name="20"/>
+<a name="21"/>#
+<a name="22"/># Return an open file to /dev/zero.  The returned file is shared
+<a name="23"/># and so should not be closed.
+<a name="24"/>#
+<a name="25"/>procedure get_zero()
+<a name="26"/>   static zero
+<a name="27"/>   initial
+<a name="28"/>      zero := FileStream("/dev/zero", FileOpt.RDWR) | stopf("Can't open /dev/zero: %w")
+<a name="29"/>   return zero
+<a name="30"/>end
+<a name="31"/>
+<a name="32"/>#
+<a name="33"/># Set the three stdio files to the null file.
+<a name="34"/>#
+<a name="35"/>procedure null_stdio()
+<a name="36"/>   local nul
+<a name="37"/>   nul := FileStream(Files.NULL_FILE, FileOpt.RDONLY) | fail
+<a name="38"/>   if nul.get_fd() &gt; 0 then {
+<a name="39"/>      nul.dup2(FileStream.stdin) | fail
+<a name="40"/>      nul.close()
+<a name="41"/>   }
+<a name="42"/>   nul := FileStream(Files.NULL_FILE, FileOpt.WRONLY) | fail
+<a name="43"/>   nul.dup2(FileStream.stdout) | fail
+<a name="44"/>   nul.dup2(FileStream.stderr) | fail
+<a name="45"/>   if nul.get_fd() &gt; 2 then
+<a name="46"/>      nul.close()
+<a name="47"/>   return
+<a name="48"/>end
+<a name="49"/>
+<a name="50"/>package record Msg(file, revert)
+<a name="51"/>
+<a name="52"/>package procedure dir_recurse2(s, f, revert, on_err)
+<a name="53"/>   local p, f2, l
+<a name="54"/>   coact(Msg(f, &amp;current), revert)
+<a name="55"/>   p := FilePath(f)
+<a name="56"/>   repeat {
+<a name="57"/>      l := s.read_line() | fail
+<a name="58"/>      if /l then
+<a name="59"/>         return
+<a name="60"/>      if Files.is_relative_dir(l) then
+<a name="61"/>         next
+<a name="62"/>      f2 := p.child(l).str() 
+<a name="63"/>      if Files.is_directory(f2) then
+<a name="64"/>         dir_recurse1(f2, revert, on_err)
+<a name="65"/>      else
+<a name="66"/>         coact(Msg(f2, &amp;current), revert)
+<a name="67"/>   }
+<a name="68"/>end
+<a name="69"/>
+<a name="70"/>#
+<a name="71"/># Procedure to use with `dir_recurse`; it just throws an exception
+<a name="72"/># with the value set to an informative error message.
+<a name="73"/>#
+<a name="74"/>procedure dir_recurse_throw(f)
+<a name="75"/>   throwf("Failed to read dir %s: %w", f)
+<a name="76"/>end
+<a name="77"/>
+<a name="78"/>package procedure dir_recurse1(f, revert, on_err)
+<a name="79"/>   local s
+<a name="80"/>   use {
+<a name="81"/>      s := DirStream(f),
+<a name="82"/>      dir_recurse2(s, f, revert, on_err)
+<a name="83"/>   } | on_err(f)
+<a name="84"/>end
+<a name="85"/>
+<a name="86"/>#
+<a name="87"/># Recursively traverse directory `f`, generating all the filenames
+<a name="88"/># (including directories).  If this generator isn't used to
+<a name="89"/># exhaustion, the call must be wrapped in the `util.clean()` function,
+<a name="90"/># in order to close all outstanding files.  `on_err` is an optional
+<a name="91"/># procedure to invoke on an error reading a directory.  If it throws
+<a name="92"/># an exception, then the call to `dir_recurse` should also be enclosed
+<a name="93"/># with one of the try procedures.
+<a name="94"/>#
+<a name="95"/># Example :-
+<a name="96"/># ~
+<a name="97"/>#     clean{try1{{
+<a name="98"/>#        every f := dir_recurse(d, dir_recurse_throw) \ 50 do
+<a name="99"/>#           write("got ", f)
+<a name="100"/>#     }}} | write("Problem: ", &amp;why)
+<a name="101"/># ~
+<a name="102"/># :See also :
+<a name="103"/># :  `dir_recurse_throw()`
+<a name="104"/>procedure dir_recurse(f, on_err)
+<a name="105"/>   local v, here, e
+<a name="106"/>   here := &amp;current
+<a name="107"/>   /on_err := 1
+<a name="108"/>   e := create dir_recurse1(f, here, on_err)
+<a name="109"/>   v := @e | fail
+<a name="110"/>   repeat {
+<a name="111"/>      suspend v.file
+<a name="112"/>      v := coact(, v.revert) | fail
+<a name="113"/>   }
+<a name="114"/>end
+<a name="115"/>
+<a name="116"/>#
+<a name="117"/># A simple helper to run a program `prog` with the given optional
+<a name="118"/># parameter list and environment, and capture and return its output as
+<a name="119"/># a string.  If the program exits with an error status code, then the
+<a name="120"/># procedure fails and sets `&amp;why` appropriately.
+<a name="121"/>#
+<a name="122"/># Notes :-
+<a name="123"/># * This procedure only works on UNIX platforms.
+<a name="124"/># * stdin and stderr are both set to `/dev/null`.
+<a name="125"/># * The shell isn't invoked (unlike `io.open(..., "pr")`); so
+<a name="126"/>#   no shell syntax may be used.
+<a name="127"/># * The PATH is used to search for `prog`.
+<a name="128"/>#
+<a name="129"/># Example :-
+<a name="130"/># ~
+<a name="131"/>#    s := run_prog("ls", ["-l", "/"])
+<a name="132"/># ~
+<a name="133"/>#
+<a name="134"/>procedure run_prog(prog, params, env)
+<a name="135"/>   local f, s
+<a name="136"/>   if s := use {                         
+<a name="137"/>      f := ProgInputStream(prog, params, env, get_null(), get_null()),
+<a name="138"/>      f.read_all()
+<a name="139"/>   } &amp; f.succeeded() then
+<a name="140"/>      return s
+<a name="141"/>end                                                      
+<a name="142"/>
+<a name="143"/>#
+<a name="144"/># This procedure is very similar to `run_prog()` above, but provides
+<a name="145"/># better error reporting, by capturing standard error output.  This
+<a name="146"/># comes at a slight setup and performance cost, however.  For example :-
+<a name="147"/>#
+<a name="148"/># ~
+<a name="149"/>#    s := run_prog2("ls", ["-l", "/junk"])
+<a name="150"/># ~
+<a name="151"/>#
+<a name="152"/># would fail and set `&amp;why` to something like :-
+<a name="153"/>#
+<a name="154"/># ~
+<a name="155"/>#   ls failed: Exited with status 2: ls: cannot access '/junk': No such file or directory
+<a name="156"/># ~
+<a name="157"/>#
+<a name="158"/># whereas `run_prog()` would just report the status code.
+<a name="159"/>#
+<a name="160"/>procedure run_prog2(prog, params, env)
+<a name="161"/>   local f, s
+<a name="162"/>   if s := use {                         
+<a name="163"/>      f := FilterInputStream(, prog, params, env),
+<a name="164"/>      f.read_all()
+<a name="165"/>   } &amp; f.succeeded() then
+<a name="166"/>      return s
+<a name="167"/>end                                                      
+</pre></body></html>

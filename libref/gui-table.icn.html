@@ -1,0 +1,613 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>table.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: table.icn 8350 2020-07-04 20:22:10Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import util, ipl.lists, ipl.pdco
+<a name="12"/>
+<a name="13"/>class TableContent(SelectableScrollArea)
+<a name="14"/>   public override calculate_line_height()
+<a name="15"/>      local t, m, h, r, e, i
+<a name="16"/>      t := []
+<a name="17"/>      m := 0
+<a name="18"/>      every h := (!parent.table_header.children).calculate_line_height(self.cbwin) do {
+<a name="19"/>         if integer(h) then
+<a name="20"/>            m &lt;:= h
+<a name="21"/>         else
+<a name="22"/>            put(t, h)
+<a name="23"/>      }
+<a name="24"/>      #
+<a name="25"/>      # Easy case, all columns report fixed line heights, so the line height for the
+<a name="26"/>      # table is the maximum.
+<a name="27"/>      if *t = 0 then
+<a name="28"/>         return m
+<a name="29"/>
+<a name="30"/>      r := list(*t[1], m)
+<a name="31"/>      every e := !t do {
+<a name="32"/>         *e = *contents | syserr("Inconsistent table column line height list sizes returned")
+<a name="33"/>         every i := 1 to *r do
+<a name="34"/>            r[i] &lt;:= e[i]
+<a name="35"/>      }
+<a name="36"/>
+<a name="37"/>      return r
+<a name="38"/>   end
+<a name="39"/>
+<a name="40"/>   public slice(col)
+<a name="41"/>      suspend (!contents)[col]
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   public get_cell(line, col)
+<a name="45"/>      return contents[line, col]
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   public override calculate_subject_width()
+<a name="49"/>      return parent.get_total_column_width()
+<a name="50"/>   end
+<a name="51"/>
+<a name="52"/>   # Synch buttons because of the horizontal movement.
+<a name="53"/>   public synch_header()
+<a name="54"/>      parent.table_header.synch_with_content()
+<a name="55"/>   end
+<a name="56"/>
+<a name="57"/>   public override on_hsb()
+<a name="58"/>      SelectableScrollArea.on_hsb()
+<a name="59"/>      synch_header()
+<a name="60"/>   end
+<a name="61"/>
+<a name="62"/>   public override handle_key_right(e)
+<a name="63"/>      SelectableScrollArea.handle_key_right(e)
+<a name="64"/>      synch_header()
+<a name="65"/>   end
+<a name="66"/>
+<a name="67"/>   public override handle_key_left(e)
+<a name="68"/>      SelectableScrollArea.handle_key_left(e)
+<a name="69"/>      synch_header()
+<a name="70"/>   end
+<a name="71"/>
+<a name="72"/>   public get_column(n)
+<a name="73"/>      return parent.table_header.children[n]
+<a name="74"/>   end
+<a name="75"/>
+<a name="76"/>   #
+<a name="77"/>   # Return the column under the current x, y cursor.
+<a name="78"/>   #
+<a name="79"/>   public get_column_under_pointer(e)
+<a name="80"/>      local c
+<a name="81"/>      view.in_region(e) | fail
+<a name="82"/>      every c := !parent.table_header.children do
+<a name="83"/>         if c.x &lt;= e.x &lt; c.x + c.w then
+<a name="84"/>            return c
+<a name="85"/>   end
+<a name="86"/>
+<a name="87"/>   public override draw()
+<a name="88"/>      local yp, i, j, info, h, lh, r, cols, col, cc, W
+<a name="89"/>
+<a name="90"/>      r := view.get_cbwin_clip()
+<a name="91"/>
+<a name="92"/>      info := get_line_info(r) | fail
+<a name="93"/>      h := get_line_height()
+<a name="94"/>
+<a name="95"/>      cols := parent.table_header.children
+<a name="96"/>      use {
+<a name="97"/>         W := view.cbwin.clone(), 
+<a name="98"/>         {
+<a name="99"/>            every j := 1 to *cols do {
+<a name="100"/>               col := cols[j]
+<a name="101"/>               # If the column is visible
+<a name="102"/>               if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
+<a name="103"/>                  # Clip on the column.
+<a name="104"/>                  W.clip!cc
+<a name="105"/>                  yp := r.y - info.offset
+<a name="106"/>                  # Write each line in this column
+<a name="107"/>                  every i := info.first to info.last do {
+<a name="108"/>                     lh := integer(h) | h[i]
+<a name="109"/>                     col.draw_cell(W, self.contents[i, j], i, j, yp, lh)
+<a name="110"/>                     yp +:= lh
+<a name="111"/>                  }
+<a name="112"/>               }
+<a name="113"/>            }
+<a name="114"/>         }
+<a name="115"/>      }
+<a name="116"/>      # Call the superclass draw to do the selection, highlight etc.
+<a name="117"/>      SelectableScrollArea.draw()
+<a name="118"/>   end
+<a name="119"/>
+<a name="120"/>   public override draw_line_data(xp, yp, lh, i)
+<a name="121"/>   end
+<a name="122"/>end
+<a name="123"/>
+<a name="124"/>
+<a name="125"/>class TableHeader(Component)
+<a name="126"/>   public
+<a name="127"/>      which_highlight,
+<a name="128"/>      going_left,
+<a name="129"/>      scroll_ticker,
+<a name="130"/>      scroll_ticker_interval
+<a name="131"/>
+<a name="132"/>   public static const
+<a name="133"/>      SCROLL_INCREMENT
+<a name="134"/>
+<a name="135"/>   private static init()
+<a name="136"/>      SCROLL_INCREMENT := env_scale("OI_TABLEHEADER_SCROLL_INCREMENT") | scale(20)
+<a name="137"/>   end
+<a name="138"/>
+<a name="139"/>   #
+<a name="140"/>   # Set the draggable columns behaviour.  If set, the columns can be moved.
+<a name="141"/>   #
+<a name="142"/>   public set_draggable_columns(s)
+<a name="143"/>      allow_drop_flag := allow_drag_flag := need_flag(s)
+<a name="144"/>      link
+<a name="145"/>   end
+<a name="146"/>
+<a name="147"/>   public override get_default_height()
+<a name="148"/>      local hh, col
+<a name="149"/>      hh := 0
+<a name="150"/>      every col := !children do
+<a name="151"/>         hh &lt;:= col.get_preferred_height()
+<a name="152"/>      return hh
+<a name="153"/>   end
+<a name="154"/>
+<a name="155"/>   public which_column(e)
+<a name="156"/>      local c
+<a name="157"/>      in_region(e) | fail
+<a name="158"/>      every c := !children do
+<a name="159"/>         if c.in_region(e) then
+<a name="160"/>            return c
+<a name="161"/>   end
+<a name="162"/>
+<a name="163"/>   public override define_dnd_pointers(drag)
+<a name="164"/>      cbwin.copy_pointer("dnd negative", Dialog.DND_NEGATIVE_POINTER)
+<a name="165"/>      cbwin.copy_pointer("dnd positive", "sb h double arrow")
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   public check_ticker(d)
+<a name="169"/>      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+<a name="170"/>      scroll_ticker.change_time(scroll_ticker_interval)
+<a name="171"/>      # Start it (if it isn't already running)
+<a name="172"/>      scroll_ticker.start()
+<a name="173"/>   end
+<a name="174"/>
+<a name="175"/>   public get_leftmost_visible_column()
+<a name="176"/>      local c
+<a name="177"/>      every c := !children do
+<a name="178"/>         if intersect(c) then
+<a name="179"/>            return c
+<a name="180"/>   end
+<a name="181"/>
+<a name="182"/>   public get_rightmost_visible_column()
+<a name="183"/>      local c
+<a name="184"/>      every c := back(children) do
+<a name="185"/>         if intersect(c) then
+<a name="186"/>            return c
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   public scroll_tick()
+<a name="190"/>      local tc
+<a name="191"/>      tc := parent.table_content
+<a name="192"/>      repeat {
+<a name="193"/>         if \going_left then {
+<a name="194"/>            tc.set_area_x(tc.get_area_x() - SCROLL_INCREMENT)
+<a name="195"/>            set_which_highlight(get_leftmost_visible_column())
+<a name="196"/>         } else {
+<a name="197"/>            tc.set_area_x(tc.get_area_x() + SCROLL_INCREMENT)
+<a name="198"/>            set_which_highlight(get_rightmost_visible_column())
+<a name="199"/>         }
+<a name="200"/>         parent_dialog.update_drop()
+<a name="201"/>         synch_with_content()
+<a name="202"/>         scroll_ticker.sleep(scroll_ticker_interval)
+<a name="203"/>      }
+<a name="204"/>   end
+<a name="205"/>
+<a name="206"/>   public override can_drag(ev)
+<a name="207"/>      local c
+<a name="208"/>      every c := !children do {
+<a name="209"/>         if \c.is_down then {
+<a name="210"/>            c.clear_down()
+<a name="211"/>            return c
+<a name="212"/>         }
+<a name="213"/>      }
+<a name="214"/>   end
+<a name="215"/>
+<a name="216"/>   public override drag_event(drag, e)
+<a name="217"/>      local c, rhs
+<a name="218"/>      drag.get_source() === self | fail
+<a name="219"/>      if \parent.table_content.hsb &amp; \which_highlight then {
+<a name="220"/>         rhs := min(x + w, children[-1].x + children[-1].w)
+<a name="221"/>         if e.x &lt; x then {
+<a name="222"/>            going_left := &amp;yes
+<a name="223"/>            check_ticker(x - e.x)
+<a name="224"/>            return
+<a name="225"/>         } else if e.x &gt;= rhs then {
+<a name="226"/>            going_left := &amp;no
+<a name="227"/>            check_ticker(e.x - rhs)
+<a name="228"/>            return
+<a name="229"/>         }
+<a name="230"/>      }
+<a name="231"/>      scroll_ticker.stop()
+<a name="232"/>      c := which_column(e)
+<a name="233"/>      set_which_highlight(c)
+<a name="234"/>      return \c
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   public override can_drop(drag, e)
+<a name="238"/>      return drag.content ~=== \which_highlight
+<a name="239"/>   end
+<a name="240"/>
+<a name="241"/>   public override perform_drop(drag, drop, e)
+<a name="242"/>      local i, j
+<a name="243"/>      i := drag.content.get_column_index()
+<a name="244"/>      j := drop.content.get_column_index()
+<a name="245"/>      every lmove(!parent.table_content.contents, i, j)
+<a name="246"/>      reposition_index(i, j)
+<a name="247"/>      layout()
+<a name="248"/>      parent.invalidate()
+<a name="249"/>      return
+<a name="250"/>   end
+<a name="251"/>
+<a name="252"/>   public override drag_reset(e)
+<a name="253"/>      scroll_ticker.stop()
+<a name="254"/>      set_which_highlight()
+<a name="255"/>      # Resynch since the components in the table header may have
+<a name="256"/>      # moved; we can't do this in perform_drop since the held count
+<a name="257"/>      # is non-zero then.
+<a name="258"/>      parent_dialog.resynch_pointer()
+<a name="259"/>   end
+<a name="260"/>
+<a name="261"/>   public set_which_highlight(x)
+<a name="262"/>      if which_highlight ~=== x then {
+<a name="263"/>         (\which_highlight).invalidate()
+<a name="264"/>         which_highlight := x
+<a name="265"/>         (\which_highlight).invalidate()
+<a name="266"/>      }
+<a name="267"/>      link
+<a name="268"/>   end
+<a name="269"/>
+<a name="270"/>   public synch_with_content()
+<a name="271"/>      local dx
+<a name="272"/>      dx := self.x - parent.table_content.get_area_x() - children[1].x
+<a name="273"/>      every (!self.children).shift(dx, 0)
+<a name="274"/>      invalidate()
+<a name="275"/>   end
+<a name="276"/>
+<a name="277"/>   public override layout()
+<a name="278"/>      local i, b
+<a name="279"/>      i := self.x - parent.table_content.get_area_x()
+<a name="280"/>      every b := !self.children do {
+<a name="281"/>         b.x := i
+<a name="282"/>         b.y := self.y
+<a name="283"/>         # b.w_spec is set below from the column width.
+<a name="284"/>         b.w := b.w_spec
+<a name="285"/>         b.h := self.h
+<a name="286"/>         b.layout()
+<a name="287"/>         i +:= b.w
+<a name="288"/>      }
+<a name="289"/>   end
+<a name="290"/>
+<a name="291"/>   public override new()
+<a name="292"/>      Component.new()
+<a name="293"/>      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+<a name="294"/>      return
+<a name="295"/>   end
+<a name="296"/>end
+<a name="297"/>
+<a name="298"/>
+<a name="299"/>#
+<a name="300"/># This class displays a table, the columns of which are set up
+<a name="301"/># using TableColumns.
+<a name="302"/>#
+<a name="303"/>class Table(Component)
+<a name="304"/>   public 
+<a name="305"/>      table_header,
+<a name="306"/>      table_content,
+<a name="307"/>      head_h,
+<a name="308"/>      no_more_sizing
+<a name="309"/>
+<a name="310"/>   public override initially()
+<a name="311"/>      if *table_header.children = 0 then
+<a name="312"/>         runerr("No TableColumns in Table")
+<a name="313"/>      Component.initially()
+<a name="314"/>   end
+<a name="315"/>
+<a name="316"/>   #
+<a name="317"/>   # Return the nth `TableColumn`.
+<a name="318"/>   #
+<a name="319"/>   public get_column(n)
+<a name="320"/>      return table_header.children[n]
+<a name="321"/>   end
+<a name="322"/>
+<a name="323"/>   public get_contents()
+<a name="324"/>      return self.table_content.get_contents()
+<a name="325"/>   end
+<a name="326"/>
+<a name="327"/>   #
+<a name="328"/>   # Move to the given position.  Either parameter may be omitted.
+<a name="329"/>   # :Parameters :
+<a name="330"/>   # :  `line` - The line to move to
+<a name="331"/>   # :  `horiz` - The left offset to move to
+<a name="332"/>   #
+<a name="333"/>   public goto_pos(line, horiz)
+<a name="334"/>      self.table_content.goto_pos(line, horiz)
+<a name="335"/>   end
+<a name="336"/>
+<a name="337"/>   #
+<a name="338"/>   # Ensure the given line is visible
+<a name="339"/>   #
+<a name="340"/>   public ensure_line_visible(line) 
+<a name="341"/>      self.table_content.ensure_line_visible(line) 
+<a name="342"/>   end
+<a name="343"/>
+<a name="344"/>   #
+<a name="345"/>   # Set the contents of the table.  The parameter should be a
+<a name="346"/>   # two dimensional list.  Each element of the list should
+<a name="347"/>   # correspond to one line of the table.
+<a name="348"/>   # :Parameters :
+<a name="349"/>   # :  `x` - The contents
+<a name="350"/>   #
+<a name="351"/>   public set_contents(x)
+<a name="352"/>      self.table_content.set_contents(x)
+<a name="353"/>      link
+<a name="354"/>   end
+<a name="355"/>
+<a name="356"/>   #
+<a name="357"/>   # Call this method if the contents list, previously
+<a name="358"/>   # set with `set_contents()`, has changed.
+<a name="359"/>   #
+<a name="360"/>   public contents_changed()
+<a name="361"/>      self.table_content.contents_changed()
+<a name="362"/>      link
+<a name="363"/>   end
+<a name="364"/>
+<a name="365"/>   public clear_selections()
+<a name="366"/>      self.table_content.clear_selections()
+<a name="367"/>      link
+<a name="368"/>   end
+<a name="369"/>
+<a name="370"/>   public set_draggable_cursor(s)
+<a name="371"/>      self.table_content.set_draggable_cursor(s)
+<a name="372"/>      link
+<a name="373"/>   end
+<a name="374"/>
+<a name="375"/>   public set_motion_cursor(s)
+<a name="376"/>      self.table_content.set_motion_cursor(s)
+<a name="377"/>      link
+<a name="378"/>   end
+<a name="379"/>
+<a name="380"/>   public set_selection_on_key_moves(s)
+<a name="381"/>      self.table_content.set_selection_on_key_moves(s)
+<a name="382"/>      link
+<a name="383"/>   end
+<a name="384"/>
+<a name="385"/>   public set_show_over(s)
+<a name="386"/>      self.table_content.set_show_over(s)
+<a name="387"/>      link
+<a name="388"/>   end
+<a name="389"/>
+<a name="390"/>   #
+<a name="391"/>   # Return a list of lines selected
+<a name="392"/>   # :Returns :
+<a name="393"/>   # :  A list of lines currently selected
+<a name="394"/>   #
+<a name="395"/>   public get_selections()
+<a name="396"/>      return self.table_content.get_selections()
+<a name="397"/>   end
+<a name="398"/>
+<a name="399"/>   #
+<a name="400"/>   # Set the current selections to the list l, which is a list of
+<a name="401"/>   # line numbers.
+<a name="402"/>   # :Parameters :
+<a name="403"/>   # :  `l` - The list of item numbers.
+<a name="404"/>   #
+<a name="405"/>   public set_selections(l)
+<a name="406"/>      self.table_content.set_selections(l)
+<a name="407"/>      link
+<a name="408"/>   end
+<a name="409"/>
+<a name="410"/>   #
+<a name="411"/>   # Set the cursor
+<a name="412"/>   #
+<a name="413"/>   public set_cursor(line)
+<a name="414"/>      self.table_content.set_cursor(line)
+<a name="415"/>      link
+<a name="416"/>   end
+<a name="417"/>
+<a name="418"/>   #
+<a name="419"/>   # Return item currently under the clicked cursor
+<a name="420"/>   #
+<a name="421"/>   public get_cursor()
+<a name="422"/>      return self.table_content.get_cursor()
+<a name="423"/>   end
+<a name="424"/>
+<a name="425"/>   #
+<a name="426"/>   # Return line currently under the clicked cursor
+<a name="427"/>   #
+<a name="428"/>   public line_get_cursor()
+<a name="429"/>      return self.table_content.object_get_cursor()
+<a name="430"/>   end
+<a name="431"/>
+<a name="432"/>   #
+<a name="433"/>   # Get the number of the first visible line
+<a name="434"/>   #
+<a name="435"/>   public get_first_line()
+<a name="436"/>      return self.table_content.get_first_line()
+<a name="437"/>   end
+<a name="438"/>
+<a name="439"/>   #
+<a name="440"/>   # The index of the last line in the area, or zero if there are no
+<a name="441"/>   # lines.
+<a name="442"/>   #
+<a name="443"/>   public get_last_line()
+<a name="444"/>      return self.table_content.get_last_line()
+<a name="445"/>   end
+<a name="446"/>
+<a name="447"/>   public get_line_under_pointer(e)
+<a name="448"/>      return self.table_content.get_line_under_pointer(e)
+<a name="449"/>   end
+<a name="450"/>
+<a name="451"/>   public get_column_under_pointer(e)
+<a name="452"/>      return self.table_content.get_column_under_pointer(e)
+<a name="453"/>   end
+<a name="454"/>
+<a name="455"/>   public set_draggable_columns(s)
+<a name="456"/>      table_header.set_draggable_columns(s)
+<a name="457"/>      link
+<a name="458"/>   end
+<a name="459"/>
+<a name="460"/>   #
+<a name="461"/>   # Add the given TableColumn to the Table.
+<a name="462"/>   # :Parameters :
+<a name="463"/>   # :  `c` - The column to add.
+<a name="464"/>   # :  `i` - The index to add at; if omitted then the new column
+<a name="465"/>   #            is appended to the end.
+<a name="466"/>   #
+<a name="467"/>   public add_column(c, i)
+<a name="468"/>      table_header.add(c, i)
+<a name="469"/>      link
+<a name="470"/>   end
+<a name="471"/>
+<a name="472"/>   #
+<a name="473"/>   # Get the columns of the table
+<a name="474"/>   #
+<a name="475"/>   public get_columns()
+<a name="476"/>      return table_header.get_children()
+<a name="477"/>   end
+<a name="478"/>
+<a name="479"/>   #
+<a name="480"/>   # Configure the table selection mode.
+<a name="481"/>   # :Parameters :
+<a name="482"/>   # :  `m` - a constant from `Select`
+<a name="483"/>   public set_select_mode(m)
+<a name="484"/>      self.table_content.set_select_mode(m)
+<a name="485"/>      link
+<a name="486"/>   end
+<a name="487"/>
+<a name="488"/>   #
+<a name="489"/>   # Get the total width of all columns
+<a name="490"/>   #
+<a name="491"/>   public get_total_column_width()
+<a name="492"/>      return Sum{ (!self.table_header.children).w_spec }
+<a name="493"/>   end
+<a name="494"/>
+<a name="495"/>   #
+<a name="496"/>   # Compute the w_spec of the columns, including those whose width is unset.
+<a name="497"/>   #
+<a name="498"/>   public size_columns()
+<a name="499"/>      local col, l, sw, dw, av
+<a name="500"/>
+<a name="501"/>      l := []
+<a name="502"/>      sw := 0
+<a name="503"/>      every col := !self.table_header.children do {
+<a name="504"/>         if \col.column_width then {
+<a name="505"/>            col.w_spec := max(col.column_width, TableColumn.MIN_COLUMN_WIDTH)
+<a name="506"/>            sw +:= col.w_spec
+<a name="507"/>         } else 
+<a name="508"/>            put(l, col)
+<a name="509"/>      }
+<a name="510"/>      
+<a name="511"/>      if *l = 0 then
+<a name="512"/>         return
+<a name="513"/>
+<a name="514"/>      table_content.invalidate_subject_width()
+<a name="515"/>
+<a name="516"/>      # The width to give the auto size columns.
+<a name="517"/>      av := table_content.predict_view_width(self.w - border.get_total_width(), &amp;yes) - sw
+<a name="518"/>      dw := max(av / *l, TableColumn.MIN_COLUMN_WIDTH)
+<a name="519"/>
+<a name="520"/>      every l[1 to *l - 1].w_spec := dw
+<a name="521"/>      l[-1].w_spec := max(av - dw * (*l - 1), TableColumn.MIN_COLUMN_WIDTH)
+<a name="522"/>   end
+<a name="523"/>
+<a name="524"/>   public override get_default_height(dw)
+<a name="525"/>      dw -:= border.get_total_width()
+<a name="526"/>      return self.table_header.get_preferred_height(dw) + 2 * Gui.BORDER_WIDTH + 
+<a name="527"/>         self.table_content.get_preferred_height(dw) + border.get_total_height()
+<a name="528"/>   end
+<a name="529"/>
+<a name="530"/>   public override get_default_width()
+<a name="531"/>      local col, tw
+<a name="532"/>      tw := 0
+<a name="533"/>      # No go if we have any auto-size columns...
+<a name="534"/>      every col := !self.table_header.children do
+<a name="535"/>         tw +:= \col.column_width | fail
+<a name="536"/>      return border.get_total_width() + tw
+<a name="537"/>   end
+<a name="538"/>
+<a name="539"/>   public override layout()
+<a name="540"/>      local hw, hh
+<a name="541"/>
+<a name="542"/>      if /no_more_sizing then
+<a name="543"/>         size_columns()
+<a name="544"/>
+<a name="545"/>      hw := self.w - border.get_total_width()
+<a name="546"/>      hh := self.table_header.get_preferred_height(hw)
+<a name="547"/>
+<a name="548"/>      # The 2 * Gui.BORDER_WIDTH is the decoration between the header and the content.
+<a name="549"/>      self.table_content.x := self.x + border.get_l_inset()
+<a name="550"/>      self.table_content.y := self.y + hh + border.get_t_inset() + 2 * Gui.BORDER_WIDTH
+<a name="551"/>      self.table_content.w := hw
+<a name="552"/>      self.table_content.h := self.h - hh - border.get_total_height() - 2 * Gui.BORDER_WIDTH
+<a name="553"/>      self.table_content.layout()
+<a name="554"/>
+<a name="555"/>      self.table_header.x := self.x + border.get_l_inset()
+<a name="556"/>      self.table_header.y := self.y + border.get_t_inset()
+<a name="557"/>      self.table_header.w := hw
+<a name="558"/>      self.table_header.h := hh
+<a name="559"/>      self.table_header.layout()
+<a name="560"/>   end
+<a name="561"/>
+<a name="562"/>   public override display()
+<a name="563"/>      border.draw_rect(self.cbwin, self)
+<a name="564"/>      Gui.style.draw_raised_rectangle(self.cbwin, 
+<a name="565"/>                                  self.x + border.get_l_inset(), 
+<a name="566"/>                                  self.y + self.table_header.h + border.get_t_inset(), 
+<a name="567"/>                                  self.w - border.get_total_width(), 
+<a name="568"/>                                  2 * Gui.BORDER_WIDTH,
+<a name="569"/>                                  Gui.BORDER_WIDTH)
+<a name="570"/>      self.display_children()
+<a name="571"/>   end
+<a name="572"/>
+<a name="573"/>   public on_table_content(ev, src, type)
+<a name="574"/>      # Fire the event with self as source.
+<a name="575"/>      fire(type, ev)
+<a name="576"/>   end
+<a name="577"/>
+<a name="578"/>   #
+<a name="579"/>   # Return the component used to display the table contents, which is a
+<a name="580"/>   # subclass of SelectableScrollArea.
+<a name="581"/>   #
+<a name="582"/>   public get_table_content()
+<a name="583"/>      return self.table_content
+<a name="584"/>   end
+<a name="585"/>
+<a name="586"/>   public create_table_content()
+<a name="587"/>      return TableContent()
+<a name="588"/>   end
+<a name="589"/>
+<a name="590"/>   public create_table_header()
+<a name="591"/>      return TableHeader()
+<a name="592"/>   end
+<a name="593"/>
+<a name="594"/>   public override new()
+<a name="595"/>      Component.new()
+<a name="596"/>      self.preferred_focus := self.table_content := create_table_content()
+<a name="597"/>      self.table_content.set_border(NullBorder())
+<a name="598"/>      self.set_border(SunkenBorder())
+<a name="599"/>      every self.table_content.connect(self.on_table_content,
+<a name="600"/>                                       Event.CURSOR_MOVED | Event.SELECTION_CHANGED)
+<a name="601"/>      self.add(table_content)
+<a name="602"/>      self.table_header := create_table_header()
+<a name="603"/>      self.add(table_header)
+<a name="604"/>      self.set_constraint("x_fill", &amp;yes)
+<a name="605"/>      self.set_constraint("y_fill", &amp;yes)
+<a name="606"/>      self.set_constraint("x_weight", 1.0)
+<a name="607"/>      self.set_constraint("y_weight",  1.0)
+<a name="608"/>      return
+<a name="609"/>   end
+<a name="610"/>end
+</pre></body></html>

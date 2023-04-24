@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>argf</title></head><body>
+<h1>argf(e)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Given a co-expression <code>e</code>, this returns a function which, when
+invoked, passes its arguments (as a list) to a refreshed copy of <code>e</code>
+by way of an activation.  The subsequent results of the co-expresson
+form the results sequence of the function.
+<p/>
+For example :-
+<pre>
+  local f, a
+  ...
+  f := argf {{
+      a := coact()       # Get the args
+      (a[1] to a[2])^2   # The results
+  }}
+  ...
+  f(3, 5)       # Generates 9, 16, 25
+</pre>
+<p/>
+Another example is a recursive factorial function.  Note how <code>a</code>
+must be de-referenced to get its value before the recursive call
+changes it (the local <code>a</code> is shared by all the invocations).
+<p/>
+<pre>
+  local g, a
+  ...
+  g := argf {{
+     a := coact()[1]     # The first arg
+     if a = 0 then 1 else .a * g(a - 1)
+  }}
+  ...
+  g(5)          # Returns 120
+</pre>
+<p/>
+An alternative to this procedure is <code><a href="ipl.functional.lambda.html" target="displayFrame">lambda</a></code>, which passes arguments
+by way of a global variable.
+<p/><a href="ipl.functional-lambda.icn.html#76" target="displayFrame">Source - lambda.icn </a>
+<p/>
+</body></html>

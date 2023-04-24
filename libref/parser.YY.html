@@ -1,0 +1,2886 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>YY</title></head><body>
+<h1>YY</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="parser-package.html" target="listFrame">parser</a></dd>
+</dl><p/>
+<p/><a href="parser-oigram.icn.html#9" target="displayFrame">Source - oigram.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="parser.YY.html">parser.YY</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+<a href="util.Connectable.html#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#action">action()</a>
+<a href="#action_1">action_1()</a>
+<a href="#action_10">action_10()</a>
+<a href="#action_100">action_100()</a>
+<a href="#action_101">action_101()</a>
+<a href="#action_102">action_102()</a>
+<a href="#action_103">action_103()</a>
+<a href="#action_104">action_104()</a>
+<a href="#action_105">action_105()</a>
+<a href="#action_106">action_106()</a>
+<a href="#action_107">action_107()</a>
+<a href="#action_108">action_108()</a>
+<a href="#action_109">action_109()</a>
+<a href="#action_11">action_11()</a>
+<a href="#action_110">action_110()</a>
+<a href="#action_111">action_111()</a>
+<a href="#action_112">action_112()</a>
+<a href="#action_113">action_113()</a>
+<a href="#action_114">action_114()</a>
+<a href="#action_115">action_115()</a>
+<a href="#action_116">action_116()</a>
+<a href="#action_117">action_117()</a>
+<a href="#action_118">action_118()</a>
+<a href="#action_119">action_119()</a>
+<a href="#action_120">action_120()</a>
+<a href="#action_121">action_121()</a>
+<a href="#action_122">action_122()</a>
+<a href="#action_123">action_123()</a>
+<a href="#action_124">action_124()</a>
+<a href="#action_125">action_125()</a>
+<a href="#action_127">action_127()</a>
+<a href="#action_128">action_128()</a>
+<a href="#action_13">action_13()</a>
+<a href="#action_130">action_130()</a>
+<a href="#action_132">action_132()</a>
+<a href="#action_133">action_133()</a>
+<a href="#action_134">action_134()</a>
+<a href="#action_135">action_135()</a>
+<a href="#action_136">action_136()</a>
+<a href="#action_137">action_137()</a>
+<a href="#action_138">action_138()</a>
+<a href="#action_139">action_139()</a>
+<a href="#action_140">action_140()</a>
+<a href="#action_141">action_141()</a>
+<a href="#action_142">action_142()</a>
+<a href="#action_143">action_143()</a>
+<a href="#action_144">action_144()</a>
+<a href="#action_145">action_145()</a>
+<a href="#action_147">action_147()</a>
+<a href="#action_148">action_148()</a>
+<a href="#action_150">action_150()</a>
+<a href="#action_151">action_151()</a>
+<a href="#action_152">action_152()</a>
+<a href="#action_153">action_153()</a>
+<a href="#action_155">action_155()</a>
+<a href="#action_156">action_156()</a>
+<a href="#action_157">action_157()</a>
+<a href="#action_158">action_158()</a>
+<a href="#action_160">action_160()</a>
+<a href="#action_162">action_162()</a>
+<a href="#action_163">action_163()</a>
+<a href="#action_164">action_164()</a>
+<a href="#action_166">action_166()</a>
+<a href="#action_167">action_167()</a>
+<a href="#action_168">action_168()</a>
+<a href="#action_169">action_169()</a>
+<a href="#action_170">action_170()</a>
+<a href="#action_171">action_171()</a>
+<a href="#action_172">action_172()</a>
+<a href="#action_173">action_173()</a>
+<a href="#action_174">action_174()</a>
+<a href="#action_175">action_175()</a>
+<a href="#action_176">action_176()</a>
+<a href="#action_177">action_177()</a>
+<a href="#action_178">action_178()</a>
+<a href="#action_179">action_179()</a>
+<a href="#action_180">action_180()</a>
+<a href="#action_181">action_181()</a>
+<a href="#action_182">action_182()</a>
+<a href="#action_183">action_183()</a>
+<a href="#action_184">action_184()</a>
+<a href="#action_185">action_185()</a>
+<a href="#action_186">action_186()</a>
+<a href="#action_187">action_187()</a>
+<a href="#action_188">action_188()</a>
+<a href="#action_189">action_189()</a>
+<a href="#action_19">action_19()</a>
+<a href="#action_2">action_2()</a>
+<a href="#action_200">action_200()</a>
+<a href="#action_201">action_201()</a>
+<a href="#action_202">action_202()</a>
+<a href="#action_203">action_203()</a>
+<a href="#action_204">action_204()</a>
+<a href="#action_205">action_205()</a>
+<a href="#action_206">action_206()</a>
+<a href="#action_207">action_207()</a>
+<a href="#action_208">action_208()</a>
+<a href="#action_209">action_209()</a>
+<a href="#action_210">action_210()</a>
+<a href="#action_211">action_211()</a>
+<a href="#action_212">action_212()</a>
+<a href="#action_213">action_213()</a>
+<a href="#action_214">action_214()</a>
+<a href="#action_215">action_215()</a>
+<a href="#action_216">action_216()</a>
+<a href="#action_217">action_217()</a>
+<a href="#action_218">action_218()</a>
+<a href="#action_219">action_219()</a>
+<a href="#action_22">action_22()</a>
+<a href="#action_220">action_220()</a>
+<a href="#action_221">action_221()</a>
+<a href="#action_222">action_222()</a>
+<a href="#action_223">action_223()</a>
+<a href="#action_224">action_224()</a>
+<a href="#action_225">action_225()</a>
+<a href="#action_226">action_226()</a>
+<a href="#action_227">action_227()</a>
+<a href="#action_228">action_228()</a>
+<a href="#action_229">action_229()</a>
+<a href="#action_23">action_23()</a>
+<a href="#action_230">action_230()</a>
+<a href="#action_231">action_231()</a>
+<a href="#action_232">action_232()</a>
+<a href="#action_233">action_233()</a>
+<a href="#action_234">action_234()</a>
+<a href="#action_235">action_235()</a>
+<a href="#action_237">action_237()</a>
+<a href="#action_238">action_238()</a>
+<a href="#action_239">action_239()</a>
+<a href="#action_241">action_241()</a>
+<a href="#action_247">action_247()</a>
+<a href="#action_25">action_25()</a>
+<a href="#action_252">action_252()</a>
+<a href="#action_254">action_254()</a>
+<a href="#action_255">action_255()</a>
+<a href="#action_26">action_26()</a>
+<a href="#action_28">action_28()</a>
+<a href="#action_3">action_3()</a>
+<a href="#action_31">action_31()</a>
+<a href="#action_32">action_32()</a>
+<a href="#action_34">action_34()</a>
+<a href="#action_36">action_36()</a>
+<a href="#action_37">action_37()</a>
+<a href="#action_38">action_38()</a>
+<a href="#action_39">action_39()</a>
+<a href="#action_42">action_42()</a>
+<a href="#action_43">action_43()</a>
+<a href="#action_44">action_44()</a>
+<a href="#action_48">action_48()</a>
+<a href="#action_49">action_49()</a>
+<a href="#action_5">action_5()</a>
+<a href="#action_54">action_54()</a>
+<a href="#action_55">action_55()</a>
+<a href="#action_6">action_6()</a>
+<a href="#action_60">action_60()</a>
+<a href="#action_7">action_7()</a>
+<a href="#action_70">action_70()</a>
+<a href="#action_71">action_71()</a>
+<a href="#action_72">action_72()</a>
+<a href="#action_74">action_74()</a>
+<a href="#action_75">action_75()</a>
+<a href="#action_77">action_77()</a>
+<a href="#action_79">action_79()</a>
+<a href="#action_8">action_8()</a>
+<a href="#action_80">action_80()</a>
+<a href="#action_81">action_81()</a>
+<a href="#action_84">action_84()</a>
+<a href="#action_85">action_85()</a>
+<a href="#action_86">action_86()</a>
+<a href="#action_89">action_89()</a>
+<a href="#action_91">action_91()</a>
+<a href="#action_93">action_93()</a>
+<a href="#action_94">action_94()</a>
+<a href="#action_95">action_95()</a>
+<a href="#action_96">action_96()</a>
+<a href="#action_97">action_97()</a>
+<a href="#action_98">action_98()</a>
+<a href="#action_99">action_99()</a>
+<a href="#action_null">action_null()</a>
+<a href="#err">err()</a>
+<a href="#init">init()</a>
+<a href="#init_stacks">init_stacks()</a>
+<a href="#set_debug">set_debug()</a>
+<a href="#token_str">token_str()</a>
+<a href="#yyparse">yyparse()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ABSTRACT">ABSTRACT</a>
+<a href="#AND">AND</a>
+<a href="#ASSIGN">ASSIGN</a>
+<a href="#AT">AT</a>
+<a href="#AUGAND">AUGAND</a>
+<a href="#AUGAT">AUGAT</a>
+<a href="#AUGBANG">AUGBANG</a>
+<a href="#AUGCARET">AUGCARET</a>
+<a href="#AUGCONCAT">AUGCONCAT</a>
+<a href="#AUGDIFF">AUGDIFF</a>
+<a href="#AUGEQUIV">AUGEQUIV</a>
+<a href="#AUGINTER">AUGINTER</a>
+<a href="#AUGLCONCAT">AUGLCONCAT</a>
+<a href="#AUGMINUS">AUGMINUS</a>
+<a href="#AUGMOD">AUGMOD</a>
+<a href="#AUGNEQUIV">AUGNEQUIV</a>
+<a href="#AUGNMEQ">AUGNMEQ</a>
+<a href="#AUGNMGE">AUGNMGE</a>
+<a href="#AUGNMGT">AUGNMGT</a>
+<a href="#AUGNMLE">AUGNMLE</a>
+<a href="#AUGNMLT">AUGNMLT</a>
+<a href="#AUGNMNE">AUGNMNE</a>
+<a href="#AUGPLUS">AUGPLUS</a>
+<a href="#AUGQMARK">AUGQMARK</a>
+<a href="#AUGSEQ">AUGSEQ</a>
+<a href="#AUGSGE">AUGSGE</a>
+<a href="#AUGSGT">AUGSGT</a>
+<a href="#AUGSLASH">AUGSLASH</a>
+<a href="#AUGSLE">AUGSLE</a>
+<a href="#AUGSLT">AUGSLT</a>
+<a href="#AUGSNE">AUGSNE</a>
+<a href="#AUGSTAR">AUGSTAR</a>
+<a href="#AUGUNION">AUGUNION</a>
+<a href="#BACKSLASH">BACKSLASH</a>
+<a href="#BANG">BANG</a>
+<a href="#BAR">BAR</a>
+<a href="#BREAK">BREAK</a>
+<a href="#BY">BY</a>
+<a href="#CARET">CARET</a>
+<a href="#CASE">CASE</a>
+<a href="#CLASS">CLASS</a>
+<a href="#COLON">COLON</a>
+<a href="#COMMA">COMMA</a>
+<a href="#CONCAT">CONCAT</a>
+<a href="#CONST">CONST</a>
+<a href="#CREATE">CREATE</a>
+<a href="#CSETLIT">CSETLIT</a>
+<a href="#DEFAULT">DEFAULT</a>
+<a href="#DIFF">DIFF</a>
+<a href="#DO">DO</a>
+<a href="#DOT">DOT</a>
+<a href="#ELSE">ELSE</a>
+<a href="#END">END</a>
+<a href="#EOFX">EOFX</a>
+<a href="#EQUIV">EQUIV</a>
+<a href="#EVERY">EVERY</a>
+<a href="#FAIL">FAIL</a>
+<a href="#FINAL">FINAL</a>
+<a href="#GLOBAL">GLOBAL</a>
+<a href="#IDENT">IDENT</a>
+<a href="#IF">IF</a>
+<a href="#IMPORT">IMPORT</a>
+<a href="#INITIAL">INITIAL</a>
+<a href="#INTER">INTER</a>
+<a href="#INTLIT">INTLIT</a>
+<a href="#INVOCABLE">INVOCABLE</a>
+<a href="#LBRACE">LBRACE</a>
+<a href="#LBRACK">LBRACK</a>
+<a href="#LCONCAT">LCONCAT</a>
+<a href="#LINK">LINK</a>
+<a href="#LOCAL">LOCAL</a>
+<a href="#LPAREN">LPAREN</a>
+<a href="#MCOLON">MCOLON</a>
+<a href="#MINUS">MINUS</a>
+<a href="#MOD">MOD</a>
+<a href="#NATIVE">NATIVE</a>
+<a href="#NEQUIV">NEQUIV</a>
+<a href="#NEXT">NEXT</a>
+<a href="#NMEQ">NMEQ</a>
+<a href="#NMGE">NMGE</a>
+<a href="#NMGT">NMGT</a>
+<a href="#NMLE">NMLE</a>
+<a href="#NMLT">NMLT</a>
+<a href="#NMNE">NMNE</a>
+<a href="#NOT">NOT</a>
+<a href="#OF">OF</a>
+<a href="#OPTIONAL">OPTIONAL</a>
+<a href="#OVERRIDE">OVERRIDE</a>
+<a href="#PACKAGE">PACKAGE</a>
+<a href="#PCOLON">PCOLON</a>
+<a href="#PLUS">PLUS</a>
+<a href="#PRIVATE">PRIVATE</a>
+<a href="#PROCEDURE">PROCEDURE</a>
+<a href="#PROTECTED">PROTECTED</a>
+<a href="#PUBLIC">PUBLIC</a>
+<a href="#QMARK">QMARK</a>
+<a href="#RBRACE">RBRACE</a>
+<a href="#RBRACK">RBRACK</a>
+<a href="#READABLE">READABLE</a>
+<a href="#REALLIT">REALLIT</a>
+<a href="#RECORD">RECORD</a>
+<a href="#REPEAT">REPEAT</a>
+<a href="#RETURN">RETURN</a>
+<a href="#REVASSIGN">REVASSIGN</a>
+<a href="#REVSWAP">REVSWAP</a>
+<a href="#RPAREN">RPAREN</a>
+<a href="#SEMICOL">SEMICOL</a>
+<a href="#SEQ">SEQ</a>
+<a href="#SGE">SGE</a>
+<a href="#SGT">SGT</a>
+<a href="#SLASH">SLASH</a>
+<a href="#SLE">SLE</a>
+<a href="#SLT">SLT</a>
+<a href="#SNE">SNE</a>
+<a href="#STAR">STAR</a>
+<a href="#statestk">statestk</a>
+<a href="#STATIC">STATIC</a>
+<a href="#STRINGLIT">STRINGLIT</a>
+<a href="#SUCCEED">SUCCEED</a>
+<a href="#SUSPEND">SUSPEND</a>
+<a href="#SWAP">SWAP</a>
+<a href="#THEN">THEN</a>
+<a href="#TILDE">TILDE</a>
+<a href="#TO">TO</a>
+<a href="#UCSLIT">UCSLIT</a>
+<a href="#UNION">UNION</a>
+<a href="#UNLESS">UNLESS</a>
+<a href="#UNTIL">UNTIL</a>
+<a href="#valstk">valstk</a>
+<a href="#WHILE">WHILE</a>
+<a href="#yycheck">yycheck</a>
+<a href="#yydebug">yydebug</a>
+<a href="#yydefred">yydefred</a>
+<a href="#yydgoto">yydgoto</a>
+<a href="#YYERRCODE">YYERRCODE</a>
+<a href="#yyerrflag">yyerrflag</a>
+<a href="#yygindex">yygindex</a>
+<a href="#yylen">yylen</a>
+<a href="#yylhs">yylhs</a>
+<a href="#yylval">yylval</a>
+<a href="#yyname">yyname</a>
+<a href="#yyrindex">yyrindex</a>
+<a href="#yyrule">yyrule</a>
+<a href="#yysindex">yysindex</a>
+<a href="#yytable">yytable</a>
+<a href="#yyval">yyval</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="action"/>
+<h3>action(yyn)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#3531" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="action_1"/>
+<h3>action_1()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2645" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="action_10"/>
+<h3>action_10()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_100"/>
+<h3>action_100()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_101"/>
+<h3>action_101()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_102"/>
+<h3>action_102()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_103"/>
+<h3>action_103()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_104"/>
+<h3>action_104()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_105"/>
+<h3>action_105()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_106"/>
+<h3>action_106()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_107"/>
+<h3>action_107()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_108"/>
+<h3>action_108()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_109"/>
+<h3>action_109()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_11"/>
+<h3>action_11()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_110"/>
+<h3>action_110()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_111"/>
+<h3>action_111()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_112"/>
+<h3>action_112()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_113"/>
+<h3>action_113()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_114"/>
+<h3>action_114()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_115"/>
+<h3>action_115()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_116"/>
+<h3>action_116()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_117"/>
+<h3>action_117()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_118"/>
+<h3>action_118()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_119"/>
+<h3>action_119()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_120"/>
+<h3>action_120()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_121"/>
+<h3>action_121()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_122"/>
+<h3>action_122()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_123"/>
+<h3>action_123()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_124"/>
+<h3>action_124()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_125"/>
+<h3>action_125()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_127"/>
+<h3>action_127()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_128"/>
+<h3>action_128()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_13"/>
+<h3>action_13()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_130"/>
+<h3>action_130()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_132"/>
+<h3>action_132()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_133"/>
+<h3>action_133()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_134"/>
+<h3>action_134()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_135"/>
+<h3>action_135()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_136"/>
+<h3>action_136()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_137"/>
+<h3>action_137()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_138"/>
+<h3>action_138()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_139"/>
+<h3>action_139()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_140"/>
+<h3>action_140()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_141"/>
+<h3>action_141()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_142"/>
+<h3>action_142()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_143"/>
+<h3>action_143()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_144"/>
+<h3>action_144()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_145"/>
+<h3>action_145()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_147"/>
+<h3>action_147()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_148"/>
+<h3>action_148()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_150"/>
+<h3>action_150()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_151"/>
+<h3>action_151()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_152"/>
+<h3>action_152()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_153"/>
+<h3>action_153()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_155"/>
+<h3>action_155()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_156"/>
+<h3>action_156()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_157"/>
+<h3>action_157()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_158"/>
+<h3>action_158()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_160"/>
+<h3>action_160()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_162"/>
+<h3>action_162()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_163"/>
+<h3>action_163()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_164"/>
+<h3>action_164()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_166"/>
+<h3>action_166()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_167"/>
+<h3>action_167()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_168"/>
+<h3>action_168()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_169"/>
+<h3>action_169()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_170"/>
+<h3>action_170()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_171"/>
+<h3>action_171()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_172"/>
+<h3>action_172()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_173"/>
+<h3>action_173()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_174"/>
+<h3>action_174()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_175"/>
+<h3>action_175()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_176"/>
+<h3>action_176()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_177"/>
+<h3>action_177()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_178"/>
+<h3>action_178()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_179"/>
+<h3>action_179()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_180"/>
+<h3>action_180()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_181"/>
+<h3>action_181()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_182"/>
+<h3>action_182()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_183"/>
+<h3>action_183()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_184"/>
+<h3>action_184()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_185"/>
+<h3>action_185()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_186"/>
+<h3>action_186()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_187"/>
+<h3>action_187()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_188"/>
+<h3>action_188()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_189"/>
+<h3>action_189()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_19"/>
+<h3>action_19()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_2"/>
+<h3>action_2()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_200"/>
+<h3>action_200()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_201"/>
+<h3>action_201()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_202"/>
+<h3>action_202()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_203"/>
+<h3>action_203()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_204"/>
+<h3>action_204()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_205"/>
+<h3>action_205()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_206"/>
+<h3>action_206()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_207"/>
+<h3>action_207()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_208"/>
+<h3>action_208()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_209"/>
+<h3>action_209()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_210"/>
+<h3>action_210()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_211"/>
+<h3>action_211()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_212"/>
+<h3>action_212()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_213"/>
+<h3>action_213()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_214"/>
+<h3>action_214()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_215"/>
+<h3>action_215()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_216"/>
+<h3>action_216()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_217"/>
+<h3>action_217()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_218"/>
+<h3>action_218()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_219"/>
+<h3>action_219()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_22"/>
+<h3>action_22()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_220"/>
+<h3>action_220()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_221"/>
+<h3>action_221()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_222"/>
+<h3>action_222()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_223"/>
+<h3>action_223()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_224"/>
+<h3>action_224()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_225"/>
+<h3>action_225()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_226"/>
+<h3>action_226()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_227"/>
+<h3>action_227()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_228"/>
+<h3>action_228()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_229"/>
+<h3>action_229()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_23"/>
+<h3>action_23()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_230"/>
+<h3>action_230()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_231"/>
+<h3>action_231()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_232"/>
+<h3>action_232()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_233"/>
+<h3>action_233()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_234"/>
+<h3>action_234()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_235"/>
+<h3>action_235()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_237"/>
+<h3>action_237()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_238"/>
+<h3>action_238()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_239"/>
+<h3>action_239()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_241"/>
+<h3>action_241()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_247"/>
+<h3>action_247()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_25"/>
+<h3>action_25()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_252"/>
+<h3>action_252()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_254"/>
+<h3>action_254()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_255"/>
+<h3>action_255()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_26"/>
+<h3>action_26()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_28"/>
+<h3>action_28()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_3"/>
+<h3>action_3()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_31"/>
+<h3>action_31()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_32"/>
+<h3>action_32()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_34"/>
+<h3>action_34()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_36"/>
+<h3>action_36()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_37"/>
+<h3>action_37()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_38"/>
+<h3>action_38()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_39"/>
+<h3>action_39()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_42"/>
+<h3>action_42()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_43"/>
+<h3>action_43()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_44"/>
+<h3>action_44()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_48"/>
+<h3>action_48()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_49"/>
+<h3>action_49()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_5"/>
+<h3>action_5()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_54"/>
+<h3>action_54()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_55"/>
+<h3>action_55()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_6"/>
+<h3>action_6()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_60"/>
+<h3>action_60()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_7"/>
+<h3>action_7()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_70"/>
+<h3>action_70()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_71"/>
+<h3>action_71()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_72"/>
+<h3>action_72()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_74"/>
+<h3>action_74()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_75"/>
+<h3>action_75()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_77"/>
+<h3>action_77()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_79"/>
+<h3>action_79()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_8"/>
+<h3>action_8()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_80"/>
+<h3>action_80()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_81"/>
+<h3>action_81()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_84"/>
+<h3>action_84()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_85"/>
+<h3>action_85()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_86"/>
+<h3>action_86()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_89"/>
+<h3>action_89()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_91"/>
+<h3>action_91()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_93"/>
+<h3>action_93()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_94"/>
+<h3>action_94()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_95"/>
+<h3>action_95()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_96"/>
+<h3>action_96()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_97"/>
+<h3>action_97()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_98"/>
+<h3>action_98()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_99"/>
+<h3>action_99()</h3>
+private<p/>
+<dl>
+<dd>
+</dd>
+</dl><hr>
+<a name="action_null"/>
+<h3>action_null()</h3>
+private<p/>
+<dl>
+<dd>
+## end of procedure parse() ######################################
+## start semantic actions ########################################
+<p/><a href="parser-oigram.icn.html#2637" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="err"/>
+<h3>err(msg)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2452" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#139" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="init_stacks"/>
+<h3>init_stacks()</h3>
+private<p/>
+<dl>
+<dd>
+###############################################################
+procedure: init_stacks : allocate and prepare stacks
+###############################################################
+<p/><a href="parser-oigram.icn.html#2461" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="set_debug"/>
+<h3>set_debug(v)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2456" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="token_str"/>
+<h3>token_str(n)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2448" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yyparse"/>
+<h3>yyparse(yylex)</h3>
+public<p/>
+<dl>
+<dd>
+###############################################################
+procedure: yyparse : parse input and execute indicated items
+###############################################################
+<p/><a href="parser-oigram.icn.html#2471" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ABSTRACT"/>
+<h3>ABSTRACT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#17" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AND"/>
+<h3>AND</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#65" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="ASSIGN"/>
+<h3>ASSIGN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#82" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AT"/>
+<h3>AT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#110" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGAND"/>
+<h3>AUGAND</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#66" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGAT"/>
+<h3>AUGAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#111" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGBANG"/>
+<h3>AUGBANG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#62" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGCARET"/>
+<h3>AUGCARET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#114" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGCONCAT"/>
+<h3>AUGCONCAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#117" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGDIFF"/>
+<h3>AUGDIFF</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#78" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGEQUIV"/>
+<h3>AUGEQUIV</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#99" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGINTER"/>
+<h3>AUGINTER</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#70" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGLCONCAT"/>
+<h3>AUGLCONCAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#119" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGMINUS"/>
+<h3>AUGMINUS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#76" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGMOD"/>
+<h3>AUGMOD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#64" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGNEQUIV"/>
+<h3>AUGNEQUIV</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#126" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGNMEQ"/>
+<h3>AUGNMEQ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#95" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGNMGE"/>
+<h3>AUGNMGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#103" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGNMGT"/>
+<h3>AUGNMGT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#101" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGNMLE"/>
+<h3>AUGNMLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#93" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGNMLT"/>
+<h3>AUGNMLT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#85" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGNMNE"/>
+<h3>AUGNMNE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#122" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGPLUS"/>
+<h3>AUGPLUS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#72" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGQMARK"/>
+<h3>AUGQMARK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#109" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSEQ"/>
+<h3>AUGSEQ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#97" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSGE"/>
+<h3>AUGSGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#107" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSGT"/>
+<h3>AUGSGT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#105" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSLASH"/>
+<h3>AUGSLASH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#81" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSLE"/>
+<h3>AUGSLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#91" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSLT"/>
+<h3>AUGSLT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#89" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSNE"/>
+<h3>AUGSNE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#124" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGSTAR"/>
+<h3>AUGSTAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#68" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="AUGUNION"/>
+<h3>AUGUNION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#74" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="BACKSLASH"/>
+<h3>BACKSLASH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#112" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="BANG"/>
+<h3>BANG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#61" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="BAR"/>
+<h3>BAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#115" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="BREAK"/>
+<h3>BREAK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#18" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="BY"/>
+<h3>BY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#19" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="CARET"/>
+<h3>CARET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#113" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="CASE"/>
+<h3>CASE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#20" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="CLASS"/>
+<h3>CLASS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#21" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="COLON"/>
+<h3>COLON</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#132" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="COMMA"/>
+<h3>COMMA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#130" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="CONCAT"/>
+<h3>CONCAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#116" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="CONST"/>
+<h3>CONST</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#22" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="CREATE"/>
+<h3>CREATE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#23" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="CSETLIT"/>
+<h3>CSETLIT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#14" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFAULT"/>
+<h3>DEFAULT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#24" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="DIFF"/>
+<h3>DIFF</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#77" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="DO"/>
+<h3>DO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#25" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="DOT"/>
+<h3>DOT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#79" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="ELSE"/>
+<h3>ELSE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#26" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="END"/>
+<h3>END</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#27" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="EOFX"/>
+<h3>EOFX</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#16" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="EQUIV"/>
+<h3>EQUIV</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#98" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="EVERY"/>
+<h3>EVERY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#28" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="FAIL"/>
+<h3>FAIL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#29" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="FINAL"/>
+<h3>FINAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#30" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="GLOBAL"/>
+<h3>GLOBAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#31" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="IDENT"/>
+<h3>IDENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#10" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="IF"/>
+<h3>IF</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#32" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="IMPORT"/>
+<h3>IMPORT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#33" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="INITIAL"/>
+<h3>INITIAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#34" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="INTER"/>
+<h3>INTER</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#69" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="INTLIT"/>
+<h3>INTLIT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#11" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="INVOCABLE"/>
+<h3>INVOCABLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#35" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="LBRACE"/>
+<h3>LBRACE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#136" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="LBRACK"/>
+<h3>LBRACK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#134" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="LCONCAT"/>
+<h3>LCONCAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#118" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="LINK"/>
+<h3>LINK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#36" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="LOCAL"/>
+<h3>LOCAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#37" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="LPAREN"/>
+<h3>LPAREN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#127" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="MCOLON"/>
+<h3>MCOLON</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#131" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="MINUS"/>
+<h3>MINUS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#75" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="MOD"/>
+<h3>MOD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#63" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NATIVE"/>
+<h3>NATIVE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#38" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NEQUIV"/>
+<h3>NEQUIV</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#125" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NEXT"/>
+<h3>NEXT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#39" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NMEQ"/>
+<h3>NMEQ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#94" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NMGE"/>
+<h3>NMGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#102" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NMGT"/>
+<h3>NMGT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#100" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NMLE"/>
+<h3>NMLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#92" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NMLT"/>
+<h3>NMLT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#84" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NMNE"/>
+<h3>NMNE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#121" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="NOT"/>
+<h3>NOT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#40" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="OF"/>
+<h3>OF</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#41" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="OPTIONAL"/>
+<h3>OPTIONAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#42" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="OVERRIDE"/>
+<h3>OVERRIDE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#43" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="PACKAGE"/>
+<h3>PACKAGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#44" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="PCOLON"/>
+<h3>PCOLON</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#129" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="PLUS"/>
+<h3>PLUS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#71" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="PRIVATE"/>
+<h3>PRIVATE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#45" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="PROCEDURE"/>
+<h3>PROCEDURE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#46" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="PROTECTED"/>
+<h3>PROTECTED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#47" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="PUBLIC"/>
+<h3>PUBLIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#48" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="QMARK"/>
+<h3>QMARK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#108" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="RBRACE"/>
+<h3>RBRACE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#137" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="RBRACK"/>
+<h3>RBRACK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#135" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="READABLE"/>
+<h3>READABLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#49" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="REALLIT"/>
+<h3>REALLIT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#12" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="RECORD"/>
+<h3>RECORD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#50" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="REPEAT"/>
+<h3>REPEAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#51" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="RETURN"/>
+<h3>RETURN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#52" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="REVASSIGN"/>
+<h3>REVASSIGN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#86" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="REVSWAP"/>
+<h3>REVSWAP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#87" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="RPAREN"/>
+<h3>RPAREN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#128" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SEMICOL"/>
+<h3>SEMICOL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#133" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SEQ"/>
+<h3>SEQ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#96" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SGE"/>
+<h3>SGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#106" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SGT"/>
+<h3>SGT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#104" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SLASH"/>
+<h3>SLASH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#80" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SLE"/>
+<h3>SLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#90" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SLT"/>
+<h3>SLT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#88" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SNE"/>
+<h3>SNE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#123" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="STAR"/>
+<h3>STAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#67" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="statestk"/>
+<h3>statestk</h3>
+private<p/>
+<dl>
+<dd>
+state stack
+<p/><a href="parser-oigram.icn.html#2445" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="STATIC"/>
+<h3>STATIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#53" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="STRINGLIT"/>
+<h3>STRINGLIT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#13" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SUCCEED"/>
+<h3>SUCCEED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#54" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SUSPEND"/>
+<h3>SUSPEND</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#55" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="SWAP"/>
+<h3>SWAP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#83" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="THEN"/>
+<h3>THEN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#56" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="TILDE"/>
+<h3>TILDE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#120" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="TO"/>
+<h3>TO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#57" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="UCSLIT"/>
+<h3>UCSLIT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#15" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="UNION"/>
+<h3>UNION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#73" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="UNLESS"/>
+<h3>UNLESS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#58" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="UNTIL"/>
+<h3>UNTIL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#59" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="valstk"/>
+<h3>valstk</h3>
+private<p/>
+<dl>
+<dd>
+value stack
+<p/><a href="parser-oigram.icn.html#2446" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="WHILE"/>
+<h3>WHILE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#60" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yycheck"/>
+<h3>yycheck</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2441" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yydebug"/>
+<h3>yydebug</h3>
+private<p/>
+<dl>
+<dd>
+(boolean) do I want debug output?
+<p/><a href="parser-oigram.icn.html#2430" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yydefred"/>
+<h3>yydefred</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2435" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yydgoto"/>
+<h3>yydgoto</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2436" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="YYERRCODE"/>
+<h3>YYERRCODE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#138" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yyerrflag"/>
+<h3>yyerrflag</h3>
+private<p/>
+<dl>
+<dd>
+(integer) was there an error?
+<p/><a href="parser-oigram.icn.html#2431" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yygindex"/>
+<h3>yygindex</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2439" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yylen"/>
+<h3>yylen</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2434" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yylhs"/>
+<h3>yylhs</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2433" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yylval"/>
+<h3>yylval</h3>
+private readable<p/>
+<dl>
+<dd>
+the 'lval' (result) I got from yylex()
+<p/><a href="parser-oigram.icn.html#2429" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yyname"/>
+<h3>yyname</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2442" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yyrindex"/>
+<h3>yyrindex</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2438" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yyrule"/>
+<h3>yyrule</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2443" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yysindex"/>
+<h3>yysindex</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2437" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yytable"/>
+<h3>yytable</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-oigram.icn.html#2440" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+<a name="yyval"/>
+<h3>yyval</h3>
+private<p/>
+<dl>
+<dd>
+used to return semantic vals from action routines
+<p/><a href="parser-oigram.icn.html#2428" target="displayFrame">Source - oigram.icn </a>
+</dd>
+</dl><hr>
+</body></html>

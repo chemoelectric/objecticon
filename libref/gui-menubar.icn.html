@@ -1,0 +1,473 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>menubar.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: menubar.icn 8361 2020-07-08 10:22:14Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import graphics, ipl.lists
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This class is the base from which menu systems are created,
+<a name="15"/># other than popup menus.
+<a name="16"/>#
+<a name="17"/># Menus are added to the menu bar with the `add()` method.
+<a name="18"/>#
+<a name="19"/>class MenuBar(Component, MenuSystem)
+<a name="20"/>   public 
+<a name="21"/>      which_highlight,      # Currently highlighted menu
+<a name="22"/>      which_open,           # Currently open menu
+<a name="23"/>      menus                 # List of menus.
+<a name="24"/>
+<a name="25"/>   public override close_all()
+<a name="26"/>      set_which_highlight()
+<a name="27"/>   end
+<a name="28"/>
+<a name="29"/>   #
+<a name="30"/>   # Add the `Menu` c to the `MenuBar`.  This will be one drop down
+<a name="31"/>   # menu.  Items are then added to the `Menu`.
+<a name="32"/>   # :Parameters :
+<a name="33"/>   # :  `c` - The `Menu` to add.
+<a name="34"/>   # :  `i` - The index to add at; if omitted then the new component
+<a name="35"/>   #            is appended to the end.
+<a name="36"/>   # :Fails :
+<a name="37"/>   # :  If i is out of range
+<a name="38"/>   #
+<a name="39"/>   public override add(c, i)
+<a name="40"/>      /i := 0
+<a name="41"/>      insert(self.menus, i, c) | fail
+<a name="42"/>      c.set_component_link(self)
+<a name="43"/>      if is_initialized() then
+<a name="44"/>         c.initially()
+<a name="45"/>      link
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   #
+<a name="49"/>   # Get the index of the given `Menu`
+<a name="50"/>   #
+<a name="51"/>   public override get_index(c)
+<a name="52"/>      return keyof(self.menus, c)
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   #
+<a name="56"/>   # Remove the `Menu` from the menu list.
+<a name="57"/>   # :Parameters :
+<a name="58"/>   # :  `c` - The `Menu` to remove.
+<a name="59"/>   # :Fails :
+<a name="60"/>   # :  If c is not a child menu of this instance.
+<a name="61"/>   #
+<a name="62"/>   public override remove(c)
+<a name="63"/>      return remove_index(get_index(c))
+<a name="64"/>   end
+<a name="65"/>
+<a name="66"/>   #
+<a name="67"/>   # Remove the `Menu` at the given index from the menu list.
+<a name="68"/>   # :Parameters :
+<a name="69"/>   # :  `i` - The index
+<a name="70"/>   # :Fails :
+<a name="71"/>   # :  If i is out of range
+<a name="72"/>   #
+<a name="73"/>   public override remove_index(i)
+<a name="74"/>      local c
+<a name="75"/>      c := self.menus[i] | fail
+<a name="76"/>      delete(self.menus, i)
+<a name="77"/>      c.set_component_link(&amp;null)
+<a name="78"/>      if is_initialized() then
+<a name="79"/>         c.finally()
+<a name="80"/>      link
+<a name="81"/>   end
+<a name="82"/>
+<a name="83"/>   #
+<a name="84"/>   # Remove all the menus.
+<a name="85"/>   #
+<a name="86"/>   public override remove_all()
+<a name="87"/>      link remove_list()
+<a name="88"/>   end
+<a name="89"/>
+<a name="90"/>   #
+<a name="91"/>   # Move the `Menu` to the given index position.
+<a name="92"/>   # :Parameters :
+<a name="93"/>   # :  `c` - The `Menu` to move.
+<a name="94"/>   # :  `j` - The new position.
+<a name="95"/>   # :Fails :
+<a name="96"/>   # :  If c is not a child of this instance, 
+<a name="97"/>   #             or j is out of range.
+<a name="98"/>   #
+<a name="99"/>   public override reposition(c, j)
+<a name="100"/>      return reposition_index(get_index(c), j)
+<a name="101"/>   end
+<a name="102"/>
+<a name="103"/>   #
+<a name="104"/>   # Move the `Menu` at position `i` to `j`.
+<a name="105"/>   # :Parameters :
+<a name="106"/>   # :  `i` - The old position.
+<a name="107"/>   # :  `j` - The new position.
+<a name="108"/>   # :Fails :
+<a name="109"/>   # :  If either index is out of range.
+<a name="110"/>   #
+<a name="111"/>   public override reposition_index(i, j)
+<a name="112"/>      link lmove(menus, i, j)
+<a name="113"/>   end
+<a name="114"/>
+<a name="115"/>   # Remove the menus in the range `i:j`, returning the
+<a name="116"/>   # removed menus in a list.
+<a name="117"/>   # :Parameters :
+<a name="118"/>   # :  `i` - The start slice index, default 1
+<a name="119"/>   # :  `j` - The end slice index, default 0
+<a name="120"/>   # :Fails :
+<a name="121"/>   # :  If the range is invalid.
+<a name="122"/>   #
+<a name="123"/>   #
+<a name="124"/>   public override remove_list(i, j)
+<a name="125"/>      local l
+<a name="126"/>      l := lextract(menus, i, j) | fail
+<a name="127"/>      every (!l).set_component_link(&amp;null)
+<a name="128"/>      if is_initialized() then
+<a name="129"/>         every (!l).finally()
+<a name="130"/>      return l
+<a name="131"/>   end
+<a name="132"/>
+<a name="133"/>   # Add all the `Menu`s contained in list `l` at index `i`.
+<a name="134"/>   #
+<a name="135"/>   # :Parameters :
+<a name="136"/>   # :  `l` - The list to add
+<a name="137"/>   # :  `i` - The index
+<a name="138"/>   # :Fails :
+<a name="139"/>   # :  If i is out of range
+<a name="140"/>   #
+<a name="141"/>   public override add_list(l, i)
+<a name="142"/>      linsert(menus, l, i) | fail
+<a name="143"/>      every (!l).set_component_link(self)
+<a name="144"/>      if is_initialized() then
+<a name="145"/>         every (!l).initially()
+<a name="146"/>      link
+<a name="147"/>   end
+<a name="148"/>
+<a name="149"/>   public override initially()
+<a name="150"/>      Component.initially()
+<a name="151"/>      every (!self.menus).initially()
+<a name="152"/>   end
+<a name="153"/>
+<a name="154"/>   public override finally()
+<a name="155"/>      self.set_which_highlight()
+<a name="156"/>      every (!self.menus).finally()
+<a name="157"/>      Component.finally()
+<a name="158"/>   end
+<a name="159"/>
+<a name="160"/>   public override display()
+<a name="161"/>      local m
+<a name="162"/>
+<a name="163"/>      border.draw_rect(self.cbwin, self)
+<a name="164"/>
+<a name="165"/>      # We just paint the ones which intersect with the clip rectangle.
+<a name="166"/>      every m := !menus do {
+<a name="167"/>         if cbwin.drawable(m.label_x, m.label_y, m.label_w, m.label_h) then {
+<a name="168"/>            m.draw_label(self.cbwin, 0, m.label_w, 0)
+<a name="169"/>            if m === \self.which_highlight then
+<a name="170"/>               Gui.style.fill_down_rectangle(self.cbwin, m.label_x, m.label_y, m.label_w, m.label_h)
+<a name="171"/>            if m.is_shaded() then
+<a name="172"/>               Gui.style.shade_rectangle(self.cbwin,
+<a name="173"/>                                         m.label_x, m.label_y, m.label_w, m.label_h)
+<a name="174"/>         }
+<a name="175"/>      }
+<a name="176"/>   end
+<a name="177"/>
+<a name="178"/>   #
+<a name="179"/>   # Determine which of the menu labels is selected, if any, given we're in region.
+<a name="180"/>   #
+<a name="181"/>   public which_item(e)
+<a name="182"/>      local m
+<a name="183"/>      every m := !self.menus do {
+<a name="184"/>         if /m.is_shaded_flag &amp; m.in_label_region(e) then
+<a name="185"/>            return m
+<a name="186"/>      }
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   #
+<a name="190"/>   # Set which_open and which_highlight to (non-null) x.
+<a name="191"/>   #
+<a name="192"/>   public set_which_open(x)
+<a name="193"/>      #
+<a name="194"/>      # Do nothing if x presently open
+<a name="195"/>      #
+<a name="196"/>      if self.which_open === x then
+<a name="197"/>         link
+<a name="198"/>
+<a name="199"/>      set_which_highlight(x) | fail
+<a name="200"/>      self.which_open := x
+<a name="201"/>      self.which_open.show(self.which_open.label_x -self.which_open.border.get_l_inset(),
+<a name="202"/>                           self.y + self.h,, self.y)
+<a name="203"/>      link
+<a name="204"/>   end
+<a name="205"/>
+<a name="206"/>   #
+<a name="207"/>   # Set the which_highlight to x, which_open to null
+<a name="208"/>   #
+<a name="209"/>   public set_which_highlight(x)
+<a name="210"/>      #
+<a name="211"/>      # Do nothing if already in desired state.
+<a name="212"/>      #
+<a name="213"/>      if (self.which_highlight === x) &amp; /self.which_open then
+<a name="214"/>         link
+<a name="215"/>
+<a name="216"/>      if /self.which_highlight then
+<a name="217"/>         self.parent_dialog.enter_menu_mode(self) | fail
+<a name="218"/>
+<a name="219"/>      # Hide any existing visible submenu (even though it may have already hidden itself)
+<a name="220"/>      (\self.which_open).hide()
+<a name="221"/>
+<a name="222"/>      # Just invalidate the bits that have changed.
+<a name="223"/>      self.invalidate((\self.which_highlight).get_label_rect())
+<a name="224"/>      self.which_highlight := x
+<a name="225"/>      self.invalidate((\self.which_highlight).get_label_rect())
+<a name="226"/>
+<a name="227"/>      self.which_open := &amp;null
+<a name="228"/>
+<a name="229"/>      if /self.which_highlight then
+<a name="230"/>         self.parent_dialog.exit_menu_mode(self)
+<a name="231"/>      link
+<a name="232"/>   end
+<a name="233"/>
+<a name="234"/>   public handle_key_left(e)
+<a name="235"/>      if \self.which_highlight then
+<a name="236"/>         go_left()
+<a name="237"/>   end
+<a name="238"/>
+<a name="239"/>   public handle_key_right(e)
+<a name="240"/>      if \self.which_highlight then
+<a name="241"/>         go_right()
+<a name="242"/>   end
+<a name="243"/>
+<a name="244"/>   public handle_key_down(e)
+<a name="245"/>      if \self.which_highlight then {
+<a name="246"/>         set_which_open(self.which_highlight)
+<a name="247"/>         self.which_highlight.cursor_on()
+<a name="248"/>      }
+<a name="249"/>   end
+<a name="250"/>
+<a name="251"/>   public override make_partial()
+<a name="252"/>      set_which_highlight(self.which_highlight)
+<a name="253"/>   end
+<a name="254"/>
+<a name="255"/>   public handle_key_escape(e)
+<a name="256"/>      if \self.which_highlight then
+<a name="257"/>         self.set_which_highlight()
+<a name="258"/>   end
+<a name="259"/>
+<a name="260"/>   public override handle_accel(e)
+<a name="261"/>      local m
+<a name="262"/>      m := find_key(e.code) | fail
+<a name="263"/>      set_which_open(m) | fail
+<a name="264"/>      # The accelerator event will be passed to the menu, which could
+<a name="265"/>      # be two "accelerations" on one keypress.  Therefore the key is noted
+<a name="266"/>      # in menu and skipped by the menu handle_key method.
+<a name="267"/>      m.accel_skip := e
+<a name="268"/>      m.cursor_on()
+<a name="269"/>   end
+<a name="270"/>
+<a name="271"/>   public override match_accel(e)
+<a name="272"/>      succeed find_key(e)
+<a name="273"/>   end
+<a name="274"/>
+<a name="275"/>   public override should_close(e)
+<a name="276"/>      succeed member(Mouse.PRESS, e.code) &amp; not(in_region(e))
+<a name="277"/>   end
+<a name="278"/>
+<a name="279"/>   public override get_tooltip(e)
+<a name="280"/>      local m
+<a name="281"/>      if \self.tooltip then
+<a name="282"/>         return self.tooltip
+<a name="283"/>      every m := !self.menus do {
+<a name="284"/>         if m.in_label_region(e) then
+<a name="285"/>            return m.get_tooltip(e)
+<a name="286"/>      }
+<a name="287"/>   end
+<a name="288"/>
+<a name="289"/>   public handle_default(e)
+<a name="290"/>      local m
+<a name="291"/>      if /self.which_open &amp; \self.which_highlight then {
+<a name="292"/>         if m := find_key(e.code) then {
+<a name="293"/>            set_which_open(m)
+<a name="294"/>            m.cursor_on()
+<a name="295"/>         }
+<a name="296"/>      }
+<a name="297"/>   end
+<a name="298"/>
+<a name="299"/>   public find_key(k)
+<a name="300"/>      local m
+<a name="301"/>      every m := !menus do {
+<a name="302"/>         if m.accel === k &amp; m.is_unshaded() then
+<a name="303"/>            return m
+<a name="304"/>      }
+<a name="305"/>   end
+<a name="306"/>
+<a name="307"/>   public override go_right()
+<a name="308"/>      local m, t, first
+<a name="309"/>      every m := !menus do {
+<a name="310"/>         if m.is_unshaded() then {
+<a name="311"/>            if /self.which_highlight | \t then {
+<a name="312"/>               first := m
+<a name="313"/>               break
+<a name="314"/>            }
+<a name="315"/>            /first := m
+<a name="316"/>         }
+<a name="317"/>         if m === which_highlight then
+<a name="318"/>            t := m
+<a name="319"/>      }
+<a name="320"/>      if \first then {
+<a name="321"/>         if \self.which_open then {
+<a name="322"/>            set_which_open(first)
+<a name="323"/>            self.which_open.cursor_on()
+<a name="324"/>         } else
+<a name="325"/>            set_which_highlight(first)
+<a name="326"/>      }
+<a name="327"/>   end
+<a name="328"/>
+<a name="329"/>   public override go_left()
+<a name="330"/>      local m, last
+<a name="331"/>
+<a name="332"/>      every m := !menus do {
+<a name="333"/>         if \last &amp; m === which_highlight then
+<a name="334"/>            break
+<a name="335"/>         m.is_shaded() | (last := m)
+<a name="336"/>      }
+<a name="337"/>      if \last then {
+<a name="338"/>         if \self.which_open then {
+<a name="339"/>            set_which_open(last)
+<a name="340"/>            self.which_open.cursor_on()
+<a name="341"/>         } else
+<a name="342"/>            set_which_highlight(last)
+<a name="343"/>      }
+<a name="344"/>   end
+<a name="345"/>
+<a name="346"/>   public handle_press(e)
+<a name="347"/>      local t
+<a name="348"/>      if t := which_item(e) then {
+<a name="349"/>         if t === self.which_open then
+<a name="350"/>            set_which_highlight(t)
+<a name="351"/>         else
+<a name="352"/>            set_which_open(t)
+<a name="353"/>      } else
+<a name="354"/>         self.set_which_highlight()
+<a name="355"/>   end
+<a name="356"/>
+<a name="357"/>   public handle_move(e)
+<a name="358"/>      local t
+<a name="359"/>      if \self.which_highlight &amp; t := which_item(e) then {
+<a name="360"/>         #
+<a name="361"/>         # Over an item - highlight or open it, depending on whether
+<a name="362"/>         # the current one is open or just highlighted.
+<a name="363"/>         #
+<a name="364"/>         if /self.which_open then
+<a name="365"/>            self.set_which_highlight(t)
+<a name="366"/>         else
+<a name="367"/>            self.set_which_open(t)
+<a name="368"/>      }
+<a name="369"/>   end
+<a name="370"/>
+<a name="371"/>   public handle_exit(e)
+<a name="372"/>      if /self.which_open &amp; e.code === Mouse.MOVEMENT then
+<a name="373"/>         #
+<a name="374"/>         # If a submenu is not open, but highlighted, then a mouse
+<a name="375"/>         # move outside of the bar clears the highlight (and leaves
+<a name="376"/>         # menu mode).  The test for MOVEMENT allows us to close a
+<a name="377"/>         # menu, and drag to another without leaving menu mode if we
+<a name="378"/>         # accidentally move off the bar.
+<a name="379"/>         #
+<a name="380"/>         self.set_which_highlight()
+<a name="381"/>   end
+<a name="382"/>
+<a name="383"/>   public handle_release(e) 
+<a name="384"/>      if \self.which_highlight then {
+<a name="385"/>         #
+<a name="386"/>         # Released with menu open.  If not on a label then close
+<a name="387"/>         #
+<a name="388"/>         which_item(e) | self.set_which_highlight()
+<a name="389"/>      } else {
+<a name="390"/>         if /self.which_open then
+<a name="391"/>            #
+<a name="392"/>            # Close
+<a name="393"/>            #
+<a name="394"/>            self.set_which_highlight()
+<a name="395"/>      }
+<a name="396"/>   end
+<a name="397"/>
+<a name="398"/>   public handle_key(e)
+<a name="399"/>       case /e.release &amp; e.code of {
+<a name="400"/>         Key.DOWN | " " | "\r" | "\l": handle_key_down(e)
+<a name="401"/>         Key.RIGHT: handle_key_right(e)
+<a name="402"/>         Key.LEFT: handle_key_left(e)
+<a name="403"/>         "\e" : handle_key_escape(e)
+<a name="404"/>         default: handle_default(e)
+<a name="405"/>      }
+<a name="406"/>   end
+<a name="407"/>
+<a name="408"/>   public override get_default_height()
+<a name="409"/>      local mh, m
+<a name="410"/>      mh := 0
+<a name="411"/>      every m := !self.menus do
+<a name="412"/>         mh &lt;:= m.get_label_mid_height()
+<a name="413"/>      return mh + border.get_total_height()
+<a name="414"/>   end
+<a name="415"/>
+<a name="416"/>   public override get_default_width()
+<a name="417"/>      local tw, m
+<a name="418"/>      tw := 0
+<a name="419"/>      every m := !self.menus do
+<a name="420"/>         tw +:= m.get_label_mid_width()
+<a name="421"/>      return tw + border.get_total_width()
+<a name="422"/>   end
+<a name="423"/>
+<a name="424"/>   public override layout()
+<a name="425"/>      local px, m
+<a name="426"/>      #
+<a name="427"/>      # Compute x, y for each sub-menu
+<a name="428"/>      #
+<a name="429"/>      px := self.x + border.get_l_inset()
+<a name="430"/>      every m := !self.menus do {
+<a name="431"/>         m.label_x := px
+<a name="432"/>         m.label_y := self.y + border.get_t_inset()
+<a name="433"/>         m.label_w := m.get_label_mid_width()
+<a name="434"/>         m.label_h := self.h - border.get_total_height()
+<a name="435"/>         px +:= m.label_w
+<a name="436"/>      }
+<a name="437"/>   end
+<a name="438"/>
+<a name="439"/>   public override shift(dx, dy)
+<a name="440"/>      local m
+<a name="441"/>      Component.shift(dx, dy)
+<a name="442"/>      every m := !self.menus do {
+<a name="443"/>         m.label_x +:= dx
+<a name="444"/>         m.label_y +:= dy
+<a name="445"/>      }
+<a name="446"/>   end
+<a name="447"/>
+<a name="448"/>   public override allow_nested(c)
+<a name="449"/>      succeed is(c, SubMenuProxyComponent) &amp; c.menu.parent_component === self
+<a name="450"/>   end
+<a name="451"/>
+<a name="452"/>   public override gen_popup_components()
+<a name="453"/>   end
+<a name="454"/>
+<a name="455"/>   public override get_nesting_component()
+<a name="456"/>      link
+<a name="457"/>   end
+<a name="458"/>
+<a name="459"/>   public override new()
+<a name="460"/>      Component.new()
+<a name="461"/>      self.set_border(RaisedBorder())
+<a name="462"/>      self.menus := []
+<a name="463"/>      every connect(handle_press, Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
+<a name="464"/>      every connect(handle_release, Event.MOUSE_LEFT_RELEASE_OVER | Event.MOUSE_MIDDLE_RELEASE_OVER | Event.MOUSE_RIGHT_RELEASE_OVER)
+<a name="465"/>      every connect(handle_move, Event.MOUSE_MOVEMENT | Event.MOUSE_LEFT_DRAG_OVER | Event.MOUSE_MIDDLE_DRAG_OVER | Event.MOUSE_RIGHT_DRAG_OVER)
+<a name="466"/>      connect(handle_exit, Event.MOUSE_EXIT)
+<a name="467"/>      connect(handle_key, Event.KEY_PRESS)
+<a name="468"/>      return
+<a name="469"/>   end
+<a name="470"/>end
+</pre></body></html>

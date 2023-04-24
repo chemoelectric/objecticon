@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>mixsort.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     mixsort.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to sort tables with case mixing
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     August 30, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure sorts tables like sort(T, i), except that the keys
+<a name="18"/>#  that are strings are sorted with case mixed.  That is, keys such
+<a name="19"/>#  as "Volvo" and "voluntary" come out sorted "voluntary" followed by
+<a name="20"/>#  "Volvo" as if it were "volvo" instead (assuming ASCII).
+<a name="21"/>#
+<a name="22"/>#  If a string appears in two case forms, as in "Volvo" and "volvo", one key
+<a name="23"/>#  is lost.
+<a name="24"/>#
+<a name="25"/>#  At present, this procedure applies only to keys (i = 1 or 3).  It could
+<a name="26"/>#  be extended to handle values (i = 2 or 3).
+<a name="27"/>#
+<a name="28"/>############################################################################
+<a name="29"/>
+<a name="30"/>package ipl.mixsort
+<a name="31"/>
+<a name="32"/># mixed-case string sorting
+<a name="33"/>procedure mixsort(T, i)		
+<a name="34"/>   local xcase, x, y, temp, j
+<a name="35"/>
+<a name="36"/>   xcase := table()		# key-mapping table
+<a name="37"/>   temp := table()		# parallel table
+<a name="38"/>
+<a name="39"/>   if i = (2 | 4) then return sort(T, i)	# doesn't apply
+<a name="40"/>						# (could do values ...)
+<a name="41"/>
+<a name="42"/>   every x := key(T) do {	# map keys
+<a name="43"/>      if type(x) == "string" then y := map(x)	# only transform strings
+<a name="44"/>         else y := x
+<a name="45"/>      temp[y] := T[x]		# lowercase table
+<a name="46"/>      xcase[y] := x		# key mapping
+<a name="47"/>      }
+<a name="48"/>
+<a name="49"/>   temp := sort(temp, i)	# basic sort on lowercase table
+<a name="50"/>
+<a name="51"/>   if i = 3 then {
+<a name="52"/>      every j := 1 to *temp - 1 by 2 do
+<a name="53"/>         temp[j] := xcase[temp[j]]
+<a name="54"/>      }
+<a name="55"/>   else if i === (1 | &amp;null) then {
+<a name="56"/>      every x := !temp do
+<a name="57"/>         x[1] := xcase[x[1]]
+<a name="58"/>      }
+<a name="59"/>
+<a name="60"/>   else return sort(T, i)	# error, but pass the buck
+<a name="61"/>
+<a name="62"/>   return temp
+<a name="63"/>
+<a name="64"/>end
+</pre></body></html>

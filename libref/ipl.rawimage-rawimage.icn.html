@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>rawimage.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:	  rawimage.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to write and read images in raw format
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  These procedures write and read raw image files.  The format of a raw
+<a name="18"/>#  image file is:
+<a name="19"/>#
+<a name="20"/>#	width,height
+<a name="21"/>#	&lt;palette entries with 2 hex digits, a blank, and a color specification&gt;
+<a name="22"/>#	&lt;blank line&gt;
+<a name="23"/>#	&lt;image data consisting of pairs of hext digits in row-primary order&gt;
+<a name="24"/>#
+<a name="25"/>#  These procedures are slow and should only be used when the image file
+<a name="26"/>#  formats that Icon can read and write are not sufficient.
+<a name="27"/>#
+<a name="28"/>############################################################################
+<a name="29"/>#
+<a name="30"/>#  Links:  wopen
+<a name="31"/>#
+<a name="32"/>############################################################################
+<a name="33"/>#
+<a name="34"/>#  Requires:  Version 9 graphics and co-expressions
+<a name="35"/>#
+<a name="36"/>############################################################################
+<a name="37"/>
+<a name="38"/>package ipl.rawimage
+<a name="39"/>
+<a name="40"/>import
+<a name="41"/>   graphics(Window),
+<a name="42"/>   io(Files, close, open, read,
+<a name="43"/>      reads, write, writes),
+<a name="44"/>   util(error)
+<a name="45"/>
+<a name="46"/>$define LineLen 64
+<a name="47"/>
+<a name="48"/>procedure WriteRaw(win, s, x, y, w, h)
+<a name="49"/>   local nextid, palette, line, c, temp, tempname, f, pix
+<a name="50"/>
+<a name="51"/>
+<a name="52"/>   /w := win.get_width()
+<a name="53"/>   /h := win.get_height()
+<a name="54"/>   /x := 0
+<a name="55"/>   /y := 0
+<a name="56"/>
+<a name="57"/>   f := open(s, "w")  | return error("*** cannot open output file " || s || ": " || &amp;why)
+<a name="58"/>   tempname := Files.make_temp_filename("writeraw")
+<a name="59"/>   temp := open(tempname, "w") | return error("*** cannot open temporary file")
+<a name="60"/>
+<a name="61"/>   line := ""
+<a name="62"/>
+<a name="63"/>   palette := table()
+<a name="64"/>
+<a name="65"/>   nextid := create !"0123456789abcdef" || !"0123456789abcdef"
+<a name="66"/>   pix := win.get_pixels(x, y, w, h)
+<a name="67"/>   every c := pix.gen() do {
+<a name="68"/>      /palette[c] := @nextid | runerr("WriteRaw: image has too many (&gt;256) colours")
+<a name="69"/>      line ||:= palette[c]
+<a name="70"/>      line ?:= {
+<a name="71"/>         write(temp, move(LineLen)) &amp; tab(0)
+<a name="72"/>         }
+<a name="73"/>      }
+<a name="74"/>   pix.close()
+<a name="75"/>   write(temp, "" ~== line)
+<a name="76"/>
+<a name="77"/>   write(f, w, ",", h)
+<a name="78"/>
+<a name="79"/>   palette := sort(palette, 4)
+<a name="80"/>
+<a name="81"/>   while c := get(palette) do
+<a name="82"/>      write(f, get(palette), " ", c)
+<a name="83"/>
+<a name="84"/>   write(f)			# separator
+<a name="85"/>
+<a name="86"/>   close(temp)
+<a name="87"/>   temp := open(tempname) | return error("*** cannot find temporary file")
+<a name="88"/>
+<a name="89"/>   while writes(f, reads(temp, 10000))	# copy image data
+<a name="90"/>
+<a name="91"/>   close(temp)
+<a name="92"/>   Files.remove(tempname)
+<a name="93"/>   close(f)
+<a name="94"/>
+<a name="95"/>   return 
+<a name="96"/>
+<a name="97"/>end
+<a name="98"/>
+<a name="99"/>procedure ReadRaw(s)
+<a name="100"/>   local input, palette, c, temp, size, width, height, line, x, y
+<a name="101"/>
+<a name="102"/>   input := open(s) | return error("*** cannot read raw image file")
+<a name="103"/>
+<a name="104"/>   size := read(input) | return error("*** malformed raw image file")
+<a name="105"/>
+<a name="106"/>   size ? {
+<a name="107"/>      width := integer(tab(upto(','))) &amp;
+<a name="108"/>      move(1) &amp;
+<a name="109"/>      height := integer(tab(0)) | return error("invalid raw image header")
+<a name="110"/>      }
+<a name="111"/>
+<a name="112"/>   temp := Window().set_size(width, height)
+<a name="113"/>
+<a name="114"/>   palette := table()
+<a name="115"/>
+<a name="116"/>   while line := read(input) do
+<a name="117"/>      line ? {
+<a name="118"/>         palette[move(2) | break] := (move(1), tab(0))
+<a name="119"/>         }
+<a name="120"/>
+<a name="121"/>   x := y := 0
+<a name="122"/>
+<a name="123"/>   repeat {
+<a name="124"/>      line := read(input) | break
+<a name="125"/>      line ? {
+<a name="126"/>         while c := move(2) do {
+<a name="127"/>            temp.set_fg(palette[c]) | return error("***invalid color: ", c)
+<a name="128"/>            temp.draw_point(x, y)
+<a name="129"/>            x +:= 1
+<a name="130"/>            if x = width then {
+<a name="131"/>               x := 0
+<a name="132"/>               y +:= 1
+<a name="133"/>               }
+<a name="134"/>            }
+<a name="135"/>         }
+<a name="136"/>      }
+<a name="137"/>
+<a name="138"/>   return temp
+<a name="139"/>           
+<a name="140"/>end
+</pre></body></html>

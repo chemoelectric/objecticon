@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>imagedetect.icn</title></head><body><pre>
+<a name="1"/>package ipl.imagedetect
+<a name="2"/>
+<a name="3"/>import ipl.bincvt
+<a name="4"/>
+<a name="5"/>#
+<a name="6"/># The return value of the `detect` procedure.
+<a name="7"/>#
+<a name="8"/>class ImageDetect()
+<a name="9"/>   public const
+<a name="10"/>      width, height, format
+<a name="11"/>
+<a name="12"/>   public new(width, height, format)
+<a name="13"/>      self.width := width
+<a name="14"/>      self.height := height
+<a name="15"/>      self.format := format
+<a name="16"/>      return
+<a name="17"/>   end
+<a name="18"/>end
+<a name="19"/>
+<a name="20"/># A procedure to look inside image data and get the dimensions and
+<a name="21"/># format.  Returns an `ImageDetect` object.
+<a name="22"/>#
+<a name="23"/>procedure detect(s)
+<a name="24"/>   return jpeg_detect(s) | png_detect(s) | gif_detect(s)
+<a name="25"/>end
+<a name="26"/>
+<a name="27"/># See &lt;http://www.64lines.com/jpeg-width-height&gt;
+<a name="28"/>procedure jpeg_detect(s)
+<a name="29"/>   local length, width, height, ty
+<a name="30"/>   s ? {
+<a name="31"/>      ="\xFF\xD8" | fail
+<a name="32"/>      repeat {
+<a name="33"/>         (="\xFF" &amp;
+<a name="34"/>          ty := ord(move(1))) | fail
+<a name="35"/>         # See: http://en.wikibooks.org/wiki/JPEG_-_Idea_and_Practice/The_header_part
+<a name="36"/>         if 192 &lt;= ty &lt;= 207 &amp; ty ~= 196 &amp; ty ~= 200 &amp; ty ~= 204 then {
+<a name="37"/>            (move(3) &amp;
+<a name="38"/>             height := be_unsigned(move(2)) &amp;
+<a name="39"/>             width := be_unsigned(move(2))) | fail
+<a name="40"/>            return ImageDetect(width, height, "jpeg")
+<a name="41"/>         } else {
+<a name="42"/>            (length := be_unsigned(move(2)) &amp;
+<a name="43"/>             move(length - 2)) | fail
+<a name="44"/>         }
+<a name="45"/>      }
+<a name="46"/>   }
+<a name="47"/>end
+<a name="48"/>
+<a name="49"/># See &lt;https://en.wikipedia.org/wiki/Portable_Network_Graphics#File_format&gt;
+<a name="50"/>procedure png_detect(s)
+<a name="51"/>   local width, height
+<a name="52"/>   s ? {
+<a name="53"/>      if ="\x89PNG\x0D\x0A\x1A\x0A" &amp;
+<a name="54"/>         move(4) &amp;
+<a name="55"/>         ="IHDR" &amp;
+<a name="56"/>         width := be_unsigned(move(4)) &amp;
+<a name="57"/>         height := be_unsigned(move(4))
+<a name="58"/>      then
+<a name="59"/>         return ImageDetect(width, height, "png")
+<a name="60"/>   }
+<a name="61"/>end
+<a name="62"/>
+<a name="63"/># See &lt;http://giflib.sourceforge.net/whatsinagif/bits_and_bytes.html&gt;
+<a name="64"/>procedure gif_detect(s)
+<a name="65"/>   local width, height, b, depth, n, ch
+<a name="66"/>   s ? {
+<a name="67"/>      (=("GIF87a" | "GIF89a") &amp;
+<a name="68"/>       move(4) &amp;
+<a name="69"/>       b := ord(move(1)) &amp;
+<a name="70"/>       move(2)) | fail
+<a name="71"/>      if iand(b, 128) = 128 then {
+<a name="72"/>         depth := iand(b, 7) + 1
+<a name="73"/>         move(3 * (2 ^ depth)) | fail
+<a name="74"/>      }
+<a name="75"/>      repeat {
+<a name="76"/>         ch := move(1) | fail
+<a name="77"/>         if ch == "," then {
+<a name="78"/>            (move(4) &amp;
+<a name="79"/>             width := le_unsigned(move(2)) &amp;
+<a name="80"/>             height := le_unsigned(move(2))) | fail
+<a name="81"/>            return ImageDetect(width, height, "gif")
+<a name="82"/>         }
+<a name="83"/>         if ch == "!" then {
+<a name="84"/>            move(1) | fail
+<a name="85"/>            repeat {
+<a name="86"/>               n := ord(move(1)) | fail
+<a name="87"/>               if n = 0 then
+<a name="88"/>                  break
+<a name="89"/>               move(n) | fail
+<a name="90"/>            }
+<a name="91"/>         }
+<a name="92"/>      }
+<a name="93"/>   }
+<a name="94"/>end
+</pre></body></html>

@@ -1,0 +1,1156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Message</title></head><body>
+<h1>Message</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.MimeHeaders.html" target="displayFrame">util.MimeHeaders</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="mail-package.html" target="listFrame">mail</a></dd>
+</dl><p/>
+This class represents an email message
+<p/><a href="mail-message.icn.html#9" target="displayFrame">Source - message.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.MimeHeaders.html">util.MimeHeaders</a>
+<a href="mail.Message.html">mail.Message</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.MimeHeaders</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.MimeHeaders.html#add_header">add_header()</a>
+<a href="util.MimeHeaders.html#gen_header_entries">gen_header_entries()</a>
+<a href="util.MimeHeaders.html#gen_header_keys">gen_header_keys()</a>
+<a href="util.MimeHeaders.html#gen_headers">gen_headers()</a>
+<a href="util.MimeHeaders.html#get_catenated_headers">get_catenated_headers()</a>
+<a href="util.MimeHeaders.html#get_first_header">get_first_header()</a>
+<a href="util.MimeHeaders.html#get_headers">get_headers()</a>
+<a href="util.MimeHeaders.html#has_header">has_header()</a>
+<a href="util.MimeHeaders.html#set_header">set_header()</a>
+<a href="util.MimeHeaders.html#show_headers">show_headers()</a>
+<a href="util.MimeHeaders.html#unset_header">unset_header()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.MimeHeaders</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.MimeHeaders.html#headers">headers</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_bcc">add_bcc()</a>
+<a href="#add_cc">add_cc()</a>
+<a href="#add_from">add_from()</a>
+<a href="#add_reply_to">add_reply_to()</a>
+<a href="#add_resent_bcc">add_resent_bcc()</a>
+<a href="#add_resent_cc">add_resent_cc()</a>
+<a href="#add_resent_from">add_resent_from()</a>
+<a href="#add_resent_to">add_resent_to()</a>
+<a href="#add_to">add_to()</a>
+<a href="#catenate_addresses">catenate_addresses()</a>
+<a href="#fold">fold()</a>
+<a href="#fold1">fold1()</a>
+<a href="#get_actual_content_transfer_encoding">get_actual_content_transfer_encoding()</a>
+<a href="#get_actual_content_type">get_actual_content_type()</a>
+<a href="#get_bcc">get_bcc()</a>
+<a href="#get_cc">get_cc()</a>
+<a href="#get_content">get_content()</a>
+<a href="#get_content_disposition">get_content_disposition()</a>
+<a href="#get_content_object">get_content_object()</a>
+<a href="#get_content_transfer_encoding">get_content_transfer_encoding()</a>
+<a href="#get_content_type">get_content_type()</a>
+<a href="#get_date">get_date()</a>
+<a href="#get_decoded_content">get_decoded_content()</a>
+<a href="#get_encoding_handler">get_encoding_handler()</a>
+<a href="#get_from">get_from()</a>
+<a href="#get_reply_to">get_reply_to()</a>
+<a href="#get_resent_bcc">get_resent_bcc()</a>
+<a href="#get_resent_cc">get_resent_cc()</a>
+<a href="#get_resent_date">get_resent_date()</a>
+<a href="#get_resent_from">get_resent_from()</a>
+<a href="#get_resent_sender">get_resent_sender()</a>
+<a href="#get_resent_to">get_resent_to()</a>
+<a href="#get_sender">get_sender()</a>
+<a href="#get_subject">get_subject()</a>
+<a href="#get_to">get_to()</a>
+<a href="#get_type_handler">get_type_handler()</a>
+<a href="#header_error">header_error()</a>
+<a href="#new">new()</a>
+<a href="#parse">parse()</a>
+<a href="#set_bcc">set_bcc()</a>
+<a href="#set_cc">set_cc()</a>
+<a href="#set_content">set_content()</a>
+<a href="#set_content_disposition">set_content_disposition()</a>
+<a href="#set_content_object">set_content_object()</a>
+<a href="#set_content_transfer_encoding">set_content_transfer_encoding()</a>
+<a href="#set_content_type">set_content_type()</a>
+<a href="#set_date">set_date()</a>
+<a href="#set_decoded_content">set_decoded_content()</a>
+<a href="#set_from">set_from()</a>
+<a href="#set_reply_to">set_reply_to()</a>
+<a href="#set_resent_bcc">set_resent_bcc()</a>
+<a href="#set_resent_cc">set_resent_cc()</a>
+<a href="#set_resent_date">set_resent_date()</a>
+<a href="#set_resent_from">set_resent_from()</a>
+<a href="#set_resent_sender">set_resent_sender()</a>
+<a href="#set_resent_to">set_resent_to()</a>
+<a href="#set_sender">set_sender()</a>
+<a href="#set_subject">set_subject()</a>
+<a href="#set_to">set_to()</a>
+<a href="#show_message">show_message()</a>
+<a href="#to_rfc822">to_rfc822()</a>
+<a href="#to_rfc822_stream">to_rfc822_stream()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#content">content</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_bcc"/>
+<h3>add_bcc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "bcc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#497" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_cc"/>
+<h3>add_cc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "cc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#427" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_from"/>
+<h3>add_from(m)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "From" header from the given parameter, which may be either
+a single <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>, or a list of several <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> or a list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#567" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_reply_to"/>
+<h3>add_reply_to(a)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "Reply-To" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#357" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_resent_bcc"/>
+<h3>add_resent_bcc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "Resent-bcc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#532" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_resent_cc"/>
+<h3>add_resent_cc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "Resent-cc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#462" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_resent_from"/>
+<h3>add_resent_from(m)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "Resent-From" header from the given parameter, which may be either
+a single <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>, or a list of several <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> or a list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#623" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_resent_to"/>
+<h3>add_resent_to(a)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "Resent-To" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#392" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="add_to"/>
+<h3>add_to(a)</h3>
+public<p/>
+<dl>
+<dd>
+Add a "To" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#322" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="catenate_addresses"/>
+<h3>catenate_addresses(a)</h3>
+private<p/>
+<dl>
+<dd>
+Turn the given parameter into a comma-separated list of addresses.  The
+param is either an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+<p/>
+<p/><a href="mail-message.icn.html#259" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="fold"/>
+<h3>fold(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Fold a line into several CRLF lines of &lt;= 78 chars
+<p/>
+<p/><a href="mail-message.icn.html#176" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="fold1"/>
+<h3>fold1(res, l)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="mail-message.icn.html#215" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_actual_content_transfer_encoding"/>
+<h3>get_actual_content_transfer_encoding()</h3>
+private<p/>
+<dl>
+<dd>
+Helper to get the specified encoding, or the standard default.
+<p/>
+<p/><a href="mail-message.icn.html#106" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_actual_content_type"/>
+<h3>get_actual_content_type()</h3>
+private<p/>
+<dl>
+<dd>
+Helper to get the specified content type, or the standard default.
+<p/>
+<p/><a href="mail-message.icn.html#116" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_bcc"/>
+<h3>get_bcc()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "bcc" header(s) as a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "bcc" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#472" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_cc"/>
+<h3>get_cc()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "cc" header(s) as a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "bcc" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#402" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_content"/>
+<h3>get_content()</h3>
+public<p/>
+<dl>
+<dd>
+Get the content
+<p/><a href="mail-message.icn.html#24" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_content_disposition"/>
+<h3>get_content_disposition()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Content-Disposition" header as a <code><a href="mail.ContentDisposition.html" target="displayFrame">ContentDisposition</a></code> intance.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="mail.ContentDisposition.html" target="displayFrame">ContentDisposition</a></code>
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Content-Disposition" header is absent or cannot be parsed.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#698" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_content_object"/>
+<h3>get_content_object()</h3>
+public<p/>
+<dl>
+<dd>
+Retrieve an object representation of the decoded data, based on
+the Content-Type attribute.
+<p/><a href="mail-message.icn.html#69" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_content_transfer_encoding"/>
+<h3>get_content_transfer_encoding()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Content-Transfer-Encoding" field, as a string, or fail if it is
+absent or an invalid value.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a string
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#720" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_content_type"/>
+<h3>get_content_type()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Content-Type" header as a <code><a href="mail.ContentType.html" target="displayFrame">ContentType</a></code> intance.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="mail.ContentType.html" target="displayFrame">ContentType</a></code>
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Content-Type" header is absent or cannot be parsed.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#676" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_date"/>
+<h3>get_date()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Date" header as a <code><a href="util.Time.html" target="displayFrame">Time</a></code> object.
+<dl>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Date" header is absent or cannot be parsed.
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="util.Time.html" target="displayFrame">Time</a></code> instance
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#275" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_content"/>
+<h3>get_decoded_content()</h3>
+public<p/>
+<dl>
+<dd>
+Get the decoded content, based on the Content-Transfer-Encoding attribute.
+<p/><a href="mail-message.icn.html#31" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_encoding_handler"/>
+<h3>get_encoding_handler()</h3>
+private<p/>
+<dl>
+<dd>
+Helper to get the appropriate encoding handler
+<p/>
+<p/><a href="mail-message.icn.html#126" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_from"/>
+<h3>get_from()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "From" header(s) as a list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "From" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#542" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_reply_to"/>
+<h3>get_reply_to()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Reply-To" header(s) as a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Reply-To" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#332" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_resent_bcc"/>
+<h3>get_resent_bcc()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Resent-bcc" header(s) as a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Reset-bcc" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#507" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_resent_cc"/>
+<h3>get_resent_cc()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Resent-cc" header(s) as a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Resent-cc" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#437" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_resent_date"/>
+<h3>get_resent_date()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Resent-Date" header as a <code><a href="util.Time.html" target="displayFrame">Time</a></code> instance.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="util.Time.html" target="displayFrame">Time</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#656" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_resent_from"/>
+<h3>get_resent_from()</h3>
+public<p/>
+<dl>
+<dd>
+Add a "Resent-From" header from the given parameter, which may be either
+a single <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>, or a list of several <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> or a list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#600" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_resent_sender"/>
+<h3>get_resent_sender()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Resent-Sender" header as a <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> instance.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Resent-Sender" header is absent or cannot be parsed as a 
+<code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#633" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_resent_to"/>
+<h3>get_resent_to()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Resent-To" header(s) as a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Resent-To" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#367" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_sender"/>
+<h3>get_sender()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "Sender" header as a <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> instance.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "Sender" header is absent or cannot be parsed as a 
+<code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#577" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_subject"/>
+<h3>get_subject()</h3>
+public<p/>
+<dl>
+<dd>
+Get the subject
+<p/><a href="mail-message.icn.html#748" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_to"/>
+<h3>get_to()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "To" header(s) as a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code> instances
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the "To" header is absent or cannot be parsed as a 
+list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#297" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="get_type_handler"/>
+<h3>get_type_handler()</h3>
+private<p/>
+<dl>
+<dd>
+Helper to get the appropriate type handler
+<p/><a href="mail-message.icn.html#139" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="header_error"/>
+<h3>header_error(h, s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="mail-message.icn.html#270" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.MimeHeaders.html#new">new()</a> in <a href="util.MimeHeaders.html" target="displayFrame">util.MimeHeaders</a></dd>
+<dd>
+<p/><a href="mail-message.icn.html#755" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(data)</h3>
+public static<p/>
+<dl>
+<dd>
+Parse the given raw data into a Message.
+<p/><a href="mail-message.icn.html#236" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_bcc"/>
+<h3>set_bcc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "bcc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.  To add further "bcc"
+headers, use <code><a href="mail.Message.html#add_bcc">add_bcc</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#486" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cc"/>
+<h3>set_cc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "cc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.  To add further "cc"
+headers, use <code><a href="mail.Message.html#add_cc">add_cc</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#416" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_content"/>
+<h3>set_content(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the content
+<p/><a href="mail-message.icn.html#16" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_content_disposition"/>
+<h3>set_content_disposition(cd)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Content-Disposition" header from a <code><a href="mail.ContentDisposition.html" target="displayFrame">ContentDisposition</a></code> instance.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>cd</code> - a <code><a href="mail.ContentDisposition.html" target="displayFrame">ContentDisposition</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#711" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_content_object"/>
+<h3>set_content_object(o)</h3>
+public<p/>
+<dl>
+<dd>
+Set the content from the given object, which must be consistent
+with the Content-Type specified in the message.
+<p/><a href="mail-message.icn.html#89" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_content_transfer_encoding"/>
+<h3>set_content_transfer_encoding(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Content-Transfer-Encoding" from the given string.
+<p/><a href="mail-message.icn.html#732" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_content_type"/>
+<h3>set_content_type(ct)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Content-Type" header from a <code><a href="mail.ContentType.html" target="displayFrame">ContentType</a></code> instance.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ct</code> - a <code><a href="mail.ContentType.html" target="displayFrame">ContentType</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#689" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_date"/>
+<h3>set_date(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Date" header from the given <code><a href="util.Time.html" target="displayFrame">Time</a></code> object.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - the <code><a href="util.Time.html" target="displayFrame">Time</a></code> from which to set the date field.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#288" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_decoded_content"/>
+<h3>set_decoded_content(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the decoded content.  The content itself will then be set based on the
+Content-Transfer-Encoding.
+<p/><a href="mail-message.icn.html#48" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_from"/>
+<h3>set_from(m)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "From" header from the given parameter, which may be either
+a single <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>, or a list of several <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.  To add further "From"
+headers, use <code><a href="mail.Message.html#add_from">add_from</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> or a list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#556" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_reply_to"/>
+<h3>set_reply_to(a)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Reply-To" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.  To add further "Reply-To"
+headers, use <code><a href="mail.Message.html#add_reply_to">add_reply_to</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#346" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resent_bcc"/>
+<h3>set_resent_bcc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Resent-bcc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.  To add further "Resent-bcc"
+headers, use <code><a href="mail.Message.html#add_resent_bcc">add_resent_bcc</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#521" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resent_cc"/>
+<h3>set_resent_cc(a)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Resent-cc" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.  To add further "Resent-cc"
+headers, use <code><a href="mail.Message.html#add_resent_cc">add_resent_cc</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#451" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resent_date"/>
+<h3>set_resent_date(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Resent-Date" header from the given <code><a href="util.Time.html" target="displayFrame">Time</a></code> instance.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - a <code><a href="util.Time.html" target="displayFrame">Time</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#667" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resent_from"/>
+<h3>set_resent_from(m)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Resent-From" header from the given parameter, which may be either
+a single <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>, or a list of several <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.  To add further "Resent-From"
+headers, use <code><a href="mail.Message.html#add_resent_from">add_resent_from</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> or a list of <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#612" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resent_sender"/>
+<h3>set_resent_sender(m)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Resent-Sender" header from the given <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> instance.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>m</code> - a <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#647" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resent_to"/>
+<h3>set_resent_to(a)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Resent-To" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.  To add further "Resent-To"
+headers, use <code><a href="mail.Message.html#add_resent_to">add_resent_to</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#381" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_sender"/>
+<h3>set_sender(m)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "Sender" header from the given <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code> instance.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>m</code> - a <code><a href="mail.Mailbox.html" target="displayFrame">Mailbox</a></code>
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#591" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_subject"/>
+<h3>set_subject(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the subject to the given string.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - a string
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#739" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="set_to"/>
+<h3>set_to(a)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "To" header from the given parameter, which may be either
+a single <code><a href="mail.Address.html" target="displayFrame">Address</a></code>, or a list of several <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.  To add further "To"
+headers, use <code><a href="mail.Message.html#add_to">add_to</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>a</code> - an <code><a href="mail.Address.html" target="displayFrame">Address</a></code> or a list of <code><a href="mail.Address.html" target="displayFrame">Address</a></code>es.
+</dd>
+</dl>
+<p/><a href="mail-message.icn.html#311" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="show_message"/>
+<h3>show_message()</h3>
+public<p/>
+<dl>
+<dd>
+Debug output function
+<p/><a href="mail-message.icn.html#227" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="to_rfc822"/>
+<h3>to_rfc822()</h3>
+public<p/>
+<dl>
+<dd>
+Return a string representation of the message in RFC822 format.
+<p/>
+<p/><a href="mail-message.icn.html#152" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<a name="to_rfc822_stream"/>
+<h3>to_rfc822_stream(f)</h3>
+public<p/>
+<dl>
+<dd>
+Output the message in RFC822 format to the given stream.
+<p/><a href="mail-message.icn.html#163" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="content"/>
+<h3>content</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="mail-message.icn.html#13" target="displayFrame">Source - message.icn </a>
+</dd>
+</dl><hr>
+</body></html>

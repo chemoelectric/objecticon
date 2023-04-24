@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>factorizations</title></head><body>
+<h1>factorizations(n)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.factors-package.html" target="listFrame">ipl.factors</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Generate a sequence of lists giving all the possible factorizations
+of positive integer <code>n</code>.  For example, if <code>n</code> is 24, then :-
+<pre>
+  [24], [2,12], [4,6], [2,2,6]
+  [3,8], [2,3,4] and [2,2,2,3]
+</pre>
+is generated.
+<p/>
+Notes :-
+<p/>
+<ul>
+<li>
+<code>1</code> is never included in any result.
+</li>
+<li>
+the factors in each list are in ascending order,
+</li>
+<li>
+the results are in no special order, although the first result always
+has one element and the last all the prime factors.
+</li>
+<li>
+no list is repeated,
+</li>
+<li>
+each list is a distinct list instance,
+</li>
+<li>
+<code><a href="ipl.factors.factorizations.html" target="displayFrame">factorizations(1)</a></code> returns the empty list.
+</li>
+</ul>
+<p/><a href="ipl.factors-factors.icn.html#372" target="displayFrame">Source - factors.icn </a>
+<p/>
+</body></html>

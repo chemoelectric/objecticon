@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>glabels.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     glabels.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce graph ticks
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  glabels(min, max, nticks) produces a list of aesthetically pleasing labels
+<a name="18"/>#  for graph ticks to cover a given range.  It is based on the algorithm
+<a name="19"/>#  given by Paul S. Heckert in "Graphic Gems", Andrew S Glassner, ed.,
+<a name="20"/>#  Academic Press, 1990.
+<a name="21"/>#
+<a name="22"/>############################################################################
+<a name="23"/>#
+<a name="24"/>#  Links: numbers
+<a name="25"/>#
+<a name="26"/>############################################################################
+<a name="27"/>
+<a name="28"/>package ipl.glabels
+<a name="29"/>
+<a name="30"/>import
+<a name="31"/>   ipl.numbers(up),
+<a name="32"/>   util(Math)
+<a name="33"/>
+<a name="34"/>procedure glabels(min, max, ntick)
+<a name="35"/>   local d, graphmin, graphmax, llist, x,  range
+<a name="36"/>
+<a name="37"/>   if min = max then fail		# no can do
+<a name="38"/>
+<a name="39"/>   range := nicenum(max - min)
+<a name="40"/>   d := nicenum(range / (ntick - 1), 1)
+<a name="41"/>   graphmin := integer(min / d) * d
+<a name="42"/>   graphmax := up(max / d) * d
+<a name="43"/>   llist := []
+<a name="44"/>   every x := graphmin to graphmax + 0.5 * d by d do
+<a name="45"/>     put(llist, x)
+<a name="46"/>
+<a name="47"/>   return llist
+<a name="48"/>
+<a name="49"/>end
+<a name="50"/>
+<a name="51"/>procedure nicenum(x, round)
+<a name="52"/>   local exp, f, nf
+<a name="53"/>
+<a name="54"/>   exp := integer(Math.log(x, 10))
+<a name="55"/>   f := x / (10 ^ exp)
+<a name="56"/>   if \round then {
+<a name="57"/>      if f &lt; 1.5 then nf := 1
+<a name="58"/>      else if f &lt; 3.0 then nf := 2
+<a name="59"/>      else if f &lt; 7 then nf := 5
+<a name="60"/>      else nf := 10
+<a name="61"/>      }
+<a name="62"/>   else {
+<a name="63"/>      if f &lt;= 1 then nf := 1
+<a name="64"/>      else if f &lt;= 2 then nf := 2
+<a name="65"/>      else if f &lt;= 5 then nf := 5
+<a name="66"/>      else nf := 10
+<a name="67"/>      }
+<a name="68"/>
+<a name="69"/>   return nf * (10 ^ exp)
+<a name="70"/>
+<a name="71"/>end
+</pre></body></html>

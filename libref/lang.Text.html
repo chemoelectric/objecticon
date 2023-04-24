@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Text</title></head><body>
+<h1>Text</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+<p/><a href="lang-text.icn.html#5" target="displayFrame">Source - text.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#caseless_compare">caseless_compare()</a>
+<a href="#caseless_cset">caseless_cset()</a>
+<a href="#consistent_compare">consistent_compare()</a>
+<a href="#create_cset">create_cset()</a>
+<a href="#get_ord_range">get_ord_range()</a>
+<a href="#get_utf8_seq_len">get_utf8_seq_len()</a>
+<a href="#has_ord">has_ord()</a>
+<a href="#is_ascii_string">is_ascii_string()</a>
+<a href="#iso_8859_1_to_ucs">iso_8859_1_to_ucs()</a>
+<a href="#liberal_ucs">liberal_ucs()</a>
+<a href="#lower">lower()</a>
+<a href="#slice">slice()</a>
+<a href="#subset">subset()</a>
+<a href="#ucs_to_iso_8859_1">ucs_to_iso_8859_1()</a>
+<a href="#upper">upper()</a>
+<a href="#utf8_seq">utf8_seq()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="caseless_compare"/>
+<h3>caseless_compare(s1, s2)</h3>
+public static native<p/>
+<dl>
+<dd>
+Caseless string comparator function.  This works just like
+Internal.compare (so no conversions are done), but uses caseless
+text comparison.  For ucs, a unicode mapping is used to compare
+letters, whilst for strings only the ASCII letters are
+considered.
+<p/><a href="lang-text.icn.html#32" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="caseless_cset"/>
+<h3>caseless_cset(c, t)</h3>
+public static native<p/>
+<dl>
+<dd>
+Expand the given cset so that all letters appear in the result
+both in lowercase and uppercase, eg
+<pre>
+  Text.caseless_cset('Cat123') -&gt; 'catCAT123'
+</pre>
+The result can then be used, for example to do a caseless upto
+search.
+<p/>
+The optional parameter <code>t</code> can be used to indicate the type the
+result will be used with; if <code>t</code> is a string, then non-ascii
+characters won't be expanded to upper and lower case alternatives
+(using a unicode mapping); otherwise they will.  This allows
+convenient interaction with the behaviour of <code><a href="lang.Text.html#upper">upper</a></code> and <code><a href="lang.Text.html#lower">lower</a></code>.
+<p/><a href="lang-text.icn.html#161" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="consistent_compare"/>
+<h3>consistent_compare(s1, s2)</h3>
+public static native<p/>
+<dl>
+<dd>
+A caseless string comparator function with consistent ordering
+amongst items which compare caselessly equal, so that for example
+abc, aBc, ABC are always sorted in the same order.  No
+conversions are done, so different types are never mixed.
+<p/><a href="lang-text.icn.html#41" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="create_cset"/>
+<h3>create_cset(x[])</h3>
+public static native<p/>
+<dl>
+<dd>
+Produce a cset consisting of characters in the range x[1]-x[2],
+x[3]-x[4] etc.  A list of ranges may also be passed as a
+parameter.
+<p/>
+Fails and sets &amp;why if any of the code point numbers is invalid.
+<p/><a href="lang-text.icn.html#11" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="get_ord_range"/>
+<h3>get_ord_range(c)</h3>
+public static native<p/>
+<dl>
+<dd>
+Generate the ranges in a cset, as a sequence of from-to pairs.
+<p/><a href="lang-text.icn.html#6" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="get_utf8_seq_len"/>
+<h3>get_utf8_seq_len(ch)</h3>
+public static<p/>
+<dl>
+<dd>
+Given an initial character, return the number of characters
+making up a valid utf8 sequence beginning with that character, or
+fail if it is not a valid initial character.
+<p/><a href="lang-text.icn.html#59" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="has_ord"/>
+<h3>has_ord(c, x)</h3>
+public static native<p/>
+<dl>
+<dd>
+Succeed if the cset c contains the code point x, returning its
+index in the cset
+<p/><a href="lang-text.icn.html#20" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="is_ascii_string"/>
+<h3>is_ascii_string(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Succeed iff <code>s</code> is a string composed of ascii characters.  No
+conversions are performed.
+<p/><a href="lang-text.icn.html#141" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="iso_8859_1_to_ucs"/>
+<h3>iso_8859_1_to_ucs(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert an ISO-8859-1 string to ucs
+<p/><a href="lang-text.icn.html#105" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="liberal_ucs"/>
+<h3>liberal_ucs(s, subst)</h3>
+public static<p/>
+<dl>
+<dd>
+A more liberal way of parsing a utf-8 string than the builtin
+<code>ucs</code> function.  Any errors in the input result in the substitute
+character (by default U+FFFD) being put into the resulting
+string.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the string to parse into a ucs
+</dd>
+<dd>
+<code>subst</code> - the substitute character
+</dd>
+</dl>
+<p/><a href="lang-text.icn.html#79" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="lower"/>
+<h3>lower(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Convert the given string or ucs <code>s</code> to lower case.  If <code>s</code> is
+ucs, then a unicode mapping is used; it is a string then only the
+characters in <code>&amp;ucase</code> are converted.
+<p/><a href="lang-text.icn.html#147" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="slice"/>
+<h3>slice(c, i, j)</h3>
+public static native<p/>
+<dl>
+<dd>
+Given a cset <code>c</code>, produce another cset containing those characters in 
+positions <code>i</code>:<code>j</code>.
+<p/><a href="lang-text.icn.html#135" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="subset"/>
+<h3>subset(x, y)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed if all the chars in x are in cset y.
+<p/><a href="lang-text.icn.html#49" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="ucs_to_iso_8859_1"/>
+<h3>ucs_to_iso_8859_1(s, subst)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a ucs to ISO-8859-1 string; characters out of range are
+represented by the subst string (default "?").
+<p/><a href="lang-text.icn.html#119" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="upper"/>
+<h3>upper(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Convert the given string or ucs <code>s</code> to upper case.  If <code>s</code> is
+ucs, then a unicode mapping is used; it is a string then only the
+characters in <code>&amp;lcase</code> are converted.
+<p/><a href="lang-text.icn.html#154" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+<a name="utf8_seq"/>
+<h3>utf8_seq(i)</h3>
+public static native<p/>
+<dl>
+<dd>
+Produce a string containing the utf-8 sequence of chars for
+character i.
+<p/><a href="lang-text.icn.html#26" target="displayFrame">Source - text.icn </a>
+</dd>
+</dl><hr>
+</body></html>

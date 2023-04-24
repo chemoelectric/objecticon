@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>CompoundEdit</title></head><body>
+<h1>CompoundEdit</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="undo.UndoableEdit.html" target="displayFrame">undo.UndoableEdit</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="undo.UndoManager.html">undo.UndoManager</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="undo-package.html" target="listFrame">undo</a></dd>
+</dl><p/>
+An UndoableEdit which groups several edits together in a list.  The
+undo and redo methods are implemented to undo the edits in the list together.
+<p/><a href="undo-compoundedit.icn.html#13" target="displayFrame">Source - compoundedit.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="undo.UndoableEdit.html">undo.UndoableEdit</a>
+<a href="undo.CompoundEdit.html">undo.CompoundEdit</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_edit">add_edit()</a>
+<a href="#clear">clear()</a>
+<a href="#close">close()</a>
+<a href="#gen">gen()</a>
+<a href="#get_desc">get_desc()</a>
+<a href="#new">new()</a>
+<a href="#redo">redo()</a>
+<a href="#set_desc">set_desc()</a>
+<a href="#set_liberal">set_liberal()</a>
+<a href="#undo">undo()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#closed">closed</a>
+<a href="#desc">desc</a>
+<a href="#l">l</a>
+<a href="#liberal_flag">liberal_flag</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_edit"/>
+<h3>add_edit(other)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.UndoableEdit.html#add_edit">add_edit()</a> in <a href="undo.UndoableEdit.html" target="displayFrame">undo.UndoableEdit</a></dd>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#41" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="clear"/>
+<h3>clear()</h3>
+public<p/>
+<dl>
+<dd>
+Clear the list of edits.
+<p/><a href="undo-compoundedit.icn.html#58" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+A closed CompoundEdit is one which cannot have any more
+edits added to it by add_edit.
+<p/><a href="undo-compoundedit.icn.html#49" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#30" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="get_desc"/>
+<h3>get_desc()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.UndoableEdit.html#get_desc">get_desc()</a> in <a href="undo.UndoableEdit.html" target="displayFrame">undo.UndoableEdit</a></dd>
+<dd>
+Return a description of the edit.
+<p/><a href="undo-compoundedit.icn.html#84" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#91" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="redo"/>
+<h3>redo()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.UndoableEdit.html#redo">redo()</a> in <a href="undo.UndoableEdit.html" target="displayFrame">undo.UndoableEdit</a></dd>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#25" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="set_desc"/>
+<h3>set_desc(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the edit description
+<p/><a href="undo-compoundedit.icn.html#76" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="set_liberal"/>
+<h3>set_liberal(s)</h3>
+public<p/>
+<dl>
+<dd>
+If this flag is set, then after closure edits may still be
+added to the last edit in the list (if it accepts them), although
+this edit's list will not be added to.
+<p/><a href="undo-compoundedit.icn.html#66" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="undo"/>
+<h3>undo()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.UndoableEdit.html#undo">undo()</a> in <a href="undo.UndoableEdit.html" target="displayFrame">undo.UndoableEdit</a></dd>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#34" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="closed"/>
+<h3>closed</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#21" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="desc"/>
+<h3>desc</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#23" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="l"/>
+<h3>l</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#18" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+<a name="liberal_flag"/>
+<h3>liberal_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="undo-compoundedit.icn.html#22" target="displayFrame">Source - compoundedit.icn </a>
+</dd>
+</dl><hr>
+</body></html>

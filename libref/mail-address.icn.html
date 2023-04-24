@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>address.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: address.icn 8938 2021-02-26 12:09:13Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package mail
+<a name="6"/>
+<a name="7"/>import lang
+<a name="8"/>
+<a name="9"/>abstract class Address(ObjectOutput)
+<a name="10"/>   public abstract to_rfc822()
+<a name="11"/>
+<a name="12"/>   public abstract gen_mailboxes()
+<a name="13"/>
+<a name="14"/>   #
+<a name="15"/>   # Output object
+<a name="16"/>   #
+<a name="17"/>   protected override object_output(oo)
+<a name="18"/>      oo.object_string(self, to_rfc822())
+<a name="19"/>   end
+<a name="20"/>end
+</pre></body></html>

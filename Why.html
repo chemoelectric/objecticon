@@ -46,16 +46,16 @@
    }
    ...
 end</code></pre>
-<p>Since assignment to <code>&amp;why</code> is almost always followed by failure, there is a helpful utility procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?util.error.html"><code>util.error</code></a>, which simply sets <code>&amp;why</code> and fails. This would make the above code a little more concise :-</p>
+<p>Since assignment to <code>&amp;why</code> is almost always followed by failure, there is a helpful utility procedure, <a href="libref/index.html?util.error.html"><code>util.error</code></a>, which simply sets <code>&amp;why</code> and fails. This would make the above code a little more concise :-</p>
 <pre><code>procedure open_database(x)
    ...
    (f := open(x || &quot;.db&quot;)) | return error(&quot;Failed to open database: &quot; || &amp;why)
    ...
 end</code></pre>
-<p>Another useful library procedure is <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.printf.whyf.html"><code>ipl.printf.whyf</code></a>. This takes a printf-style format and parameters and sets <code>&amp;why</code> to the resulting string. The format “%w” can be used to insert <code>&amp;why</code> into the result, so the above example using <code>error()</code> could be written as :-</p>
+<p>Another useful library procedure is <a href="libref/index.html?ipl.printf.whyf.html"><code>ipl.printf.whyf</code></a>. This takes a printf-style format and parameters and sets <code>&amp;why</code> to the resulting string. The format “%w” can be used to insert <code>&amp;why</code> into the result, so the above example using <code>error()</code> could be written as :-</p>
 <pre><code>   return whyf(&quot;Failed to open database: %w&quot;)</code></pre>
 <h2 id="errno">errno</h2>
-<p>C programmers will notice that <code>&amp;why</code> is very similar to <code>errno</code>, the global variable by which various C library functions communicate error information. Indeed, in the <code>ieval</code> output given above, the values for <code>&amp;why</code> come from turning <code>errno</code> into a string form. When <code>errno</code> is used in this way by Object Icon, the raw value of <code>errno</code> is retained by appending its value to the end of the string; thus rather than simply “Permission denied”, we set <code>&amp;why</code> to “Permission denied (errno=13)”. This is occasionally useful when we wish to do something if failure occurred for a specific reason. To extract the raw <code>errno</code> value from &amp;why, the utility procedure <a href="http://objecticon.sourceforge.net/libref/index.html?util.errno.html"><code>util.errno</code></a> may be used, as follows :-</p>
+<p>C programmers will notice that <code>&amp;why</code> is very similar to <code>errno</code>, the global variable by which various C library functions communicate error information. Indeed, in the <code>ieval</code> output given above, the values for <code>&amp;why</code> come from turning <code>errno</code> into a string form. When <code>errno</code> is used in this way by Object Icon, the raw value of <code>errno</code> is retained by appending its value to the end of the string; thus rather than simply “Permission denied”, we set <code>&amp;why</code> to “Permission denied (errno=13)”. This is occasionally useful when we wish to do something if failure occurred for a specific reason. To extract the raw <code>errno</code> value from &amp;why, the utility procedure <a href="libref/index.html?util.errno.html"><code>util.errno</code></a> may be used, as follows :-</p>
 <pre><code>$ ieval -i io,util
 &gt; open(&quot;/root/nonsense.txt&quot;)
 &gt; &amp;why
@@ -63,7 +63,7 @@ end</code></pre>
 &gt; errno()
 13
 &gt;</code></pre>
-<p>The various constant values which <code>errno</code> may take can be found in the class <a href="http://objecticon.sourceforge.net/libref/index.html?posix.Errno.html"><code>posix.Errno</code></a>. We could then use logic like :-</p>
+<p>The various constant values which <code>errno</code> may take can be found in the class <a href="libref/index.html?posix.Errno.html"><code>posix.Errno</code></a>. We could then use logic like :-</p>
 <pre><code>(f := open(s)) | {
    if errno() = Errno.EACCES then
       # Do something if permission denied (EACCES is 13).
@@ -72,7 +72,7 @@ end</code></pre>
 }</code></pre>
 <p>One point to note is that the presence of these constants is somewhat system dependent. Plan 9 for example, doesn’t use <code>errno</code> at all and uses a string-based error message system.</p>
 <h2 id="save_why">save_why</h2>
-<p>Occasionally it is useful to call a procedure, but to prevent it from altering the value of <code>&amp;why</code>. This is easily achieved with the utility procedure <a href="http://objecticon.sourceforge.net/libref/index.html?util.save_why.html"><code>util.save_why</code></a>, which can be used as follows :-</p>
+<p>Occasionally it is useful to call a procedure, but to prevent it from altering the value of <code>&amp;why</code>. This is easily achieved with the utility procedure <a href="libref/index.html?util.save_why.html"><code>util.save_why</code></a>, which can be used as follows :-</p>
 <pre><code># &amp;why has some important value...
 save_why{Files.remove(tmp_file)}
 # &amp;why still has the same value, regardless of whether `remove` failed.</code></pre>

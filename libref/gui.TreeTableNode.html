@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TreeTableNode</title></head><body>
+<h1>TreeTableNode</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.TreeNode.html" target="displayFrame">gui.TreeNode</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A node in a <code><a href="gui.TreeTable.html" target="displayFrame">TreeTable</a></code>.  It provides the column data
+for the extra (non-tree) columns.  For example if
+the TreeTable's columns were named A, B, C, then a
+<code><a href="gui.TreeTableNode.html" target="displayFrame">TreeTableNode</a></code> might be created as follows :-
+<p/>
+Example :-
+<pre>
+  n := TreeTableNode().
+          set_label("Col A label").
+          set_contents(["Col B data", "Col C data"])
+</pre>
+<p/><a href="gui-treetable.icn.html#13" target="displayFrame">Source - treetable.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.TreeNode.html">gui.TreeNode</a>
+<a href="gui.TreeTableNode.html">gui.TreeTableNode</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.TreeNode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.TreeNode.html#add">add()</a>
+<a href="gui.TreeNode.html#add_list">add_list()</a>
+<a href="gui.TreeNode.html#clear_children">clear_children()</a>
+<a href="gui.TreeNode.html#expand">expand()</a>
+<a href="gui.TreeNode.html#expand_to_root">expand_to_root()</a>
+<a href="gui.TreeNode.html#get_children">get_children()</a>
+<a href="gui.TreeNode.html#get_index">get_index()</a>
+<a href="gui.TreeNode.html#get_label">get_label()</a>
+<a href="gui.TreeNode.html#get_parent">get_parent()</a>
+<a href="gui.TreeNode.html#is_expanded">is_expanded()</a>
+<a href="gui.TreeNode.html#move_all">move_all()</a>
+<a href="gui.TreeNode.html#new">new()</a>
+<a href="gui.TreeNode.html#remove">remove()</a>
+<a href="gui.TreeNode.html#remove_all">remove_all()</a>
+<a href="gui.TreeNode.html#remove_index">remove_index()</a>
+<a href="gui.TreeNode.html#remove_list">remove_list()</a>
+<a href="gui.TreeNode.html#reposition">reposition()</a>
+<a href="gui.TreeNode.html#reposition_index">reposition_index()</a>
+<a href="gui.TreeNode.html#set_always_expandable">set_always_expandable()</a>
+<a href="gui.TreeNode.html#set_expanded">set_expanded()</a>
+<a href="gui.TreeNode.html#set_icon_paint">set_icon_paint()</a>
+<a href="gui.TreeNode.html#set_label">set_label()</a>
+<a href="gui.TreeNode.html#toggle_expanded">toggle_expanded()</a>
+<a href="gui.TreeNode.html#traverse_all_postorder">traverse_all_postorder()</a>
+<a href="gui.TreeNode.html#traverse_all_preorder">traverse_all_preorder()</a>
+<a href="gui.TreeNode.html#traverse_open_postorder">traverse_open_postorder()</a>
+<a href="gui.TreeNode.html#traverse_open_preorder">traverse_open_preorder()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.TreeNode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.TreeNode.html#always_expandable_flag">always_expandable_flag</a>
+<a href="gui.TreeNode.html#children">children</a>
+<a href="gui.TreeNode.html#depth">depth</a>
+<a href="gui.TreeNode.html#draw_line">draw_line</a>
+<a href="gui.TreeNode.html#icon_paint">icon_paint</a>
+<a href="gui.TreeNode.html#is_expanded_flag">is_expanded_flag</a>
+<a href="gui.TreeNode.html#label">label</a>
+<a href="gui.TreeNode.html#parent">parent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#set_contents">set_contents()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#contents">contents</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="set_contents"/>
+<h3>set_contents(l)</h3>
+public<p/>
+<dl>
+<dd>
+Set the column data to fill the columns 2 onwards.
+<p/><a href="gui-treetable.icn.html#28" target="displayFrame">Source - treetable.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="contents"/>
+<h3>contents</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treetable.icn.html#26" target="displayFrame">Source - treetable.icn </a>
+</dd>
+</dl><hr>
+</body></html>

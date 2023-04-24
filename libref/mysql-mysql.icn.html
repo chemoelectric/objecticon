@@ -1,0 +1,593 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>mysql.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: mysql.icn 8259 2020-04-27 12:39:55Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package mysql
+<a name="10"/>
+<a name="11"/>import lang, io, util
+<a name="12"/>
+<a name="13"/># Succeed if the mysql library is available, or fail and set &amp;why if
+<a name="14"/># it isn't.
+<a name="15"/>#
+<a name="16"/>procedure mysql_available()
+<a name="17"/>   succeed \MySql.LOADED | error(MySql.WHY)
+<a name="18"/>end
+<a name="19"/>
+<a name="20"/>#
+<a name="21"/># This class provides a wrapper around the MySql C API.  Nearly all the
+<a name="22"/># methods have a single underlying corresponding C function - see the MySql
+<a name="23"/># documentation for details on what the underlying function does.
+<a name="24"/>#
+<a name="25"/>final class MySql(NoCopy, HasClose)
+<a name="26"/>   public static const 
+<a name="27"/>      FIELD_TYPE_DECIMAL,
+<a name="28"/>      FIELD_TYPE_TINY,
+<a name="29"/>      FIELD_TYPE_SHORT,
+<a name="30"/>      FIELD_TYPE_LONG,
+<a name="31"/>      FIELD_TYPE_FLOAT,
+<a name="32"/>      FIELD_TYPE_DOUBLE,
+<a name="33"/>      FIELD_TYPE_NULL,
+<a name="34"/>      FIELD_TYPE_TIMESTAMP,
+<a name="35"/>      FIELD_TYPE_LONGLONG,
+<a name="36"/>      FIELD_TYPE_INT24,
+<a name="37"/>      FIELD_TYPE_DATE,
+<a name="38"/>      FIELD_TYPE_TIME,
+<a name="39"/>      FIELD_TYPE_DATETIME,
+<a name="40"/>      FIELD_TYPE_YEAR,
+<a name="41"/>      FIELD_TYPE_NEWDATE,
+<a name="42"/>      FIELD_TYPE_ENUM,
+<a name="43"/>      FIELD_TYPE_SET,
+<a name="44"/>      FIELD_TYPE_TINY_BLOB,
+<a name="45"/>      FIELD_TYPE_MEDIUM_BLOB,
+<a name="46"/>      FIELD_TYPE_LONG_BLOB,
+<a name="47"/>      FIELD_TYPE_BLOB,
+<a name="48"/>      FIELD_TYPE_VAR_STRING,
+<a name="49"/>      FIELD_TYPE_STRING,
+<a name="50"/>      FIELD_TYPE_GEOMETRY,
+<a name="51"/>      MYSQL_OPT_CONNECT_TIMEOUT,
+<a name="52"/>      MYSQL_OPT_COMPRESS,
+<a name="53"/>      MYSQL_OPT_NAMED_PIPE,
+<a name="54"/>      MYSQL_INIT_COMMAND,
+<a name="55"/>      MYSQL_READ_DEFAULT_FILE,
+<a name="56"/>      MYSQL_READ_DEFAULT_GROUP,
+<a name="57"/>      MYSQL_SET_CHARSET_DIR,
+<a name="58"/>      MYSQL_SET_CHARSET_NAME,
+<a name="59"/>      MYSQL_OPT_LOCAL_INFILE,
+<a name="60"/>      MYSQL_OPTION_MULTI_STATEMENTS_ON,
+<a name="61"/>      MYSQL_OPTION_MULTI_STATEMENTS_OFF,
+<a name="62"/>      CLIENT_LONG_PASSWORD,
+<a name="63"/>      CLIENT_FOUND_ROWS,
+<a name="64"/>      CLIENT_LONG_FLAG,
+<a name="65"/>      CLIENT_CONNECT_WITH_DB,
+<a name="66"/>      CLIENT_NO_SCHEMA,
+<a name="67"/>      CLIENT_COMPRESS,
+<a name="68"/>      CLIENT_ODBC,
+<a name="69"/>      CLIENT_LOCAL_FILES,
+<a name="70"/>      CLIENT_IGNORE_SPACE,
+<a name="71"/>      CLIENT_PROTOCOL_41,
+<a name="72"/>      CLIENT_INTERACTIVE,
+<a name="73"/>      CLIENT_SSL,
+<a name="74"/>      CLIENT_IGNORE_SIGPIPE,
+<a name="75"/>      CLIENT_TRANSACTIONS,
+<a name="76"/>      CLIENT_RESERVED,
+<a name="77"/>      CLIENT_SECURE_CONNECTION,
+<a name="78"/>      CLIENT_MULTI_STATEMENTS,
+<a name="79"/>      CLIENT_MULTI_RESULTS,
+<a name="80"/>      CLIENT_REMEMBER_OPTIONS,
+<a name="81"/>      CR_ERROR_FIRST,
+<a name="82"/>      CR_UNKNOWN_ERROR,
+<a name="83"/>      CR_SOCKET_CREATE_ERROR,
+<a name="84"/>      CR_CONNECTION_ERROR,
+<a name="85"/>      CR_CONN_HOST_ERROR,
+<a name="86"/>      CR_IPSOCK_ERROR,
+<a name="87"/>      CR_UNKNOWN_HOST,
+<a name="88"/>      CR_SERVER_GONE_ERROR,
+<a name="89"/>      CR_VERSION_ERROR,
+<a name="90"/>      CR_OUT_OF_MEMORY,
+<a name="91"/>      CR_WRONG_HOST_INFO,
+<a name="92"/>      CR_LOCALHOST_CONNECTION,
+<a name="93"/>      CR_TCP_CONNECTION,
+<a name="94"/>      CR_SERVER_HANDSHAKE_ERR,
+<a name="95"/>      CR_SERVER_LOST,
+<a name="96"/>      CR_COMMANDS_OUT_OF_SYNC,
+<a name="97"/>      CR_NAMEDPIPE_CONNECTION,
+<a name="98"/>      CR_NAMEDPIPEWAIT_ERROR,
+<a name="99"/>      CR_NAMEDPIPEOPEN_ERROR,
+<a name="100"/>      CR_NAMEDPIPESETSTATE_ERROR,
+<a name="101"/>      CR_CANT_READ_CHARSET,
+<a name="102"/>      CR_NET_PACKET_TOO_LARGE,
+<a name="103"/>      CR_EMBEDDED_CONNECTION,
+<a name="104"/>      CR_PROBE_SLAVE_STATUS,
+<a name="105"/>      CR_PROBE_SLAVE_HOSTS,
+<a name="106"/>      CR_PROBE_SLAVE_CONNECT,
+<a name="107"/>      CR_PROBE_MASTER_CONNECT,
+<a name="108"/>      CR_SSL_CONNECTION_ERROR,
+<a name="109"/>      CR_MALFORMED_PACKET,
+<a name="110"/>      CR_WRONG_LICENSE,
+<a name="111"/>      # new 4.1 error codes
+<a name="112"/>      CR_NULL_POINTER,
+<a name="113"/>      CR_NO_PREPARE_STMT,
+<a name="114"/>      CR_PARAMS_NOT_BOUND,
+<a name="115"/>      CR_DATA_TRUNCATED,
+<a name="116"/>      CR_NO_PARAMETERS_EXISTS,
+<a name="117"/>      CR_INVALID_PARAMETER_NO,
+<a name="118"/>      CR_INVALID_BUFFER_USE,
+<a name="119"/>      CR_UNSUPPORTED_PARAM_TYPE,
+<a name="120"/>      CR_SHARED_MEMORY_CONNECTION,
+<a name="121"/>      CR_SHARED_MEMORY_CONNECT_REQUEST_ERROR,
+<a name="122"/>      CR_SHARED_MEMORY_CONNECT_ANSWER_ERROR,
+<a name="123"/>      CR_SHARED_MEMORY_CONNECT_FILE_MAP_ERROR,
+<a name="124"/>      CR_SHARED_MEMORY_CONNECT_MAP_ERROR,
+<a name="125"/>      CR_SHARED_MEMORY_FILE_MAP_ERROR,
+<a name="126"/>      CR_SHARED_MEMORY_MAP_ERROR,
+<a name="127"/>      CR_SHARED_MEMORY_EVENT_ERROR,
+<a name="128"/>      CR_SHARED_MEMORY_CONNECT_ABANDONED_ERROR,
+<a name="129"/>      CR_SHARED_MEMORY_CONNECT_SET_ERROR,
+<a name="130"/>      CR_CONN_UNKNOW_PROTOCOL,
+<a name="131"/>      CR_INVALID_CONN_HANDLE,
+<a name="132"/>      CR_UNUSED_1,
+<a name="133"/>      CR_FETCH_CANCELED,
+<a name="134"/>      CR_NO_DATA,
+<a name="135"/>      CR_NO_STMT_METADATA,
+<a name="136"/>      CR_NO_RESULT_SET,
+<a name="137"/>      CR_NOT_IMPLEMENTED,
+<a name="138"/>      CR_SERVER_LOST_EXTENDED,
+<a name="139"/>      CR_STMT_CLOSED,
+<a name="140"/>      CR_NEW_STMT_METADATA,
+<a name="141"/>      CR_ALREADY_CONNECTED,
+<a name="142"/>      CR_AUTH_PLUGIN_CANNOT_LOAD,
+<a name="143"/>      CR_DUPLICATE_CONNECTION_ATTR,
+<a name="144"/>      CR_AUTH_PLUGIN_ERR,
+<a name="145"/>      CR_INSECURE_API_ERR,
+<a name="146"/>      CR_ERROR_LAST,
+<a name="147"/>      LOADED,
+<a name="148"/>      WHY
+<a name="149"/>
+<a name="150"/>   private 
+<a name="151"/>      ptr
+<a name="152"/>   
+<a name="153"/>   #
+<a name="154"/>   # Invoke mysql_affected_rows() for the current connection.
+<a name="155"/>   #
+<a name="156"/>   public native get_affected_rows()
+<a name="157"/>
+<a name="158"/>   #
+<a name="159"/>   # Invoke mysql_change_user() for the current connection.
+<a name="160"/>   #
+<a name="161"/>   public native change_user(user, password, db)
+<a name="162"/>
+<a name="163"/>   #
+<a name="164"/>   # Invoke mysql_get_character_set_name() for the current connection.
+<a name="165"/>   #
+<a name="166"/>   public native get_character_set_name()
+<a name="167"/>
+<a name="168"/>   #
+<a name="169"/>   # Invoke mysql_close() for the current connection.
+<a name="170"/>   #
+<a name="171"/>   public override native close()
+<a name="172"/>
+<a name="173"/>   #
+<a name="174"/>   # Invoke mysql_set_server_option() for the current connection.
+<a name="175"/>   #
+<a name="176"/>   public native set_server_option(option)
+<a name="177"/>
+<a name="178"/>   #
+<a name="179"/>   # Invoke mysql_sqlstate() for the current connection.
+<a name="180"/>   #
+<a name="181"/>   public native get_sqlstate()
+<a name="182"/>
+<a name="183"/>   #
+<a name="184"/>   # Invoke mysql_ssl_set() for the current connection.
+<a name="185"/>   #
+<a name="186"/>   public native ssl_set(key, cert, ca, capath, cipher)
+<a name="187"/>
+<a name="188"/>   #
+<a name="189"/>   # Invoke mysql_dump_debug_info() for the current connection.
+<a name="190"/>   #
+<a name="191"/>   public native dump_debug_info()
+<a name="192"/>
+<a name="193"/>   #
+<a name="194"/>   # Invoke mysql_errno() for the current connection.
+<a name="195"/>   #
+<a name="196"/>   public native get_errno()
+<a name="197"/>
+<a name="198"/>   #
+<a name="199"/>   # Invoke mysql_error() for the current connection.
+<a name="200"/>   #
+<a name="201"/>   public native get_error()
+<a name="202"/>
+<a name="203"/>   #
+<a name="204"/>   # Invoke mysql_field_count() for the current connection.
+<a name="205"/>   #
+<a name="206"/>   public native get_field_count()
+<a name="207"/>
+<a name="208"/>   #
+<a name="209"/>   # Invoke mysql_get_client_info() for the current connection.
+<a name="210"/>   #
+<a name="211"/>   public static native get_client_info()
+<a name="212"/>
+<a name="213"/>   #
+<a name="214"/>   # Invoke mysql_get_client_version() for the current connection.
+<a name="215"/>   #
+<a name="216"/>   public static native get_client_version()
+<a name="217"/>
+<a name="218"/>   #
+<a name="219"/>   # Invoke mysql_get_host_info() for the current connection.
+<a name="220"/>   #
+<a name="221"/>   public native get_host_info()
+<a name="222"/>
+<a name="223"/>   #
+<a name="224"/>   # Invoke mysql_get_proto_info() for the current connection.
+<a name="225"/>   #
+<a name="226"/>   public native get_proto_info()
+<a name="227"/>
+<a name="228"/>   #
+<a name="229"/>   # Invoke mysql_get_server_info() for the current connection.
+<a name="230"/>   #
+<a name="231"/>   public native get_server_info()
+<a name="232"/>
+<a name="233"/>   #
+<a name="234"/>   # Invoke mysql_get_server_version() for the current connection.
+<a name="235"/>   #
+<a name="236"/>   public native get_server_version()
+<a name="237"/>
+<a name="238"/>   #
+<a name="239"/>   # Invoke mysql_info() for the current connection.
+<a name="240"/>   #
+<a name="241"/>   public native get_info()
+<a name="242"/>
+<a name="243"/>   #
+<a name="244"/>   # Invoke mysql_insert_id() for the current connection.
+<a name="245"/>   #
+<a name="246"/>   public native get_insert_id()
+<a name="247"/>
+<a name="248"/>   #
+<a name="249"/>   # Invoke mysql_kill() for the current connection.
+<a name="250"/>   #
+<a name="251"/>   public native kill(pid)
+<a name="252"/>
+<a name="253"/>   #
+<a name="254"/>   # Invoke mysql_list_dbs() for the current connection.
+<a name="255"/>   #
+<a name="256"/>   # :Returns :
+<a name="257"/>   # :  an `MySqlRes` instance
+<a name="258"/>   #
+<a name="259"/>   public list_dbs(wild)
+<a name="260"/>      return MySqlRes(list_dbs_impl(wild))
+<a name="261"/>   end
+<a name="262"/>
+<a name="263"/>   private native list_dbs_impl(wild)
+<a name="264"/>
+<a name="265"/>   #
+<a name="266"/>   # Invoke mysql_list_fields() for the current connection.
+<a name="267"/>   #
+<a name="268"/>   # :Returns :
+<a name="269"/>   # :  an `MySqlRes` instance
+<a name="270"/>   #
+<a name="271"/>   public list_fields(table, wild)
+<a name="272"/>      return MySqlRes(list_fields_impl(table, wild))
+<a name="273"/>   end
+<a name="274"/>
+<a name="275"/>   private native list_fields_impl(table, wild)
+<a name="276"/>
+<a name="277"/>   #
+<a name="278"/>   # Invoke mysql_list_processes() for the current connection.
+<a name="279"/>   #
+<a name="280"/>   # :Returns :
+<a name="281"/>   # :  an `MySqlRes` instance
+<a name="282"/>   #
+<a name="283"/>   public list_processes()
+<a name="284"/>      return MySqlRes(list_processes_impl())
+<a name="285"/>   end
+<a name="286"/>
+<a name="287"/>   private native list_processes_impl()
+<a name="288"/>
+<a name="289"/>   #
+<a name="290"/>   # Invoke mysql_list_tables() for the current connection.
+<a name="291"/>   #
+<a name="292"/>   # :Returns :
+<a name="293"/>   # :  an `MySqlRes` instance
+<a name="294"/>   #
+<a name="295"/>   public list_tables(wild)
+<a name="296"/>      return MySqlRes(list_tables_impl(wild))
+<a name="297"/>   end
+<a name="298"/>
+<a name="299"/>   private native list_tables_impl(wild)
+<a name="300"/>
+<a name="301"/>   #
+<a name="302"/>   # Invoke mysql_options() for the current connection.
+<a name="303"/>   #
+<a name="304"/>   public native options(option, arg)
+<a name="305"/>
+<a name="306"/>   #
+<a name="307"/>   # Invoke mysql_get_option() for the current connection.
+<a name="308"/>   #
+<a name="309"/>   public native get_option(option, arg)
+<a name="310"/>
+<a name="311"/>   #
+<a name="312"/>   # Invoke mysql_ping() for the current connection.
+<a name="313"/>   #
+<a name="314"/>   public native ping()
+<a name="315"/>
+<a name="316"/>   #
+<a name="317"/>   # Invoke mysql_query() for the current connection.
+<a name="318"/>   #
+<a name="319"/>   public native query(q)
+<a name="320"/>
+<a name="321"/>   #
+<a name="322"/>   # Invoke mysql_connect() for the current connection.
+<a name="323"/>   #
+<a name="324"/>   public native connect(host, user, passwd, db, port, unix_socket, client_flag)
+<a name="325"/>
+<a name="326"/>   #
+<a name="327"/>   # Invoke mysql_real_escape_string() for the current connection.  This
+<a name="328"/>   # should be used to escape any strings used to create SQL.
+<a name="329"/>   #
+<a name="330"/>   public native esc(s)
+<a name="331"/>
+<a name="332"/>   #
+<a name="333"/>   # Convenience method to escape a string and place single quotes 
+<a name="334"/>   # around it
+<a name="335"/>   #
+<a name="336"/>   public esc_str(s)
+<a name="337"/>      if /s then
+<a name="338"/>         return "NULL"
+<a name="339"/>      else
+<a name="340"/>         return "\'" || esc(s) || "\'"
+<a name="341"/>   end
+<a name="342"/>
+<a name="343"/>   #
+<a name="344"/>   # Convenience method to convert a `Time` instance to a string
+<a name="345"/>   # for inclusion in an SQL statement as a DATETIME or TIMESTAMP.
+<a name="346"/>   #
+<a name="347"/>   public esc_datetime(d)
+<a name="348"/>      if /d then
+<a name="349"/>         return "NULL"
+<a name="350"/>      else
+<a name="351"/>         return "\'" || d.format("yyyy-MM-dd HH:mm:ss") || "\'"
+<a name="352"/>   end
+<a name="353"/>
+<a name="354"/>   #
+<a name="355"/>   # Convenience method to convert a `Time` instance to a string
+<a name="356"/>   # for inclusion in an SQL statement as a DATE.
+<a name="357"/>   #
+<a name="358"/>   public esc_date(d)
+<a name="359"/>      if /d then
+<a name="360"/>         return "NULL"
+<a name="361"/>      else
+<a name="362"/>         return "\'" || d.format("yyyy-MM-dd") || "\'"
+<a name="363"/>   end
+<a name="364"/>
+<a name="365"/>   #
+<a name="366"/>   # Convenience method to convert a `Time` instance to a string
+<a name="367"/>   # for inclusion in an SQL statement as a TIME.
+<a name="368"/>   #
+<a name="369"/>   public esc_time(d)
+<a name="370"/>      if /d then
+<a name="371"/>         return "NULL"
+<a name="372"/>      else
+<a name="373"/>         return "\'" || d.format("HH:mm:ss") || "\'"
+<a name="374"/>   end
+<a name="375"/>
+<a name="376"/>   #
+<a name="377"/>   # Invoke mysql_stat() for the current connection.
+<a name="378"/>   #
+<a name="379"/>   public native get_stat()
+<a name="380"/>
+<a name="381"/>   #
+<a name="382"/>   # Invoke mysql_store_result() for the current connection.
+<a name="383"/>   #
+<a name="384"/>   # :Returns :
+<a name="385"/>   # :  an `MySqlRes` instance
+<a name="386"/>   #
+<a name="387"/>   public store_result()
+<a name="388"/>      return MySqlRes(store_result_impl())
+<a name="389"/>   end
+<a name="390"/>
+<a name="391"/>   private native store_result_impl()
+<a name="392"/>
+<a name="393"/>   #
+<a name="394"/>   # Invoke mysql_thread_id() for the current connection.
+<a name="395"/>   #
+<a name="396"/>   public native get_thread_id()
+<a name="397"/>
+<a name="398"/>   #
+<a name="399"/>   # Invoke mysql_use_result() for the current connection.
+<a name="400"/>   #
+<a name="401"/>   # :Returns :
+<a name="402"/>   # :  an `MySqlRes` instance
+<a name="403"/>   #
+<a name="404"/>   public use_result()
+<a name="405"/>      return MySqlRes(use_result_impl())
+<a name="406"/>   end
+<a name="407"/>
+<a name="408"/>   private native use_result_impl()
+<a name="409"/>
+<a name="410"/>   #
+<a name="411"/>   # Invoke mysql_warning_count() for the current connection.
+<a name="412"/>   #
+<a name="413"/>   public native get_warning_count()
+<a name="414"/>
+<a name="415"/>   #
+<a name="416"/>   # Invoke mysql_commit() for the current connection.
+<a name="417"/>   #
+<a name="418"/>   public native commit()
+<a name="419"/>
+<a name="420"/>   #
+<a name="421"/>   # Invoke mysql_rollback() for the current connection.
+<a name="422"/>   #
+<a name="423"/>   public native rollback()
+<a name="424"/>
+<a name="425"/>   #
+<a name="426"/>   # Turn autocommit on or off
+<a name="427"/>   # :Parameters :
+<a name="428"/>   # :  `f` - a flag, either &amp;yes (for on) or &amp;no (for off)
+<a name="429"/>   # 
+<a name="430"/>   public native set_autocommit(f)
+<a name="431"/>
+<a name="432"/>   #
+<a name="433"/>   # Invoke mysql_more_results() for the current connection.
+<a name="434"/>   #
+<a name="435"/>   public native more_results()
+<a name="436"/>
+<a name="437"/>   #
+<a name="438"/>   # Invoke mysql_next_result() for the current connection.
+<a name="439"/>   #
+<a name="440"/>   public native next_result()
+<a name="441"/>
+<a name="442"/>   #
+<a name="443"/>   # Invoke mysql_select_db() for the current connection.
+<a name="444"/>   #
+<a name="445"/>   public native select_db(db)
+<a name="446"/>
+<a name="447"/>   #
+<a name="448"/>   # Invoke mysql_shutdown() for the current connection.
+<a name="449"/>   #
+<a name="450"/>   public native shutdown()
+<a name="451"/>
+<a name="452"/>   private static native new_impl()
+<a name="453"/>
+<a name="454"/>   private static init()
+<a name="455"/>      local t
+<a name="456"/>      FIELD_TYPE_DECIMAL := 0
+<a name="457"/>      FIELD_TYPE_TINY := 1
+<a name="458"/>      FIELD_TYPE_SHORT := 2
+<a name="459"/>      FIELD_TYPE_LONG := 3
+<a name="460"/>      FIELD_TYPE_FLOAT := 4
+<a name="461"/>      FIELD_TYPE_DOUBLE := 5
+<a name="462"/>      FIELD_TYPE_NULL := 6
+<a name="463"/>      FIELD_TYPE_TIMESTAMP := 7
+<a name="464"/>      FIELD_TYPE_LONGLONG := 8
+<a name="465"/>      FIELD_TYPE_INT24 := 9 
+<a name="466"/>      FIELD_TYPE_DATE := 10
+<a name="467"/>      FIELD_TYPE_TIME := 11
+<a name="468"/>      FIELD_TYPE_DATETIME := 12
+<a name="469"/>      FIELD_TYPE_YEAR := 13
+<a name="470"/>      FIELD_TYPE_NEWDATE := 14
+<a name="471"/>      FIELD_TYPE_ENUM := 247
+<a name="472"/>      FIELD_TYPE_SET := 248
+<a name="473"/>      FIELD_TYPE_TINY_BLOB := 249
+<a name="474"/>      FIELD_TYPE_MEDIUM_BLOB := 250
+<a name="475"/>      FIELD_TYPE_LONG_BLOB := 251
+<a name="476"/>      FIELD_TYPE_BLOB := 252
+<a name="477"/>      FIELD_TYPE_VAR_STRING := 253
+<a name="478"/>      FIELD_TYPE_STRING := 254
+<a name="479"/>      FIELD_TYPE_GEOMETRY := 255
+<a name="480"/>      MYSQL_OPT_CONNECT_TIMEOUT := 0
+<a name="481"/>      MYSQL_OPT_COMPRESS := 1
+<a name="482"/>      MYSQL_OPT_NAMED_PIPE := 2
+<a name="483"/>      MYSQL_INIT_COMMAND := 3
+<a name="484"/>      MYSQL_READ_DEFAULT_FILE := 4
+<a name="485"/>      MYSQL_READ_DEFAULT_GROUP := 5
+<a name="486"/>      MYSQL_SET_CHARSET_DIR := 6
+<a name="487"/>      MYSQL_SET_CHARSET_NAME := 7 
+<a name="488"/>      MYSQL_OPT_LOCAL_INFILE := 8
+<a name="489"/>      MYSQL_OPTION_MULTI_STATEMENTS_ON := 0
+<a name="490"/>      MYSQL_OPTION_MULTI_STATEMENTS_OFF := 1
+<a name="491"/>      CLIENT_LONG_PASSWORD :=    1       
+<a name="492"/>      CLIENT_FOUND_ROWS :=       2       
+<a name="493"/>      CLIENT_LONG_FLAG :=        4       
+<a name="494"/>      CLIENT_CONNECT_WITH_DB :=  8       
+<a name="495"/>      CLIENT_NO_SCHEMA :=        16      
+<a name="496"/>      CLIENT_COMPRESS :=         32      
+<a name="497"/>      CLIENT_ODBC :=             64      
+<a name="498"/>      CLIENT_LOCAL_FILES :=      128     
+<a name="499"/>      CLIENT_IGNORE_SPACE :=     256     
+<a name="500"/>      CLIENT_PROTOCOL_41 :=      512     
+<a name="501"/>      CLIENT_INTERACTIVE :=      1024    
+<a name="502"/>      CLIENT_SSL :=              2048    
+<a name="503"/>      CLIENT_IGNORE_SIGPIPE :=   4096    
+<a name="504"/>      CLIENT_TRANSACTIONS :=     8192    
+<a name="505"/>      CLIENT_RESERVED :=         16384   
+<a name="506"/>      CLIENT_SECURE_CONNECTION := 32768  
+<a name="507"/>      CLIENT_MULTI_STATEMENTS := 65536   
+<a name="508"/>      CLIENT_MULTI_RESULTS :=    131072  
+<a name="509"/>      CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L &lt;&lt; 31))
+<a name="510"/>      CR_ERROR_FIRST :=          2000
+<a name="511"/>      CR_UNKNOWN_ERROR :=        2000
+<a name="512"/>      CR_SOCKET_CREATE_ERROR :=  2001
+<a name="513"/>      CR_CONNECTION_ERROR :=     2002
+<a name="514"/>      CR_CONN_HOST_ERROR :=      2003
+<a name="515"/>      CR_IPSOCK_ERROR :=         2004
+<a name="516"/>      CR_UNKNOWN_HOST :=         2005
+<a name="517"/>      CR_SERVER_GONE_ERROR :=    2006
+<a name="518"/>      CR_VERSION_ERROR :=        2007
+<a name="519"/>      CR_OUT_OF_MEMORY :=        2008
+<a name="520"/>      CR_WRONG_HOST_INFO :=      2009
+<a name="521"/>      CR_LOCALHOST_CONNECTION := 2010
+<a name="522"/>      CR_TCP_CONNECTION :=       2011
+<a name="523"/>      CR_SERVER_HANDSHAKE_ERR := 2012
+<a name="524"/>      CR_SERVER_LOST :=          2013
+<a name="525"/>      CR_COMMANDS_OUT_OF_SYNC := 2014
+<a name="526"/>      CR_NAMEDPIPE_CONNECTION := 2015
+<a name="527"/>      CR_NAMEDPIPEWAIT_ERROR :=  2016
+<a name="528"/>      CR_NAMEDPIPEOPEN_ERROR :=  2017
+<a name="529"/>      CR_NAMEDPIPESETSTATE_ERROR := 2018
+<a name="530"/>      CR_CANT_READ_CHARSET :=    2019
+<a name="531"/>      CR_NET_PACKET_TOO_LARGE := 2020
+<a name="532"/>      CR_EMBEDDED_CONNECTION :=  2021
+<a name="533"/>      CR_PROBE_SLAVE_STATUS :=   2022
+<a name="534"/>      CR_PROBE_SLAVE_HOSTS :=    2023
+<a name="535"/>      CR_PROBE_SLAVE_CONNECT :=  2024
+<a name="536"/>      CR_PROBE_MASTER_CONNECT := 2025
+<a name="537"/>      CR_SSL_CONNECTION_ERROR := 2026
+<a name="538"/>      CR_MALFORMED_PACKET :=     2027
+<a name="539"/>      CR_WRONG_LICENSE :=        2028
+<a name="540"/>      CR_NULL_POINTER :=         2029
+<a name="541"/>      CR_NO_PREPARE_STMT :=      2030
+<a name="542"/>      CR_PARAMS_NOT_BOUND :=     2031
+<a name="543"/>      CR_DATA_TRUNCATED :=       2032
+<a name="544"/>      CR_NO_PARAMETERS_EXISTS := 2033
+<a name="545"/>      CR_INVALID_PARAMETER_NO := 2034
+<a name="546"/>      CR_INVALID_BUFFER_USE :=   2035
+<a name="547"/>      CR_UNSUPPORTED_PARAM_TYPE := 2036
+<a name="548"/>      CR_SHARED_MEMORY_CONNECTION :=             2037
+<a name="549"/>      CR_SHARED_MEMORY_CONNECT_REQUEST_ERROR :=  2038
+<a name="550"/>      CR_SHARED_MEMORY_CONNECT_ANSWER_ERROR :=   2039
+<a name="551"/>      CR_SHARED_MEMORY_CONNECT_FILE_MAP_ERROR := 2040
+<a name="552"/>      CR_SHARED_MEMORY_CONNECT_MAP_ERROR :=      2041
+<a name="553"/>      CR_SHARED_MEMORY_FILE_MAP_ERROR :=         2042
+<a name="554"/>      CR_SHARED_MEMORY_MAP_ERROR :=              2043
+<a name="555"/>      CR_SHARED_MEMORY_EVENT_ERROR :=            2044
+<a name="556"/>      CR_SHARED_MEMORY_CONNECT_ABANDONED_ERROR := 2045
+<a name="557"/>      CR_SHARED_MEMORY_CONNECT_SET_ERROR :=      2046
+<a name="558"/>      CR_CONN_UNKNOW_PROTOCOL :=                 2047
+<a name="559"/>      CR_INVALID_CONN_HANDLE :=                  2048
+<a name="560"/>      CR_UNUSED_1 :=                             2049
+<a name="561"/>      CR_FETCH_CANCELED :=                       2050
+<a name="562"/>      CR_NO_DATA :=                              2051
+<a name="563"/>      CR_NO_STMT_METADATA :=                     2052
+<a name="564"/>      CR_NO_RESULT_SET :=                        2053
+<a name="565"/>      CR_NOT_IMPLEMENTED :=                      2054
+<a name="566"/>      CR_SERVER_LOST_EXTENDED :=                 2055
+<a name="567"/>      CR_STMT_CLOSED :=                          2056
+<a name="568"/>      CR_NEW_STMT_METADATA :=                    2057
+<a name="569"/>      CR_ALREADY_CONNECTED :=                    2058
+<a name="570"/>      CR_AUTH_PLUGIN_CANNOT_LOAD :=              2059
+<a name="571"/>      CR_DUPLICATE_CONNECTION_ATTR :=            2060
+<a name="572"/>      CR_AUTH_PLUGIN_ERR :=                      2061
+<a name="573"/>      CR_INSECURE_API_ERR :=                     2062
+<a name="574"/>      CR_ERROR_LAST :=                           2062
+<a name="575"/>
+<a name="576"/>      if t := Files.find_native_lib("objecticonmysqllib") then {
+<a name="577"/>         if Class.load_library(t) then
+<a name="578"/>            LOADED := t
+<a name="579"/>         else
+<a name="580"/>            WHY := "Failed to load MySql library: " || &amp;why
+<a name="581"/>      } else
+<a name="582"/>         WHY := "MySql library not found on OI_NATIVE path"
+<a name="583"/>   end
+<a name="584"/>
+<a name="585"/>   public new()
+<a name="586"/>      mysql_available() | fail
+<a name="587"/>      ptr := new_impl() | fail
+<a name="588"/>      return
+<a name="589"/>   end
+<a name="590"/>end
+</pre></body></html>

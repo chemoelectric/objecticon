@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>combine_cmp</title></head><body>
+<h1>combine_cmp(f, g)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.sort-package.html" target="listFrame">ipl.sort</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Return a compare function which combines two other compare functions
+in such a way that the second, <code>g</code>, is only called if the first,
+<code>f</code>, produces a tie for a particular pair (ie returns 0).
+<p/>
+For example :-
+<pre>
+   l := ["ABC",u"Abc",u"def",u"DEF",u"ABC","def",u"DEf","ABc"]
+   mergesort(l, combine_cmp(convert_cmp(string,Text.caseless_compare),
+                            type_cmp))
+</pre>
+gives
+<pre>
+   ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
+</pre>
+<p/><a href="ipl.sort-sort.icn.html#194" target="displayFrame">Source - sort.icn </a>
+<p/>
+</body></html>

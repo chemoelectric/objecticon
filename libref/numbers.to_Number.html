@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>to_Number</title></head><body>
+<h1>to_Number(x)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Convert an arbitrary value x into a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>, <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> or <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code> instance,
+or fail if that can't be done.  Existing instances are just
+returned; integers and reals are converted to <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+<p/>
+Other values are converted to string for parsing, and a runerr is produced
+if that conversion is not possible.
+<p/>
+The resulting string is parsed to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> if it contains a ".", "e"
+or "E", and a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> otherwise.  If the parsing fails, this procedure
+fails.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>, <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> or <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#1246" target="displayFrame">Source - numbers.icn </a>
+<p/>
+</body></html>

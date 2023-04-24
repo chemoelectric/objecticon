@@ -1,0 +1,323 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Sem</title></head><body>
+<h1>Sem</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipc-package.html" target="listFrame">ipc</a></dd>
+</dl><p/>
+This class provides a semaphore facility.  The implementation
+requires the accompanying native library to be on the library path.
+<p/>
+Instances of this class should not be created directly, but rather
+using the static methods <code><a href="ipc.Sem.html#open_public">open_public</a></code>, <code><a href="ipc.Sem.html#create_public">create_public</a></code> and
+<code><a href="ipc.Sem.html#create_private">create_private</a></code>
+<p/><a href="ipc-sem.icn.html#13" target="displayFrame">Source - sem.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="ipc.Sem.html">ipc.Sem</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#attempt">attempt()</a>
+<a href="#close">close()</a>
+<a href="#create_private">create_private()</a>
+<a href="#create_private_impl">create_private_impl()</a>
+<a href="#create_public">create_public()</a>
+<a href="#create_public_impl">create_public_impl()</a>
+<a href="#get_id">get_id()</a>
+<a href="#get_value">get_value()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#open_public">open_public()</a>
+<a href="#open_public_impl">open_public_impl()</a>
+<a href="#semop">semop()</a>
+<a href="#semop_impl">semop_impl()</a>
+<a href="#semop_nowait">semop_nowait()</a>
+<a href="#semop_nowait_impl">semop_nowait_impl()</a>
+<a href="#semop_poll">semop_poll()</a>
+<a href="#set_undo">set_undo()</a>
+<a href="#set_value">set_value()</a>
+<a href="#signal">signal()</a>
+<a href="#wait">wait()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#id">id</a>
+<a href="#undo_flag">undo_flag</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="attempt"/>
+<h3>attempt()</h3>
+public<p/>
+<dl>
+<dd>
+Attempt a wait, defined as <code><a href="ipc.Sem.html#semop_nowait">semop_nowait(-1)</a></code>.
+<p/><a href="ipc-sem.icn.html#55" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Clean up the resources used by the semaphore.  This should be called by
+the parent process after the semaphore is no longer needed.
+<p/><a href="ipc-sem.icn.html#112" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="create_private"/>
+<h3>create_private(val)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new private semaphore with the given initial value
+<p/><a href="ipc-sem.icn.html#158" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="create_private_impl"/>
+<h3>create_private_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#129" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="create_public"/>
+<h3>create_public(key, val)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new public semaphore with the given key and initial value
+<p/><a href="ipc-sem.icn.html#149" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="create_public_impl"/>
+<h3>create_public_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#128" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="get_id"/>
+<h3>get_id()</h3>
+public<p/>
+<dl>
+<dd>
+Return the underlying id of the semaphore, failing if it is closed.
+<p/><a href="ipc-sem.icn.html#118" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="get_value"/>
+<h3>get_value()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the current semaphore value.
+<p/><a href="ipc-sem.icn.html#43" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#131" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(id)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#135" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="open_public"/>
+<h3>open_public(key)</h3>
+public static<p/>
+<dl>
+<dd>
+Get an existing public semaphore with the given key, or fail
+if no such semaphore exists.
+<p/><a href="ipc-sem.icn.html#140" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="open_public_impl"/>
+<h3>open_public_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#127" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="semop"/>
+<h3>semop(n)</h3>
+public<p/>
+<dl>
+<dd>
+Perform a semop on the underlying sempahore.  If n is &gt;0 then n
+is added to the value.  If it is &lt;0 then the process is suspended
+until the value is &gt;= <code>abs(n)</code>, then <code>abs(n)</code> is subtracted.  If
+n is zero, then the process suspends until the semaphore value is
+zero.  This call always succeeds with <code>self</code>.
+<p/><a href="ipc-sem.icn.html#69" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="semop_impl"/>
+<h3>semop_impl(n, f)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#125" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="semop_nowait"/>
+<h3>semop_nowait(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/>
+Peform a semop with the <code>IPC_NOWAIT</code> flag set.  This is like
+<code><a href="ipc.Sem.html#semop">semop()</a></code>, but instead of suspending the process, the call will
+fail, otherwise it succeeds with <code>&amp;null</code>.
+<p/><a href="ipc-sem.icn.html#80" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="semop_nowait_impl"/>
+<h3>semop_nowait_impl(n, f)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#126" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="semop_poll"/>
+<h3>semop_poll(n, t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/>
+Repeatedly peform <code><a href="ipc.Sem.html#semop_nowait">semop_nowait()</a></code>, sleeping for a short period
+between each try until t milliseconds or <code><a href="ipc.Sem.html#semop_nowait">semop_nowait()</a></code>
+succeeds.  Fails on a timeout; otherwise succeeds with <code>&amp;null</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - the parameter to semop_nowait
+</dd>
+<dd>
+<code>t</code> - the timeout in milliseconds
+</dd>
+</dl>
+<p/><a href="ipc-sem.icn.html#89" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="set_undo"/>
+<h3>set_undo(s)</h3>
+public<p/>
+<dl>
+<dd>
+If this flag is set then <code><a href="ipc.Sem.html#semop">semop()</a></code> and <code><a href="ipc.Sem.html#semop_nowait">semop_nowait()</a></code> will use
+the <code>SEM_UNDO</code> flag.  By default this flag is off.  Note that this
+flag is an attribute of this instance, rather than the underlying
+semaphore.
+<p/><a href="ipc-sem.icn.html#27" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="set_value"/>
+<h3>set_value(x)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the value of the semaphore to <code>x</code>.
+<p/><a href="ipc-sem.icn.html#38" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="signal"/>
+<h3>signal()</h3>
+public<p/>
+<dl>
+<dd>
+Perform the signal operation, defined as <code><a href="ipc.Sem.html#semop">semop(1)</a></code>.
+<p/><a href="ipc-sem.icn.html#62" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="wait"/>
+<h3>wait()</h3>
+public<p/>
+<dl>
+<dd>
+Perform the wait operation, defined as <code><a href="ipc.Sem.html#semop">semop(-1)</a></code>.
+<p/><a href="ipc-sem.icn.html#48" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="id"/>
+<h3>id</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#22" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+<a name="undo_flag"/>
+<h3>undo_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipc-sem.icn.html#24" target="displayFrame">Source - sem.icn </a>
+</dd>
+</dl><hr>
+</body></html>

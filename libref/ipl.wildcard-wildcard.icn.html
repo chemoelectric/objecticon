@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>wildcard.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     wildcard.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for UNIX-like wild-card pattern matching
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     September 26, 1990
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>
+<a name="17"/>package ipl.wildcard
+<a name="18"/>
+<a name="19"/>import
+<a name="20"/>   ipl.scan(begin_analysis)
+<a name="21"/>
+<a name="22"/>#
+<a name="23"/>#  This is a kit of procedures to deal with UNIX-like filename wild-card
+<a name="24"/>#  patterns containing *, ?, and [...].  The meanings are as of the
+<a name="25"/>#  pattern characters are the same as in the UNIX shells csh and sh.
+<a name="26"/>#
+<a name="27"/>#  These procedures are interesting partly because of the "recursive
+<a name="28"/>#  suspension" technique used to simulate conjunction of an arbitrary
+<a name="29"/>#  number of computed expressions.
+<a name="30"/>#
+<a name="31"/>#
+<a name="32"/>#  Create a wildcard pattern using the constructor :-
+<a name="33"/>#
+<a name="34"/>#  p := Wildcard(pattern)
+<a name="35"/>#
+<a name="36"/>#  The public methods are:
+<a name="37"/>#
+<a name="38"/>#  match(s,i1,i2) : i3,i4,...,iN
+<a name="39"/>#  find(s,i1,i2) : i3,i4,...,iN
+<a name="40"/>#
+<a name="41"/>#  match() produces the sequence of positions in "s" past a
+<a name="42"/>#  substring starting at "i1" that matches the pattern, but fails if there
+<a name="43"/>#  is no such position.  Similar to match(), but is capable of
+<a name="44"/>#  generating multiple positions.
+<a name="45"/>#
+<a name="46"/>#  find() produces the sequence of positions in "s" where
+<a name="47"/>#  substrings begin that match the pattern, but fails if there is no such
+<a name="48"/>#  position.  Similar to find().
+<a name="49"/>#
+<a name="50"/>#  Default values of s, i1, and i2 are the same as for Icon's built-in
+<a name="51"/>#  string scanning procedures such as match().
+<a name="52"/>#
+<a name="53"/>class Wildcard()
+<a name="54"/>   private plist
+<a name="55"/>
+<a name="56"/>   #
+<a name="57"/>   #  Produce the sequence of positions in s past a string starting at i1
+<a name="58"/>   #  that matches the pattern, but fails if there is no such
+<a name="59"/>   #  position.  Similar to match(), but is capable of generating multiple
+<a name="60"/>   #  positions.
+<a name="61"/>   #
+<a name="62"/>   public match(s,i1,i2) 
+<a name="63"/>      local a
+<a name="64"/>      a := begin_analysis(s,i1,i2) | fail
+<a name="65"/>      s := a.s; i1 := a.i; i2 := a.j
+<a name="66"/>      suspend s[i1:i2] ? (wild_match1(copy(plist)) &amp; i1 + &amp;pos - 1)
+<a name="67"/>   end
+<a name="68"/>
+<a name="69"/>
+<a name="70"/>   #
+<a name="71"/>   #  Like `match()` above, but only succeed if the entire string
+<a name="72"/>   #  `s[i1:i2]` matches the pattern.
+<a name="73"/>   #
+<a name="74"/>   public match_all(s,i1,i2) 
+<a name="75"/>      local a
+<a name="76"/>      a := begin_analysis(s,i1,i2) | fail
+<a name="77"/>      s := a.s; i1 := a.i; i2 := a.j
+<a name="78"/>      return s[i1:i2] ? (wild_match1(copy(plist)) &amp; pos(0) &amp; i1 + &amp;pos - 1)
+<a name="79"/>   end
+<a name="80"/>
+<a name="81"/>
+<a name="82"/>   #
+<a name="83"/>   #  Produce the sequence of positions in s where strings begin that match
+<a name="84"/>   #  the pattern, but fails if there is no such position.  Similar
+<a name="85"/>   #  to find().
+<a name="86"/>   #
+<a name="87"/>   public find(s,i1,i2) 
+<a name="88"/>      local p, a
+<a name="89"/>      a := begin_analysis(s,i1,i2) | fail
+<a name="90"/>      s := a.s; i1 := a.i; i2 := a.j
+<a name="91"/>      s[i1:i2] ? suspend (
+<a name="92"/>                          wild_skip(plist) &amp;
+<a name="93"/>                          p := &amp;pos &amp;
+<a name="94"/>                          tab(match())\1 &amp;
+<a name="95"/>                          i1 + p - 1)
+<a name="96"/>   end
+<a name="97"/>
+<a name="98"/>   #
+<a name="99"/>   #  Produce Wildcard representing pattern string s.
+<a name="100"/>   #
+<a name="101"/>   public new(s) 
+<a name="102"/>      local c,ch,chars,complement,e,special
+<a name="103"/>      #
+<a name="104"/>      #  Create a list of pattern elements.  Pattern strings are parsed
+<a name="105"/>      #  and converted into list elements as follows:
+<a name="106"/>      #
+<a name="107"/>      #	* --&gt; 0			Match any substring (including empty)
+<a name="108"/>      #	? --&gt; 1			Matches any single character
+<a name="109"/>      #	[abc] --&gt; 'abc'		Matches single character in 'abc' (more below)
+<a name="110"/>      #	abc --&gt; "abc"		Matches "abc"
+<a name="111"/>      #	\			Escapes the following character, causing it
+<a name="112"/>      #				to be considered part of a string to match
+<a name="113"/>      #				rather than one of the special pattern
+<a name="114"/>      #				characters.
+<a name="115"/>      #
+<a name="116"/>      plist := []
+<a name="117"/>      s ? {
+<a name="118"/>         until pos(0) do {
+<a name="119"/>            c := &amp;null
+<a name="120"/>            #
+<a name="121"/>            #  Put pattern element on list.
+<a name="122"/>            #
+<a name="123"/>            e := (="*" &amp; 0) | (="?" &amp; 1) | (="\\" &amp; move(1)) |
+<a name="124"/>	       (="[" &amp; c := (=("]" | "!]" | "!-]" | "") || tab(default.find("]"))) &amp;
+<a name="125"/>                move(1)) |
+<a name="126"/>	       move(1) || tab(upto('*?[\\') | 0)
+<a name="127"/>            #
+<a name="128"/>            #  If it's [abc], create a cset.  Special notations:
+<a name="129"/>            #
+<a name="130"/>            #	   A-Z means all characters from A to Z inclusive.
+<a name="131"/>            #	   ! (if first) means any character not among those specified.
+<a name="132"/>            #	   - or ] (if first, or after initial !) means itself.
+<a name="133"/>            #
+<a name="134"/>            \c ? {
+<a name="135"/>               complement := ="!" | &amp;null
+<a name="136"/>               special := '\-]'
+<a name="137"/>               e := ''
+<a name="138"/>               while ch := tab(any(special)) do {
+<a name="139"/>                  e ++:= ch
+<a name="140"/>                  special --:= ch
+<a name="141"/>	       }
+<a name="142"/>               while chars := tab(default.find("-")) do {
+<a name="143"/>                  move(1)
+<a name="144"/>                  e ++:= chars[1:-1] ++
+<a name="145"/>		     &amp;cset[ord(chars[-1]) + 1:ord(move(1)) + 2]
+<a name="146"/>	       }
+<a name="147"/>               e ++:= tab(0)
+<a name="148"/>               if \complement then e := ~e
+<a name="149"/>	    }
+<a name="150"/>            if type(e) == ("string"|"ucs") == type(plist[-1]) then plist[-1] ||:= e
+<a name="151"/>            else put(plist,e)
+<a name="152"/>	 }
+<a name="153"/>      }
+<a name="154"/>      return plist
+<a name="155"/>   end
+<a name="156"/>
+<a name="157"/>
+<a name="158"/>   #
+<a name="159"/>   #  Used privately -- match a sequence of strings in s past which a match
+<a name="160"/>   #  of the first pattern element in l is likely to succeed.	This
+<a name="161"/>   #  procedure is used for heuristic performance improvement by
+<a name="162"/>   #  match() for the "*" pattern element by matching only strings
+<a name="163"/>   #  where the next element is likely to succeed, and by find() to
+<a name="164"/>   #  attempt matches only at likely positions.
+<a name="165"/>   #
+<a name="166"/>   private wild_skip(l) 
+<a name="167"/>      local x
+<a name="168"/>      x := l[1]
+<a name="169"/>      suspend tab(
+<a name="170"/>                  case type(x) of {
+<a name="171"/>                     "string"|"ucs": default.find(x)
+<a name="172"/>                     "cset": upto(x)
+<a name="173"/>                     default: &amp;pos to *&amp;subject + 1
+<a name="174"/>                  }
+<a name="175"/>                  )
+<a name="176"/>   end
+<a name="177"/>
+<a name="178"/>
+<a name="179"/>
+<a name="180"/>   #
+<a name="181"/>   #  Used privately by match() to simulate a computed conjunction
+<a name="182"/>   #  expression via recursive suspension.
+<a name="183"/>   #
+<a name="184"/>   private wild_match1(l,v) 
+<a name="185"/>      local c
+<a name="186"/>      if c := pop(l) then {
+<a name="187"/>         suspend wild_match1(l,case c of {
+<a name="188"/>            0: wild_skip(l)
+<a name="189"/>            1: move(1)    
+<a name="190"/>            default: case type(c) of {
+<a name="191"/>	       "cset": tab(any(c))
+<a name="192"/>	       default: =c
+<a name="193"/>            } 
+<a name="194"/>	 })
+<a name="195"/>         push(l,c)
+<a name="196"/>      }
+<a name="197"/>      else return v
+<a name="198"/>   end
+<a name="199"/>end
+</pre></body></html>

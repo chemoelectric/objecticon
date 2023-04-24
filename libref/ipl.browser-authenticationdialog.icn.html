@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>authenticationdialog.icn</title></head><body><pre>
+<a name="1"/>package ipl.browser
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   gui, net
+<a name="5"/>
+<a name="6"/>class AuthenticationDialog(Dialog)
+<a name="7"/>   private
+<a name="8"/>      user_name_field,
+<a name="9"/>      password_field,
+<a name="10"/>      domain_label,
+<a name="11"/>      realm_label
+<a name="12"/>
+<a name="13"/>   private readable
+<a name="14"/>      result
+<a name="15"/>
+<a name="16"/>   public override component_setup()
+<a name="17"/>   end
+<a name="18"/>
+<a name="19"/>   public override end_dialog()
+<a name="20"/>   end
+<a name="21"/>
+<a name="22"/>   public override init_dialog()
+<a name="23"/>   end
+<a name="24"/>
+<a name="25"/>   public override new(domain, realm)
+<a name="26"/>      Dialog.new()
+<a name="27"/>      self.setup()
+<a name="28"/>      domain_label.set_label(domain)
+<a name="29"/>      realm_label.set_label(realm)
+<a name="30"/>      password_field.set_displaychar("*")
+<a name="31"/>      return
+<a name="32"/>   end
+<a name="33"/>
+<a name="34"/>   private on_cancel_button(ev)
+<a name="35"/>      result := &amp;null
+<a name="36"/>      dispose()
+<a name="37"/>   end
+<a name="38"/>
+<a name="39"/>   private on_okay_button(ev)
+<a name="40"/>      result := Authentication(user_name_field.get_contents(), password_field.get_contents())
+<a name="41"/>      dispose()
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   private setup()
+<a name="45"/>      local label_2, paint_2, paint_14, okay_button, layout_4, paint_11, label_4, layout_1, label_1, paint_1, paint_9, panel_1, paint_13, paint_10, label_3, panel_3, cancel_button, layout_5, paint_12
+<a name="46"/>      self.set_label("Authentication required")
+<a name="47"/>      self.set_resize(&amp;yes)
+<a name="48"/>      paint_13 := TextPaint("Domain")
+<a name="49"/>      label_4 := Label().
+<a name="50"/>         clear_constraints().
+<a name="51"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="52"/>         set_paint(paint_13)
+<a name="53"/>      paint_14 := TextPaint("")
+<a name="54"/>      domain_label := Label().
+<a name="55"/>         clear_constraints().
+<a name="56"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="57"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="58"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="59"/>         set_paint(paint_14)
+<a name="60"/>      paint_11 := TextPaint("Realm")
+<a name="61"/>      label_3 := Label().
+<a name="62"/>         clear_constraints().
+<a name="63"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="64"/>         set_paint(paint_11)
+<a name="65"/>      paint_12 := TextPaint("")
+<a name="66"/>      realm_label := Label().
+<a name="67"/>         clear_constraints().
+<a name="68"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="69"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="70"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="71"/>         set_paint(paint_12)
+<a name="72"/>      paint_1 := TextPaint("User name")
+<a name="73"/>      label_1 := Label().
+<a name="74"/>         clear_constraints().
+<a name="75"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="76"/>         set_paint(paint_1)
+<a name="77"/>      user_name_field := TextField().
+<a name="78"/>         set_size(scale(282)).
+<a name="79"/>         clear_constraints().
+<a name="80"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="81"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="82"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="83"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="84"/>         connect(self.on_okay_button, Event.ACTION).
+<a name="85"/>         set_contents("")
+<a name="86"/>      paint_2 := TextPaint("Password")
+<a name="87"/>      label_2 := Label().
+<a name="88"/>         clear_constraints().
+<a name="89"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="90"/>         set_paint(paint_2)
+<a name="91"/>      password_field := TextField().
+<a name="92"/>         set_size(scale(60)).
+<a name="93"/>         clear_constraints().
+<a name="94"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="95"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="96"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="97"/>         connect(self.on_okay_button, Event.ACTION).
+<a name="98"/>         set_contents("")
+<a name="99"/>      layout_1 := GridLayout().
+<a name="100"/>         set_doi(scale(0)).
+<a name="101"/>         set_extra("cells")
+<a name="102"/>      panel_1 := Panel().
+<a name="103"/>         clear_constraints().
+<a name="104"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="105"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="106"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="107"/>         set_constraint(Grid.Y_WEIGHT, 0.0).
+<a name="108"/>         set_layout(layout_1).
+<a name="109"/>         add(label_4).
+<a name="110"/>         add(domain_label).
+<a name="111"/>         add(label_3).
+<a name="112"/>         add(realm_label).
+<a name="113"/>         add(label_1).
+<a name="114"/>         add(user_name_field).
+<a name="115"/>         add(label_2).
+<a name="116"/>         add(password_field)
+<a name="117"/>      self.add(panel_1)
+<a name="118"/>      paint_9 := TextPaint("Okay")
+<a name="119"/>      okay_button := TextButton().
+<a name="120"/>         set_align(Align.L, Align.B).
+<a name="121"/>         clear_constraints().
+<a name="122"/>         connect(self.on_okay_button, Event.ACTION).
+<a name="123"/>         set_toggles(&amp;no).
+<a name="124"/>         set_paint(paint_9)
+<a name="125"/>      paint_10 := TextPaint("Cancel")
+<a name="126"/>      cancel_button := TextButton().
+<a name="127"/>         set_align(Align.L, Align.B).
+<a name="128"/>         clear_constraints().
+<a name="129"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="130"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="131"/>         connect(self.on_cancel_button, Event.ACTION).
+<a name="132"/>         set_toggles(&amp;no).
+<a name="133"/>         set_paint(paint_10)
+<a name="134"/>      layout_4 := GridLayout().
+<a name="135"/>         set_doi(scale(0)).
+<a name="136"/>         set_extra("cells")
+<a name="137"/>      panel_3 := Panel().
+<a name="138"/>         clear_constraints().
+<a name="139"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="140"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="141"/>         set_layout(layout_4).
+<a name="142"/>         add(okay_button).
+<a name="143"/>         add(cancel_button)
+<a name="144"/>      self.add(panel_3)
+<a name="145"/>      layout_5 := GridLayout().
+<a name="146"/>         set_extra("cells")
+<a name="147"/>      self.set_layout(layout_5)
+<a name="148"/>      self.set_focus(user_name_field.find_focus())
+<a name="149"/>   end
+<a name="150"/>end
+<a name="151"/>
+<a name="152"/>### Ivib-v2 layout: layouts/$.layout
+</pre></body></html>

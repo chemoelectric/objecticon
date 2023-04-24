@@ -1,0 +1,26 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>All</title></head><body>
+<h1>All(e1, e2)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.pdco-package.html" target="listFrame">ipl.pdco</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Evaluate <code>e1</code> and for each result, evaluate <code>e2</code>, failing should it
+fail.  Succeed when <code>e1</code> is exhausted (and hence each evaluation of
+<code>e2</code> succeeded).
+<p/>
+Examples :-
+<pre>
+   # Are the characters in string s in ascending
+   # lexicographic order?
+   if All{ i := 1 to *s - 1,
+           s[i] &lt;&lt;= s[i + 1] }
+   then write("Yes")
+
+   # Are all the elements of list l positive?
+   if All{ e := !l, e &gt; 0 }
+   then write("Yes")
+</pre>
+<p/><a href="ipl.pdco-pdco.icn.html#307" target="displayFrame">Source - pdco.icn </a>
+<p/>
+</body></html>

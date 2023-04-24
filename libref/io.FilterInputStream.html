@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>FilterInputStream</title></head><body>
+<h1>FilterInputStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.FilterStreamBase.html" target="displayFrame">io.FilterStreamBase</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+This stream filters data taken from an arbitrary source <code><a href="io.Stream.html" target="displayFrame">Stream</a></code>
+through a background process.  The output from that process can then
+be read as this <code><a href="io.Stream.html" target="displayFrame">Stream</a></code>'s output.
+<p/>
+For example :-
+<pre>
+  g := FilterInputStream(StringStream(s), "gzip", ["-c"])
+  # Reading from g will give the compressed value of the string s.
+  res := g.read_all()
+</pre>
+<p/><a href="io-streams.icn.html#1891" target="displayFrame">Source - streams.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="io.HasBgProc.html">io.HasBgProc</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.FilterStreamBase.html">io.FilterStreamBase</a>
+<a href="io.FilterInputStream.html">io.FilterInputStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#do_wait">do_wait()</a>
+<a href="io.HasBgProc.html#get_exit_info">get_exit_info()</a>
+<a href="io.HasBgProc.html#get_pid">get_pid()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#exit_info">exit_info</a>
+<a href="io.HasBgProc.html#pid">pid</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#out">out()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.FilterStreamBase</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.FilterStreamBase.html#close_cerr">close_cerr()</a>
+<a href="io.FilterStreamBase.html#close_cin">close_cin()</a>
+<a href="io.FilterStreamBase.html#close_cout">close_cout()</a>
+<a href="io.FilterStreamBase.html#do_poll">do_poll()</a>
+<a href="io.FilterStreamBase.html#setup">setup()</a>
+<a href="io.FilterStreamBase.html#succeeded">succeeded()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.FilterStreamBase</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.FilterStreamBase.html#cerr">cerr</a>
+<a href="io.FilterStreamBase.html#cin">cin</a>
+<a href="io.FilterStreamBase.html#cmd">cmd</a>
+<a href="io.FilterStreamBase.html#cout">cout</a>
+<a href="io.FilterStreamBase.html#err_sink">err_sink</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#flush_cerr">flush_cerr()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#in">in()</a>
+<a href="#new">new()</a>
+<a href="#swap_outputs">swap_outputs()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#buff">buff</a>
+<a href="#source">source</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Close the stream.  This waits for the child process to terminate.
+NB: <code><a href="io.FilterInputStream.html#source">source</a></code> and <code><a href="io.FilterStreamBase.html#err_sink">err_sink</a></code> are not closed unless the
+<code><a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying</a></code> has been set to <code>&amp;yes</code>.
+<p/><a href="io-streams.icn.html#1985" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="flush_cerr"/>
+<h3>flush_cerr()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1966" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#2006" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="in"/>
+<h3>in(n)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#in">in()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1908" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(source, cmd, args, env, err_sink)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>source</code> - the <code><a href="io.Stream.html" target="displayFrame">Stream</a></code> from which data is given to the command.
+Defaults to a <code><a href="io.NullStream.html" target="displayFrame">NullStream</a></code>.
+</dd>
+<dd>
+<code>cmd</code> - the name of the command                                    <br>
+</dd>
+<dd>
+<code>args</code> - the arg list                                              <br>
+</dd>
+<dd>
+<code>env</code> - the env list                                               <br>
+</dd>
+<dd>
+<code>err_sink</code> - optional stream to send standard error to.  If omitted,
+defaults to a <code><a href="io.StringStream.html" target="displayFrame">StringStream</a></code>, which can then be used together
+with <code><a href="io.FilterStreamBase.html#succeeded">succeeded()</a></code> to check the command's exit status.
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#2010" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="swap_outputs"/>
+<h3>swap_outputs()</h3>
+public<p/>
+<dl>
+<dd>
+Exchange the handling of the command's stdout and stderr, so that
+stdout goes to the stderr sink and stderr is read by calling
+<code><a href="io.FilterInputStream.html#in">in()</a></code>
+<p/><a href="io-streams.icn.html#1956" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="buff"/>
+<h3>buff</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1905" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="source"/>
+<h3>source</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1903" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,404 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>DoublyLinkedList</title></head><body>
+<h1>DoublyLinkedList</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="datastruct.List.html" target="displayFrame">datastruct.List</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+A <code><a href="datastruct.List.html" target="displayFrame">List</a></code> implementation based on a doubly linked list.  Note some of
+the operations which suspend values may behave differently from the
+builtin list if the list is concurrently modified.
+<p/><a href="datastruct-lists.icn.html#1052" target="displayFrame">Source - lists.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="datastruct.List.html">datastruct.List</a>
+<a href="datastruct.DoublyLinkedList.html">datastruct.DoublyLinkedList</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from datastruct.List</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.List.html#get">get()</a>
+<a href="datastruct.List.html#init">init()</a>
+<a href="datastruct.List.html#keyof">keyof()</a>
+<a href="datastruct.List.html#list">list()</a>
+<a href="datastruct.List.html#object_equals">object_equals()</a>
+<a href="datastruct.List.html#object_hash">object_hash()</a>
+<a href="datastruct.List.html#object_output">object_output()</a>
+<a href="datastruct.List.html#pull">pull()</a>
+<a href="datastruct.List.html#push">push()</a>
+<a href="datastruct.List.html#put">put()</a>
+<a href="datastruct.List.html#random">random()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from datastruct.List</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.List.html#DELETE">DELETE</a>
+<a href="datastruct.List.html#EMPTY_LIST">EMPTY_LIST</a>
+<a href="datastruct.List.html#INSERT">INSERT</a>
+<a href="datastruct.List.html#MODIFY">MODIFY</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#adjust_index">adjust_index()</a>
+<a href="#at">at()</a>
+<a href="#back">back()</a>
+<a href="#back_nodes">back_nodes()</a>
+<a href="#clear">clear()</a>
+<a href="#delete">delete()</a>
+<a href="#empty">empty()</a>
+<a href="#extract">extract()</a>
+<a href="#extract_nodes">extract_nodes()</a>
+<a href="#from_nodes">from_nodes()</a>
+<a href="#gen">gen()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#insert">insert()</a>
+<a href="#need_node">need_node()</a>
+<a href="#need_sublist">need_sublist()</a>
+<a href="#new">new()</a>
+<a href="#new_node">new_node()</a>
+<a href="#new_sentinel">new_sentinel()</a>
+<a href="#node">node()</a>
+<a href="#node0">node0()</a>
+<a href="#node_cvslice">node_cvslice()</a>
+<a href="#nodes">nodes()</a>
+<a href="#size">size()</a>
+<a href="#slice">slice()</a>
+<a href="#splice">splice()</a>
+<a href="#unsafe_extract_nodes">unsafe_extract_nodes()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#sentinel">sentinel</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="adjust_index"/>
+<h3>adjust_index(i, sz)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a (positive) index i and a known list size, adjust i to an
+equivalent negative index, if that would make lookup using
+<code><a href="datastruct.DoublyLinkedList.html#node">node()</a></code> faster.
+<p/><a href="datastruct-lists.icn.html#1154" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="at"/>
+<h3>at(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#at">at()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1116" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="back"/>
+<h3>back(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#back">back()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1150" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="back_nodes"/>
+<h3>back_nodes(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the nodes in reverse order, starting with the node
+before index <code>i</code> (thus generating the elements in the range 1:i);
+<code>i</code> defaults to 0. (see <code><a href="datastruct.DoublyLinkedList.html#nodes">nodes()</a></code>).
+<p/><a href="datastruct-lists.icn.html#1136" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="clear"/>
+<h3>clear()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#clear">clear()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+This is a constant-time operation that leaves the former list
+nodes intact, but entirely divorced from this list.  The old
+nodes will remain "linked" to one another, and can still be
+operated upon, but without affecting this list.
+<p/><a href="datastruct-lists.icn.html#1082" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="delete"/>
+<h3>delete(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#delete">delete()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1112" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="empty"/>
+<h3>empty()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#empty">empty()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1073" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="extract"/>
+<h3>extract(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the elements in the range <code>i:j</code> and return them as another
+<code><a href="datastruct.DoublyLinkedList.html" target="displayFrame">DoublyLinkedList</a></code> instance.
+<p/>
+Example :-
+<pre>
+  l := DoublyLinkedList(10,20,30,40,50,60,70)
+  m := l.extract(2, 5)
+  # Now l is (10,50,60,70)
+  # and m is (20,30,40)
+</pre>
+<p/><a href="datastruct-lists.icn.html#1233" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="extract_nodes"/>
+<h3>extract_nodes(h, t)</h3>
+public static<p/>
+<dl>
+<dd>
+Given two nodes <code>h</code> and <code>t</code>, forming a sub-list with <code>h</code> equal to
+or coming before <code>t</code>, extract that sub-list from its current list
+and return it as a new <code><a href="datastruct.DoublyLinkedList.html" target="displayFrame">DoublyLinkedList</a></code>, with <code>h</code> and <code>t</code>
+forming the new list's head and tail node respectively.
+<p/><a href="datastruct-lists.icn.html#1274" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="from_nodes"/>
+<h3>from_nodes(h, t)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1297" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#gen">gen()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1146" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1307" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="insert"/>
+<h3>insert(i, x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#insert">insert()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1061" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="need_node"/>
+<h3>need_node(x)</h3>
+public static<p/>
+<dl>
+<dd>
+Check that <code>x</code> is a "linked" <code><a href="datastruct.DoublyLinkedListNode.html" target="displayFrame">DoublyLinkedListNode</a></code> instance,
+signalling a runtime error otherwise.
+<p/><a href="datastruct-lists.icn.html#1254" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="need_sublist"/>
+<h3>need_sublist(h, t)</h3>
+public static<p/>
+<dl>
+<dd>
+Check nodes <code>h</code> forward to <code>t</code> form a sub-list, signalling a
+runtime error otherwise.
+<p/><a href="datastruct-lists.icn.html#1262" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(entries[])</h3>
+public<p/>
+<dl>
+<dd>
+Create an instance and add each of the given entries.
+<p/><a href="datastruct-lists.icn.html#1334" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="new_node"/>
+<h3>new_node(i, x)</h3>
+public<p/>
+<dl>
+<dd>
+This is like <code><a href="datastruct.DoublyLinkedList.html#insert">insert()</a></code>, but returns the new node that has been
+inserted.
+<p/><a href="datastruct-lists.icn.html#1065" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="new_sentinel"/>
+<h3>new_sentinel()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1077" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="node"/>
+<h3>node(i)</h3>
+public<p/>
+<dl>
+<dd>
+Return the node containing element <code>i</code>, or fail if <code>i</code> is out of
+range.
+<p/><a href="datastruct-lists.icn.html#1325" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="node0"/>
+<h3>node0(i)</h3>
+private<p/>
+<dl>
+<dd>
+Like node(i), but additionally allowing index 0 (or size()+1) to
+return the sentinel node.
+<p/><a href="datastruct-lists.icn.html#1311" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="node_cvslice"/>
+<h3>node_cvslice(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Given an index range <code>i:j</code>, this method returns the corresponding
+nodes at the beginning and end of the range.  If the range is out
+of bounds, the method fails.  Otherwise, a record is returned
+with <code>len</code>, <code>h</code> and <code>t</code> fields indicating the length of the range
+and the head and tail nodes respectively.  If the range is empty,
+then <code>len</code> is zero and the other two fields are null.
+<p/><a href="datastruct-lists.icn.html#1167" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="nodes"/>
+<h3>nodes(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the nodes in the list, starting at index <code>i</code> (default
+1).  Each node represents one entry in the list.  The node <code>val</code>
+field may be changed if desired, to edit the value in the list.
+<p/>
+See also <code><a href="datastruct.DoublyLinkedListNode.html#gen">DoublyLinkedListNode.gen()</a></code>.
+<p/><a href="datastruct-lists.icn.html#1124" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#size">size()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1120" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="slice"/>
+<h3>slice(i, j)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#slice">slice()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1227" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="splice"/>
+<h3>splice(i, other)</h3>
+public<p/>
+<dl>
+<dd>
+Insert the contents of another <code><a href="datastruct.DoublyLinkedList.html" target="displayFrame">DoublyLinkedList</a></code> at position
+<code>i</code>.  Afterwards, <code>other</code> is empty.  It is not permissible to
+splice a list into itself.
+<p/>
+Example :-
+<pre>
+  l := DoublyLinkedList(10,20,30,40)
+  m := DoublyLinkedList(96,97,98) 
+  l.splice(3, m)
+  # Now l is (10,20,96,97,98,30,40)
+  # and m is empty.
+</pre>
+<p/><a href="datastruct-lists.icn.html#1094" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="unsafe_extract_nodes"/>
+<h3>unsafe_extract_nodes(h, t)</h3>
+public static<p/>
+<dl>
+<dd>
+This is like <code><a href="datastruct.DoublyLinkedList.html#extract_nodes">extract_nodes</a></code>, but foregoes any check of the
+mentioned sub-list requirement, and is thus a constant-time
+operation.
+<p/>
+Cautionary note: if the sub-list requirement is not satisifed,
+then corrupted lists will result.
+<p/><a href="datastruct-lists.icn.html#1285" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="sentinel"/>
+<h3>sentinel</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1058" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+</body></html>

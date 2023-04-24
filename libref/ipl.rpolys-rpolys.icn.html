@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>rpolys.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     rpolys.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce traces of regular polygons
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     March 24, 1999
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/># Generate points for a regular polygon with the specified number of
+<a name="18"/># vertices and radius, centered at cx and cy.  The offset angle is theta;
+<a name="19"/># default 0.
+<a name="20"/>#
+<a name="21"/>############################################################################
+<a name="22"/>#
+<a name="23"/>#  Links:  gobject
+<a name="24"/>#
+<a name="25"/>############################################################################
+<a name="26"/>
+<a name="27"/>package ipl.rpolys
+<a name="28"/>
+<a name="29"/>import
+<a name="30"/>   ipl.gobject(Point),
+<a name="31"/>   util(Math)
+<a name="32"/>
+<a name="33"/># generate polygon points
+<a name="34"/>procedure rpoly(cx, cy, radius, vertices, theta)	
+<a name="35"/>   local incr, i
+<a name="36"/>
+<a name="37"/>   incr := 2 * Math.PI / vertices
+<a name="38"/>   /theta := 0			# starting angle
+<a name="39"/>
+<a name="40"/>   every i := 1 to vertices do {
+<a name="41"/>      suspend Point(cx + radius * Math.cos(theta), cy + radius * Math.sin(theta))
+<a name="42"/>      theta +:= incr
+<a name="43"/>      }
+<a name="44"/>
+<a name="45"/>end
+</pre></body></html>

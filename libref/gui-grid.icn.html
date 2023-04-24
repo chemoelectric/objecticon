@@ -1,0 +1,518 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>grid.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   util,
+<a name="5"/>   lang,
+<a name="6"/>   ipl.sort,
+<a name="7"/>   ipl.pdco,
+<a name="8"/>   io,
+<a name="9"/>   ipl.numbers
+<a name="10"/>
+<a name="11"/>class CellInfo(Insets,XYAlign,ObjectOutput)
+<a name="12"/>   public 
+<a name="13"/>      obj,            # An arbitrary object 
+<a name="14"/>      ax,             # Actual computed pixel location and size,
+<a name="15"/>      ay,             # within insets, ie where to draw the thing
+<a name="16"/>      aw,             # inside the cell.
+<a name="17"/>      ah,
+<a name="18"/>      vw,             # Available space for aw, ah; they are either this or the
+<a name="19"/>      vh,             #    preferred size depending on fill
+<a name="20"/>      s,              # Identifying string for print_layout
+<a name="21"/>      x,              # Location, size in grid units.
+<a name="22"/>      y, 
+<a name="23"/>      w, 
+<a name="24"/>      h, 
+<a name="25"/>      pw,             # Preferred cell width excluding insets
+<a name="26"/>      ph, 
+<a name="27"/>      ph_calc_w,      # Width used to calc ph
+<a name="28"/>      x_fill,         # Constraints: fill, align, weights, insets
+<a name="29"/>      y_fill,
+<a name="30"/>      x_weight,
+<a name="31"/>      y_weight
+<a name="32"/>
+<a name="33"/>   #
+<a name="34"/>   # Output object
+<a name="35"/>   #
+<a name="36"/>   protected override object_output(oo)
+<a name="37"/>      local t
+<a name="38"/>      t := s || ": "
+<a name="39"/>      t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
+<a name="40"/>         " component pref width=" || pw
+<a name="41"/>      t ||:= "\n\theight=" || ph || " calculated from width " || image(ph_calc_w)
+<a name="42"/>      t ||:= "\n\tcell desired size=" || pw + l_inset + r_inset || "," || ph + t_inset + b_inset
+<a name="43"/>      t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
+<a name="44"/>
+<a name="45"/>      t ||:= " \n\tfill=" || image(x_fill) || "," || image(y_fill) || 
+<a name="46"/>         " weight=" || x_weight || "," || y_weight ||
+<a name="47"/>         " align=" || image(x_align) || "," || image(y_align) ||
+<a name="48"/>         " insets=l:" || l_inset || " t:" || t_inset || " r:" || r_inset || " b:" || b_inset
+<a name="49"/>      oo.object_string(self, t)
+<a name="50"/>   end
+<a name="51"/>end
+<a name="52"/>
+<a name="53"/>class Grid()
+<a name="54"/>   public static const 
+<a name="55"/>      CONSTRAINT_SET,
+<a name="56"/>      EXTRA_CELLS,
+<a name="57"/>      EXTRA_BORDERS,
+<a name="58"/>      EXTRA_IGNORE,
+<a name="59"/>      X_TAB,
+<a name="60"/>      Y_TAB,
+<a name="61"/>      EOL,
+<a name="62"/>      X,
+<a name="63"/>      Y,
+<a name="64"/>      W,
+<a name="65"/>      H,
+<a name="66"/>      L_INSET,
+<a name="67"/>      R_INSET,
+<a name="68"/>      T_INSET,
+<a name="69"/>      B_INSET,
+<a name="70"/>      X_FILL,
+<a name="71"/>      Y_FILL,
+<a name="72"/>      X_ALIGN,
+<a name="73"/>      Y_ALIGN,
+<a name="74"/>      X_WEIGHT,
+<a name="75"/>      Y_WEIGHT
+<a name="76"/>
+<a name="77"/>   public 
+<a name="78"/>      gw,           # Grid width, height in cells
+<a name="79"/>      gh, 
+<a name="80"/>      p_col_w,      # Preferred column widths/row heights
+<a name="81"/>      p_row_h,
+<a name="82"/>      a_col_w,      # Actual column widths/row heights after extra
+<a name="83"/>      a_row_h,      # space has been allocated
+<a name="84"/>      a_col_x,      # Actual row x and y values
+<a name="85"/>      a_row_y,
+<a name="86"/>      col_weights,  # Column/row weights.
+<a name="87"/>      row_weights,
+<a name="88"/>      info,         # List of CellInfo for each component being laid out
+<a name="89"/>      info_by_cell_height,   # info sorted by cell height
+<a name="90"/>      info_by_cell_width,    # and width
+<a name="91"/>      dii,          # Default inner padding, ie not at edge of grid
+<a name="92"/>      doi,          # Default outer padding
+<a name="93"/>      extra,        # Flag indicating how to allocate extra space
+<a name="94"/>      pad_w,        # Padding to the left of the grid
+<a name="95"/>      pad_h,        # Padding above the grid
+<a name="96"/>      id_seq,       # For generating CellInfo string ids for debug
+<a name="97"/>      add_x,        # For auto-computing cell position and sizes.
+<a name="98"/>      add_y,
+<a name="99"/>      add_row_h
+<a name="100"/>
+<a name="101"/>   public static validate_int(t, key, def)
+<a name="102"/>      local val
+<a name="103"/>      if val := member(t, key) then
+<a name="104"/>         return integer(val) | runerr("Expected integer grid constraint", val)
+<a name="105"/>      else
+<a name="106"/>         return \def
+<a name="107"/>   end
+<a name="108"/>
+<a name="109"/>   public static validate_real(t, key, def)
+<a name="110"/>      local val
+<a name="111"/>      if val := member(t, key) then
+<a name="112"/>         return real(val) | runerr("Expected real-valued grid constraint", val)
+<a name="113"/>      else
+<a name="114"/>         return \def
+<a name="115"/>   end
+<a name="116"/>
+<a name="117"/>   public static validate_flag(t, key)
+<a name="118"/>      local val
+<a name="119"/>      if val := member(t, key) then
+<a name="120"/>         return (val === (&amp;yes | &amp;no)) | runerr("Expected flag-valued grid constraint", val)
+<a name="121"/>      else
+<a name="122"/>         return &amp;no
+<a name="123"/>   end
+<a name="124"/>
+<a name="125"/>   public static validate_x_align(t, key)
+<a name="126"/>      local val
+<a name="127"/>      if val := member(t, key) then {
+<a name="128"/>         (val === (Align.L | Align.R | Align.C)) | runerr("Expected x-alignment grid constraint", val)
+<a name="129"/>         return val
+<a name="130"/>      }
+<a name="131"/>      else
+<a name="132"/>         return Align.C
+<a name="133"/>   end
+<a name="134"/>
+<a name="135"/>   public static validate_y_align(t, key)
+<a name="136"/>      local val
+<a name="137"/>      if val := member(t, key) then {
+<a name="138"/>         (val === (Align.T | Align.B | Align.C)) | runerr("Expected y-alignment grid constraint", val)
+<a name="139"/>         return val
+<a name="140"/>      }
+<a name="141"/>      else
+<a name="142"/>         return Align.C
+<a name="143"/>   end
+<a name="144"/>
+<a name="145"/>   public create_cell(t)
+<a name="146"/>      local ci
+<a name="147"/>      ci := CellInfo()
+<a name="148"/>      ci.s := @id_seq
+<a name="149"/>      self.add_x +:= validate_int(t, X_TAB)
+<a name="150"/>      if self.add_y +:= validate_int(t, Y_TAB) then
+<a name="151"/>         add_row_h := 0
+<a name="152"/>      ci.x := validate_int(t, X, add_x)
+<a name="153"/>      ci.y := validate_int(t, Y, add_y)
+<a name="154"/>      ci.w := validate_int(t, W, 1)
+<a name="155"/>      ci.h := validate_int(t, H, 1)
+<a name="156"/>      add_row_h &lt;:= ci.h
+<a name="157"/>      if /validate_flag(t, EOL) then {
+<a name="158"/>         add_x := ci.x + ci.w
+<a name="159"/>         add_y := ci.y
+<a name="160"/>      } else {
+<a name="161"/>         add_x := 1
+<a name="162"/>         add_y +:= add_row_h
+<a name="163"/>         add_row_h := 0
+<a name="164"/>      }
+<a name="165"/>      ci.l_inset := validate_int(t, L_INSET)
+<a name="166"/>      ci.t_inset := validate_int(t, T_INSET)
+<a name="167"/>      ci.r_inset := validate_int(t, R_INSET)
+<a name="168"/>      ci.b_inset := validate_int(t, B_INSET)
+<a name="169"/>      ci.x_fill := validate_flag(t, X_FILL)
+<a name="170"/>      ci.y_fill := validate_flag(t, Y_FILL)
+<a name="171"/>      ci.x_align := validate_x_align(t, X_ALIGN)
+<a name="172"/>      ci.y_align := validate_y_align(t, Y_ALIGN)
+<a name="173"/>      ci.x_weight := validate_real(t, X_WEIGHT, 0.0)
+<a name="174"/>      ci.y_weight := validate_real(t, Y_WEIGHT, 0.0)
+<a name="175"/>
+<a name="176"/>      put(info, ci)
+<a name="177"/>
+<a name="178"/>      return ci
+<a name="179"/>   end
+<a name="180"/>
+<a name="181"/>   public dimension()
+<a name="182"/>      local ci
+<a name="183"/>
+<a name="184"/>      # Work out grid width/height
+<a name="185"/>      gw := gh := 0
+<a name="186"/>      every ci := !info do {
+<a name="187"/>         gw &lt;:= ci.x + ci.w - 1
+<a name="188"/>         gh &lt;:= ci.y + ci.h - 1
+<a name="189"/>      }
+<a name="190"/>
+<a name="191"/>      # Fill in final defaults now we have the grid dimensions.
+<a name="192"/>      every ci := !info do {
+<a name="193"/>         /ci.l_inset := if ci.x = 1 then self.doi else self.dii
+<a name="194"/>         /ci.t_inset := if ci.y = 1 then self.doi else self.dii
+<a name="195"/>         /ci.r_inset := if ci.x + ci.w = gw + 1 then self.doi else self.dii
+<a name="196"/>         /ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
+<a name="197"/>      }
+<a name="198"/>
+<a name="199"/>      info_by_cell_width := isort(info, cell_width_sort)
+<a name="200"/>      info_by_cell_height := isort(info, cell_height_sort)
+<a name="201"/>
+<a name="202"/>      compute_col_weights()
+<a name="203"/>      compute_row_weights()
+<a name="204"/>   end
+<a name="205"/>   
+<a name="206"/>   public static slice(start, span, l)
+<a name="207"/>      return Sum{ l[start to start + span - 1] }
+<a name="208"/>   end
+<a name="209"/>
+<a name="210"/>   public static total(l)
+<a name="211"/>      return Sum{ !l }
+<a name="212"/>   end
+<a name="213"/>
+<a name="214"/>   public static dist_by_weight(start, span, extra, l, weights, tw)
+<a name="215"/>      local left, i, a, j
+<a name="216"/>
+<a name="217"/>      left := extra
+<a name="218"/>      every i := start to start + span - 1 do {
+<a name="219"/>         a := integer(extra * weights[i] / tw)
+<a name="220"/>         l[i] +:= a
+<a name="221"/>         left -:= a
+<a name="222"/>         if weights[i] &gt; 0 then
+<a name="223"/>            j := i
+<a name="224"/>      }
+<a name="225"/>      l[j] +:= left
+<a name="226"/>   end
+<a name="227"/>
+<a name="228"/>   public static dist_equally(start, span, extra, l)
+<a name="229"/>      local left, i, a
+<a name="230"/>      if extra = 0 then
+<a name="231"/>         fail
+<a name="232"/>      a := extra / span
+<a name="233"/>      left := extra
+<a name="234"/>      every i := start to start + span - 1 do {
+<a name="235"/>         l[i] +:= a
+<a name="236"/>         left -:= a
+<a name="237"/>      }
+<a name="238"/>      l[i] +:= left
+<a name="239"/>   end
+<a name="240"/>
+<a name="241"/>   public static allocate_space(start, span, extra, l, weights)
+<a name="242"/>      local tw
+<a name="243"/>      tw := slice(start, span, weights)
+<a name="244"/>      if tw = 0 then
+<a name="245"/>         dist_equally(start, span, extra, l)
+<a name="246"/>      else
+<a name="247"/>         dist_by_weight(start, span, extra, l, weights, tw)
+<a name="248"/>   end
+<a name="249"/>
+<a name="250"/>   public compute_col_weights()
+<a name="251"/>      local i, need
+<a name="252"/>      col_weights := list(gw, 0.0)
+<a name="253"/>      every i := !info_by_cell_width do {
+<a name="254"/>         need := i.x_weight - slice(i.x, i.w, col_weights)
+<a name="255"/>         if need &gt; 0.0 then
+<a name="256"/>            dist_equally(i.x, i.w, need, col_weights)
+<a name="257"/>      }
+<a name="258"/>   end
+<a name="259"/>
+<a name="260"/>   public compute_preferred_col_widths()
+<a name="261"/>      local i, need
+<a name="262"/>      p_col_w := list(gw, 0)
+<a name="263"/>      every i := !info_by_cell_width do {
+<a name="264"/>         need := i.pw + i.l_inset + i.r_inset - slice(i.x, i.w, p_col_w)
+<a name="265"/>         if need &gt; 0 then
+<a name="266"/>            allocate_space(i.x, i.w, need, p_col_w, col_weights)
+<a name="267"/>      }
+<a name="268"/>   end
+<a name="269"/>
+<a name="270"/>   public compute_row_weights()
+<a name="271"/>      local i, need
+<a name="272"/>      row_weights := list(gh, 0.0)
+<a name="273"/>      every i := !info_by_cell_height do {
+<a name="274"/>         need := i.y_weight - slice(i.y, i.h, row_weights)
+<a name="275"/>         if need &gt; 0.0 then
+<a name="276"/>            dist_equally(i.y, i.h, need, row_weights)
+<a name="277"/>      }
+<a name="278"/>   end
+<a name="279"/>
+<a name="280"/>   public compute_preferred_row_heights()
+<a name="281"/>      local i, need
+<a name="282"/>      p_row_h := list(gh, 0)
+<a name="283"/>      every i := !info_by_cell_height do {
+<a name="284"/>         need := i.ph + i.t_inset + i.b_inset - slice(i.y, i.h, p_row_h)
+<a name="285"/>         if need &gt; 0 then 
+<a name="286"/>            allocate_space(i.y, i.h, need, p_row_h, row_weights)
+<a name="287"/>      }
+<a name="288"/>   end
+<a name="289"/>
+<a name="290"/>   private static cell_width_sort(i)
+<a name="291"/>      return i.w
+<a name="292"/>   end
+<a name="293"/>
+<a name="294"/>   private static cell_height_sort(i)
+<a name="295"/>      return i.h
+<a name="296"/>   end
+<a name="297"/>
+<a name="298"/>   public print_layout()
+<a name="299"/>      local x, y, t, i, s, l, u
+<a name="300"/>
+<a name="301"/>      write("Grid dimensions:", gw, ",",gh)
+<a name="302"/>      l := *info[-1].s
+<a name="303"/>      t := table()
+<a name="304"/>      u := repl(" ", l)
+<a name="305"/>      every t[(1 to gw)||","||(1 to gh)] := u
+<a name="306"/>
+<a name="307"/>      every i := !info do
+<a name="308"/>         every t[(i.x to i.x + i.w - 1)||","||(i.y to i.y + i.h - 1)] := right(i.s, l)
+<a name="309"/>
+<a name="310"/>      u := "+" || repl("-", l)
+<a name="311"/>      write(s := repl(u, gw) || "+")
+<a name="312"/>      every y := 1 to gh do {
+<a name="313"/>         every x := 1 to gw do
+<a name="314"/>            writes("|", t[x||","||y])
+<a name="315"/>         write("|\n",s)
+<a name="316"/>      }
+<a name="317"/>
+<a name="318"/>      write("----- Items ------")
+<a name="319"/>      every write(to_string(!info))
+<a name="320"/>
+<a name="321"/>      write("----- Data -------")
+<a name="322"/>      write("p_col_w=", to_string(p_col_w))
+<a name="323"/>      if \self.a_col_w then {
+<a name="324"/>         write("a_col_w=", to_string(a_col_w))
+<a name="325"/>         write("\textra width in a_col_w:", total(a_col_w)-total(p_col_w))
+<a name="326"/>         write("\tleft pad border:", self.pad_w)
+<a name="327"/>      }
+<a name="328"/>      write("p_row_h=", to_string(p_row_h))
+<a name="329"/>      if \self.a_row_h then {
+<a name="330"/>         write("a_row_h=", to_string(a_row_h))
+<a name="331"/>         write("\textra height in a_row_h:", total(a_row_h)-total(p_row_h))
+<a name="332"/>         write("\ttop pad border:", self.pad_h)
+<a name="333"/>      }
+<a name="334"/>
+<a name="335"/>      write("col_weights=", to_string(col_weights))
+<a name="336"/>      write("row_weights=", to_string(row_weights))
+<a name="337"/>      write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
+<a name="338"/>   end
+<a name="339"/>
+<a name="340"/>   public get_preferred_width()
+<a name="341"/>      return total(p_col_w)
+<a name="342"/>   end
+<a name="343"/>
+<a name="344"/>   public get_preferred_height()
+<a name="345"/>      return total(p_row_h)
+<a name="346"/>   end
+<a name="347"/>
+<a name="348"/>   public compute_actual_col_widths(w1)
+<a name="349"/>      local i, ew, tw
+<a name="350"/>
+<a name="351"/>      a_col_w := copy(p_col_w)
+<a name="352"/>
+<a name="353"/>      case self.extra of {
+<a name="354"/>         EXTRA_CELLS : {
+<a name="355"/>            # Extra width
+<a name="356"/>            ew := w1 - total(p_col_w)
+<a name="357"/>            tw := total(col_weights)
+<a name="358"/>            if tw = 0 then
+<a name="359"/>               # All weights zero - it goes on the border
+<a name="360"/>               self.pad_w := ew / 2
+<a name="361"/>            else {
+<a name="362"/>               # Some weights, so no border and allocate by weight.
+<a name="363"/>               self.pad_w := 0
+<a name="364"/>               dist_by_weight(1, gw, ew, a_col_w, col_weights, tw)
+<a name="365"/>            }
+<a name="366"/>         }
+<a name="367"/>         EXTRA_BORDERS : 
+<a name="368"/>            self.pad_w := (w1 - total(p_col_w)) / 2
+<a name="369"/>         EXTRA_IGNORE : 
+<a name="370"/>            self.pad_w := 0
+<a name="371"/>         default : runerr("Bad value for extra", self.extra)
+<a name="372"/>      }
+<a name="373"/>
+<a name="374"/>      every i := !info do {
+<a name="375"/>         i.vw := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+<a name="376"/>         i.aw := if \i.x_fill then i.vw else i.pw
+<a name="377"/>      }
+<a name="378"/>   end
+<a name="379"/>
+<a name="380"/>   public compute_actual_col_positions(x1)
+<a name="381"/>      local i, x, w
+<a name="382"/>
+<a name="383"/>      a_col_x := []
+<a name="384"/>      x := x1 + self.pad_w
+<a name="385"/>      every w := !a_col_w do {
+<a name="386"/>         put(a_col_x, x)
+<a name="387"/>         x +:= w
+<a name="388"/>      }
+<a name="389"/>
+<a name="390"/>      every i := !info do {
+<a name="391"/>         x := a_col_x[i.x] + i.l_inset
+<a name="392"/>         i.ax := case i.x_align of {
+<a name="393"/>            Align.L : x
+<a name="394"/>            Align.R : x + i.vw - i.aw
+<a name="395"/>            Align.C : x + (i.vw - i.aw) / 2
+<a name="396"/>         }
+<a name="397"/>      }
+<a name="398"/>   end
+<a name="399"/>
+<a name="400"/>   public compute_actual_row_heights(h1)
+<a name="401"/>      local i, eh, tw
+<a name="402"/>
+<a name="403"/>      a_row_h := copy(p_row_h)
+<a name="404"/>
+<a name="405"/>      case self.extra of {
+<a name="406"/>         EXTRA_CELLS : {
+<a name="407"/>            # Extra height.
+<a name="408"/>            eh := h1 - total(p_row_h)
+<a name="409"/>            tw := total(row_weights)
+<a name="410"/>            if tw = 0 then
+<a name="411"/>               self.pad_h := eh / 2
+<a name="412"/>            else {
+<a name="413"/>               self.pad_h := 0
+<a name="414"/>               dist_by_weight(1, gh, eh, a_row_h, row_weights, tw)
+<a name="415"/>            }
+<a name="416"/>         }
+<a name="417"/>         EXTRA_BORDERS : 
+<a name="418"/>            self.pad_h := (h1 - total(p_row_h)) / 2
+<a name="419"/>         EXTRA_IGNORE : 
+<a name="420"/>            self.pad_h := 0
+<a name="421"/>         default : runerr("Bad value for extra", self.extra)
+<a name="422"/>      }
+<a name="423"/>
+<a name="424"/>      every i := !info do {
+<a name="425"/>         i.vh := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
+<a name="426"/>         i.ah := if \i.y_fill then i.vh else i.ph
+<a name="427"/>      }
+<a name="428"/>   end
+<a name="429"/>
+<a name="430"/>   public compute_actual_row_positions(y1)
+<a name="431"/>      local i, y, h
+<a name="432"/>
+<a name="433"/>      a_row_y := []
+<a name="434"/>      y := y1 + self.pad_h
+<a name="435"/>      every h := !a_row_h do {
+<a name="436"/>         put(a_row_y, y)
+<a name="437"/>         y +:= h
+<a name="438"/>      }
+<a name="439"/>
+<a name="440"/>      every i := !info do {
+<a name="441"/>         y := a_row_y[i.y] + i.t_inset
+<a name="442"/>         i.ay := case i.y_align of {
+<a name="443"/>            Align.T : y
+<a name="444"/>            Align.B : y + i.vh - i.ah
+<a name="445"/>            Align.C : y + (i.vh - i.ah) / 2
+<a name="446"/>         }
+<a name="447"/>      }
+<a name="448"/>   end
+<a name="449"/>
+<a name="450"/>   #
+<a name="451"/>   # Set the default inner inset
+<a name="452"/>   #
+<a name="453"/>   public set_dii(n)
+<a name="454"/>      self.dii := need_integer(n, 0)
+<a name="455"/>      link
+<a name="456"/>   end
+<a name="457"/>
+<a name="458"/>   #
+<a name="459"/>   # Set the default outer inset
+<a name="460"/>   #
+<a name="461"/>   public set_doi(n)
+<a name="462"/>      self.doi := need_integer(n, 0)
+<a name="463"/>      link
+<a name="464"/>   end
+<a name="465"/>
+<a name="466"/>   #
+<a name="467"/>   # Configure where to allocate any extra space.
+<a name="468"/>   #
+<a name="469"/>   # :Parameters :
+<a name="470"/>   # :  `s` - one of `EXTRA_CELLS`, `EXTRA_BORDERS`, `EXTRA_IGNORE`
+<a name="471"/>   #
+<a name="472"/>   public set_extra(s)
+<a name="473"/>      self.extra := s
+<a name="474"/>      link
+<a name="475"/>   end
+<a name="476"/>
+<a name="477"/>   private static init()
+<a name="478"/>      EXTRA_CELLS := "cells"
+<a name="479"/>      EXTRA_BORDERS := "borders"
+<a name="480"/>      EXTRA_IGNORE := "ignore"
+<a name="481"/>      X_TAB := "x_tab"
+<a name="482"/>      Y_TAB := "y_tab"
+<a name="483"/>      EOL := "eol"
+<a name="484"/>      X := "x"
+<a name="485"/>      Y := "y"
+<a name="486"/>      W := "w"
+<a name="487"/>      H := "h"
+<a name="488"/>      L_INSET := "l_inset"
+<a name="489"/>      R_INSET := "r_inset"
+<a name="490"/>      T_INSET := "t_inset"
+<a name="491"/>      B_INSET := "b_inset" 
+<a name="492"/>      X_FILL := "x_fill"
+<a name="493"/>      Y_FILL := "y_fill"
+<a name="494"/>      X_ALIGN := "x_align"
+<a name="495"/>      Y_ALIGN := "y_align"
+<a name="496"/>      X_WEIGHT := "x_weight"
+<a name="497"/>      Y_WEIGHT := "y_weight"
+<a name="498"/>      CONSTRAINT_SET := set(X_TAB, Y_TAB, EOL, X, Y, W, H, L_INSET, R_INSET, T_INSET, B_INSET, 
+<a name="499"/>                            X_FILL, Y_FILL, X_ALIGN, Y_ALIGN, X_WEIGHT, Y_WEIGHT)
+<a name="500"/>   end
+<a name="501"/>
+<a name="502"/>   public static is_constraint(s)
+<a name="503"/>      succeed member(CONSTRAINT_SET, s)
+<a name="504"/>   end
+<a name="505"/>
+<a name="506"/>   public new()
+<a name="507"/>      self.dii := self.doi := 0
+<a name="508"/>      self.extra := EXTRA_CELLS
+<a name="509"/>      self.id_seq := create alphaseq(seq())
+<a name="510"/>      self.add_y := self.add_x := 1
+<a name="511"/>      self.add_row_h := 0
+<a name="512"/>      self.info := []
+<a name="513"/>      return
+<a name="514"/>   end
+<a name="515"/>end
+</pre></body></html>

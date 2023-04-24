@@ -1,0 +1,501 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SymbolTable</title></head><body>
+<h1>SymbolTable</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="parser-package.html" target="listFrame">parser</a></dd>
+</dl><p/>
+<p/><a href="parser-symboltable.icn.html#366" target="displayFrame">Source - symboltable.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="parser.SymbolTable.html">parser.SymbolTable</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_builtins">add_builtins()</a>
+<a href="#add_symbol">add_symbol()</a>
+<a href="#check_package_access">check_package_access()</a>
+<a href="#compute_inheritance">compute_inheritance()</a>
+<a href="#dump">dump()</a>
+<a href="#ensure_package_db">ensure_package_db()</a>
+<a href="#gb_locate">gb_locate()</a>
+<a href="#gen_symbol_names">gen_symbol_names()</a>
+<a href="#gen_symbols">gen_symbols()</a>
+<a href="#gen_type">gen_type()</a>
+<a href="#get_all_packages">get_all_packages()</a>
+<a href="#get_scanned_file">get_scanned_file()</a>
+<a href="#get_stem">get_stem()</a>
+<a href="#glocate">glocate()</a>
+<a href="#in_tail">in_tail()</a>
+<a href="#init">init()</a>
+<a href="#linearize_c3">linearize_c3()</a>
+<a href="#match_stem">match_stem()</a>
+<a href="#merge1_c3">merge1_c3()</a>
+<a href="#merge_c3">merge_c3()</a>
+<a href="#new">new()</a>
+<a href="#parse">parse()</a>
+<a href="#resolve">resolve()</a>
+<a href="#resolve_classes">resolve_classes()</a>
+<a href="#resolve_invocables">resolve_invocables()</a>
+<a href="#resolve_n">resolve_n()</a>
+<a href="#resolve_supers">resolve_supers()</a>
+<a href="#scan">scan()</a>
+<a href="#scan_file">scan_file()</a>
+<a href="#scan_package">scan_package()</a>
+<a href="#scan_packtxt">scan_packtxt()</a>
+<a href="#scan_src">scan_src()</a>
+<a href="#scan_u">scan_u()</a>
+<a href="#set_file_mode">set_file_mode()</a>
+<a href="#set_pp_defs">set_pp_defs()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ALWAYS_SRC">ALWAYS_SRC</a>
+<a href="#ALWAYS_U">ALWAYS_U</a>
+<a href="#BUILTINS">BUILTINS</a>
+<a href="#file_mode">file_mode</a>
+<a href="#package_db">package_db</a>
+<a href="#pp_defs">pp_defs</a>
+<a href="#pparser">pparser</a>
+<a href="#PREFER_SRC">PREFER_SRC</a>
+<a href="#PREFER_U">PREFER_U</a>
+<a href="#scanned_files">scanned_files</a>
+<a href="#scanned_packages">scanned_packages</a>
+<a href="#SCANNING_EVENT">SCANNING_EVENT</a>
+<a href="#symbol_table">symbol_table</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_builtins"/>
+<h3>add_builtins()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#666" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="add_symbol"/>
+<h3>add_symbol(sym)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#414" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="check_package_access"/>
+<h3>check_package_access(sf, sym)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#691" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_inheritance"/>
+<h3>compute_inheritance()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#777" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="dump"/>
+<h3>dump()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#402" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="ensure_package_db"/>
+<h3>ensure_package_db()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#595" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="gb_locate"/>
+<h3>gb_locate(name)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#673" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_symbol_names"/>
+<h3>gen_symbol_names()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#658" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_symbols"/>
+<h3>gen_symbols()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#662" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_type"/>
+<h3>gen_type(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#745" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="get_all_packages"/>
+<h3>get_all_packages()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#633" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="get_scanned_file"/>
+<h3>get_scanned_file(f)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#687" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="get_stem"/>
+<h3>get_stem(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#424" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="glocate"/>
+<h3>glocate(name)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#683" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="in_tail"/>
+<h3>in_tail(l, h)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#802" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#386" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="linearize_c3"/>
+<h3>linearize_c3(c, seen)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#784" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="match_stem"/>
+<h3>match_stem(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#432" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="merge1_c3"/>
+<h3>merge1_c3(l, r)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#806" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="merge_c3"/>
+<h3>merge_c3(l)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#822" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.Connectable.html#new">new()</a> in <a href="util.Connectable.html" target="displayFrame">util.Connectable</a></dd>
+<dd>
+<p/><a href="parser-symboltable.icn.html#840" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#396" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="resolve"/>
+<h3>resolve(sf, name)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#728" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="resolve_classes"/>
+<h3>resolve_classes()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#738" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="resolve_invocables"/>
+<h3>resolve_invocables()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#752" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="resolve_n"/>
+<h3>resolve_n(sf, name)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#700" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="resolve_supers"/>
+<h3>resolve_supers()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#765" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scan"/>
+<h3>scan(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#460" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_file"/>
+<h3>scan_file(f)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#591" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_package"/>
+<h3>scan_package(p)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#638" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_packtxt"/>
+<h3>scan_packtxt(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#618" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_src"/>
+<h3>scan_src(sf)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#482" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_u"/>
+<h3>scan_u(sf)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#554" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="set_file_mode"/>
+<h3>set_file_mode(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#830" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pp_defs"/>
+<h3>set_pp_defs(t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#835" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ALWAYS_SRC"/>
+<h3>ALWAYS_SRC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#380" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="ALWAYS_U"/>
+<h3>ALWAYS_U</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#381" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="BUILTINS"/>
+<h3>BUILTINS</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#383" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="file_mode"/>
+<h3>file_mode</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#373" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="package_db"/>
+<h3>package_db</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#369" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="pp_defs"/>
+<h3>pp_defs</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#374" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="pparser"/>
+<h3>pparser</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#368" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="PREFER_SRC"/>
+<h3>PREFER_SRC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#378" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="PREFER_U"/>
+<h3>PREFER_U</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#379" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scanned_files"/>
+<h3>scanned_files</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#371" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="scanned_packages"/>
+<h3>scanned_packages</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#372" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="SCANNING_EVENT"/>
+<h3>SCANNING_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#377" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+<a name="symbol_table"/>
+<h3>symbol_table</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-symboltable.icn.html#370" target="displayFrame">Source - symboltable.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,687 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SortTable</title></head><body>
+<h1>SortTable</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="datastruct.InsertTableImpl1.html" target="displayFrame">datastruct.InsertTableImpl1</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+A <code><a href="datastruct.Table.html" target="displayFrame">Table</a></code> which uses a red-black binary tree so that its members are
+always in sorted order.
+<p/><a href="datastruct-tables.icn.html#781" target="displayFrame">Source - tables.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="datastruct.Table.html">datastruct.Table</a>
+<a href="datastruct.InsertTableImpl1.html">datastruct.InsertTableImpl1</a>
+<a href="datastruct.SortTable.html">datastruct.SortTable</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from datastruct.Table</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.Table.html#empty">empty()</a>
+<a href="datastruct.Table.html#entries">entries()</a>
+<a href="datastruct.Table.html#entry_list">entry_list()</a>
+<a href="datastruct.Table.html#flatten">flatten()</a>
+<a href="datastruct.Table.html#get">get()</a>
+<a href="datastruct.Table.html#init">init()</a>
+<a href="datastruct.Table.html#init_entries">init_entries()</a>
+<a href="datastruct.Table.html#key_list">key_list()</a>
+<a href="datastruct.Table.html#key_member">key_member()</a>
+<a href="datastruct.Table.html#key_sort">key_sort()</a>
+<a href="datastruct.Table.html#object_equals">object_equals()</a>
+<a href="datastruct.Table.html#object_hash">object_hash()</a>
+<a href="datastruct.Table.html#object_output">object_output()</a>
+<a href="datastruct.Table.html#random_key">random_key()</a>
+<a href="datastruct.Table.html#sort">sort()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from datastruct.Table</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.Table.html#def">def</a>
+<a href="datastruct.Table.html#DELETE">DELETE</a>
+<a href="datastruct.Table.html#EMPTY_TABLE">EMPTY_TABLE</a>
+<a href="datastruct.Table.html#INSERT">INSERT</a>
+<a href="datastruct.Table.html#MODIFY">MODIFY</a>
+<a href="datastruct.Table.html#ORDER">ORDER</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from datastruct.InsertTableImpl1</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.InsertTableImpl1.html#insert">insert()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#add_node">add_node()</a>
+<a href="#back">back()</a>
+<a href="#back_key">back_key()</a>
+<a href="#back_keyval">back_keyval()</a>
+<a href="#back_nodes">back_nodes()</a>
+<a href="#check">check()</a>
+<a href="#clear">clear()</a>
+<a href="#delete">delete()</a>
+<a href="#down_var">down_var()</a>
+<a href="#find_key_ge">find_key_ge()</a>
+<a href="#find_key_gt">find_key_gt()</a>
+<a href="#find_key_le">find_key_le()</a>
+<a href="#find_key_lt">find_key_lt()</a>
+<a href="#find_node">find_node()</a>
+<a href="#find_node_ge">find_node_ge()</a>
+<a href="#find_node_gt">find_node_gt()</a>
+<a href="#find_node_le">find_node_le()</a>
+<a href="#find_node_lt">find_node_lt()</a>
+<a href="#fix_after_deletion">fix_after_deletion()</a>
+<a href="#fix_after_insertion">fix_after_insertion()</a>
+<a href="#fix_sizes">fix_sizes()</a>
+<a href="#gen">gen()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#height">height()</a>
+<a href="#height1">height1()</a>
+<a href="#is_balanced">is_balanced()</a>
+<a href="#is_balanced1">is_balanced1()</a>
+<a href="#is_black">is_black()</a>
+<a href="#is_bst">is_bst()</a>
+<a href="#is_correctly_linked">is_correctly_linked()</a>
+<a href="#is_rank_consistent">is_rank_consistent()</a>
+<a href="#is_red">is_red()</a>
+<a href="#is_size_consistent">is_size_consistent()</a>
+<a href="#key">key()</a>
+<a href="#keyval">keyval()</a>
+<a href="#member">member()</a>
+<a href="#new">new()</a>
+<a href="#new_node">new_node()</a>
+<a href="#new_sentinel">new_sentinel()</a>
+<a href="#node">node()</a>
+<a href="#nodes">nodes()</a>
+<a href="#random">random()</a>
+<a href="#rank">rank()</a>
+<a href="#rank1">rank1()</a>
+<a href="#rank_of">rank_of()</a>
+<a href="#rotate_left">rotate_left()</a>
+<a href="#rotate_right">rotate_right()</a>
+<a href="#select">select()</a>
+<a href="#select1">select1()</a>
+<a href="#size">size()</a>
+<a href="#size1">size1()</a>
+<a href="#swap_nodes">swap_nodes()</a>
+<a href="#unlink">unlink()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cmp">cmp</a>
+<a href="#sentinel">sentinel</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(key)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#add">add()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#791" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="add_node"/>
+<h3>add_node(key)</h3>
+public<p/>
+<dl>
+<dd>
+Add a new node into the tree with the given key (and the default
+value), or return an existing node if one with a matching key is
+already present.
+<p/><a href="datastruct-tables.icn.html#806" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="back"/>
+<h3>back(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#back">back()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1238" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="back_key"/>
+<h3>back_key(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#back_key">back_key()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1226" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="back_keyval"/>
+<h3>back_keyval(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#back_keyval">back_keyval()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1230" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="back_nodes"/>
+<h3>back_nodes(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the nodes in reverse order, starting with the node
+before index <code>i</code> in the sorted order (thus generating the
+elements in the range 1:i); <code>i</code> defaults to 0. (see <code><a href="datastruct.SortTable.html#nodes">nodes()</a></code>).
+<p/><a href="datastruct-tables.icn.html#1193" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="check"/>
+<h3>check()</h3>
+public<p/>
+<dl>
+<dd>
+Check the table for internal consistency.
+<p/><a href="datastruct-tables.icn.html#1305" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="clear"/>
+<h3>clear()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#clear">clear()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+This is a constant-time operation that leaves the former tree of
+nodes intact, but entirely divorced from this table.  The old
+nodes will remain "linked" to one another, and can still be
+operated upon, but without affecting this table.
+<p/><a href="datastruct-tables.icn.html#1246" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="delete"/>
+<h3>delete(key)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#delete">delete()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#847" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="down_var"/>
+<h3>down_var(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#947" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_key_ge"/>
+<h3>find_key_ge(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the smallest key greater than or equal to <code>key</code>, or fail
+there is no such key.
+<p/><a href="datastruct-tables.icn.html#1159" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_key_gt"/>
+<h3>find_key_gt(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the smallest key greater than <code>key</code>, or fail there is no
+such key.
+<p/><a href="datastruct-tables.icn.html#1143" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_key_le"/>
+<h3>find_key_le(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the largest key less than or equal to <code>key</code>, or fail there
+is no such key.
+<p/><a href="datastruct-tables.icn.html#1167" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_key_lt"/>
+<h3>find_key_lt(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the largest key less than <code>key</code>, or fail there is no such
+key.
+<p/><a href="datastruct-tables.icn.html#1151" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_node"/>
+<h3>find_node(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the node corresponding to <code>key</code>, or fail if it is not
+found.
+<p/><a href="datastruct-tables.icn.html#1125" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_node_ge"/>
+<h3>find_node_ge(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the node with the smallest key greater than or equal to
+<code>key</code>, or fail there is no such node.
+<p/><a href="datastruct-tables.icn.html#1081" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_node_gt"/>
+<h3>find_node_gt(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the node with the smallest key greater than <code>key</code>, or fail
+there is no such node.
+<p/><a href="datastruct-tables.icn.html#1039" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_node_le"/>
+<h3>find_node_le(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the node with the largest key less than or equal to <code>key</code>,
+or fail there is no such node.
+<p/><a href="datastruct-tables.icn.html#1103" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="find_node_lt"/>
+<h3>find_node_lt(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the node with the largest key less than <code>key</code>, or fail
+there is no such node.
+<p/><a href="datastruct-tables.icn.html#1060" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="fix_after_deletion"/>
+<h3>fix_after_deletion(x)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#874" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="fix_after_insertion"/>
+<h3>fix_after_insertion(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#966" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="fix_sizes"/>
+<h3>fix_sizes(n, d)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#840" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#gen">gen()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1234" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1374" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="height"/>
+<h3>height()</h3>
+public<p/>
+<dl>
+<dd>
+Return the height of the tree; useful for testing purposes.
+<p/><a href="datastruct-tables.icn.html#1318" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="height1"/>
+<h3>height1(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1325" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_balanced"/>
+<h3>is_balanced()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1335" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_balanced1"/>
+<h3>is_balanced1(n, b)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1346" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_black"/>
+<h3>is_black(p)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#958" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_bst"/>
+<h3>is_bst(n, min, max)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1352" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_correctly_linked"/>
+<h3>is_correctly_linked(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1329" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_rank_consistent"/>
+<h3>is_rank_consistent()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1365" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_red"/>
+<h3>is_red(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#962" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_size_consistent"/>
+<h3>is_size_consistent(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1359" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="key"/>
+<h3>key(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#key">key()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1218" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="keyval"/>
+<h3>keyval(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#keyval">keyval()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1222" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="member"/>
+<h3>member(key)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#member">member()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1175" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(def, cmp, entries[])</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>def</code> - the default value
+</dd>
+<dd>
+<code>cmp</code> - a comparator function taking two arbitrary values and
+returning <code>&lt;0</code>, <code>0</code> or <code>&gt;0</code> by way of comparison.  The default
+value is <code><a href="lang.Internal.html#compare">Internal.compare</a></code>.  The function must satisfy
+<ul>
+<li>
+<code>sign(cmp(a,b)) = -sign(cmp(b,a))</code> for all <code>a,b</code>
+</li>
+<li>
+<code>cmp(a,b)&gt;0 &amp; cmp(b,c)&gt;0 =&gt; cmp(a,c)&gt;0</code>
+</li>
+<li>
+<code>cmp(a,b)=0 &lt;=&gt; sign(cmp(a,x))=sign(cmp(b,x))</code> for all other <code>x</code>.
+</li>
+</ul>
+</dd>
+<dd>
+<code>entries</code> - initial key-value entries.
+</dd>
+</dl>
+<p/><a href="datastruct-tables.icn.html#1378" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="new_node"/>
+<h3>new_node(key, val)</h3>
+public<p/>
+<dl>
+<dd>
+This is like <code><a href="datastruct.SortTable.html#add_node">add_node()</a></code>, but sets the value of the node to
+<code>val</code> before returning it.
+<p/><a href="datastruct-tables.icn.html#795" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="new_sentinel"/>
+<h3>new_sentinel()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1242" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="node"/>
+<h3>node(i)</h3>
+public<p/>
+<dl>
+<dd>
+Return the <code>i</code>th node in the sorted order (see <code><a href="datastruct.SortTable.html#nodes">nodes()</a></code>).
+<p/><a href="datastruct-tables.icn.html#1270" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="nodes"/>
+<h3>nodes(i)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the nodes in the table, in sorted key order, starting at
+index <code>i</code> (default 1).  Each node represents one entry in the
+table, and contains key and val members; the former is read-only,
+the latter may be changed if desired, to edit the value in the
+table.  The nodes are generated in sorted key order.
+<p/>
+See also <code><a href="datastruct.SortTableNode.html#gen">SortTableNode.gen()</a></code>.
+<p/><a href="datastruct-tables.icn.html#1179" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="random"/>
+<h3>random()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#random">random()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1258" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rank"/>
+<h3>rank(k)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#rank">rank()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1278" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rank1"/>
+<h3>rank1(n, k)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1293" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rank_of"/>
+<h3>rank_of(n)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1203" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rotate_left"/>
+<h3>rotate_left(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1013" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rotate_right"/>
+<h3>rotate_right(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1026" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="select"/>
+<h3>select(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#select">select()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1266" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="select1"/>
+<h3>select1(n, i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1282" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#size">size()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1262" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="size1"/>
+<h3>size1(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1214" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="swap_nodes"/>
+<h3>swap_nodes(x, y)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#933" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="unlink"/>
+<h3>unlink(n)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#851" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="cmp"/>
+<h3>cmp</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#788" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="sentinel"/>
+<h3>sentinel</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#786" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+</body></html>

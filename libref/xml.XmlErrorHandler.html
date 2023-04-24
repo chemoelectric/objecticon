@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>XmlErrorHandler</title></head><body>
+<h1>XmlErrorHandler</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+A useful class for handling error/warning/validity messages from the XML parser.
+<p/><a href="xml-xmlerrorhandler.icn.html#13" target="displayFrame">Source - xmlerrorhandler.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#connect">connect()</a>
+<a href="#fatal_error">fatal_error()</a>
+<a href="#msg_impl">msg_impl()</a>
+<a href="#new">new()</a>
+<a href="#set_level">set_level()</a>
+<a href="#set_out_file">set_out_file()</a>
+<a href="#show_stack">show_stack()</a>
+<a href="#validity_error">validity_error()</a>
+<a href="#warning">warning()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#level">level</a>
+<a href="#out_file">out_file</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="connect"/>
+<h3>connect(p)</h3>
+public<p/>
+<dl>
+<dd>
+Connect the error handler to the given parser.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>p</code> - An <code><a href="xml.XmlParser.html" target="displayFrame">XmlParser</a></code> instance.
+</dd>
+</dl>
+<p/><a href="xml-xmlerrorhandler.icn.html#44" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="fatal_error"/>
+<h3>fatal_error(pd)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#55" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="msg_impl"/>
+<h3>msg_impl(pd, n, pre)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#67" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(l, o)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#85" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="set_level"/>
+<h3>set_level(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the level to use :-
+<p/>
+0 - no output
+1 - fatal only
+2 - fatal + validity
+3 - fatal + validity + warning
+<p/>
+The default is 3
+<p/><a href="xml-xmlerrorhandler.icn.html#29" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="set_out_file"/>
+<h3>set_out_file(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the output file
+<p/><a href="xml-xmlerrorhandler.icn.html#21" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="show_stack"/>
+<h3>show_stack(stack)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#74" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="validity_error"/>
+<h3>validity_error(pd)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#59" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="warning"/>
+<h3>warning(pd)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#63" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="level"/>
+<h3>level</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#19" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+<a name="out_file"/>
+<h3>out_file</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlerrorhandler.icn.html#18" target="displayFrame">Source - xmlerrorhandler.icn </a>
+</dd>
+</dl><hr>
+</body></html>

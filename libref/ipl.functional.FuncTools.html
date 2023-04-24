@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>FuncTools</title></head><body>
+<h1>FuncTools</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+</dl><p/>
+-------------------------------------------------------------------------------
+Name:        functools
+Purpose:     Small functional programming library
+<p/>
+Author:      Oleg Baharew aka ArqricCat (IDP Team)
+<p/>
+Created:     03.08.2013
+Copyright:   (c) IDP Team, 2013
+Licence:     MIT License
+Class summary:
+FuncTools - This class provides some higher-order and other functions, borrowed from functional languages.
+Methods defined in this class:
+<ul>
+<li>
+head(l) - head of list
+</li>
+<li>
+tail(l) - tail of list
+</li>
+<li>
+mapf(f,l) - application of function to all elements of the list
+</li>
+<li>
+filter(f,l) - creates a list of values for which function is true
+</li>
+<li>
+foldl(f,l) - left-associative list folding
+</li>
+<li>
+foldr(f,l) - right-associative list folding
+</li>
+<li>
+enumerate(seq) - creates a table with iterated keys and values, taken from sequence
+</li>
+<li>
+sum(l) - sum of list elements
+</li>
+<li>
+min(l) - minimal value from list
+</li>
+<li>
+max(l) - maximal value from list
+</li>
+<li>
+product(l) - product of all elements of the list
+</li>
+<li>
+iota(a,b) - creates a list of integers from a to b
+</li>
+<li>
+also(flist,x) - generator that applies function from the list to argument
+</li>
+<li>
+lsequental(flist,x) - left-associative function composition of the list to the argument
+</li>
+<li>
+rsequental(flist,x) - right-associative function composition of the list to the argument
+</li>
+<li>
+joinfuncs(flist,x) - list generated from the results of the application functions from flist
+</li>
+<li>
+joinfuncs2(flist,x) - list formed from a list of functions and the results of their application
+</li>
+<li>
+iterf(f,l) - transform function application to generator
+</li>
+<li>
+traverse(l) - nested list traversal, activating &amp;source with successive elements
+</li>
+<li>
+rtraverse(l) - nested list reverse order traversal, activating &amp;source with successive elements
+</li>
+</ul>
+<p/><a href="ipl.functional-functools.icn.html#3" target="displayFrame">Source - functools.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#also">also()</a>
+<a href="#enumerate">enumerate()</a>
+<a href="#filter">filter()</a>
+<a href="#foldl">foldl()</a>
+<a href="#foldr">foldr()</a>
+<a href="#head">head()</a>
+<a href="#iota">iota()</a>
+<a href="#iterf">iterf()</a>
+<a href="#joinfuncs">joinfuncs()</a>
+<a href="#lsequental">lsequental()</a>
+<a href="#mapf">mapf()</a>
+<a href="#max">max()</a>
+<a href="#min">min()</a>
+<a href="#product">product()</a>
+<a href="#rsequental">rsequental()</a>
+<a href="#rtraverse">rtraverse()</a>
+<a href="#sum">sum()</a>
+<a href="#tail">tail()</a>
+<a href="#traverse">traverse()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="also"/>
+<h3>also(flist, x)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#146" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="enumerate"/>
+<h3>enumerate(seq)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#87" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="filter"/>
+<h3>filter(f, l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#60" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="foldl"/>
+<h3>foldl(f, start, l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#71" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="foldr"/>
+<h3>foldr(f, start, l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#79" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="head"/>
+<h3>head(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#41" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="iota"/>
+<h3>iota(a, b)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#136" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="iterf"/>
+<h3>iterf(f, l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#179" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="joinfuncs"/>
+<h3>joinfuncs(flist, x)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#170" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="lsequental"/>
+<h3>lsequental(flist, x)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#152" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="mapf"/>
+<h3>mapf(f, l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#49" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="max"/>
+<h3>max(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#116" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="min"/>
+<h3>min(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#105" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="product"/>
+<h3>product(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#127" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="rsequental"/>
+<h3>rsequental(flist, x)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#161" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="rtraverse"/>
+<h3>rtraverse(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#191" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="sum"/>
+<h3>sum(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#96" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="tail"/>
+<h3>tail(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#45" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse"/>
+<h3>traverse(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.functional-functools.icn.html#185" target="displayFrame">Source - functools.icn </a>
+</dd>
+</dl><hr>
+</body></html>

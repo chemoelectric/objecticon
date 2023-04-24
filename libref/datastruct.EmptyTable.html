@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>EmptyTable</title></head><body>
+<h1>EmptyTable</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="datastruct.OrderTableImpl1.html" target="displayFrame">datastruct.OrderTableImpl1</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+An empty table.  An instance of this class is <code><a href="datastruct.Table.html#EMPTY_TABLE">Table.EMPTY_TABLE</a></code>.
+<p/><a href="datastruct-tables.icn.html#1564" target="displayFrame">Source - tables.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="datastruct.Table.html">datastruct.Table</a>
+<a href="datastruct.OrderTableImpl1.html">datastruct.OrderTableImpl1</a>
+<a href="datastruct.EmptyTable.html">datastruct.EmptyTable</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from datastruct.Table</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.Table.html#add">add()</a>
+<a href="datastruct.Table.html#back">back()</a>
+<a href="datastruct.Table.html#back_keyval">back_keyval()</a>
+<a href="datastruct.Table.html#clear">clear()</a>
+<a href="datastruct.Table.html#delete">delete()</a>
+<a href="datastruct.Table.html#empty">empty()</a>
+<a href="datastruct.Table.html#entries">entries()</a>
+<a href="datastruct.Table.html#entry_list">entry_list()</a>
+<a href="datastruct.Table.html#flatten">flatten()</a>
+<a href="datastruct.Table.html#gen">gen()</a>
+<a href="datastruct.Table.html#get">get()</a>
+<a href="datastruct.Table.html#init">init()</a>
+<a href="datastruct.Table.html#init_entries">init_entries()</a>
+<a href="datastruct.Table.html#insert">insert()</a>
+<a href="datastruct.Table.html#key_list">key_list()</a>
+<a href="datastruct.Table.html#key_member">key_member()</a>
+<a href="datastruct.Table.html#key_sort">key_sort()</a>
+<a href="datastruct.Table.html#keyval">keyval()</a>
+<a href="datastruct.Table.html#object_equals">object_equals()</a>
+<a href="datastruct.Table.html#object_hash">object_hash()</a>
+<a href="datastruct.Table.html#object_output">object_output()</a>
+<a href="datastruct.Table.html#random">random()</a>
+<a href="datastruct.Table.html#random_key">random_key()</a>
+<a href="datastruct.Table.html#sort">sort()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from datastruct.Table</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.Table.html#def">def</a>
+<a href="datastruct.Table.html#DELETE">DELETE</a>
+<a href="datastruct.Table.html#EMPTY_TABLE">EMPTY_TABLE</a>
+<a href="datastruct.Table.html#INSERT">INSERT</a>
+<a href="datastruct.Table.html#MODIFY">MODIFY</a>
+<a href="datastruct.Table.html#ORDER">ORDER</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from datastruct.OrderTableImpl1</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.OrderTableImpl1.html#back_key">back_key()</a>
+<a href="datastruct.OrderTableImpl1.html#key">key()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_mode">get_mode()</a>
+<a href="#member">member()</a>
+<a href="#rank">rank()</a>
+<a href="#select">select()</a>
+<a href="#size">size()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1581" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="member"/>
+<h3>member(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#member">member()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1568" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rank"/>
+<h3>rank(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#rank">rank()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1574" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="select"/>
+<h3>select(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#select">select()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1571" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Table.html#size">size()</a> in <a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></dd>
+<dd>
+<p/><a href="datastruct-tables.icn.html#1577" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+</body></html>

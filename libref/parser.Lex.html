@@ -1,0 +1,522 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Lex</title></head><body>
+<h1>Lex</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="parser-package.html" target="listFrame">parser</a></dd>
+</dl><p/>
+<p/><a href="parser-lex.icn.html#8" target="displayFrame">Source - lex.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="parser.Lex.html">parser.Lex</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+<a href="util.Connectable.html#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#do_and">do_and()</a>
+<a href="#do_at">do_at()</a>
+<a href="#do_backslash">do_backslash()</a>
+<a href="#do_bang">do_bang()</a>
+<a href="#do_caret">do_caret()</a>
+<a href="#do_colon">do_colon()</a>
+<a href="#do_comma">do_comma()</a>
+<a href="#do_csetlit">do_csetlit()</a>
+<a href="#do_digits">do_digits()</a>
+<a href="#do_dot">do_dot()</a>
+<a href="#do_encoding">do_encoding()</a>
+<a href="#do_equal">do_equal()</a>
+<a href="#do_greater">do_greater()</a>
+<a href="#do_lbrace">do_lbrace()</a>
+<a href="#do_lbrack">do_lbrack()</a>
+<a href="#do_less">do_less()</a>
+<a href="#do_letters">do_letters()</a>
+<a href="#do_lparen">do_lparen()</a>
+<a href="#do_minus">do_minus()</a>
+<a href="#do_mod">do_mod()</a>
+<a href="#do_or">do_or()</a>
+<a href="#do_plus">do_plus()</a>
+<a href="#do_qmark">do_qmark()</a>
+<a href="#do_rbrace">do_rbrace()</a>
+<a href="#do_rbrack">do_rbrack()</a>
+<a href="#do_rparen">do_rparen()</a>
+<a href="#do_semi">do_semi()</a>
+<a href="#do_slash">do_slash()</a>
+<a href="#do_star">do_star()</a>
+<a href="#do_strlit">do_strlit()</a>
+<a href="#do_tilde">do_tilde()</a>
+<a href="#do_u">do_u()</a>
+<a href="#err">err()</a>
+<a href="#get_strlit">get_strlit()</a>
+<a href="#init">init()</a>
+<a href="#yylex">yylex()</a>
+<a href="#yylex2">yylex2()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#Beginner">Beginner</a>
+<a href="#Ender">Ender</a>
+<a href="#idchars">idchars</a>
+<a href="#Newline">Newline</a>
+<a href="#reswords">reswords</a>
+<a href="#tokflags">tokflags</a>
+<a href="#yycolno">yycolno</a>
+<a href="#yyencoding">yyencoding</a>
+<a href="#yyfilename">yyfilename</a>
+<a href="#yylineno">yylineno</a>
+<a href="#yylinestart">yylinestart</a>
+<a href="#yytext">yytext</a>
+<a href="#yytokval">yytokval</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="do_and"/>
+<h3>do_and()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#505" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_at"/>
+<h3>do_at()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#373" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_backslash"/>
+<h3>do_backslash()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#368" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_bang"/>
+<h3>do_bang()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#516" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_caret"/>
+<h3>do_caret()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#362" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_colon"/>
+<h3>do_colon()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#439" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_comma"/>
+<h3>do_comma()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#295" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_csetlit"/>
+<h3>do_csetlit()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#252" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_digits"/>
+<h3>do_digits()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#268" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_dot"/>
+<h3>do_dot()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#453" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_encoding"/>
+<h3>do_encoding()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#79" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_equal"/>
+<h3>do_equal()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#385" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_greater"/>
+<h3>do_greater()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#401" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_lbrace"/>
+<h3>do_lbrace()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#307" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_lbrack"/>
+<h3>do_lbrack()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#299" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_less"/>
+<h3>do_less()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#418" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_letters"/>
+<h3>do_letters()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#260" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_lparen"/>
+<h3>do_lparen()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#319" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_minus"/>
+<h3>do_minus()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#469" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_mod"/>
+<h3>do_mod()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#511" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_or"/>
+<h3>do_or()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#347" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_plus"/>
+<h3>do_plus()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#482" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_qmark"/>
+<h3>do_qmark()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#379" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_rbrace"/>
+<h3>do_rbrace()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#311" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_rbrack"/>
+<h3>do_rbrack()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#303" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_rparen"/>
+<h3>do_rparen()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#323" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_semi"/>
+<h3>do_semi()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#315" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_slash"/>
+<h3>do_slash()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#447" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_star"/>
+<h3>do_star()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#495" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_strlit"/>
+<h3>do_strlit()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#237" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_tilde"/>
+<h3>do_tilde()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#327" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="do_u"/>
+<h3>do_u()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#219" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="err"/>
+<h3>err(msg)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#75" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="get_strlit"/>
+<h3>get_strlit()</h3>
+private<p/>
+<dl>
+<dd>
+Tab to end of current str literal, setting yytext to its (unescaped)
+value.  yytext should be set to the start of the literal, either ",
+u" or ', depending on the type.
+<p/><a href="parser-lex.icn.html#164" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#23" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yylex"/>
+<h3>yylex(str, filename, encoding, line)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#522" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yylex2"/>
+<h3>yylex2()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#86" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="Beginner"/>
+<h3>Beginner</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#21" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="Ender"/>
+<h3>Ender</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#21" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="idchars"/>
+<h3>idchars</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#20" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="Newline"/>
+<h3>Newline</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#21" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="reswords"/>
+<h3>reswords</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#20" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="tokflags"/>
+<h3>tokflags</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#15" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yycolno"/>
+<h3>yycolno</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#16" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yyencoding"/>
+<h3>yyencoding</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#16" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yyfilename"/>
+<h3>yyfilename</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#16" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yylineno"/>
+<h3>yylineno</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#16" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yylinestart"/>
+<h3>yylinestart</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#17" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yytext"/>
+<h3>yytext</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#17" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+<a name="yytokval"/>
+<h3>yytokval</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-lex.icn.html#17" target="displayFrame">Source - lex.icn </a>
+</dd>
+</dl><hr>
+</body></html>

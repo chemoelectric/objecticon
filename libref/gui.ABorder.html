@@ -1,0 +1,264 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ABorder</title></head><body>
+<h1>ABorder</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Insets.html" target="displayFrame">gui.Insets</a><br>
+<a href="gui.XYAlign.html" target="displayFrame">gui.XYAlign</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.CompoundBorder.html">gui.CompoundBorder</a><br>
+<a href="gui.EmptyBorder.html">gui.EmptyBorder</a><br>
+<a href="gui.LineBorder.html">gui.LineBorder</a><br>
+<a href="gui.NullBorder.html">gui.NullBorder</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A <code><a href="gui.ABorder.html" target="displayFrame">ABorder</a></code> (so named to avoid a clash with the <code><a href="gui.Border.html" target="displayFrame">Border</a></code> component),
+is an object which represents a border.  It reports the widths of
+the four edges of its border.  Given a rectangle, it also draws the
+border on a Window.
+<p/>
+An <code><a href="gui.ABorder.html" target="displayFrame">ABorder</a></code> also subclasses <code><a href="gui.XYAlign.html" target="displayFrame">XYAlign</a></code>.  This lets it position a
+<code><a href="gui.Size.html" target="displayFrame">Size</a></code> within a <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> by "floating" it within the bordered inner
+area according to the alignment.
+<p/><a href="gui-borders.icn.html#5" target="displayFrame">Source - borders.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Insets.html">gui.Insets</a>
+<a href="gui.ABorder.html">gui.ABorder</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Insets</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Insets.html#get_b_inset">get_b_inset()</a>
+<a href="gui.Insets.html#get_inner_rect">get_inner_rect()</a>
+<a href="gui.Insets.html#get_l_inset">get_l_inset()</a>
+<a href="gui.Insets.html#get_r_inset">get_r_inset()</a>
+<a href="gui.Insets.html#get_t_inset">get_t_inset()</a>
+<a href="gui.Insets.html#get_total_height">get_total_height()</a>
+<a href="gui.Insets.html#get_total_width">get_total_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Insets</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Insets.html#b_inset">b_inset</a>
+<a href="gui.Insets.html#l_inset">l_inset</a>
+<a href="gui.Insets.html#r_inset">r_inset</a>
+<a href="gui.Insets.html#t_inset">t_inset</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#draw">draw()</a>
+<a href="#draw_dashed">draw_dashed()</a>
+<a href="#draw_dashed_rect">draw_dashed_rect()</a>
+<a href="#draw_down">draw_down()</a>
+<a href="#draw_down_rect">draw_down_rect()</a>
+<a href="#draw_focus">draw_focus()</a>
+<a href="#draw_focus_rect">draw_focus_rect()</a>
+<a href="#draw_highlight">draw_highlight()</a>
+<a href="#draw_highlight_rect">draw_highlight_rect()</a>
+<a href="#draw_rect">draw_rect()</a>
+<a href="#draw_rev">draw_rev()</a>
+<a href="#draw_rev_rect">draw_rev_rect()</a>
+<a href="#finally">finally()</a>
+<a href="#float">float()</a>
+<a href="#initially">initially()</a>
+<a href="#new">new()</a>
+<a href="#set_align">set_align()</a>
+<a href="#set_x_align">set_x_align()</a>
+<a href="#set_y_align">set_y_align()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="draw"/>
+<h3>draw(W, x, y, w, h)</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#17" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_dashed"/>
+<h3>draw_dashed(W, x, y, w, h, t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#46" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_dashed_rect"/>
+<h3>draw_dashed_rect(W, r, t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#42" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_down"/>
+<h3>draw_down(W, x, y, w, h)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#62" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_down_rect"/>
+<h3>draw_down_rect(W, r)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#58" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_focus"/>
+<h3>draw_focus(W, x, y, w, h, t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#38" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_focus_rect"/>
+<h3>draw_focus_rect(W, r, t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#34" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_highlight"/>
+<h3>draw_highlight(W, x, y, w, h, t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#54" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_highlight_rect"/>
+<h3>draw_highlight_rect(W, r, t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#50" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_rect"/>
+<h3>draw_rect(W, r)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#22" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_rev"/>
+<h3>draw_rev(W, x, y, w, h)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#26" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_rev_rect"/>
+<h3>draw_rev_rect(W, r)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#30" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#19" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="float"/>
+<h3>float(r, s)</h3>
+public<p/>
+<dl>
+<dd>
+Take a <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>, giving the bordered size, and a <code><a href="gui.Size.html" target="displayFrame">Size</a></code>, giving an
+object within it, and "float" it within the area in accordance
+with the x and y alignment, but limiting the result to the
+<code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>.  A <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> is returned.
+<p/><a href="gui-borders.icn.html#66" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially(c)</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#16" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#92" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_align"/>
+<h3>set_align(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#86" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_x_align"/>
+<h3>set_x_align(x)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#76" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_y_align"/>
+<h3>set_y_align(y)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#81" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+</body></html>

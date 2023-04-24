@@ -1,0 +1,266 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TableLayout</title></head><body>
+<h1>TableLayout</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Layout.html" target="displayFrame">gui.Layout</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-tablelayout.icn.html#492" target="displayFrame">Source - tablelayout.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Layout.html">gui.Layout</a>
+<a href="ipl.browser.TableLayout.html">ipl.browser.TableLayout</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Layout</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Layout.html#set_parent">set_parent()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Layout</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Layout.html#parent">parent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#adjust_preferred_heights">adjust_preferred_heights()</a>
+<a href="#align_baselines">align_baselines()</a>
+<a href="#cells_at">cells_at()</a>
+<a href="#display">display()</a>
+<a href="#ensure_grid">ensure_grid()</a>
+<a href="#get_max_width">get_max_width()</a>
+<a href="#get_preferred_height">get_preferred_height()</a>
+<a href="#get_preferred_width">get_preferred_width()</a>
+<a href="#layout">layout()</a>
+<a href="#new">new()</a>
+<a href="#reset">reset()</a>
+<a href="#set_debug">set_debug()</a>
+<a href="#set_dii">set_dii()</a>
+<a href="#set_doi">set_doi()</a>
+<a href="#set_fix_col1">set_fix_col1()</a>
+<a href="#should_align_baselines">should_align_baselines()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#computed_g">computed_g</a>
+<a href="#debug">debug</a>
+<a href="#dii">dii</a>
+<a href="#doi">doi</a>
+<a href="#fix_col1_flag">fix_col1_flag</a>
+<a href="#g">g</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="adjust_preferred_heights"/>
+<h3>adjust_preferred_heights()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#541" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="align_baselines"/>
+<h3>align_baselines()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#558" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="cells_at"/>
+<h3>cells_at(i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#569" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="display"/>
+<h3>display()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Layout.html#display">display()</a> in <a href="gui.Layout.html" target="displayFrame">gui.Layout</a></dd>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#595" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="ensure_grid"/>
+<h3>ensure_grid()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#505" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="get_max_width"/>
+<h3>get_max_width()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#536" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_height"/>
+<h3>get_preferred_height(pw)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Layout.html#get_preferred_height">get_preferred_height()</a> in <a href="gui.Layout.html" target="displayFrame">gui.Layout</a></dd>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#583" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_width"/>
+<h3>get_preferred_width()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Layout.html#get_preferred_width">get_preferred_width()</a> in <a href="gui.Layout.html" target="displayFrame">gui.Layout</a></dd>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#531" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="layout"/>
+<h3>layout()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Layout.html#layout">layout()</a> in <a href="gui.Layout.html" target="displayFrame">gui.Layout</a></dd>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#612" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#655" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="reset"/>
+<h3>reset()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Layout.html#reset">reset()</a> in <a href="gui.Layout.html" target="displayFrame">gui.Layout</a></dd>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#501" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="set_debug"/>
+<h3>set_debug(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#640" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dii"/>
+<h3>set_dii(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#645" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="set_doi"/>
+<h3>set_doi(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#650" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fix_col1"/>
+<h3>set_fix_col1(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#590" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="should_align_baselines"/>
+<h3>should_align_baselines(i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#576" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="computed_g"/>
+<h3>computed_g</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#495" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="debug"/>
+<h3>debug</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#499" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="dii"/>
+<h3>dii</h3>
+public<p/>
+<dl>
+<dd>
+Default inner padding, ie not at edge of grid
+<p/><a href="ipl.browser-tablelayout.icn.html#496" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="doi"/>
+<h3>doi</h3>
+public<p/>
+<dl>
+<dd>
+Default outer padding
+<p/><a href="ipl.browser-tablelayout.icn.html#497" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="fix_col1_flag"/>
+<h3>fix_col1_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#498" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="g"/>
+<h3>g</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#494" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+</body></html>

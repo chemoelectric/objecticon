@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>putpixel.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     putpixel.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to write quantized, processed pixel
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	These procedures assist pixel-by-pixel image construction.
+<a name="18"/>#
+<a name="19"/>#	PutPixel(W, x, y, k)	draws a single pixel after applying
+<a name="20"/>#				dithering, color quantization, and
+<a name="21"/>#				gamma correction.
+<a name="22"/>#
+<a name="23"/>#	PixInit(gamma, cquant, gquant, drandom)
+<a name="24"/>#				initializes parameters for PutPixel().
+<a name="25"/>#
+<a name="26"/>############################################################################
+<a name="27"/>#
+<a name="28"/>#     PutPixel([win,] x, y, colr) sets the pixel at (x,y) to the given color
+<a name="29"/>#  after applying dithering, color quantization, and gamma correction.
+<a name="30"/>#  It is designed for constructing images a pixel at a time.  The window's
+<a name="31"/>#  foreground color is left set to the adjusted color.
+<a name="32"/>#
+<a name="33"/>#     Colr can be any value acceptable to Fg.  Mutable colors are not
+<a name="34"/>#  dithered, quantized, or gamma-corrected.
+<a name="35"/>#
+<a name="36"/>#     PixInit(gamma, cquant, gquant, drandom) may be called before PutPixel
+<a name="37"/>#  to establish non-default parameters.  The default gamma value is 1.0
+<a name="38"/>#  (that is, no correction beyond Icon's usual gamma correction).
+<a name="39"/>#  cquant and gquant specify the number of color and grayscale quantization
+<a name="40"/>#  steps; the defaults are 6 and 16 respectively.  If gquant + cquant ^ 3
+<a name="41"/>#  exceeds 256 there is a potential for running out of colors.  drandom
+<a name="42"/>#  is the fraction (0 to 1) of the dithering to be done randomly; the
+<a name="43"/>#  default is zero.
+<a name="44"/>#
+<a name="45"/>############################################################################
+<a name="46"/>#
+<a name="47"/>#  Requires:  Version 9 graphics
+<a name="48"/>#
+<a name="49"/>############################################################################
+<a name="50"/>
+<a name="51"/>package ipl.putpixel
+<a name="52"/>
+<a name="53"/>import
+<a name="54"/>   graphics(Window)
+<a name="55"/>
+<a name="56"/>global XPP_qtab, XPP_gtab, XPP_dtab, XPP_rtab, XPP_gadjust
+<a name="57"/>
+<a name="58"/>#  PixInit -- set parameters and build tables
+<a name="59"/>
+<a name="60"/># initialize pixel processing
+<a name="61"/>procedure PixInit(gamma, cquant, gquant, drandom)  
+<a name="62"/>   local PIXRANGE, NRANDOM, cstep, gstep, indx, appx, gcor, i
+<a name="63"/>
+<a name="64"/>   /gamma := 1.0			# gamma correction factor
+<a name="65"/>   /cquant := 6				# color quantization steps
+<a name="66"/>   /gquant := 16			# grayscale quantization
+<a name="67"/>   /drandom := 0.0			# fraction of dithering to do randomly
+<a name="68"/>
+<a name="69"/>   NRANDOM := 500			# size of random number table
+<a name="70"/>   PIXRANGE := 255			# pixel value range 0..255
+<a name="71"/>
+<a name="72"/>   if gamma &lt; 0.01 then			# ensure legal values
+<a name="73"/>      gamma := 2.5
+<a name="74"/>   cquant &lt;:= 2
+<a name="75"/>   gquant &lt;:= 2
+<a name="76"/>   drandom &lt;:= 0.0
+<a name="77"/>   drandom &gt;:= 1.0
+<a name="78"/>
+<a name="79"/>   cstep := (PIXRANGE / (cquant-1.0))	# color step size
+<a name="80"/>   gstep := (PIXRANGE / (gquant-1.0))	# grayscale step size
+<a name="81"/>
+<a name="82"/>   # build 4 x 4 dither table (choose one)
+<a name="83"/>   # XPP_dtab := [0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5]  # ordered dither
+<a name="84"/>   XPP_dtab := [0,6,9,15,11,13,2,4,7,1,14,8,12,10,5,3]  # magic square dither
+<a name="85"/>   every i := 1 to 16 do	# normalize
+<a name="86"/>      XPP_dtab[i] := (XPP_dtab[i]/15.0 - 0.5) * (cstep - 3) * (1.0 - drandom)
+<a name="87"/>
+<a name="88"/>   # build list of scaled random numbers for dithering
+<a name="89"/>   XPP_rtab := list(NRANDOM)
+<a name="90"/>   every !XPP_rtab := (?0 - 0.5) * 2 * (cstep - 3) * drandom
+<a name="91"/>
+<a name="92"/>   # build table for combined quantization and gamma correction
+<a name="93"/>   XPP_qtab := list(PIXRANGE+1)
+<a name="94"/>   every i := 0 to PIXRANGE do {
+<a name="95"/>      indx := integer((i + cstep / 2) / cstep)
+<a name="96"/>      appx := cstep * indx
+<a name="97"/>      gcor := PIXRANGE * ((real(appx) / real(PIXRANGE)) ^ (1.0 / gamma))
+<a name="98"/>      XPP_qtab[i+1] := integer(gcor + 0.5)
+<a name="99"/>      }
+<a name="100"/>   # build similar table for grayscale
+<a name="101"/>   XPP_gtab := list(PIXRANGE+1)
+<a name="102"/>   every i := 0 to PIXRANGE do {
+<a name="103"/>      indx := integer((i + gstep / 2) / gstep)
+<a name="104"/>      appx := gstep * indx
+<a name="105"/>      gcor := PIXRANGE * ((real(appx) / real(PIXRANGE)) ^ (1.0 / gamma))
+<a name="106"/>      XPP_gtab[i+1] := integer(gcor + 0.5)
+<a name="107"/>      }
+<a name="108"/>   # grayscale adjustment for different quantization
+<a name="109"/>   XPP_gadjust := (gstep - 3) / (cstep - 3)
+<a name="110"/>   return
+<a name="111"/>end
+<a name="112"/>
+<a name="113"/>#  PutPixel -- write a pixel
+<a name="114"/>
+<a name="115"/># write pixel
+<a name="116"/>procedure PutPixel(win, x, y, color)		   
+<a name="117"/>   local i, r, g, b, l
+<a name="118"/>
+<a name="119"/>   initial if /XPP_qtab then PixInit()
+<a name="120"/>
+<a name="121"/>   l := Window.parse_color(color) | fail
+<a name="122"/>
+<a name="123"/>   # convert three 0..65535 ints to 0..255
+<a name="124"/>   r := l.red / 256
+<a name="125"/>   g := l.green / 256
+<a name="126"/>   b := l.blue / 256
+<a name="127"/>
+<a name="128"/>   # get dither table index based on coordinates
+<a name="129"/>   i := iand(x, 3) + 4 * iand(y, 3) + 1
+<a name="130"/>
+<a name="131"/>   if r = g = b then {
+<a name="132"/>      g := integer(g + XPP_gadjust * (XPP_dtab[i] + ?XPP_rtab))
+<a name="133"/>      (g &lt;:= 1) | (g &gt;:= 256)
+<a name="134"/>      r := g := b := 257 * XPP_gtab[g]
+<a name="135"/>      }
+<a name="136"/>   else {
+<a name="137"/>      r := integer(r + XPP_dtab[i] + ?XPP_rtab + 1.5)
+<a name="138"/>      g := integer(g - XPP_dtab[i] + ?XPP_rtab + 1.5)
+<a name="139"/>      b := integer(b + XPP_dtab[i] + ?XPP_rtab + 1.5)
+<a name="140"/>      (r &lt;:= 1) | (r &gt;:= 256)
+<a name="141"/>      (g &lt;:= 1) | (g &gt;:= 256)
+<a name="142"/>      (b &lt;:= 1) | (b &gt;:= 256)
+<a name="143"/>      r := 257 * XPP_qtab[r]
+<a name="144"/>      g := 257 * XPP_qtab[g]
+<a name="145"/>      b := 257 * XPP_qtab[b]
+<a name="146"/>      }
+<a name="147"/>
+<a name="148"/>   # finally, put the pixel on the screen
+<a name="149"/>   win.set_fg(r || "," || g || "," || b)
+<a name="150"/>   win.draw_point(x, y)
+<a name="151"/>   return
+<a name="152"/>end
+</pre></body></html>

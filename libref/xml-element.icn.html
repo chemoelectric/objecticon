@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>element.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: element.icn 7415 2019-01-25 16:51:58Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>import io, ipl.pdco
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># Represents an element in the document.
+<a name="15"/>#
+<a name="16"/>abstract class Element(Node)
+<a name="17"/>   public
+<a name="18"/>      name, 
+<a name="19"/>      attributes
+<a name="20"/>
+<a name="21"/>   #
+<a name="22"/>   # Set the name of the tag
+<a name="23"/>   #
+<a name="24"/>   public set_name(s)
+<a name="25"/>      name := s
+<a name="26"/>      link
+<a name="27"/>   end
+<a name="28"/>
+<a name="29"/>   #
+<a name="30"/>   # Return the name of the element
+<a name="31"/>   #
+<a name="32"/>   public get_name(s)
+<a name="33"/>      return name
+<a name="34"/>   end
+<a name="35"/>
+<a name="36"/>   #
+<a name="37"/>   # Return the attributes map for this tag.
+<a name="38"/>   #
+<a name="39"/>   public get_attributes()
+<a name="40"/>      return attributes
+<a name="41"/>   end
+<a name="42"/>
+<a name="43"/>   #
+<a name="44"/>   # Set an attribute for this tag.
+<a name="45"/>   #
+<a name="46"/>   public set_attribute(key, value)
+<a name="47"/>      insert(attributes, key, value)
+<a name="48"/>      link
+<a name="49"/>   end
+<a name="50"/>
+<a name="51"/>   #
+<a name="52"/>   # Return the attribute for this element, or fail if non is present
+<a name="53"/>   #
+<a name="54"/>   public get_attribute(key)
+<a name="55"/>      return member(attributes, key)
+<a name="56"/>   end
+<a name="57"/>
+<a name="58"/>   #
+<a name="59"/>   # Search for all the `Element`s with the given tag name, recursively
+<a name="60"/>   # traversing the entire tree based at this node.
+<a name="61"/>   #
+<a name="62"/>   # :Parameters :
+<a name="63"/>   # :  `s` - the name of the sub-elements.
+<a name="64"/>   #
+<a name="65"/>   public search_tree(s)
+<a name="66"/>      local n
+<a name="67"/>      every n := Seq{traverse_nodes_preorder()} do
+<a name="68"/>         if is(n, Element) &amp; (/s | n.get_name() == s) then
+<a name="69"/>            suspend n
+<a name="70"/>   end
+<a name="71"/>
+<a name="72"/>   #
+<a name="73"/>   # Generate the elements under this element, with the given name.  If name
+<a name="74"/>   # is omitted, generate all the elements.
+<a name="75"/>   #
+<a name="76"/>   # :Parameters :
+<a name="77"/>   # :  `s` - the name of the sub-elements.
+<a name="78"/>   #
+<a name="79"/>   public search_children(s)
+<a name="80"/>      local n
+<a name="81"/>      every n := !children do
+<a name="82"/>         if not(text(n)) &amp; is(n, Element) &amp; (/s | n.get_name() == s) then
+<a name="83"/>            suspend n
+<a name="84"/>   end
+<a name="85"/>
+<a name="86"/>   #
+<a name="87"/>   # Return the nth sub-element matching the given tag; if the tag is
+<a name="88"/>   # omitted just return the nth sub-element.
+<a name="89"/>   #
+<a name="90"/>   # :Parameters :
+<a name="91"/>   # :  `n` - the index to look for; 1 being the first.
+<a name="92"/>   # :  `s` - the name of the sub-element.
+<a name="93"/>   # :Fails :
+<a name="94"/>   # :  if there is no such element.
+<a name="95"/>   #
+<a name="96"/>   public get_nth_element(n, s)
+<a name="97"/>      local x
+<a name="98"/>      every x := search_children(s) do {
+<a name="99"/>         if n = 1 then
+<a name="100"/>            return x
+<a name="101"/>         n -:= 1
+<a name="102"/>      }
+<a name="103"/>   end
+<a name="104"/>
+<a name="105"/>   #
+<a name="106"/>   # Print the structure to the given file
+<a name="107"/>   #
+<a name="108"/>   public override print_structure(f, indent, flags)
+<a name="109"/>      local s, x, i, j, e
+<a name="110"/>      /indent := 0
+<a name="111"/>      i := repl(" ", indent * 5)
+<a name="112"/>      write(f, i || "Tag : &lt;" || self.name || "&gt;")
+<a name="113"/>      s := ""
+<a name="114"/>      every x := !sort(self.attributes) do {
+<a name="115"/>         s ||:= x[1] || "=" || image(x[2]) || " "
+<a name="116"/>      }
+<a name="117"/>      write(f, i || "Attributes : " || s)
+<a name="118"/>      write(f, i || "Contents :")
+<a name="119"/>      every j := 1 to *children do {
+<a name="120"/>         writes(i || j || ":")
+<a name="121"/>         e := children[j]
+<a name="122"/>         if text(e) then
+<a name="123"/>            write(f, image(e))
+<a name="124"/>         else {
+<a name="125"/>            write(f)
+<a name="126"/>            e.print_structure(f, indent + 1, flags)
+<a name="127"/>         }
+<a name="128"/>      }
+<a name="129"/>      write(f, i, "End of tag : &lt;/", self.name, "&gt;")
+<a name="130"/>   end
+<a name="131"/>
+<a name="132"/>   public override new(n)
+<a name="133"/>      Node.new()
+<a name="134"/>      self.attributes := table()
+<a name="135"/>      self.name := n
+<a name="136"/>      return
+<a name="137"/>   end
+<a name="138"/>end
+</pre></body></html>

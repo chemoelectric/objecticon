@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>UnixFileSystem</title></head><body>
+<h1>UnixFileSystem</h1>
+<dl>
+<dt>Type :</dt><dd>package class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+<p/><a href="io-files.icn.html#1039" target="displayFrame">Source - files.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.FileSystem.html">io.FileSystem</a>
+<a href="io.UnixFileSystem.html">io.UnixFileSystem</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#file_to_url">file_to_url()</a>
+<a href="#filepath_absolute">filepath_absolute()</a>
+<a href="#filepath_is_absolute">filepath_is_absolute()</a>
+<a href="#filepath_is_prefix">filepath_is_prefix()</a>
+<a href="#filepath_is_unc">filepath_is_unc()</a>
+<a href="#filepath_normal">filepath_normal()</a>
+<a href="#filepath_standard_case">filepath_standard_case()</a>
+<a href="#filepath_str">filepath_str()</a>
+<a href="#find_exe">find_exe()</a>
+<a href="#get_home">get_home()</a>
+<a href="#get_path_list">get_path_list()</a>
+<a href="#get_program_name">get_program_name()</a>
+<a href="#get_roots">get_roots()</a>
+<a href="#get_temp">get_temp()</a>
+<a href="#is_hidden">is_hidden()</a>
+<a href="#is_relative_dir">is_relative_dir()</a>
+<a href="#split_paths">split_paths()</a>
+<a href="#standard_case">standard_case()</a>
+<a href="#standard_case_cmp">standard_case_cmp()</a>
+<a href="#url_to_file">url_to_file()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="file_to_url"/>
+<h3>file_to_url(f)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#file_to_url">file_to_url()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1158" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="filepath_absolute"/>
+<h3>filepath_absolute(fp, other)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#filepath_absolute">filepath_absolute()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1095" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="filepath_is_absolute"/>
+<h3>filepath_is_absolute(fp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#filepath_is_absolute">filepath_is_absolute()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1064" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="filepath_is_prefix"/>
+<h3>filepath_is_prefix(fp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#filepath_is_prefix">filepath_is_prefix()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1071" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="filepath_is_unc"/>
+<h3>filepath_is_unc(fp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#filepath_is_unc">filepath_is_unc()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1068" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="filepath_normal"/>
+<h3>filepath_normal(fp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#filepath_normal">filepath_normal()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1075" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="filepath_standard_case"/>
+<h3>filepath_standard_case(fp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#filepath_standard_case">filepath_standard_case()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1112" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="filepath_str"/>
+<h3>filepath_str(fp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#filepath_str">filepath_str()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1053" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="find_exe"/>
+<h3>find_exe(f, n)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#find_exe">find_exe()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1167" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_home"/>
+<h3>get_home()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#get_home">get_home()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1125" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path_list"/>
+<h3>get_path_list(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#get_path_list">get_path_list()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1040" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_program_name"/>
+<h3>get_program_name()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#get_program_name">get_program_name()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1154" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_roots"/>
+<h3>get_roots()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#get_roots">get_roots()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1141" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_temp"/>
+<h3>get_temp()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#get_temp">get_temp()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1129" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_hidden"/>
+<h3>is_hidden(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#is_hidden">is_hidden()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1133" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_relative_dir"/>
+<h3>is_relative_dir(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#is_relative_dir">is_relative_dir()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1137" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="split_paths"/>
+<h3>split_paths(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#split_paths">split_paths()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1145" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="standard_case"/>
+<h3>standard_case(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#standard_case">standard_case()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1116" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="standard_case_cmp"/>
+<h3>standard_case_cmp(s1, s2)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#standard_case_cmp">standard_case_cmp()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1120" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="url_to_file"/>
+<h3>url_to_file(u)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.FileSystem.html#url_to_file">url_to_file()</a> in <a href="io.FileSystem.html" target="displayFrame">io.FileSystem</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#1162" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+</body></html>

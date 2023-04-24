@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>snapshot</title></head><body>
+<h1>snapshot(title, len)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.scan-package.html" target="listFrame">ipl.scan</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+###########################################################################
+<p/>
+The procedure <code><a href="ipl.scan.snapshot.html" target="displayFrame">snapshot(title,len)</a></code> writes a snapshot of the state
+of string scanning, showing the value of <code>&amp;subject</code> and <code>&amp;pos</code>, an
+optional title, and (again optionally) wrapping the display
+for <code>len</code> width.
+<p/>
+For example,
+<pre>
+   "((a+b)-delta)/(c*d))" ? {
+tab(bal('+\-/*'))
+snapshot("example")
+}
+</pre>
+<p/>
+produces
+<p/>
+<pre>
+---example---------------------------
+|				    |
+|				    |
+| &amp;subject = "((a+b)-delta)/(c*d))" |
+|			   |	    |
+|			    	    |
+-------------------------------------
+</pre>
+<p/>
+Note that the bar showing the <code>&amp;pos</code> is positioned under the <code>&amp;pos</code>th
+character (actual positions are between characters).  If <code>&amp;pos</code> is
+at the end of <code>&amp;subject</code>, the bar is positioned under the quotation
+mark delimiting the subject. For example,
+<p/>
+<pre>
+   "abcdefgh" ? (tab(0) &amp; snapshot())
+</pre>
+<p/>
+produces
+<p/>
+<pre>
+-------------------------
+|			|
+|			|
+| &amp;subject = "abcdefgh" |
+|		      | |
+|			|
+-------------------------
+</pre>
+<p/>
+Escape sequences are handled properly. For example,
+<p/>
+<pre>
+   "abc\tdef\nghi" ? (tab(upto('\n')) &amp; snapshot())
+</pre>
+<p/>
+produces
+<p/>
+<pre>
+------------------------------
+|			     |
+|			     |
+| &amp;subject = "abc\tdef\nghi" |
+|		      |      |
+|			     |
+------------------------------
+</pre>
+<p/>
+The title argument places a title into the top bar, as in
+<p/>
+<pre>
+"abc\tdef\nghi" ? (tab(upto('\n')) &amp; snapshot("upto('\n')")
+</pre>
+<p/>
+which produces
+<p/>
+<pre>
+    --upto('\n')-------------------
+    |                             |
+    |                             |
+    | &amp;subject = "abc\tdef\nghi"  |
+    |                     |       |
+    |                             |
+    -------------------------------
+</pre>
+<p/>
+The len argument rewraps the display for a screen of len width.
+<p/><a href="ipl.scan-scan.icn.html#150" target="displayFrame">Source - scan.icn </a>
+<p/>
+</body></html>

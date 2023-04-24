@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Coexpression</title></head><body>
+<h1>Coexpression</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+This class contains some useful methods for manipulating co-expressions.
+<p/><a href="lang-prog.icn.html#265" target="displayFrame">Source - prog.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_activator">get_activator()</a>
+<a href="#get_current_frame_info">get_current_frame_info()</a>
+<a href="#get_level">get_level()</a>
+<a href="#get_program">get_program()</a>
+<a href="#get_stack_info">get_stack_info()</a>
+<a href="#get_stack_info_impl">get_stack_info_impl()</a>
+<a href="#is_main">is_main()</a>
+<a href="#print_stack">print_stack()</a>
+<a href="#traceback">traceback()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_activator"/>
+<h3>get_activator(ce)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the given co-expression's activator (ie the value of
+<code>&amp;source</code> when it was last active); fails if the co-expression has
+never been activated.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ce</code> - the co-expression, by default &amp;current
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#269" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_frame_info"/>
+<h3>get_current_frame_info(ce)</h3>
+public static<p/>
+<dl>
+<dd>
+This is like <code><a href="lang.Coexpression.html#get_stack_info">get_stack_info</a></code>, but just returns what would be the
+first element of the list, which represents the current procedure
+frame of the given co-expression.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ce</code> - the co-expression, by default &amp;current
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#338" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_level"/>
+<h3>get_level(ce)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the current procedure depth level of the given
+co-expression (ie the value of &amp;level for that co-expression).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ce</code> - the co-expression, by default &amp;current
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#297" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_program"/>
+<h3>get_program(ce)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the program holding the current execution point
+of the given co-expression.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ce</code> - the co-expression, by default &amp;current
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#279" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_stack_info"/>
+<h3>get_stack_info(ce, lim)</h3>
+public static<p/>
+<dl>
+<dd>
+Return a list containing information about the stack of frames in the given
+co-expression.  Each element is a <code><a href="lang.FrameInfo.html" target="displayFrame">FrameInfo</a></code> instance.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ce</code> - the co-expression, by default &amp;current
+</dd>
+<dd>
+<code>lim</code> - the maximum number of frames to put in the list, by default 
+all frames
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#323" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_stack_info_impl"/>
+<h3>get_stack_info_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#350" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="is_main"/>
+<h3>is_main(ce)</h3>
+public static native<p/>
+<dl>
+<dd>
+Succeed iff this co-expression is the main co-expression of a
+program.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ce</code> - the co-expression, by default &amp;current
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#288" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="print_stack"/>
+<h3>print_stack(ce)</h3>
+public static native<p/>
+<dl>
+<dd>
+Output (to stderr) a dump of the stack of the given co-expression,
+showing the internal format of the stack.
+<p/><a href="lang-prog.icn.html#317" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="traceback"/>
+<h3>traceback(ce, act_chain)</h3>
+public static native<p/>
+<dl>
+<dd>
+Output (to stderr) a traceback in the same format as that produced by
+a runtime error.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ce</code> - the co-expression, by default &amp;current
+</dd>
+<dd>
+<code>act_chain</code> - if non-null, show the traceback for the activator chain, otherwise
+just show the traceback for this co-expression.
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#306" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+</body></html>

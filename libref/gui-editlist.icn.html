@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>editlist.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: editlist.icn 8828 2021-01-08 12:48:33Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import
+<a name="12"/>   util,
+<a name="13"/>   ipl.pdco
+<a name="14"/>
+<a name="15"/>#
+<a name="16"/># This component functions in the same way as List above, but
+<a name="17"/># the item selected may be edited by the user.  An extra
+<a name="18"/># method is therefore supplied to get the content, as it may
+<a name="19"/># not correspond to an element of the list.
+<a name="20"/>#
+<a name="21"/># A CONTENT_CHANGED event is generated when the value displayed in the
+<a name="22"/># field changes, either by selection from the list or user edit of the
+<a name="23"/># text.
+<a name="24"/>#
+<a name="25"/>class EditList(SelectionDropDown)
+<a name="26"/>   public
+<a name="27"/>      # The last event which changed the view via a change in selection (as opposed to editing).
+<a name="28"/>      applied_event
+<a name="29"/>
+<a name="30"/>   #
+<a name="31"/>   # Set the text field's filter (see `TextField` for details).
+<a name="32"/>   # :Parameters :
+<a name="33"/>   # :  `c` - The filter
+<a name="34"/>   #
+<a name="35"/>   public set_filter(c)
+<a name="36"/>      self.view.set_filter(c)
+<a name="37"/>      link
+<a name="38"/>   end
+<a name="39"/>
+<a name="40"/>   #
+<a name="41"/>   # Return the contents of the selected item (which may have
+<a name="42"/>   # been edited).
+<a name="43"/>   #
+<a name="44"/>   public get_contents()
+<a name="45"/>      return self.view.get_contents()
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   #
+<a name="49"/>   # Set the contents of the text to the given string; the
+<a name="50"/>   # selection is set to any matching item in the list, or
+<a name="51"/>   # left unchanged if there is no match.
+<a name="52"/>   #
+<a name="53"/>   public set_contents(x)
+<a name="54"/>      self.view.set_contents(x)
+<a name="55"/>      synch_selection()
+<a name="56"/>      link
+<a name="57"/>   end
+<a name="58"/>
+<a name="59"/>   # Set the list selection items to the list x, but then synchronize
+<a name="60"/>   # the selection in the list with the view, rather than the other
+<a name="61"/>   # way around (as `set_selection_list` does).
+<a name="62"/>   #
+<a name="63"/>   # :Parameters :
+<a name="64"/>   # :  `The` - list of items
+<a name="65"/>   #
+<a name="66"/>   public synch_set_selection_list(x)
+<a name="67"/>      self.selection_list := need_list(x)
+<a name="68"/>      /self.selection := 1
+<a name="69"/>      constrain_selection()
+<a name="70"/>      synch_selection()
+<a name="71"/>      link
+<a name="72"/>   end
+<a name="73"/>
+<a name="74"/>   public synch_selection()
+<a name="75"/>      local s, i
+<a name="76"/>      s := view.get_contents()
+<a name="77"/>      every i := 1 to *selection_list do {
+<a name="78"/>         if convert_element(selection_list[i]) == s then {
+<a name="79"/>            selection := i
+<a name="80"/>            return i
+<a name="81"/>         }
+<a name="82"/>      }
+<a name="83"/>   end
+<a name="84"/>
+<a name="85"/>   public was_applied(ev)
+<a name="86"/>      succeed ev === applied_event
+<a name="87"/>   end
+<a name="88"/>
+<a name="89"/>   public override apply_selection(ev)
+<a name="90"/>      local s 
+<a name="91"/>      s := convert_element(object_get_selection()) | view.get_contents()[1:1]
+<a name="92"/>      if /ev then
+<a name="93"/>         self.view.set_contents(s)
+<a name="94"/>      else
+<a name="95"/>         self.view.assign_contents(s,, applied_event := ev, &amp;yes)
+<a name="96"/>   end
+<a name="97"/>
+<a name="98"/>   public on_textfield(ev, src, type)
+<a name="99"/>      synch_selection()
+<a name="100"/>      # Fire the event with self as source.
+<a name="101"/>      fire(type, ev)
+<a name="102"/>   end
+<a name="103"/>
+<a name="104"/>   public override create_view()
+<a name="105"/>      return DropDownTextField()
+<a name="106"/>   end
+<a name="107"/>
+<a name="108"/>   public override get_default_width()
+<a name="109"/>      return border.get_total_width() +
+<a name="110"/>         b.get_preferred_width() +
+<a name="111"/>         # Max string length + space for cursor (cf TextField's get_view() method)
+<a name="112"/>         MaxNN{ self.cbwin.text_width((view.contents | convert_element(!self.selection_list)) || " ") } +
+<a name="113"/>         view.border.get_total_width()
+<a name="114"/>   end
+<a name="115"/>
+<a name="116"/>   public override new()
+<a name="117"/>      SelectionDropDown.new()
+<a name="118"/>      every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+<a name="119"/>      return
+<a name="120"/>   end
+<a name="121"/>end
+<a name="122"/>
+<a name="123"/>#
+<a name="124"/># EditList in which changes/selection to the view/list are independent
+<a name="125"/>#
+<a name="126"/>class IndependentEditList(EditList)
+<a name="127"/>   private old_selection
+<a name="128"/>
+<a name="129"/>   # These two methods are overridden to do nothing, effectively
+<a name="130"/>   # making the list and the textfield independent, so that
+<a name="131"/>   # changes/selection from one don't affect the other.
+<a name="132"/>   public override apply_selection(ev) end
+<a name="133"/>   public override synch_selection() end
+<a name="134"/>
+<a name="135"/>   public override start_change(e)
+<a name="136"/>      self.old_selection := self.selection
+<a name="137"/>   end
+<a name="138"/>
+<a name="139"/>   public override end_change(e)
+<a name="140"/>      if self.old_selection ~=== self.selection then
+<a name="141"/>         fire(Event.SELECTION_CHANGED, e)
+<a name="142"/>   end
+<a name="143"/>end
+</pre></body></html>

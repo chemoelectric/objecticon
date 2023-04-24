@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>messagehandler.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: messagehandler.icn 8996 2021-03-24 07:27:53Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package mail
+<a name="6"/>
+<a name="7"/>import lang
+<a name="8"/>
+<a name="9"/>class MessageHandler(TypeHandler)
+<a name="10"/>   public override can_handle(ct)
+<a name="11"/>      local t, s
+<a name="12"/>      t := Text.lower(ct.get_type())
+<a name="13"/>      s := Text.lower(ct.get_subtype())
+<a name="14"/>      succeed (t == "message" &amp; s == "rfc822") | (t == "application" &amp; s == "x-extension-eml")
+<a name="15"/>   end
+<a name="16"/>
+<a name="17"/>   public override convert_to_object(m,  data)
+<a name="18"/>      local res
+<a name="19"/>      res := Message.parse(data) | fail
+<a name="20"/>      return res
+<a name="21"/>   end
+<a name="22"/>
+<a name="23"/>   public override convert_from_object(m, obj)
+<a name="24"/>      return obj.to_rfc822()
+<a name="25"/>   end
+<a name="26"/>end
+</pre></body></html>

@@ -1,0 +1,732 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>rfc822parser.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: rfc822parser.icn 8791 2020-12-28 13:35:33Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package mail
+<a name="6"/>
+<a name="7"/>import 
+<a name="8"/>   util,
+<a name="9"/>   exception
+<a name="10"/>
+<a name="11"/>class RFC822Parser()
+<a name="12"/>   public static const 
+<a name="13"/>      CTL_CHAR,
+<a name="14"/>      SPACE,
+<a name="15"/>      SPECIALS,
+<a name="16"/>      ATOM_CHAR,
+<a name="17"/>      CTEXT_CHAR,
+<a name="18"/>      FIELD_NAME_CHARS,
+<a name="19"/>      QTEXT_CHAR,
+<a name="20"/>      DTEXT_CHAR,
+<a name="21"/>      LWSP_CHAR,
+<a name="22"/>      DAYS,
+<a name="23"/>      MONTHS,
+<a name="24"/>      TZ_CHARS,
+<a name="25"/>      TSPECIALS,
+<a name="26"/>      ATOM_CHAR_1521
+<a name="27"/>
+<a name="28"/>   private static init()
+<a name="29"/>      CTL_CHAR := &amp;ascii[1:33] ++ &amp;ascii[128]
+<a name="30"/>      SPACE := ' '
+<a name="31"/>      SPECIALS := '()&lt;&gt;@,;:\\\".[]'
+<a name="32"/>      ATOM_CHAR := &amp;ascii -- CTL_CHAR -- SPACE -- SPECIALS
+<a name="33"/>      QTEXT_CHAR := &amp;ascii -- '\"\\\r'
+<a name="34"/>      DTEXT_CHAR := &amp;ascii -- '[]\\\r'
+<a name="35"/>      CTEXT_CHAR := &amp;ascii -- '()\\\r'
+<a name="36"/>      FIELD_NAME_CHARS := &amp;ascii -- CTL_CHAR -- SPACE -- ':'
+<a name="37"/>      LWSP_CHAR := ' \t'
+<a name="38"/>      DAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+<a name="39"/>      MONTHS := ["Jan", "Feb",  "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+<a name="40"/>      TZ_CHARS := '+\-' ++ &amp;digits ++ &amp;ucase
+<a name="41"/>      # RCF 1521 defs
+<a name="42"/>      TSPECIALS := '()&lt;&gt;@,;:\\\"/[]?='
+<a name="43"/>      ATOM_CHAR_1521 := &amp;ascii -- CTL_CHAR -- SPACE -- TSPECIALS
+<a name="44"/>   end
+<a name="45"/>
+<a name="46"/>   #
+<a name="47"/>   # The first four parse objects are the fundamental lexical components, other
+<a name="48"/>   # than inidividual special characters (see rfc822).  Therefore, they must
+<a name="49"/>   # be preceded by a call to next_token, to move the position to the correct
+<a name="50"/>   # point to parse them.
+<a name="51"/>   #
+<a name="52"/>
+<a name="53"/>   #
+<a name="54"/>   # qtext = &lt;any CHAR excepting &lt;"&gt;, "\" &amp; CR, and including 
+<a name="55"/>   #         linear-white-space&gt;
+<a name="56"/>   # quoted-pair =  "\" CHAR
+<a name="57"/>   # quoted-string = &lt;"&gt; *(qtext/quoted-pair) &lt;"&gt;
+<a name="58"/>   #
+<a name="59"/>   # Must be preceded by a call to next_token()
+<a name="60"/>   #
+<a name="61"/>   private parse_quoted_string()
+<a name="62"/>      local res
+<a name="63"/>
+<a name="64"/>      res := move(1)
+<a name="65"/>
+<a name="66"/>      repeat {
+<a name="67"/>         if any('\\') then {
+<a name="68"/>            res ||:= move(2) | throw("Unterminated quoted string")
+<a name="69"/>         } else if any(QTEXT_CHAR) then
+<a name="70"/>            res ||:= tab(many(QTEXT_CHAR))
+<a name="71"/>         else if any('\"') then {
+<a name="72"/>            res ||:= move(1)
+<a name="73"/>            return res
+<a name="74"/>         } else
+<a name="75"/>            # Missing closing quote or illegal char
+<a name="76"/>            throw("Missing closing quote or illegal char")
+<a name="77"/>      }
+<a name="78"/>   end
+<a name="79"/>
+<a name="80"/>   #
+<a name="81"/>   # As above, but returns the string without the surrounding quotes, and any
+<a name="82"/>   # escape sequences converted.
+<a name="83"/>   #
+<a name="84"/>   private parse_and_convert_quoted_string()
+<a name="85"/>      local res
+<a name="86"/>
+<a name="87"/>      res := move(0)  # Empty string, same type as &amp;subject
+<a name="88"/>      move(1)
+<a name="89"/>
+<a name="90"/>      repeat {
+<a name="91"/>         if ="\\" then
+<a name="92"/>            res ||:= move(1) | throw("Unterminated quoted string")
+<a name="93"/>         else if any(QTEXT_CHAR) then
+<a name="94"/>            res ||:= tab(many(QTEXT_CHAR))
+<a name="95"/>         else if ="\"" then
+<a name="96"/>            return res
+<a name="97"/>         else
+<a name="98"/>            # Missing closing quote or illegal char
+<a name="99"/>            throw("Missing closing quote or illegal char")
+<a name="100"/>      }
+<a name="101"/>   end
+<a name="102"/>
+<a name="103"/>   #
+<a name="104"/>   # Helper to add quotes to a string `s`, and escape any characters
+<a name="105"/>   # in `c`, which defaults to `'\"\\\r'`.
+<a name="106"/>   #
+<a name="107"/>   public static quote_string(s, c)
+<a name="108"/>      local t
+<a name="109"/>      t := "\""
+<a name="110"/>      /c := '\"\\\r'
+<a name="111"/>      s ? {
+<a name="112"/>         while t ||:= string(tab(upto(c))) || "\\" || string(move(1))
+<a name="113"/>         return t || tab(0) || "\""
+<a name="114"/>      }
+<a name="115"/>   end
+<a name="116"/>
+<a name="117"/>   #
+<a name="118"/>   # Little utility function for quoting a string (if necessary).
+<a name="119"/>   #
+<a name="120"/>   public static escape_1521_value(s)
+<a name="121"/>      # If non-empty and all chars are atom chars, no quotes needed.
+<a name="122"/>      return if many(ATOM_CHAR_1521, s) = *s + 1 then
+<a name="123"/>         s
+<a name="124"/>      else
+<a name="125"/>         quote_string(s, ~QTEXT_CHAR)
+<a name="126"/>   end
+<a name="127"/>
+<a name="128"/>   #
+<a name="129"/>   # atom        =  1*&lt;any CHAR except specials, SPACE and CTLs&gt;
+<a name="130"/>   # ie one or more atom_char
+<a name="131"/>   #
+<a name="132"/>   # Must be preceded by a call to next_token()
+<a name="133"/>   #
+<a name="134"/>   private parse_atom()
+<a name="135"/>      return tab(many(ATOM_CHAR)) | throw("Atom char expected")
+<a name="136"/>   end
+<a name="137"/>
+<a name="138"/>   #
+<a name="139"/>   # domain-literal =  "[" *(dtext / quoted-pair) "]"
+<a name="140"/>   # dtext =  &lt;any CHAR excluding "[","]", "\" &amp; CR&gt;
+<a name="141"/>   #
+<a name="142"/>   # Must be preceded by a call to next_token()
+<a name="143"/>   #
+<a name="144"/>   private parse_domain_literal()
+<a name="145"/>      local res
+<a name="146"/>      res := move(1)
+<a name="147"/>      repeat {
+<a name="148"/>         if any('\\') then
+<a name="149"/>            res ||:= move(2) | throw("Premature end of field")
+<a name="150"/>         else if any(DTEXT_CHAR) then
+<a name="151"/>            res ||:= tab(many(DTEXT_CHAR))
+<a name="152"/>         else if any(']') then 
+<a name="153"/>            return res || move(1)
+<a name="154"/>         else
+<a name="155"/>            # Missing closing ] or illegal char
+<a name="156"/>            throw("Missing closing ] or illegal char")
+<a name="157"/>      }
+<a name="158"/>   end
+<a name="159"/>
+<a name="160"/>   #
+<a name="161"/>   # comment     =  "(" *(ctext / quoted-pair / comment) ")"
+<a name="162"/>   #
+<a name="163"/>   private parse_comment()
+<a name="164"/>      local res
+<a name="165"/>      res := move(1)
+<a name="166"/>      repeat {
+<a name="167"/>         if any('\\') then
+<a name="168"/>            res ||:= move(2) | throw("Premature end of field")
+<a name="169"/>         else if any(CTEXT_CHAR) then
+<a name="170"/>            res ||:= tab(many(CTEXT_CHAR))
+<a name="171"/>         else if any('(') then
+<a name="172"/>            res ||:= parse_comment()
+<a name="173"/>         else if any(')') then 
+<a name="174"/>            return res || move(1)
+<a name="175"/>         else
+<a name="176"/>            # Missing closing ) or illegal char
+<a name="177"/>            throw("Missing closing ) or illegal char")
+<a name="178"/>      }
+<a name="179"/>   end
+<a name="180"/>
+<a name="181"/>   private next_token()
+<a name="182"/>      repeat {
+<a name="183"/>         tab(many(LWSP_CHAR))
+<a name="184"/>         if any('(') then
+<a name="185"/>            parse_comment()
+<a name="186"/>         else
+<a name="187"/>            return
+<a name="188"/>      }
+<a name="189"/>   end
+<a name="190"/>
+<a name="191"/>   #
+<a name="192"/>   # word =  atom / quoted-string
+<a name="193"/>   #
+<a name="194"/>   private parse_word() 
+<a name="195"/>      next_token()
+<a name="196"/>      return if any('\"') then
+<a name="197"/>         parse_quoted_string()
+<a name="198"/>      else
+<a name="199"/>         parse_atom()
+<a name="200"/>   end
+<a name="201"/>
+<a name="202"/>   #
+<a name="203"/>   # local-part  =  word *("." word)             
+<a name="204"/>   #
+<a name="205"/>   private parse_local_part()
+<a name="206"/>      local res
+<a name="207"/>      res := parse_word()
+<a name="208"/>      while res ||:= ="." do
+<a name="209"/>         res ||:= parse_word()
+<a name="210"/>      return res
+<a name="211"/>   end
+<a name="212"/>
+<a name="213"/>   #
+<a name="214"/>   # domain      =  sub-domain *("." sub-domain)
+<a name="215"/>   #
+<a name="216"/>   private parse_domain()
+<a name="217"/>      local res
+<a name="218"/>      res := parse_sub_domain()
+<a name="219"/>      while res ||:= ="." do
+<a name="220"/>         res ||:= parse_sub_domain()
+<a name="221"/>      return res
+<a name="222"/>   end
+<a name="223"/>
+<a name="224"/>   #
+<a name="225"/>   # sub-domain  =  domain-ref / domain-literal
+<a name="226"/>   # domain-ref  =  atom
+<a name="227"/>   #
+<a name="228"/>   private parse_sub_domain()
+<a name="229"/>      next_token()
+<a name="230"/>      return if any('[') then
+<a name="231"/>         parse_domain_literal()
+<a name="232"/>      else
+<a name="233"/>         parse_atom()
+<a name="234"/>   end
+<a name="235"/>
+<a name="236"/>   #
+<a name="237"/>   # phrase =  1*word
+<a name="238"/>   #
+<a name="239"/>   private parse_phrase()
+<a name="240"/>      local res
+<a name="241"/>      res := move(0)
+<a name="242"/>      next_token()
+<a name="243"/>      while any('\"' ++ ATOM_CHAR) do {
+<a name="244"/>         # Single spaces between words
+<a name="245"/>         if *res &gt; 0 then
+<a name="246"/>            res ||:= " "
+<a name="247"/>         res ||:= parse_word()
+<a name="248"/>         next_token()
+<a name="249"/>      }
+<a name="250"/>      if *res = 0 then
+<a name="251"/>         throw("Phrase expected")
+<a name="252"/>      return res
+<a name="253"/>   end
+<a name="254"/>
+<a name="255"/>   #
+<a name="256"/>   # addr_spec = local-part "@" domain
+<a name="257"/>   #
+<a name="258"/>   private parse_addr_spec(mb)
+<a name="259"/>      local t
+<a name="260"/>      t := parse_local_part()
+<a name="261"/>      mb.set_local_part(t)
+<a name="262"/>      next_token()
+<a name="263"/>      ="@" | throw("'@' expected")
+<a name="264"/>      t := parse_domain()
+<a name="265"/>      mb.set_domain(t)
+<a name="266"/>      return
+<a name="267"/>   end
+<a name="268"/>
+<a name="269"/>   #
+<a name="270"/>   # route       =  1#("@" domain) ":" 
+<a name="271"/>   # where 1#X means '(X *("," X))' 
+<a name="272"/>   #
+<a name="273"/>   private parse_route(mb)
+<a name="274"/>      local t
+<a name="275"/>      t := []
+<a name="276"/>      repeat {
+<a name="277"/>         next_token()
+<a name="278"/>         ="@" | throw("'@' expected")
+<a name="279"/>         put(t, parse_domain())
+<a name="280"/>         next_token()
+<a name="281"/>         ="," | break
+<a name="282"/>         next_token()
+<a name="283"/>      }
+<a name="284"/>      next_token()
+<a name="285"/>      =":" | throw("':' expected")
+<a name="286"/>      mb.set_route(t)
+<a name="287"/>      return
+<a name="288"/>   end
+<a name="289"/>
+<a name="290"/>   #
+<a name="291"/>   # route-addr  =  "&lt;" [route] addr-spec "&gt;"
+<a name="292"/>   #
+<a name="293"/>   private parse_route_addr(mb)
+<a name="294"/>      next_token()
+<a name="295"/>      ="&lt;" | throw("'&lt;' expected")
+<a name="296"/>      next_token()
+<a name="297"/>      if any('@') then
+<a name="298"/>         parse_route(mb)
+<a name="299"/>      else
+<a name="300"/>         mb.set_route([])
+<a name="301"/>      parse_addr_spec(mb)
+<a name="302"/>      next_token()
+<a name="303"/>      ="&gt;" | throw("'&gt;' expected")
+<a name="304"/>      return
+<a name="305"/>   end
+<a name="306"/>
+<a name="307"/>   #
+<a name="308"/>   # See RFC1123 5.2.15
+<a name="309"/>   # mailbox =  addr-spec            ; simple address
+<a name="310"/>   #         / [phrase] route-addr   ; name &amp; addr-spec
+<a name="311"/>   #
+<a name="312"/>   private parse_mailbox_impl()
+<a name="313"/>      local x, mb
+<a name="314"/>      mb := Mailbox()
+<a name="315"/>      #
+<a name="316"/>      # The lookahead is complex, so try parsing as a simple address
+<a name="317"/>      # first, and if that fails try the more complex alternative.
+<a name="318"/>      #
+<a name="319"/>      x := &amp;pos
+<a name="320"/>      unless try { parse_addr_spec(mb) } then {
+<a name="321"/>         eclear()
+<a name="322"/>         tab(x)
+<a name="323"/>         if any('\"' ++ ATOM_CHAR) then
+<a name="324"/>            mb.set_phrase(parse_phrase())
+<a name="325"/>         parse_route_addr(mb)
+<a name="326"/>      }
+<a name="327"/>
+<a name="328"/>      return mb
+<a name="329"/>   end
+<a name="330"/>
+<a name="331"/>   #
+<a name="332"/>   # group =  phrase ":" [#mailbox] ";"
+<a name="333"/>   # #X means empty or X,X,X...
+<a name="334"/>   #    
+<a name="335"/>   private parse_group_impl()
+<a name="336"/>      local mb, p, t
+<a name="337"/>
+<a name="338"/>      p := parse_phrase()
+<a name="339"/>      t := []
+<a name="340"/>      next_token()
+<a name="341"/>      =":" | throw("':' expected")
+<a name="342"/>      next_token()
+<a name="343"/>      unless =";" then {      # ; here implies an empty group
+<a name="344"/>         repeat {
+<a name="345"/>            mb := parse_mailbox_impl()
+<a name="346"/>            put(t, mb)
+<a name="347"/>            next_token()
+<a name="348"/>            ="," | break
+<a name="349"/>            next_token()
+<a name="350"/>         }
+<a name="351"/>         =";" | throw("';' expected")
+<a name="352"/>      }
+<a name="353"/>      return Group(t, p)
+<a name="354"/>   end
+<a name="355"/>
+<a name="356"/>   private parse_mailbox_or_group()
+<a name="357"/>      local x, a
+<a name="358"/>
+<a name="359"/>      x := &amp;pos
+<a name="360"/>      if try { a := parse_mailbox_impl() } then
+<a name="361"/>         return a
+<a name="362"/>      eclear()
+<a name="363"/>      tab(x)
+<a name="364"/>
+<a name="365"/>      return parse_group_impl()
+<a name="366"/>   end
+<a name="367"/>
+<a name="368"/>   private parse_address_list_impl(can_be_empty)
+<a name="369"/>      local l
+<a name="370"/>      l := []
+<a name="371"/>
+<a name="372"/>      if \can_be_empty then {
+<a name="373"/>         next_token()
+<a name="374"/>         if pos(0) then
+<a name="375"/>            return l
+<a name="376"/>      }
+<a name="377"/>
+<a name="378"/>      repeat {
+<a name="379"/>         put(l, parse_mailbox_or_group()) | fail
+<a name="380"/>         next_token()
+<a name="381"/>         ="," | return l
+<a name="382"/>      }
+<a name="383"/>   end
+<a name="384"/>
+<a name="385"/>   private parse_mailbox_list_impl(can_be_empty)
+<a name="386"/>      local l
+<a name="387"/>      l := []
+<a name="388"/>
+<a name="389"/>      if \can_be_empty then {
+<a name="390"/>         next_token()
+<a name="391"/>         if pos(0) then
+<a name="392"/>            return l
+<a name="393"/>      }
+<a name="394"/>
+<a name="395"/>      repeat {
+<a name="396"/>         put(l, parse_mailbox_impl())
+<a name="397"/>         next_token()
+<a name="398"/>         ="," | return l
+<a name="399"/>      }
+<a name="400"/>   end
+<a name="401"/>
+<a name="402"/>   #
+<a name="403"/>   # month =  "Jan"  /  "Feb" /  "Mar"  /  "Apr" /  "May"  /  "Jun" /  
+<a name="404"/>   #         "Jul"  /  "Aug" /  "Sep"  /  "Oct" /  "Nov"  /  "Dec"
+<a name="405"/>   #
+<a name="406"/>   private parse_month()
+<a name="407"/>      local i
+<a name="408"/>      next_token()
+<a name="409"/>      every i := 1 to *MONTHS do
+<a name="410"/>         if =MONTHS[i] then
+<a name="411"/>            return i
+<a name="412"/>      throw("Invalid month")
+<a name="413"/>   end
+<a name="414"/>
+<a name="415"/>   private parse_day()
+<a name="416"/>      local s
+<a name="417"/>      next_token()
+<a name="418"/>      s := tab(many(&amp;digits)) | throw("Digit expected")
+<a name="419"/>      if *s &lt;= 2 then
+<a name="420"/>         return integer(s)
+<a name="421"/>      throw("Invalid day: " || s)
+<a name="422"/>   end
+<a name="423"/>
+<a name="424"/>   private parse_year()
+<a name="425"/>      local s
+<a name="426"/>      next_token()
+<a name="427"/>      s := tab(many(&amp;digits)) | throw("Digit expected")
+<a name="428"/>      if 2 &lt;= *s &lt;= 4 then
+<a name="429"/>         return integer(s)
+<a name="430"/>      throw("Invalid year: " || s)
+<a name="431"/>   end
+<a name="432"/>
+<a name="433"/>   private parse_2dig()
+<a name="434"/>      local s
+<a name="435"/>      next_token()
+<a name="436"/>      s := tab(many(&amp;digits)) | throw("Digit expected")
+<a name="437"/>      if *s = 2 then
+<a name="438"/>         return integer(s)
+<a name="439"/>      throw("2 digit field expected")
+<a name="440"/>   end
+<a name="441"/>
+<a name="442"/>   private parse_zone()
+<a name="443"/>      next_token()
+<a name="444"/>      tab(upto(TZ_CHARS)) | throw("Expected tz char")
+<a name="445"/>      return tab(many(TZ_CHARS)) | throw("Expected tz char")
+<a name="446"/>   end
+<a name="447"/>
+<a name="448"/>   #
+<a name="449"/>   # date-time = [ day "," ] date time
+<a name="450"/>   # day =  "Mon"  / "Tue" /  "Wed"  / "Thu"/  "Fri"  / "Sat" /  "Sun"
+<a name="451"/>   # date = 1*2DIGIT month 2*4DIGIT ; see rfc1123, s5.2.14
+<a name="452"/>   # time =  hour zone                    
+<a name="453"/>   # hour =  2DIGIT ":" 2DIGIT [":" 2DIGIT]
+<a name="454"/>   #
+<a name="455"/>   private parse_date_time_impl()
+<a name="456"/>      local d, m, y, s, hh, mm, ss, zz
+<a name="457"/>
+<a name="458"/>      next_token()
+<a name="459"/>      if =(!DAYS) then {
+<a name="460"/>         next_token()
+<a name="461"/>         ="," | throw("',' expected")
+<a name="462"/>      }
+<a name="463"/>      d := parse_day()
+<a name="464"/>      m := parse_month()
+<a name="465"/>      y := parse_year()
+<a name="466"/>
+<a name="467"/>      hh := parse_2dig()
+<a name="468"/>      next_token()
+<a name="469"/>      =":" | throw("':' expected")
+<a name="470"/>      mm := parse_2dig()
+<a name="471"/>      next_token()
+<a name="472"/>      if =":" then
+<a name="473"/>         ss := parse_2dig()
+<a name="474"/>      else
+<a name="475"/>         ss := 0
+<a name="476"/>
+<a name="477"/>      s := parse_zone()
+<a name="478"/>      zz := Timezone.get_known_timezone(s) | Timezone(0, s)
+<a name="479"/>
+<a name="480"/>      return Time(y, m, d, hh, mm, ss, zz)
+<a name="481"/>   end
+<a name="482"/>
+<a name="483"/>   #
+<a name="484"/>   # field           =    field-name ":" [field-body] CRLF
+<a name="485"/>   # field-name      =  1*&lt;any CHAR, excluding CTLs, SPACE, and ":"&gt;
+<a name="486"/>   # field-body      =   *text [CRLF LWSP-char field-body]
+<a name="487"/>   #
+<a name="488"/>   private parse_field_impl(message)
+<a name="489"/>      local f, v
+<a name="490"/>      next_token()
+<a name="491"/>      f := tab(many(FIELD_NAME_CHARS)) | throw("Expect fieldname chars")
+<a name="492"/>      next_token()
+<a name="493"/>      =":" | throw("':' expected")
+<a name="494"/>      next_token()
+<a name="495"/>      # The handling of folding is done by the caller, so we just take the
+<a name="496"/>      # rest of the string as the field-body.
+<a name="497"/>      v := tab(0)
+<a name="498"/>      message.add_header(f, v)
+<a name="499"/>      return
+<a name="500"/>   end
+<a name="501"/>
+<a name="502"/>   #
+<a name="503"/>   # See rfc 2045 (formerly 1521)
+<a name="504"/>   #
+<a name="505"/>   #  encoding := "Content-Transfer-Encoding" ":" mechanism
+<a name="506"/>   #
+<a name="507"/>   #  mechanism := "7bit" / "8bit" / "binary" /
+<a name="508"/>   #               "quoted-printable" / "base64" /
+<a name="509"/>   #               ietf-token / x-token
+<a name="510"/>   #               ; These values are not case sensitive
+<a name="511"/>   #
+<a name="512"/>   private parse_content_transfer_encoding_impl()
+<a name="513"/>      return parse_token_1521()
+<a name="514"/>   end
+<a name="515"/>
+<a name="516"/>   #
+<a name="517"/>   #  type := discrete-type / composite-type
+<a name="518"/>   #  discrete-type := "text" / "image" / "audio" / "video" /
+<a name="519"/>   #                   "application" / extension-token
+<a name="520"/>   #
+<a name="521"/>   #  composite-type := "message" / "multipart" / extension-token
+<a name="522"/>   #
+<a name="523"/>   #  extension-token := ietf-token / x-token
+<a name="524"/>   #
+<a name="525"/>   #  ietf-token := &lt;An extension token defined by a
+<a name="526"/>   #                 standards-track RFC and registered
+<a name="527"/>   #                 with IANA.&gt;
+<a name="528"/>   #
+<a name="529"/>   #  x-token := &lt;The two characters "X-" or "x-" followed, with
+<a name="530"/>   #              no intervening white space, by any token&gt;
+<a name="531"/>   #
+<a name="532"/>   private parse_type()
+<a name="533"/>      return parse_token_1521()
+<a name="534"/>   end
+<a name="535"/>
+<a name="536"/>   #
+<a name="537"/>   # subtype := extension-token / iana-token
+<a name="538"/>   #
+<a name="539"/>   # iana-token := &lt;A publicly-defined extension token. Tokens
+<a name="540"/>   #                 of this form must be registered with IANA
+<a name="541"/>   #                 as specified in RFC 2048   
+<a name="542"/>   #
+<a name="543"/>   private parse_subtype()
+<a name="544"/>      return parse_token_1521()
+<a name="545"/>   end
+<a name="546"/>
+<a name="547"/>   #
+<a name="548"/>   # token  :=  1*&lt;any (ASCII) CHAR except SPACE, CTLs,
+<a name="549"/>   # or tspecials&gt;
+<a name="550"/>   #
+<a name="551"/>   # tspecials :=  "(" / ")" / "&lt;" / "&gt;" / "@"
+<a name="552"/>   #             /  "," / ";" / ":" / "\" / &lt;"&gt;
+<a name="553"/>   #             /  "/" / "[" / "]" / "?" / "="
+<a name="554"/>   #            ; Must be in quoted-string,
+<a name="555"/>   #            ; to use within parameter values
+<a name="556"/>   #
+<a name="557"/>   private parse_token_1521()
+<a name="558"/>      return tab(many(ATOM_CHAR_1521)) | throw("RFC1521 Token expected")
+<a name="559"/>   end
+<a name="560"/>
+<a name="561"/>   #
+<a name="562"/>   #  value := token / quoted-string
+<a name="563"/>   #
+<a name="564"/>   private parse_value()
+<a name="565"/>      return if any('\"') then
+<a name="566"/>         parse_and_convert_quoted_string()
+<a name="567"/>      else
+<a name="568"/>         parse_token_1521()
+<a name="569"/>   end
+<a name="570"/>
+<a name="571"/>   #
+<a name="572"/>   #  parameter := attribute "=" value
+<a name="573"/>   #
+<a name="574"/>   #  attribute := token
+<a name="575"/>   #               ; Matching of attributes
+<a name="576"/>   #               ; is ALWAYS case-insensitive.
+<a name="577"/>   #
+<a name="578"/>   #  On success the resulting value is placed into o.
+<a name="579"/>   #
+<a name="580"/>   private parse_parameter(o)
+<a name="581"/>      local key, val
+<a name="582"/>      key := parse_token_1521()
+<a name="583"/>      next_token()
+<a name="584"/>      ="=" | throw("'=' expected")
+<a name="585"/>      next_token()
+<a name="586"/>      val := parse_value()
+<a name="587"/>      o.set_parameter(key, val)
+<a name="588"/>   end
+<a name="589"/>
+<a name="590"/>   #
+<a name="591"/>   # See rfc 2045 (formerly 1521)
+<a name="592"/>   #
+<a name="593"/>   #  content := "Content-Type" ":" type "/" subtype
+<a name="594"/>   #             *(";" parameter)
+<a name="595"/>   #             ; Matching of media type and subtype
+<a name="596"/>   #             ; is ALWAYS case-insensitive.
+<a name="597"/>   #
+<a name="598"/>   #  attribute := token
+<a name="599"/>   #               ; Matching of attributes
+<a name="600"/>   #               ; is ALWAYS case-insensitive.
+<a name="601"/>   #
+<a name="602"/>   #  value := token / quoted-string
+<a name="603"/>   #
+<a name="604"/>   private parse_content_type_impl()
+<a name="605"/>      local ty, st, ct
+<a name="606"/>
+<a name="607"/>      next_token()
+<a name="608"/>
+<a name="609"/>      ty := parse_type()
+<a name="610"/>      next_token()
+<a name="611"/>      ="/" | throw("'/' expected")
+<a name="612"/>      next_token()
+<a name="613"/>      st := parse_subtype()
+<a name="614"/>      ct := ContentType(ty, st)
+<a name="615"/>
+<a name="616"/>      repeat {
+<a name="617"/>         next_token()
+<a name="618"/>         =";" | break
+<a name="619"/>         next_token()
+<a name="620"/>         parse_parameter(ct)
+<a name="621"/>      }
+<a name="622"/>
+<a name="623"/>      return ct
+<a name="624"/>   end
+<a name="625"/>
+<a name="626"/>   #
+<a name="627"/>   # disposition-type := "inline"
+<a name="628"/>   #                       / "attachment"
+<a name="629"/>   #                       / extension-token
+<a name="630"/>   #                       ; values are not case-sensitive
+<a name="631"/>   private parse_disposition_type()
+<a name="632"/>      return parse_token_1521()
+<a name="633"/>   end
+<a name="634"/>
+<a name="635"/>   #
+<a name="636"/>   # See rfc 2183 (formerly 1806)
+<a name="637"/>   #
+<a name="638"/>   #  disposition := "Content-Disposition" ":"
+<a name="639"/>   #                   disposition-type
+<a name="640"/>   #                   *(";" disposition-parm)
+<a name="641"/>   #
+<a name="642"/>   #  disposition-type := "inline"
+<a name="643"/>   #                       / "attachment"
+<a name="644"/>   #                       / extension-token
+<a name="645"/>   #                       ; values are not case-sensitive
+<a name="646"/>   #
+<a name="647"/>   #  NB - These are all parsed as 'parameter'; further parsing being done
+<a name="648"/>   #  within the ContentDisposition class itself (thus they are treated the
+<a name="649"/>   #  same as headers in a Message, ie stored a strings, but with get/set
+<a name="650"/>   #  methods for the appropriate object types).
+<a name="651"/>   #
+<a name="652"/>   #  disposition-parm := filename-parm
+<a name="653"/>   #                    / creation-date-parm
+<a name="654"/>   #                    / modification-date-parm
+<a name="655"/>   #                    / read-date-parm
+<a name="656"/>   #                    / size-parm
+<a name="657"/>   #                    / parameter
+<a name="658"/>   #
+<a name="659"/>   #  filename-parm := "filename" "=" value
+<a name="660"/>   #
+<a name="661"/>   #  creation-date-parm := "creation-date" "=" quoted-date-time
+<a name="662"/>   #  modification-date-parm := "modification-date" "=" quoted-date-time
+<a name="663"/>   #  read-date-parm := "read-date" "=" quoted-date-time
+<a name="664"/>   #
+<a name="665"/>   #  size-parm := "size" "=" 1*DIGIT
+<a name="666"/>   #
+<a name="667"/>   #  quoted-date-time := quoted-string
+<a name="668"/>   #                   ; contents MUST be an RFC 822 `date-time'
+<a name="669"/>   #                   ; numeric timezones (+HHMM or -HHMM) MUST be used
+<a name="670"/>   #
+<a name="671"/>   private parse_content_disposition_impl()
+<a name="672"/>      local ty, cd
+<a name="673"/>
+<a name="674"/>      next_token()
+<a name="675"/>      ty := parse_disposition_type()
+<a name="676"/>      cd := ContentDisposition(ty)
+<a name="677"/>
+<a name="678"/>      repeat {
+<a name="679"/>         next_token()
+<a name="680"/>         =";" | break
+<a name="681"/>         next_token()
+<a name="682"/>         parse_parameter(cd)
+<a name="683"/>      }
+<a name="684"/>
+<a name="685"/>      return cd
+<a name="686"/>   end
+<a name="687"/>
+<a name="688"/>   private end_check(o)
+<a name="689"/>      next_token()
+<a name="690"/>      pos(0) | throw("Extraneous input:" || tab(0))
+<a name="691"/>      return o
+<a name="692"/>   end
+<a name="693"/>
+<a name="694"/>   public parse_mailbox(s)
+<a name="695"/>      return s ? try1{ end_check(parse_mailbox_impl()) }
+<a name="696"/>   end
+<a name="697"/>
+<a name="698"/>   public parse_group(s)
+<a name="699"/>      return s ? try1{ end_check(parse_group_impl()) }
+<a name="700"/>   end
+<a name="701"/>
+<a name="702"/>   public parse_address_list(s, can_be_empty)
+<a name="703"/>      return s ? try1{ end_check(parse_address_list_impl(can_be_empty)) }
+<a name="704"/>   end
+<a name="705"/>
+<a name="706"/>   public parse_mailbox_list(s, can_be_empty)
+<a name="707"/>      return s ? try1{ end_check(parse_mailbox_list_impl(can_be_empty)) }
+<a name="708"/>   end
+<a name="709"/>
+<a name="710"/>   public parse_date_time(s)
+<a name="711"/>      return s ? try1{ end_check(parse_date_time_impl()) }
+<a name="712"/>   end
+<a name="713"/>
+<a name="714"/>   public parse_field(s, message)
+<a name="715"/>      return s ? try1{ parse_field_impl(message) }
+<a name="716"/>   end
+<a name="717"/>
+<a name="718"/>   public parse_content_type(s)
+<a name="719"/>      return s ? try1{ end_check(parse_content_type_impl()) }
+<a name="720"/>   end
+<a name="721"/>
+<a name="722"/>   public parse_content_disposition(s)
+<a name="723"/>      return s ? try1{ end_check(parse_content_disposition_impl()) }
+<a name="724"/>   end
+<a name="725"/>
+<a name="726"/>   public parse_content_transfer_encoding(s)
+<a name="727"/>      return s ? try1{ end_check(parse_content_transfer_encoding_impl()) }
+<a name="728"/>   end
+<a name="729"/>end
+</pre></body></html>

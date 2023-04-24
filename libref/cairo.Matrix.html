@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Matrix</title></head><body>
+<h1>Matrix</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="cairo-package.html" target="listFrame">cairo</a></dd>
+</dl><p/>
+This class represents a 2d transformation matrix.  It does not wrap
+a cairo object.  Instances are immutable, so operations always
+return a different new instance.
+<p/><a href="cairo-cairo.icn.html#110" target="displayFrame">Source - cairo.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#determinant">determinant()</a>
+<a href="#from_rotation">from_rotation()</a>
+<a href="#from_scale">from_scale()</a>
+<a href="#from_translation">from_translation()</a>
+<a href="#init">init()</a>
+<a href="#inverse">inverse()</a>
+<a href="#multiply">multiply()</a>
+<a href="#multiply_distance">multiply_distance()</a>
+<a href="#multiply_point">multiply_point()</a>
+<a href="#new">new()</a>
+<a href="#rotate">rotate()</a>
+<a href="#scale">scale()</a>
+<a href="#translate">translate()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#I">I</a>
+<a href="#x0">x0</a>
+<a href="#xx">xx</a>
+<a href="#xy">xy</a>
+<a href="#y0">y0</a>
+<a href="#yx">yx</a>
+<a href="#yy">yy</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="determinant"/>
+<h3>determinant()</h3>
+public<p/>
+<dl>
+<dd>
+Return the determinant of the matrix.
+<p/><a href="cairo-cairo.icn.html#142" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="from_rotation"/>
+<h3>from_rotation(r)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new instance representing a rotation of <code>r</code> radians.
+<p/><a href="cairo-cairo.icn.html#133" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="from_scale"/>
+<h3>from_scale(sx, sy)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new instance representing a scale.
+<p/><a href="cairo-cairo.icn.html#160" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="from_translation"/>
+<h3>from_translation(tx, ty)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new instance representing a translation.
+<p/><a href="cairo-cairo.icn.html#127" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#123" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="inverse"/>
+<h3>inverse()</h3>
+public<p/>
+<dl>
+<dd>
+Return a new <code><a href="cairo.Matrix.html" target="displayFrame">Matrix</a></code> which is the inverse of this one, or fail
+if there is no inverse.
+<p/><a href="cairo-cairo.icn.html#148" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="multiply"/>
+<h3>multiply(a, b)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the product of the two given <code><a href="cairo.Matrix.html" target="displayFrame">Matrix</a></code> instances.
+<p/><a href="cairo-cairo.icn.html#200" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="multiply_distance"/>
+<h3>multiply_distance(dx, dy)</h3>
+public<p/>
+<dl>
+<dd>
+Return a <code><a href="graphics.Vector.html" target="displayFrame">Vector</a></code> record, which is the result of multiplying this
+matrix by <code>(dx, dy)</code>, but ignoring the transformation elements.
+<p/><a href="cairo-cairo.icn.html#173" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="multiply_point"/>
+<h3>multiply_point(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Return a <code><a href="graphics.Point.html" target="displayFrame">Point</a></code> record, which is the result of multiplying this
+matrix by the point <code>(x, y)</code>.
+<p/><a href="cairo-cairo.icn.html#166" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(xx, yx, xy, yy, x0, y0)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance based on the given six elements.
+<p/><a href="cairo-cairo.icn.html#211" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="rotate"/>
+<h3>rotate(r)</h3>
+public<p/>
+<dl>
+<dd>
+Return a new instance which is this instance rotated <code>r</code> radians.
+<p/><a href="cairo-cairo.icn.html#180" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="scale"/>
+<h3>scale(sx, sy)</h3>
+public<p/>
+<dl>
+<dd>
+Return a new instance which is this instance scaled by <code>sx</code>
+and <code>sy</code>.
+<p/><a href="cairo-cairo.icn.html#193" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="translate"/>
+<h3>translate(tx, ty)</h3>
+public<p/>
+<dl>
+<dd>
+Return a new instance which is this instance translated by <code>tx</code>
+and <code>ty</code>.
+<p/><a href="cairo-cairo.icn.html#186" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="I"/>
+<h3>I</h3>
+public static const<p/>
+<dl>
+<dd>
+The identity matrix
+<p/><a href="cairo-cairo.icn.html#119" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="x0"/>
+<h3>x0</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#117" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="xx"/>
+<h3>xx</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#117" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="xy"/>
+<h3>xy</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#117" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="y0"/>
+<h3>y0</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#117" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="yx"/>
+<h3>yx</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#117" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="yy"/>
+<h3>yy</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#117" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,2820 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Block</title></head><body>
+<h1>Block</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="unicode-package.html" target="listFrame">unicode</a></dd>
+</dl><p/>
+<p/><a href="unicode-unicodedata.icn.html#5" target="displayFrame">Source - unicodedata.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#init">init()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ADLAM">ADLAM</a>
+<a href="#AEGEAN_NUMBERS">AEGEAN_NUMBERS</a>
+<a href="#AHOM">AHOM</a>
+<a href="#ALCHEMICAL_SYMBOLS">ALCHEMICAL_SYMBOLS</a>
+<a href="#ALPHABETIC_PRESENTATION_FORMS">ALPHABETIC_PRESENTATION_FORMS</a>
+<a href="#ANATOLIAN_HIEROGLYPHS">ANATOLIAN_HIEROGLYPHS</a>
+<a href="#ANCIENT_GREEK_MUSICAL_NOTATION">ANCIENT_GREEK_MUSICAL_NOTATION</a>
+<a href="#ANCIENT_GREEK_NUMBERS">ANCIENT_GREEK_NUMBERS</a>
+<a href="#ANCIENT_SYMBOLS">ANCIENT_SYMBOLS</a>
+<a href="#ARABIC">ARABIC</a>
+<a href="#ARABIC_EXTENDED_A">ARABIC_EXTENDED_A</a>
+<a href="#ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS">ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS</a>
+<a href="#ARABIC_PRESENTATION_FORMS_A">ARABIC_PRESENTATION_FORMS_A</a>
+<a href="#ARABIC_PRESENTATION_FORMS_B">ARABIC_PRESENTATION_FORMS_B</a>
+<a href="#ARABIC_SUPPLEMENT">ARABIC_SUPPLEMENT</a>
+<a href="#ARMENIAN">ARMENIAN</a>
+<a href="#ARROWS">ARROWS</a>
+<a href="#AVESTAN">AVESTAN</a>
+<a href="#BALINESE">BALINESE</a>
+<a href="#BAMUM">BAMUM</a>
+<a href="#BAMUM_SUPPLEMENT">BAMUM_SUPPLEMENT</a>
+<a href="#BASIC_LATIN">BASIC_LATIN</a>
+<a href="#BASSA_VAH">BASSA_VAH</a>
+<a href="#BATAK">BATAK</a>
+<a href="#BENGALI">BENGALI</a>
+<a href="#BHAIKSUKI">BHAIKSUKI</a>
+<a href="#BLOCK_ELEMENTS">BLOCK_ELEMENTS</a>
+<a href="#BOPOMOFO">BOPOMOFO</a>
+<a href="#BOPOMOFO_EXTENDED">BOPOMOFO_EXTENDED</a>
+<a href="#BOX_DRAWING">BOX_DRAWING</a>
+<a href="#BRAHMI">BRAHMI</a>
+<a href="#BRAILLE_PATTERNS">BRAILLE_PATTERNS</a>
+<a href="#BUGINESE">BUGINESE</a>
+<a href="#BUHID">BUHID</a>
+<a href="#BYZANTINE_MUSICAL_SYMBOLS">BYZANTINE_MUSICAL_SYMBOLS</a>
+<a href="#CARIAN">CARIAN</a>
+<a href="#CAUCASIAN_ALBANIAN">CAUCASIAN_ALBANIAN</a>
+<a href="#CHAKMA">CHAKMA</a>
+<a href="#CHAM">CHAM</a>
+<a href="#CHEROKEE">CHEROKEE</a>
+<a href="#CHEROKEE_SUPPLEMENT">CHEROKEE_SUPPLEMENT</a>
+<a href="#CHESS_SYMBOLS">CHESS_SYMBOLS</a>
+<a href="#CHORASMIAN">CHORASMIAN</a>
+<a href="#CJK_COMPATIBILITY">CJK_COMPATIBILITY</a>
+<a href="#CJK_COMPATIBILITY_FORMS">CJK_COMPATIBILITY_FORMS</a>
+<a href="#CJK_COMPATIBILITY_IDEOGRAPHS">CJK_COMPATIBILITY_IDEOGRAPHS</a>
+<a href="#CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT">CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT</a>
+<a href="#CJK_RADICALS_SUPPLEMENT">CJK_RADICALS_SUPPLEMENT</a>
+<a href="#CJK_STROKES">CJK_STROKES</a>
+<a href="#CJK_SYMBOLS_AND_PUNCTUATION">CJK_SYMBOLS_AND_PUNCTUATION</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS">CJK_UNIFIED_IDEOGRAPHS</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A">CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B">CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C">CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D">CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E">CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F">CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F</a>
+<a href="#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G">CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G</a>
+<a href="#COMBINING_DIACRITICAL_MARKS">COMBINING_DIACRITICAL_MARKS</a>
+<a href="#COMBINING_DIACRITICAL_MARKS_EXTENDED">COMBINING_DIACRITICAL_MARKS_EXTENDED</a>
+<a href="#COMBINING_DIACRITICAL_MARKS_FOR_SYMBOLS">COMBINING_DIACRITICAL_MARKS_FOR_SYMBOLS</a>
+<a href="#COMBINING_DIACRITICAL_MARKS_SUPPLEMENT">COMBINING_DIACRITICAL_MARKS_SUPPLEMENT</a>
+<a href="#COMBINING_HALF_MARKS">COMBINING_HALF_MARKS</a>
+<a href="#COMMON_INDIC_NUMBER_FORMS">COMMON_INDIC_NUMBER_FORMS</a>
+<a href="#CONTROL_PICTURES">CONTROL_PICTURES</a>
+<a href="#COPTIC">COPTIC</a>
+<a href="#COPTIC_EPACT_NUMBERS">COPTIC_EPACT_NUMBERS</a>
+<a href="#COUNTING_ROD_NUMERALS">COUNTING_ROD_NUMERALS</a>
+<a href="#CUNEIFORM">CUNEIFORM</a>
+<a href="#CUNEIFORM_NUMBERS_AND_PUNCTUATION">CUNEIFORM_NUMBERS_AND_PUNCTUATION</a>
+<a href="#CURRENCY_SYMBOLS">CURRENCY_SYMBOLS</a>
+<a href="#CYPRIOT_SYLLABARY">CYPRIOT_SYLLABARY</a>
+<a href="#CYRILLIC">CYRILLIC</a>
+<a href="#CYRILLIC_EXTENDED_A">CYRILLIC_EXTENDED_A</a>
+<a href="#CYRILLIC_EXTENDED_B">CYRILLIC_EXTENDED_B</a>
+<a href="#CYRILLIC_EXTENDED_C">CYRILLIC_EXTENDED_C</a>
+<a href="#CYRILLIC_SUPPLEMENT">CYRILLIC_SUPPLEMENT</a>
+<a href="#DESERET">DESERET</a>
+<a href="#DEVANAGARI">DEVANAGARI</a>
+<a href="#DEVANAGARI_EXTENDED">DEVANAGARI_EXTENDED</a>
+<a href="#DINGBATS">DINGBATS</a>
+<a href="#DIVES_AKURU">DIVES_AKURU</a>
+<a href="#DOGRA">DOGRA</a>
+<a href="#DOMINO_TILES">DOMINO_TILES</a>
+<a href="#DUPLOYAN">DUPLOYAN</a>
+<a href="#EARLY_DYNASTIC_CUNEIFORM">EARLY_DYNASTIC_CUNEIFORM</a>
+<a href="#EGYPTIAN_HIEROGLYPH_FORMAT_CONTROLS">EGYPTIAN_HIEROGLYPH_FORMAT_CONTROLS</a>
+<a href="#EGYPTIAN_HIEROGLYPHS">EGYPTIAN_HIEROGLYPHS</a>
+<a href="#ELBASAN">ELBASAN</a>
+<a href="#ELYMAIC">ELYMAIC</a>
+<a href="#EMOTICONS">EMOTICONS</a>
+<a href="#ENCLOSED_ALPHANUMERIC_SUPPLEMENT">ENCLOSED_ALPHANUMERIC_SUPPLEMENT</a>
+<a href="#ENCLOSED_ALPHANUMERICS">ENCLOSED_ALPHANUMERICS</a>
+<a href="#ENCLOSED_CJK_LETTERS_AND_MONTHS">ENCLOSED_CJK_LETTERS_AND_MONTHS</a>
+<a href="#ENCLOSED_IDEOGRAPHIC_SUPPLEMENT">ENCLOSED_IDEOGRAPHIC_SUPPLEMENT</a>
+<a href="#ETHIOPIC">ETHIOPIC</a>
+<a href="#ETHIOPIC_EXTENDED">ETHIOPIC_EXTENDED</a>
+<a href="#ETHIOPIC_EXTENDED_A">ETHIOPIC_EXTENDED_A</a>
+<a href="#ETHIOPIC_SUPPLEMENT">ETHIOPIC_SUPPLEMENT</a>
+<a href="#GENERAL_PUNCTUATION">GENERAL_PUNCTUATION</a>
+<a href="#GEOMETRIC_SHAPES">GEOMETRIC_SHAPES</a>
+<a href="#GEOMETRIC_SHAPES_EXTENDED">GEOMETRIC_SHAPES_EXTENDED</a>
+<a href="#GEORGIAN">GEORGIAN</a>
+<a href="#GEORGIAN_EXTENDED">GEORGIAN_EXTENDED</a>
+<a href="#GEORGIAN_SUPPLEMENT">GEORGIAN_SUPPLEMENT</a>
+<a href="#GLAGOLITIC">GLAGOLITIC</a>
+<a href="#GLAGOLITIC_SUPPLEMENT">GLAGOLITIC_SUPPLEMENT</a>
+<a href="#GOTHIC">GOTHIC</a>
+<a href="#GRANTHA">GRANTHA</a>
+<a href="#GREEK_AND_COPTIC">GREEK_AND_COPTIC</a>
+<a href="#GREEK_EXTENDED">GREEK_EXTENDED</a>
+<a href="#GUJARATI">GUJARATI</a>
+<a href="#GUNJALA_GONDI">GUNJALA_GONDI</a>
+<a href="#GURMUKHI">GURMUKHI</a>
+<a href="#HALFWIDTH_AND_FULLWIDTH_FORMS">HALFWIDTH_AND_FULLWIDTH_FORMS</a>
+<a href="#HANGUL_COMPATIBILITY_JAMO">HANGUL_COMPATIBILITY_JAMO</a>
+<a href="#HANGUL_JAMO">HANGUL_JAMO</a>
+<a href="#HANGUL_JAMO_EXTENDED_A">HANGUL_JAMO_EXTENDED_A</a>
+<a href="#HANGUL_JAMO_EXTENDED_B">HANGUL_JAMO_EXTENDED_B</a>
+<a href="#HANGUL_SYLLABLES">HANGUL_SYLLABLES</a>
+<a href="#HANIFI_ROHINGYA">HANIFI_ROHINGYA</a>
+<a href="#HANUNOO">HANUNOO</a>
+<a href="#HATRAN">HATRAN</a>
+<a href="#HEBREW">HEBREW</a>
+<a href="#HIGH_PRIVATE_USE_SURROGATES">HIGH_PRIVATE_USE_SURROGATES</a>
+<a href="#HIGH_SURROGATES">HIGH_SURROGATES</a>
+<a href="#HIRAGANA">HIRAGANA</a>
+<a href="#IDEOGRAPHIC_DESCRIPTION_CHARACTERS">IDEOGRAPHIC_DESCRIPTION_CHARACTERS</a>
+<a href="#IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION">IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION</a>
+<a href="#IMPERIAL_ARAMAIC">IMPERIAL_ARAMAIC</a>
+<a href="#INDIC_SIYAQ_NUMBERS">INDIC_SIYAQ_NUMBERS</a>
+<a href="#INSCRIPTIONAL_PAHLAVI">INSCRIPTIONAL_PAHLAVI</a>
+<a href="#INSCRIPTIONAL_PARTHIAN">INSCRIPTIONAL_PARTHIAN</a>
+<a href="#IPA_EXTENSIONS">IPA_EXTENSIONS</a>
+<a href="#JAVANESE">JAVANESE</a>
+<a href="#KAITHI">KAITHI</a>
+<a href="#KANA_EXTENDED_A">KANA_EXTENDED_A</a>
+<a href="#KANA_SUPPLEMENT">KANA_SUPPLEMENT</a>
+<a href="#KANBUN">KANBUN</a>
+<a href="#KANGXI_RADICALS">KANGXI_RADICALS</a>
+<a href="#KANNADA">KANNADA</a>
+<a href="#KATAKANA">KATAKANA</a>
+<a href="#KATAKANA_PHONETIC_EXTENSIONS">KATAKANA_PHONETIC_EXTENSIONS</a>
+<a href="#KAYAH_LI">KAYAH_LI</a>
+<a href="#KHAROSHTHI">KHAROSHTHI</a>
+<a href="#KHITAN_SMALL_SCRIPT">KHITAN_SMALL_SCRIPT</a>
+<a href="#KHMER">KHMER</a>
+<a href="#KHMER_SYMBOLS">KHMER_SYMBOLS</a>
+<a href="#KHOJKI">KHOJKI</a>
+<a href="#KHUDAWADI">KHUDAWADI</a>
+<a href="#LAO">LAO</a>
+<a href="#LATIN_1_SUPPLEMENT">LATIN_1_SUPPLEMENT</a>
+<a href="#LATIN_EXTENDED_A">LATIN_EXTENDED_A</a>
+<a href="#LATIN_EXTENDED_ADDITIONAL">LATIN_EXTENDED_ADDITIONAL</a>
+<a href="#LATIN_EXTENDED_B">LATIN_EXTENDED_B</a>
+<a href="#LATIN_EXTENDED_C">LATIN_EXTENDED_C</a>
+<a href="#LATIN_EXTENDED_D">LATIN_EXTENDED_D</a>
+<a href="#LATIN_EXTENDED_E">LATIN_EXTENDED_E</a>
+<a href="#LEPCHA">LEPCHA</a>
+<a href="#LETTERLIKE_SYMBOLS">LETTERLIKE_SYMBOLS</a>
+<a href="#LIMBU">LIMBU</a>
+<a href="#LINEAR_A">LINEAR_A</a>
+<a href="#LINEAR_B_IDEOGRAMS">LINEAR_B_IDEOGRAMS</a>
+<a href="#LINEAR_B_SYLLABARY">LINEAR_B_SYLLABARY</a>
+<a href="#LISU">LISU</a>
+<a href="#LISU_SUPPLEMENT">LISU_SUPPLEMENT</a>
+<a href="#LOW_SURROGATES">LOW_SURROGATES</a>
+<a href="#LYCIAN">LYCIAN</a>
+<a href="#LYDIAN">LYDIAN</a>
+<a href="#MAHAJANI">MAHAJANI</a>
+<a href="#MAHJONG_TILES">MAHJONG_TILES</a>
+<a href="#MAKASAR">MAKASAR</a>
+<a href="#MALAYALAM">MALAYALAM</a>
+<a href="#MANDAIC">MANDAIC</a>
+<a href="#MANICHAEAN">MANICHAEAN</a>
+<a href="#MARCHEN">MARCHEN</a>
+<a href="#MASARAM_GONDI">MASARAM_GONDI</a>
+<a href="#MATHEMATICAL_ALPHANUMERIC_SYMBOLS">MATHEMATICAL_ALPHANUMERIC_SYMBOLS</a>
+<a href="#MATHEMATICAL_OPERATORS">MATHEMATICAL_OPERATORS</a>
+<a href="#MAYAN_NUMERALS">MAYAN_NUMERALS</a>
+<a href="#MEDEFAIDRIN">MEDEFAIDRIN</a>
+<a href="#MEETEI_MAYEK">MEETEI_MAYEK</a>
+<a href="#MEETEI_MAYEK_EXTENSIONS">MEETEI_MAYEK_EXTENSIONS</a>
+<a href="#MENDE_KIKAKUI">MENDE_KIKAKUI</a>
+<a href="#MEROITIC_CURSIVE">MEROITIC_CURSIVE</a>
+<a href="#MEROITIC_HIEROGLYPHS">MEROITIC_HIEROGLYPHS</a>
+<a href="#MIAO">MIAO</a>
+<a href="#MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A">MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A</a>
+<a href="#MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B">MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B</a>
+<a href="#MISCELLANEOUS_SYMBOLS">MISCELLANEOUS_SYMBOLS</a>
+<a href="#MISCELLANEOUS_SYMBOLS_AND_ARROWS">MISCELLANEOUS_SYMBOLS_AND_ARROWS</a>
+<a href="#MISCELLANEOUS_SYMBOLS_AND_PICTOGRAPHS">MISCELLANEOUS_SYMBOLS_AND_PICTOGRAPHS</a>
+<a href="#MISCELLANEOUS_TECHNICAL">MISCELLANEOUS_TECHNICAL</a>
+<a href="#MODI">MODI</a>
+<a href="#MODIFIER_TONE_LETTERS">MODIFIER_TONE_LETTERS</a>
+<a href="#MONGOLIAN">MONGOLIAN</a>
+<a href="#MONGOLIAN_SUPPLEMENT">MONGOLIAN_SUPPLEMENT</a>
+<a href="#MRO">MRO</a>
+<a href="#MULTANI">MULTANI</a>
+<a href="#MUSICAL_SYMBOLS">MUSICAL_SYMBOLS</a>
+<a href="#MYANMAR">MYANMAR</a>
+<a href="#MYANMAR_EXTENDED_A">MYANMAR_EXTENDED_A</a>
+<a href="#MYANMAR_EXTENDED_B">MYANMAR_EXTENDED_B</a>
+<a href="#NABATAEAN">NABATAEAN</a>
+<a href="#NANDINAGARI">NANDINAGARI</a>
+<a href="#NEW_TAI_LUE">NEW_TAI_LUE</a>
+<a href="#NEWA">NEWA</a>
+<a href="#NKO">NKO</a>
+<a href="#NUMBER_FORMS">NUMBER_FORMS</a>
+<a href="#NUSHU">NUSHU</a>
+<a href="#NYIAKENG_PUACHUE_HMONG">NYIAKENG_PUACHUE_HMONG</a>
+<a href="#OGHAM">OGHAM</a>
+<a href="#OL_CHIKI">OL_CHIKI</a>
+<a href="#OLD_HUNGARIAN">OLD_HUNGARIAN</a>
+<a href="#OLD_ITALIC">OLD_ITALIC</a>
+<a href="#OLD_NORTH_ARABIAN">OLD_NORTH_ARABIAN</a>
+<a href="#OLD_PERMIC">OLD_PERMIC</a>
+<a href="#OLD_PERSIAN">OLD_PERSIAN</a>
+<a href="#OLD_SOGDIAN">OLD_SOGDIAN</a>
+<a href="#OLD_SOUTH_ARABIAN">OLD_SOUTH_ARABIAN</a>
+<a href="#OLD_TURKIC">OLD_TURKIC</a>
+<a href="#OPTICAL_CHARACTER_RECOGNITION">OPTICAL_CHARACTER_RECOGNITION</a>
+<a href="#ORIYA">ORIYA</a>
+<a href="#ORNAMENTAL_DINGBATS">ORNAMENTAL_DINGBATS</a>
+<a href="#OSAGE">OSAGE</a>
+<a href="#OSMANYA">OSMANYA</a>
+<a href="#OTTOMAN_SIYAQ_NUMBERS">OTTOMAN_SIYAQ_NUMBERS</a>
+<a href="#PAHAWH_HMONG">PAHAWH_HMONG</a>
+<a href="#PALMYRENE">PALMYRENE</a>
+<a href="#PAU_CIN_HAU">PAU_CIN_HAU</a>
+<a href="#PHAGS_PA">PHAGS_PA</a>
+<a href="#PHAISTOS_DISC">PHAISTOS_DISC</a>
+<a href="#PHOENICIAN">PHOENICIAN</a>
+<a href="#PHONETIC_EXTENSIONS">PHONETIC_EXTENSIONS</a>
+<a href="#PHONETIC_EXTENSIONS_SUPPLEMENT">PHONETIC_EXTENSIONS_SUPPLEMENT</a>
+<a href="#PLAYING_CARDS">PLAYING_CARDS</a>
+<a href="#PRIVATE_USE_AREA">PRIVATE_USE_AREA</a>
+<a href="#PSALTER_PAHLAVI">PSALTER_PAHLAVI</a>
+<a href="#REJANG">REJANG</a>
+<a href="#RUMI_NUMERAL_SYMBOLS">RUMI_NUMERAL_SYMBOLS</a>
+<a href="#RUNIC">RUNIC</a>
+<a href="#SAMARITAN">SAMARITAN</a>
+<a href="#SAURASHTRA">SAURASHTRA</a>
+<a href="#SHARADA">SHARADA</a>
+<a href="#SHAVIAN">SHAVIAN</a>
+<a href="#SHORTHAND_FORMAT_CONTROLS">SHORTHAND_FORMAT_CONTROLS</a>
+<a href="#SIDDHAM">SIDDHAM</a>
+<a href="#SINHALA">SINHALA</a>
+<a href="#SINHALA_ARCHAIC_NUMBERS">SINHALA_ARCHAIC_NUMBERS</a>
+<a href="#SMALL_FORM_VARIANTS">SMALL_FORM_VARIANTS</a>
+<a href="#SMALL_KANA_EXTENSION">SMALL_KANA_EXTENSION</a>
+<a href="#SOGDIAN">SOGDIAN</a>
+<a href="#SORA_SOMPENG">SORA_SOMPENG</a>
+<a href="#SOYOMBO">SOYOMBO</a>
+<a href="#SPACING_MODIFIER_LETTERS">SPACING_MODIFIER_LETTERS</a>
+<a href="#SPECIALS">SPECIALS</a>
+<a href="#SUNDANESE">SUNDANESE</a>
+<a href="#SUNDANESE_SUPPLEMENT">SUNDANESE_SUPPLEMENT</a>
+<a href="#SUPERSCRIPTS_AND_SUBSCRIPTS">SUPERSCRIPTS_AND_SUBSCRIPTS</a>
+<a href="#SUPPLEMENTAL_ARROWS_A">SUPPLEMENTAL_ARROWS_A</a>
+<a href="#SUPPLEMENTAL_ARROWS_B">SUPPLEMENTAL_ARROWS_B</a>
+<a href="#SUPPLEMENTAL_ARROWS_C">SUPPLEMENTAL_ARROWS_C</a>
+<a href="#SUPPLEMENTAL_MATHEMATICAL_OPERATORS">SUPPLEMENTAL_MATHEMATICAL_OPERATORS</a>
+<a href="#SUPPLEMENTAL_PUNCTUATION">SUPPLEMENTAL_PUNCTUATION</a>
+<a href="#SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS">SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS</a>
+<a href="#SUPPLEMENTARY_PRIVATE_USE_AREA_A">SUPPLEMENTARY_PRIVATE_USE_AREA_A</a>
+<a href="#SUPPLEMENTARY_PRIVATE_USE_AREA_B">SUPPLEMENTARY_PRIVATE_USE_AREA_B</a>
+<a href="#SUTTON_SIGNWRITING">SUTTON_SIGNWRITING</a>
+<a href="#SYLOTI_NAGRI">SYLOTI_NAGRI</a>
+<a href="#SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A">SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A</a>
+<a href="#SYMBOLS_FOR_LEGACY_COMPUTING">SYMBOLS_FOR_LEGACY_COMPUTING</a>
+<a href="#SYRIAC">SYRIAC</a>
+<a href="#SYRIAC_SUPPLEMENT">SYRIAC_SUPPLEMENT</a>
+<a href="#TAGALOG">TAGALOG</a>
+<a href="#TAGBANWA">TAGBANWA</a>
+<a href="#TAGS">TAGS</a>
+<a href="#TAI_LE">TAI_LE</a>
+<a href="#TAI_THAM">TAI_THAM</a>
+<a href="#TAI_VIET">TAI_VIET</a>
+<a href="#TAI_XUAN_JING_SYMBOLS">TAI_XUAN_JING_SYMBOLS</a>
+<a href="#TAKRI">TAKRI</a>
+<a href="#TAMIL">TAMIL</a>
+<a href="#TAMIL_SUPPLEMENT">TAMIL_SUPPLEMENT</a>
+<a href="#TANGUT">TANGUT</a>
+<a href="#TANGUT_COMPONENTS">TANGUT_COMPONENTS</a>
+<a href="#TANGUT_SUPPLEMENT">TANGUT_SUPPLEMENT</a>
+<a href="#TELUGU">TELUGU</a>
+<a href="#THAANA">THAANA</a>
+<a href="#THAI">THAI</a>
+<a href="#TIBETAN">TIBETAN</a>
+<a href="#TIFINAGH">TIFINAGH</a>
+<a href="#TIRHUTA">TIRHUTA</a>
+<a href="#TRANSPORT_AND_MAP_SYMBOLS">TRANSPORT_AND_MAP_SYMBOLS</a>
+<a href="#UGARITIC">UGARITIC</a>
+<a href="#UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS">UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS</a>
+<a href="#UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS_EXTENDED">UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS_EXTENDED</a>
+<a href="#VAI">VAI</a>
+<a href="#VARIATION_SELECTORS">VARIATION_SELECTORS</a>
+<a href="#VARIATION_SELECTORS_SUPPLEMENT">VARIATION_SELECTORS_SUPPLEMENT</a>
+<a href="#VEDIC_EXTENSIONS">VEDIC_EXTENSIONS</a>
+<a href="#VERTICAL_FORMS">VERTICAL_FORMS</a>
+<a href="#WANCHO">WANCHO</a>
+<a href="#WARANG_CITI">WARANG_CITI</a>
+<a href="#YEZIDI">YEZIDI</a>
+<a href="#YI_RADICALS">YI_RADICALS</a>
+<a href="#YI_SYLLABLES">YI_SYLLABLES</a>
+<a href="#YIJING_HEXAGRAM_SYMBOLS">YIJING_HEXAGRAM_SYMBOLS</a>
+<a href="#ZANABAZAR_SQUARE">ZANABAZAR_SQUARE</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#316" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ADLAM"/>
+<h3>ADLAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#284" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="AEGEAN_NUMBERS"/>
+<h3>AEGEAN_NUMBERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#172" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="AHOM"/>
+<h3>AHOM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#234" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ALCHEMICAL_SYMBOLS"/>
+<h3>ALCHEMICAL_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#297" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ALPHABETIC_PRESENTATION_FORMS"/>
+<h3>ALPHABETIC_PRESENTATION_FORMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#160" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ANATOLIAN_HIEROGLYPHS"/>
+<h3>ANATOLIAN_HIEROGLYPHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#254" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ANCIENT_GREEK_MUSICAL_NOTATION"/>
+<h3>ANCIENT_GREEK_MUSICAL_NOTATION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#274" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ANCIENT_GREEK_NUMBERS"/>
+<h3>ANCIENT_GREEK_NUMBERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#173" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ANCIENT_SYMBOLS"/>
+<h3>ANCIENT_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#174" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARABIC"/>
+<h3>ARABIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#19" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARABIC_EXTENDED_A"/>
+<h3>ARABIC_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#27" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS"/>
+<h3>ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#287" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARABIC_PRESENTATION_FORMS_A"/>
+<h3>ARABIC_PRESENTATION_FORMS_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#161" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARABIC_PRESENTATION_FORMS_B"/>
+<h3>ARABIC_PRESENTATION_FORMS_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#167" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARABIC_SUPPLEMENT"/>
+<h3>ARABIC_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#21" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARMENIAN"/>
+<h3>ARMENIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#17" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ARROWS"/>
+<h3>ARROWS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#84" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="AVESTAN"/>
+<h3>AVESTAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#204" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BALINESE"/>
+<h3>BALINESE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#64" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BAMUM"/>
+<h3>BAMUM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#132" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BAMUM_SUPPLEMENT"/>
+<h3>BAMUM_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#255" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BASIC_LATIN"/>
+<h3>BASIC_LATIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#7" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BASSA_VAH"/>
+<h3>BASSA_VAH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#257" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BATAK"/>
+<h3>BATAK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#66" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BENGALI"/>
+<h3>BENGALI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#29" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BHAIKSUKI"/>
+<h3>BHAIKSUKI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#242" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BLOCK_ELEMENTS"/>
+<h3>BLOCK_ELEMENTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#91" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BOPOMOFO"/>
+<h3>BOPOMOFO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#116" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BOPOMOFO_EXTENDED"/>
+<h3>BOPOMOFO_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#119" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BOX_DRAWING"/>
+<h3>BOX_DRAWING</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#90" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BRAHMI"/>
+<h3>BRAHMI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#217" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BRAILLE_PATTERNS"/>
+<h3>BRAILLE_PATTERNS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#97" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BUGINESE"/>
+<h3>BUGINESE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#61" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BUHID"/>
+<h3>BUHID</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#52" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="BYZANTINE_MUSICAL_SYMBOLS"/>
+<h3>BYZANTINE_MUSICAL_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#272" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CARIAN"/>
+<h3>CARIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#177" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CAUCASIAN_ALBANIAN"/>
+<h3>CAUCASIAN_ALBANIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#189" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CHAKMA"/>
+<h3>CHAKMA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#220" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CHAM"/>
+<h3>CHAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#145" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CHEROKEE"/>
+<h3>CHEROKEE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#46" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CHEROKEE_SUPPLEMENT"/>
+<h3>CHEROKEE_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#151" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CHESS_SYMBOLS"/>
+<h3>CHESS_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#301" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CHORASMIAN"/>
+<h3>CHORASMIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#215" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_COMPATIBILITY"/>
+<h3>CJK_COMPATIBILITY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#123" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_COMPATIBILITY_FORMS"/>
+<h3>CJK_COMPATIBILITY_FORMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#165" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_COMPATIBILITY_IDEOGRAPHS"/>
+<h3>CJK_COMPATIBILITY_IDEOGRAPHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#159" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT"/>
+<h3>CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#309" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_RADICALS_SUPPLEMENT"/>
+<h3>CJK_RADICALS_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#110" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_STROKES"/>
+<h3>CJK_STROKES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#120" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_SYMBOLS_AND_PUNCTUATION"/>
+<h3>CJK_SYMBOLS_AND_PUNCTUATION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#113" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#126" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#124" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#304" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#305" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#306" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#307" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#308" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G"/>
+<h3>CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#310" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COMBINING_DIACRITICAL_MARKS"/>
+<h3>COMBINING_DIACRITICAL_MARKS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#13" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COMBINING_DIACRITICAL_MARKS_EXTENDED"/>
+<h3>COMBINING_DIACRITICAL_MARKS_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#63" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COMBINING_DIACRITICAL_MARKS_FOR_SYMBOLS"/>
+<h3>COMBINING_DIACRITICAL_MARKS_FOR_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#81" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COMBINING_DIACRITICAL_MARKS_SUPPLEMENT"/>
+<h3>COMBINING_DIACRITICAL_MARKS_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#75" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COMBINING_HALF_MARKS"/>
+<h3>COMBINING_HALF_MARKS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#164" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COMMON_INDIC_NUMBER_FORMS"/>
+<h3>COMMON_INDIC_NUMBER_FORMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#136" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CONTROL_PICTURES"/>
+<h3>CONTROL_PICTURES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#87" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COPTIC"/>
+<h3>COPTIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#104" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COPTIC_EPACT_NUMBERS"/>
+<h3>COPTIC_EPACT_NUMBERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#178" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="COUNTING_ROD_NUMERALS"/>
+<h3>COUNTING_ROD_NUMERALS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#277" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CUNEIFORM"/>
+<h3>CUNEIFORM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#249" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CUNEIFORM_NUMBERS_AND_PUNCTUATION"/>
+<h3>CUNEIFORM_NUMBERS_AND_PUNCTUATION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#250" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CURRENCY_SYMBOLS"/>
+<h3>CURRENCY_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#80" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CYPRIOT_SYLLABARY"/>
+<h3>CYPRIOT_SYLLABARY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#191" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CYRILLIC"/>
+<h3>CYRILLIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#15" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CYRILLIC_EXTENDED_A"/>
+<h3>CYRILLIC_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#108" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CYRILLIC_EXTENDED_B"/>
+<h3>CYRILLIC_EXTENDED_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#131" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CYRILLIC_EXTENDED_C"/>
+<h3>CYRILLIC_EXTENDED_C</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#69" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="CYRILLIC_SUPPLEMENT"/>
+<h3>CYRILLIC_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#16" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DESERET"/>
+<h3>DESERET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#184" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DEVANAGARI"/>
+<h3>DEVANAGARI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#28" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DEVANAGARI_EXTENDED"/>
+<h3>DEVANAGARI_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#139" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DINGBATS"/>
+<h3>DINGBATS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#94" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DIVES_AKURU"/>
+<h3>DIVES_AKURU</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#237" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DOGRA"/>
+<h3>DOGRA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#235" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DOMINO_TILES"/>
+<h3>DOMINO_TILES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#289" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="DUPLOYAN"/>
+<h3>DUPLOYAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#270" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="EARLY_DYNASTIC_CUNEIFORM"/>
+<h3>EARLY_DYNASTIC_CUNEIFORM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#251" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="EGYPTIAN_HIEROGLYPH_FORMAT_CONTROLS"/>
+<h3>EGYPTIAN_HIEROGLYPH_FORMAT_CONTROLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#253" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="EGYPTIAN_HIEROGLYPHS"/>
+<h3>EGYPTIAN_HIEROGLYPHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#252" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ELBASAN"/>
+<h3>ELBASAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#188" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ELYMAIC"/>
+<h3>ELYMAIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#216" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="EMOTICONS"/>
+<h3>EMOTICONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#294" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ENCLOSED_ALPHANUMERIC_SUPPLEMENT"/>
+<h3>ENCLOSED_ALPHANUMERIC_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#291" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ENCLOSED_ALPHANUMERICS"/>
+<h3>ENCLOSED_ALPHANUMERICS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#89" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ENCLOSED_CJK_LETTERS_AND_MONTHS"/>
+<h3>ENCLOSED_CJK_LETTERS_AND_MONTHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#122" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ENCLOSED_IDEOGRAPHIC_SUPPLEMENT"/>
+<h3>ENCLOSED_IDEOGRAPHIC_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#292" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ETHIOPIC"/>
+<h3>ETHIOPIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#44" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ETHIOPIC_EXTENDED"/>
+<h3>ETHIOPIC_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#107" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ETHIOPIC_EXTENDED_A"/>
+<h3>ETHIOPIC_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#149" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ETHIOPIC_SUPPLEMENT"/>
+<h3>ETHIOPIC_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#45" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GENERAL_PUNCTUATION"/>
+<h3>GENERAL_PUNCTUATION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#78" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GEOMETRIC_SHAPES"/>
+<h3>GEOMETRIC_SHAPES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#92" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GEOMETRIC_SHAPES_EXTENDED"/>
+<h3>GEOMETRIC_SHAPES_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#298" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GEORGIAN"/>
+<h3>GEORGIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#42" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GEORGIAN_EXTENDED"/>
+<h3>GEORGIAN_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#70" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GEORGIAN_SUPPLEMENT"/>
+<h3>GEORGIAN_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#105" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GLAGOLITIC"/>
+<h3>GLAGOLITIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#102" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GLAGOLITIC_SUPPLEMENT"/>
+<h3>GLAGOLITIC_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#280" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GOTHIC"/>
+<h3>GOTHIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#180" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GRANTHA"/>
+<h3>GRANTHA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#227" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GREEK_AND_COPTIC"/>
+<h3>GREEK_AND_COPTIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#14" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GREEK_EXTENDED"/>
+<h3>GREEK_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#77" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GUJARATI"/>
+<h3>GUJARATI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#31" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GUNJALA_GONDI"/>
+<h3>GUNJALA_GONDI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#245" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="GURMUKHI"/>
+<h3>GURMUKHI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#30" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HALFWIDTH_AND_FULLWIDTH_FORMS"/>
+<h3>HALFWIDTH_AND_FULLWIDTH_FORMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#168" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HANGUL_COMPATIBILITY_JAMO"/>
+<h3>HANGUL_COMPATIBILITY_JAMO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#117" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HANGUL_JAMO"/>
+<h3>HANGUL_JAMO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#43" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HANGUL_JAMO_EXTENDED_A"/>
+<h3>HANGUL_JAMO_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#142" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HANGUL_JAMO_EXTENDED_B"/>
+<h3>HANGUL_JAMO_EXTENDED_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#154" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HANGUL_SYLLABLES"/>
+<h3>HANGUL_SYLLABLES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#153" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HANIFI_ROHINGYA"/>
+<h3>HANIFI_ROHINGYA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#210" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HANUNOO"/>
+<h3>HANUNOO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#51" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HATRAN"/>
+<h3>HATRAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#195" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HEBREW"/>
+<h3>HEBREW</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#18" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HIGH_PRIVATE_USE_SURROGATES"/>
+<h3>HIGH_PRIVATE_USE_SURROGATES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#156" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HIGH_SURROGATES"/>
+<h3>HIGH_SURROGATES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#155" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="HIRAGANA"/>
+<h3>HIRAGANA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#114" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="IDEOGRAPHIC_DESCRIPTION_CHARACTERS"/>
+<h3>IDEOGRAPHIC_DESCRIPTION_CHARACTERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#112" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION"/>
+<h3>IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#261" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="IMPERIAL_ARAMAIC"/>
+<h3>IMPERIAL_ARAMAIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#192" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="INDIC_SIYAQ_NUMBERS"/>
+<h3>INDIC_SIYAQ_NUMBERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#285" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="INSCRIPTIONAL_PAHLAVI"/>
+<h3>INSCRIPTIONAL_PAHLAVI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#206" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="INSCRIPTIONAL_PARTHIAN"/>
+<h3>INSCRIPTIONAL_PARTHIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#205" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="IPA_EXTENSIONS"/>
+<h3>IPA_EXTENSIONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#11" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="JAVANESE"/>
+<h3>JAVANESE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#143" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KAITHI"/>
+<h3>KAITHI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#218" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KANA_EXTENDED_A"/>
+<h3>KANA_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#267" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KANA_SUPPLEMENT"/>
+<h3>KANA_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#266" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KANBUN"/>
+<h3>KANBUN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#118" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KANGXI_RADICALS"/>
+<h3>KANGXI_RADICALS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#111" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KANNADA"/>
+<h3>KANNADA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#35" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KATAKANA"/>
+<h3>KATAKANA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#115" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KATAKANA_PHONETIC_EXTENSIONS"/>
+<h3>KATAKANA_PHONETIC_EXTENSIONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#121" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KAYAH_LI"/>
+<h3>KAYAH_LI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#140" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KHAROSHTHI"/>
+<h3>KHAROSHTHI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#200" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KHITAN_SMALL_SCRIPT"/>
+<h3>KHITAN_SMALL_SCRIPT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#264" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KHMER"/>
+<h3>KHMER</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#54" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KHMER_SYMBOLS"/>
+<h3>KHMER_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#60" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KHOJKI"/>
+<h3>KHOJKI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#224" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="KHUDAWADI"/>
+<h3>KHUDAWADI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#226" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LAO"/>
+<h3>LAO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#39" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LATIN_1_SUPPLEMENT"/>
+<h3>LATIN_1_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#8" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LATIN_EXTENDED_A"/>
+<h3>LATIN_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#9" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LATIN_EXTENDED_ADDITIONAL"/>
+<h3>LATIN_EXTENDED_ADDITIONAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#76" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LATIN_EXTENDED_B"/>
+<h3>LATIN_EXTENDED_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#10" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LATIN_EXTENDED_C"/>
+<h3>LATIN_EXTENDED_C</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#103" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LATIN_EXTENDED_D"/>
+<h3>LATIN_EXTENDED_D</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#134" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LATIN_EXTENDED_E"/>
+<h3>LATIN_EXTENDED_E</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#150" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LEPCHA"/>
+<h3>LEPCHA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#67" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LETTERLIKE_SYMBOLS"/>
+<h3>LETTERLIKE_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#82" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LIMBU"/>
+<h3>LIMBU</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#57" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LINEAR_A"/>
+<h3>LINEAR_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#190" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LINEAR_B_IDEOGRAMS"/>
+<h3>LINEAR_B_IDEOGRAMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#171" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LINEAR_B_SYLLABARY"/>
+<h3>LINEAR_B_SYLLABARY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#170" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LISU"/>
+<h3>LISU</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#129" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LISU_SUPPLEMENT"/>
+<h3>LISU_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#247" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LOW_SURROGATES"/>
+<h3>LOW_SURROGATES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#157" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LYCIAN"/>
+<h3>LYCIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#176" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LYDIAN"/>
+<h3>LYDIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#197" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MAHAJANI"/>
+<h3>MAHAJANI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#221" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MAHJONG_TILES"/>
+<h3>MAHJONG_TILES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#288" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MAKASAR"/>
+<h3>MAKASAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#246" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MALAYALAM"/>
+<h3>MALAYALAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#36" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MANDAIC"/>
+<h3>MANDAIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#25" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MANICHAEAN"/>
+<h3>MANICHAEAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#203" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MARCHEN"/>
+<h3>MARCHEN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#243" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MASARAM_GONDI"/>
+<h3>MASARAM_GONDI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#244" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MATHEMATICAL_ALPHANUMERIC_SYMBOLS"/>
+<h3>MATHEMATICAL_ALPHANUMERIC_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#278" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MATHEMATICAL_OPERATORS"/>
+<h3>MATHEMATICAL_OPERATORS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#85" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MAYAN_NUMERALS"/>
+<h3>MAYAN_NUMERALS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#275" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MEDEFAIDRIN"/>
+<h3>MEDEFAIDRIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#259" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MEETEI_MAYEK"/>
+<h3>MEETEI_MAYEK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#152" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MEETEI_MAYEK_EXTENSIONS"/>
+<h3>MEETEI_MAYEK_EXTENSIONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#148" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MENDE_KIKAKUI"/>
+<h3>MENDE_KIKAKUI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#283" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MEROITIC_CURSIVE"/>
+<h3>MEROITIC_CURSIVE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#199" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MEROITIC_HIEROGLYPHS"/>
+<h3>MEROITIC_HIEROGLYPHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#198" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MIAO"/>
+<h3>MIAO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#260" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A"/>
+<h3>MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#95" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B"/>
+<h3>MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#99" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MISCELLANEOUS_SYMBOLS"/>
+<h3>MISCELLANEOUS_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#93" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MISCELLANEOUS_SYMBOLS_AND_ARROWS"/>
+<h3>MISCELLANEOUS_SYMBOLS_AND_ARROWS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#101" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MISCELLANEOUS_SYMBOLS_AND_PICTOGRAPHS"/>
+<h3>MISCELLANEOUS_SYMBOLS_AND_PICTOGRAPHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#293" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MISCELLANEOUS_TECHNICAL"/>
+<h3>MISCELLANEOUS_TECHNICAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#86" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MODI"/>
+<h3>MODI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#231" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MODIFIER_TONE_LETTERS"/>
+<h3>MODIFIER_TONE_LETTERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#133" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MONGOLIAN"/>
+<h3>MONGOLIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#55" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MONGOLIAN_SUPPLEMENT"/>
+<h3>MONGOLIAN_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#232" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MRO"/>
+<h3>MRO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#256" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MULTANI"/>
+<h3>MULTANI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#225" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MUSICAL_SYMBOLS"/>
+<h3>MUSICAL_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#273" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MYANMAR"/>
+<h3>MYANMAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#41" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MYANMAR_EXTENDED_A"/>
+<h3>MYANMAR_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#146" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="MYANMAR_EXTENDED_B"/>
+<h3>MYANMAR_EXTENDED_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#144" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NABATAEAN"/>
+<h3>NABATAEAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#194" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NANDINAGARI"/>
+<h3>NANDINAGARI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#238" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NEW_TAI_LUE"/>
+<h3>NEW_TAI_LUE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#59" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NEWA"/>
+<h3>NEWA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#228" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NKO"/>
+<h3>NKO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#23" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NUMBER_FORMS"/>
+<h3>NUMBER_FORMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#83" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NUSHU"/>
+<h3>NUSHU</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#269" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="NYIAKENG_PUACHUE_HMONG"/>
+<h3>NYIAKENG_PUACHUE_HMONG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#281" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OGHAM"/>
+<h3>OGHAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#48" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OL_CHIKI"/>
+<h3>OL_CHIKI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#68" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_HUNGARIAN"/>
+<h3>OLD_HUNGARIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#209" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_ITALIC"/>
+<h3>OLD_ITALIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#179" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_NORTH_ARABIAN"/>
+<h3>OLD_NORTH_ARABIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#202" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_PERMIC"/>
+<h3>OLD_PERMIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#181" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_PERSIAN"/>
+<h3>OLD_PERSIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#183" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_SOGDIAN"/>
+<h3>OLD_SOGDIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#213" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_SOUTH_ARABIAN"/>
+<h3>OLD_SOUTH_ARABIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#201" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OLD_TURKIC"/>
+<h3>OLD_TURKIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#208" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OPTICAL_CHARACTER_RECOGNITION"/>
+<h3>OPTICAL_CHARACTER_RECOGNITION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#88" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ORIYA"/>
+<h3>ORIYA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#32" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ORNAMENTAL_DINGBATS"/>
+<h3>ORNAMENTAL_DINGBATS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#295" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OSAGE"/>
+<h3>OSAGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#187" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OSMANYA"/>
+<h3>OSMANYA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#186" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="OTTOMAN_SIYAQ_NUMBERS"/>
+<h3>OTTOMAN_SIYAQ_NUMBERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#286" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PAHAWH_HMONG"/>
+<h3>PAHAWH_HMONG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#258" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PALMYRENE"/>
+<h3>PALMYRENE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#193" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PAU_CIN_HAU"/>
+<h3>PAU_CIN_HAU</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#241" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PHAGS_PA"/>
+<h3>PHAGS_PA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#137" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PHAISTOS_DISC"/>
+<h3>PHAISTOS_DISC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#175" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PHOENICIAN"/>
+<h3>PHOENICIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#196" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PHONETIC_EXTENSIONS"/>
+<h3>PHONETIC_EXTENSIONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#73" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PHONETIC_EXTENSIONS_SUPPLEMENT"/>
+<h3>PHONETIC_EXTENSIONS_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#74" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PLAYING_CARDS"/>
+<h3>PLAYING_CARDS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#290" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PRIVATE_USE_AREA"/>
+<h3>PRIVATE_USE_AREA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#158" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="PSALTER_PAHLAVI"/>
+<h3>PSALTER_PAHLAVI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#207" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="REJANG"/>
+<h3>REJANG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#141" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="RUMI_NUMERAL_SYMBOLS"/>
+<h3>RUMI_NUMERAL_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#211" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="RUNIC"/>
+<h3>RUNIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#49" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SAMARITAN"/>
+<h3>SAMARITAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#24" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SAURASHTRA"/>
+<h3>SAURASHTRA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#138" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SHARADA"/>
+<h3>SHARADA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#222" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SHAVIAN"/>
+<h3>SHAVIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#185" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SHORTHAND_FORMAT_CONTROLS"/>
+<h3>SHORTHAND_FORMAT_CONTROLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#271" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SIDDHAM"/>
+<h3>SIDDHAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#230" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SINHALA"/>
+<h3>SINHALA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#37" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SINHALA_ARCHAIC_NUMBERS"/>
+<h3>SINHALA_ARCHAIC_NUMBERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#223" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SMALL_FORM_VARIANTS"/>
+<h3>SMALL_FORM_VARIANTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#166" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SMALL_KANA_EXTENSION"/>
+<h3>SMALL_KANA_EXTENSION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#268" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SOGDIAN"/>
+<h3>SOGDIAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#214" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SORA_SOMPENG"/>
+<h3>SORA_SOMPENG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#219" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SOYOMBO"/>
+<h3>SOYOMBO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#240" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SPACING_MODIFIER_LETTERS"/>
+<h3>SPACING_MODIFIER_LETTERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#12" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SPECIALS"/>
+<h3>SPECIALS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#169" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUNDANESE"/>
+<h3>SUNDANESE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#65" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUNDANESE_SUPPLEMENT"/>
+<h3>SUNDANESE_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#71" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPERSCRIPTS_AND_SUBSCRIPTS"/>
+<h3>SUPERSCRIPTS_AND_SUBSCRIPTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#79" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTAL_ARROWS_A"/>
+<h3>SUPPLEMENTAL_ARROWS_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#96" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTAL_ARROWS_B"/>
+<h3>SUPPLEMENTAL_ARROWS_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#98" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTAL_ARROWS_C"/>
+<h3>SUPPLEMENTAL_ARROWS_C</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#299" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTAL_MATHEMATICAL_OPERATORS"/>
+<h3>SUPPLEMENTAL_MATHEMATICAL_OPERATORS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#100" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTAL_PUNCTUATION"/>
+<h3>SUPPLEMENTAL_PUNCTUATION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#109" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS"/>
+<h3>SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#300" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTARY_PRIVATE_USE_AREA_A"/>
+<h3>SUPPLEMENTARY_PRIVATE_USE_AREA_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#313" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUPPLEMENTARY_PRIVATE_USE_AREA_B"/>
+<h3>SUPPLEMENTARY_PRIVATE_USE_AREA_B</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#314" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SUTTON_SIGNWRITING"/>
+<h3>SUTTON_SIGNWRITING</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#279" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SYLOTI_NAGRI"/>
+<h3>SYLOTI_NAGRI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#135" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A"/>
+<h3>SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#302" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SYMBOLS_FOR_LEGACY_COMPUTING"/>
+<h3>SYMBOLS_FOR_LEGACY_COMPUTING</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#303" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SYRIAC"/>
+<h3>SYRIAC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#20" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="SYRIAC_SUPPLEMENT"/>
+<h3>SYRIAC_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#26" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAGALOG"/>
+<h3>TAGALOG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#50" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAGBANWA"/>
+<h3>TAGBANWA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#53" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAGS"/>
+<h3>TAGS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#311" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAI_LE"/>
+<h3>TAI_LE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#58" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAI_THAM"/>
+<h3>TAI_THAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#62" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAI_VIET"/>
+<h3>TAI_VIET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#147" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAI_XUAN_JING_SYMBOLS"/>
+<h3>TAI_XUAN_JING_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#276" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAKRI"/>
+<h3>TAKRI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#233" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAMIL"/>
+<h3>TAMIL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#33" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TAMIL_SUPPLEMENT"/>
+<h3>TAMIL_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#248" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TANGUT"/>
+<h3>TANGUT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#262" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TANGUT_COMPONENTS"/>
+<h3>TANGUT_COMPONENTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#263" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TANGUT_SUPPLEMENT"/>
+<h3>TANGUT_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#265" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TELUGU"/>
+<h3>TELUGU</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#34" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="THAANA"/>
+<h3>THAANA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#22" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="THAI"/>
+<h3>THAI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#38" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TIBETAN"/>
+<h3>TIBETAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#40" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TIFINAGH"/>
+<h3>TIFINAGH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#106" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TIRHUTA"/>
+<h3>TIRHUTA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#229" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TRANSPORT_AND_MAP_SYMBOLS"/>
+<h3>TRANSPORT_AND_MAP_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#296" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="UGARITIC"/>
+<h3>UGARITIC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#182" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS"/>
+<h3>UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#47" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS_EXTENDED"/>
+<h3>UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#56" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="VAI"/>
+<h3>VAI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#130" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="VARIATION_SELECTORS"/>
+<h3>VARIATION_SELECTORS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#162" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="VARIATION_SELECTORS_SUPPLEMENT"/>
+<h3>VARIATION_SELECTORS_SUPPLEMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#312" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="VEDIC_EXTENSIONS"/>
+<h3>VEDIC_EXTENSIONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#72" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="VERTICAL_FORMS"/>
+<h3>VERTICAL_FORMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#163" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="WANCHO"/>
+<h3>WANCHO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#282" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="WARANG_CITI"/>
+<h3>WARANG_CITI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#236" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="YEZIDI"/>
+<h3>YEZIDI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#212" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="YI_RADICALS"/>
+<h3>YI_RADICALS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#128" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="YI_SYLLABLES"/>
+<h3>YI_SYLLABLES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#127" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="YIJING_HEXAGRAM_SYMBOLS"/>
+<h3>YIJING_HEXAGRAM_SYMBOLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#125" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="ZANABAZAR_SQUARE"/>
+<h3>ZANABAZAR_SQUARE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#239" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,32 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>pbk_data</title></head><body>
+<h1>pbk_data(name, number, address)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.pbkform-package.html" target="listFrame">ipl.pbkform</a></dd>
+<dt>Type :</dt><dd>record</dd>
+</dl><p/>
+<p/>
+HP 95LX Phone Book Data Record:
+<p/>
+Byte Offset      Name            Type     Contents
+<p/>
+0                RecordType      char     1 (01h)
+1                RecordLength    int      Number of bytes in remainder
+of this data record, see note
+below.
+3                NameLength      char     Length of name text in bytes.
+4                NumberLength    char     Length on number text in bytes.
+5                AddressLength   int      Length of address text in bytes.
+7                NameText        ASCII    Name text, 30 characters maximum.
+7+NameLength     NumberText      ASCII    Number text, 30 characters maximum.
+7+NameLength+
+NumberLength   AddressText     ASCII    Address text where the null 
+character is used as the line 
+terminator.  Addresses are limited
+to a maximum of 8 lines of 39
+characters per line (not counting
+the line terminator).
+<p/>
+<p/><a href="ipl.pbkform-pbkform.icn.html#69" target="displayFrame">Source - pbkform.icn </a>
+<p/>
+</body></html>

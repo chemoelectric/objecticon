@@ -1,0 +1,2248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>graphics.icn</title></head><body><pre>
+<a name="1"/>package graphics
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   lang(Class, NoCopy, ObjectClone, ObjectOutput, Unencodable),
+<a name="5"/>   util(use, error, HasClose)
+<a name="6"/>
+<a name="7"/>record Size(width, height)
+<a name="8"/>record Point(x, y)
+<a name="9"/>record Rectangle(x, y, width, height)
+<a name="10"/>record Vector(dx, dy)
+<a name="11"/>record Color(red, green, blue, alpha)
+<a name="12"/>record XYColor(x, y, red, green, blue, alpha)
+<a name="13"/>record XYPixel(x, y, pixel)
+<a name="14"/>record References(canvas, context)
+<a name="15"/>
+<a name="16"/># This object contains pixel data either read from a file, extracted
+<a name="17"/># from a Window, or created from scratch.  The data is stored in
+<a name="18"/># various underlying formats depending on the source.
+<a name="19"/>#
+<a name="20"/>final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
+<a name="21"/>   private
+<a name="22"/>      ptr
+<a name="23"/>
+<a name="24"/>   public static const
+<a name="25"/>      A8,
+<a name="26"/>      A16,
+<a name="27"/>      RGB24,
+<a name="28"/>      BGR24,
+<a name="29"/>      RGBA32,
+<a name="30"/>      ABGR32,
+<a name="31"/>      RGB48,
+<a name="32"/>      RGBA64,
+<a name="33"/>      G8,
+<a name="34"/>      GA16,
+<a name="35"/>      AG16,
+<a name="36"/>      G16,
+<a name="37"/>      GA32,
+<a name="38"/>      PALETTE1,
+<a name="39"/>      PALETTE2,
+<a name="40"/>      PALETTE4,
+<a name="41"/>      PALETTE8
+<a name="42"/>
+<a name="43"/>   private static init()
+<a name="44"/>      A8        :=  "A8"
+<a name="45"/>      A16       :=  "A16"
+<a name="46"/>      RGB24     :=  "RGB24"
+<a name="47"/>      BGR24     :=  "BGR24"
+<a name="48"/>      RGBA32    :=  "RGBA32"
+<a name="49"/>      ABGR32    :=  "ABGR32"
+<a name="50"/>      RGB48     :=  "RGB48"
+<a name="51"/>      RGBA64    :=  "RGBA64"
+<a name="52"/>      G8        :=  "G8"
+<a name="53"/>      GA16      :=  "GA16"
+<a name="54"/>      AG16      :=  "AG16"
+<a name="55"/>      G16       :=  "G16"
+<a name="56"/>      GA32      :=  "GA32"
+<a name="57"/>      PALETTE1  :=  "PALETTE1"
+<a name="58"/>      PALETTE2  :=  "PALETTE2"
+<a name="59"/>      PALETTE4  :=  "PALETTE4"
+<a name="60"/>      PALETTE8  :=  "PALETTE8"
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   #
+<a name="64"/>   # Get the width of the block
+<a name="65"/>   #
+<a name="66"/>   public native get_width()
+<a name="67"/>
+<a name="68"/>   #
+<a name="69"/>   # Get the height of the block
+<a name="70"/>   #
+<a name="71"/>   public native get_height()
+<a name="72"/>
+<a name="73"/>   #
+<a name="74"/>   # Get the size, as a `Size` record.
+<a name="75"/>   #
+<a name="76"/>   public get_size()
+<a name="77"/>      return Size(get_width(), get_height())
+<a name="78"/>   end
+<a name="79"/>
+<a name="80"/>   #
+<a name="81"/>   # Get the pixel at the given position as an Icon colour string;
+<a name="82"/>   # indices run from 0 to width-1 and 0 to height-1 respectively.
+<a name="83"/>   #
+<a name="84"/>   public native get(x, y)
+<a name="85"/>
+<a name="86"/>   #
+<a name="87"/>   # Set the pixel to the given Icon colour string value.  Note that
+<a name="88"/>   # the value actually stored may only be an approximation of the
+<a name="89"/>   # value given, depending on the underlying data format.
+<a name="90"/>   #
+<a name="91"/>   public native set(x, y, v)
+<a name="92"/>
+<a name="93"/>   #
+<a name="94"/>   # Get the given pixel as an `Color` record, giving the rgba values.
+<a name="95"/>   #
+<a name="96"/>   public get_rgba(x, y)
+<a name="97"/>      return get_rgba_impl(x, y, Color)
+<a name="98"/>   end
+<a name="99"/>
+<a name="100"/>   private native get_rgba_impl(x, y, con)
+<a name="101"/>
+<a name="102"/>   #
+<a name="103"/>   # Set the given pixel to the given rgba integer values.
+<a name="104"/>   #
+<a name="105"/>   public native set_rgba(x, y, r, g, b, a)
+<a name="106"/>
+<a name="107"/>   #
+<a name="108"/>   # Dispose of the object, freeing the memory used by the block
+<a name="109"/>   #
+<a name="110"/>   public override native close()
+<a name="111"/>
+<a name="112"/>   #
+<a name="113"/>   # Get the format of the underlying data, which will be one of the
+<a name="114"/>   # constant values listed above, or a platform-specific value.
+<a name="115"/>   #
+<a name="116"/>   public native get_format()
+<a name="117"/>
+<a name="118"/>   #
+<a name="119"/>   # Get the raw underlying data as a string.
+<a name="120"/>   #
+<a name="121"/>   public native get_data()
+<a name="122"/>
+<a name="123"/>   #
+<a name="124"/>   # Set the raw underlying data from a string, padding with zeroes if
+<a name="125"/>   # the string is too short.
+<a name="126"/>   #
+<a name="127"/>   public native set_data(s)
+<a name="128"/>
+<a name="129"/>   #
+<a name="130"/>   # Convenient method to generate 0 to get_width() - 1
+<a name="131"/>   #
+<a name="132"/>   public x_range()
+<a name="133"/>      suspend 0 to get_width() - 1
+<a name="134"/>   end
+<a name="135"/>
+<a name="136"/>   #
+<a name="137"/>   # Convenient method to generate 0 to get_height() - 1
+<a name="138"/>   #
+<a name="139"/>   public y_range()
+<a name="140"/>      suspend 0 to get_height() - 1
+<a name="141"/>   end
+<a name="142"/>
+<a name="143"/>   #
+<a name="144"/>   # Generate all the pixels in the given rectangle, which defaults to
+<a name="145"/>   # the whole image.  The pixels are generated left to right and from
+<a name="146"/>   # top to bottom, as `XYColor` records, which give the x, y position
+<a name="147"/>   # and rgba color values of each pixel.  NB - the same record is
+<a name="148"/>   # suspended each time.
+<a name="149"/>   #
+<a name="150"/>   public gen_rgba(x, y, width, height)
+<a name="151"/>      suspend gen_rgba_impl(x, y, width, height, XYColor)
+<a name="152"/>   end
+<a name="153"/>
+<a name="154"/>   private native gen_rgba_impl(x, y, width, height, con)
+<a name="155"/>
+<a name="156"/>   #
+<a name="157"/>   # Generate all the pixels in the given rectangle, which defaults to
+<a name="158"/>   # the whole image.  The pixels are generated left to right and from
+<a name="159"/>   # top to bottom, as `XYPixel` records, which give the x, y position
+<a name="160"/>   # and color string of each pixel.  NB - the same record is
+<a name="161"/>   # suspended each time.
+<a name="162"/>   #
+<a name="163"/>   public gen(x, y, width, height)
+<a name="164"/>      suspend gen_impl(x, y, width, height, XYPixel)
+<a name="165"/>   end
+<a name="166"/>
+<a name="167"/>   private native gen_impl(x, y, width, height, con)
+<a name="168"/>
+<a name="169"/>   #
+<a name="170"/>   # Copy a single pixel from this instance to another.
+<a name="171"/>   #
+<a name="172"/>   public native copy_pixel(x1, y1, dest, x2, y2)
+<a name="173"/>
+<a name="174"/>   #
+<a name="175"/>   # Copy a rectangular area from this instance to another.
+<a name="176"/>   #
+<a name="177"/>   public native copy_to(x1, y1, width, height, dest, x2, y2)
+<a name="178"/>
+<a name="179"/>   #
+<a name="180"/>   # Copy a rectangular area from this instance to another, scaling
+<a name="181"/>   # the result to fit in the destination rectangle.
+<a name="182"/>   #
+<a name="183"/>   public native scale_to(x1, y1, width1, height1,
+<a name="184"/>                          dest, x2, y2, width2, height2)
+<a name="185"/>
+<a name="186"/>   #
+<a name="187"/>   # Filter the given set of pixels according to the given filter
+<a name="188"/>   # spec.
+<a name="189"/>   #
+<a name="190"/>   public native filter(x, y, width, height, filter)
+<a name="191"/>
+<a name="192"/>   #
+<a name="193"/>   # Encode the image to a file.
+<a name="194"/>   #
+<a name="195"/>   public native to_file(fname)
+<a name="196"/>
+<a name="197"/>   #
+<a name="198"/>   # Return the number of bits of alpha depth (zero if the format
+<a name="199"/>   # doesn't support storage of an alpha channel).
+<a name="200"/>   #
+<a name="201"/>   public native get_alpha_depth()
+<a name="202"/>
+<a name="203"/>   #
+<a name="204"/>   # Return the number of bits of color depth.
+<a name="205"/>   #
+<a name="206"/>   public native get_color_depth()
+<a name="207"/>
+<a name="208"/>   #
+<a name="209"/>   # Get the palette size, or fail if this is not a PALETTE format.
+<a name="210"/>   #
+<a name="211"/>   public native get_palette_size()
+<a name="212"/>
+<a name="213"/>   #
+<a name="214"/>   # Get the palette entry at index i, as a `Color` record.  This and
+<a name="215"/>   # similar methods give a runerr unless the format is PALETTEx.  The
+<a name="216"/>   # number of palette entries depends on the format; eg PALETTE4 has
+<a name="217"/>   # 2^4=16 possible entries, indexed 0..15.
+<a name="218"/>   #
+<a name="219"/>   public get_palette_rgba(i)
+<a name="220"/>      return get_palette_rgba_impl(i, Color)
+<a name="221"/>   end
+<a name="222"/>
+<a name="223"/>   private native get_palette_rgba_impl(i, con)
+<a name="224"/>
+<a name="225"/>   #
+<a name="226"/>   # Set the palette entry at index i to the given rgba values.
+<a name="227"/>   #
+<a name="228"/>   public native set_palette_rgba(i, r, g, b, a)
+<a name="229"/>
+<a name="230"/>   #
+<a name="231"/>   # Get the palette entry at index i as an icon colour value.
+<a name="232"/>   #
+<a name="233"/>   public native get_palette(i)
+<a name="234"/>
+<a name="235"/>   #
+<a name="236"/>   # Set the palette entry at index i to the given icon colour value.
+<a name="237"/>   #
+<a name="238"/>   public native set_palette(i, v)
+<a name="239"/>
+<a name="240"/>   #
+<a name="241"/>   # Get the palette index contained at the given pixel location.
+<a name="242"/>   #
+<a name="243"/>   public native get_palette_index(x, y)
+<a name="244"/>
+<a name="245"/>   #
+<a name="246"/>   # Set the palette index contained at the given pixel location.
+<a name="247"/>   #
+<a name="248"/>   public native set_palette_index(x, y, i)
+<a name="249"/>
+<a name="250"/>   #
+<a name="251"/>   # Return a new instance which is an exact copy of this instance.
+<a name="252"/>   # No data is shared.
+<a name="253"/>   #
+<a name="254"/>   public clone()
+<a name="255"/>      return create_for_ptr(clone_impl())
+<a name="256"/>   end
+<a name="257"/>
+<a name="258"/>   #
+<a name="259"/>   # Convert this instance to one of the same dimensions in the given
+<a name="260"/>   # format.  The format may not be a paletted format (since no
+<a name="261"/>   # palette would have been set up).
+<a name="262"/>   #
+<a name="263"/>   public convert(format)
+<a name="264"/>      return create_for_ptr(convert_impl(format))
+<a name="265"/>   end
+<a name="266"/>
+<a name="267"/>   #
+<a name="268"/>   # Return a new `Pixels` instance which shares the data of this
+<a name="269"/>   # instance.  The underlying data is freed when the last enclosing
+<a name="270"/>   # `Pixels` is closed.
+<a name="271"/>   #
+<a name="272"/>   public shared_copy()
+<a name="273"/>      return create_for_ptr(shared_copy_impl())
+<a name="274"/>   end
+<a name="275"/>
+<a name="276"/>   #
+<a name="277"/>   # Return the number of references to the underlying data.
+<a name="278"/>   #
+<a name="279"/>   public native get_references()
+<a name="280"/>
+<a name="281"/>   protected override object_clone()
+<a name="282"/>      return clone()
+<a name="283"/>   end
+<a name="284"/>
+<a name="285"/>   private native convert_impl(format)
+<a name="286"/>   private native shared_copy_impl()
+<a name="287"/>   private native clone_impl()
+<a name="288"/>
+<a name="289"/>   #
+<a name="290"/>   # Set entries in the palette according to one of the standard
+<a name="291"/>   # palettes (c1,c2 etc).  Only allowed for PALETTE8 format.
+<a name="292"/>   #
+<a name="293"/>   public native load_palette(pal)
+<a name="294"/>
+<a name="295"/>   package static create_for_ptr(ptr)
+<a name="296"/>      local i
+<a name="297"/>      i := Class.create_instance()
+<a name="298"/>      i.ptr := ptr
+<a name="299"/>      return i
+<a name="300"/>   end
+<a name="301"/>
+<a name="302"/>   private static native new_open_impl(s)
+<a name="303"/>   private static native new_blank_impl(width, height, format)
+<a name="304"/>
+<a name="305"/>   protected override object_output(oo)
+<a name="306"/>      local s
+<a name="307"/>      s := if /ptr then "closed" else
+<a name="308"/>         get_width() || "x" || get_height() || " " || get_format()
+<a name="309"/>      oo.object_string(self, s)
+<a name="310"/>   end
+<a name="311"/>
+<a name="312"/>   #
+<a name="313"/>   # The constructor for Pixels takes two formats.  With one parameter
+<a name="314"/>   # a new instance is created based on the given image string, which
+<a name="315"/>   # can be raw image data, or a filename.
+<a name="316"/>   #
+<a name="317"/>   # With two parameters, a blank instance is created of the given
+<a name="318"/>   # width and height; an optional third parameter provides the format
+<a name="319"/>   # (the default is `RGBA64`).  The underlying data is allocated and
+<a name="320"/>   # set to zero.
+<a name="321"/>   #
+<a name="322"/>   public new(a[])
+<a name="323"/>      (ptr := if *a = 1 then
+<a name="324"/>         new_open_impl(a[1])
+<a name="325"/>      else
+<a name="326"/>         new_blank_impl!a) | fail
+<a name="327"/>      return
+<a name="328"/>   end
+<a name="329"/>end
+<a name="330"/>
+<a name="331"/>final class Window(NoCopy, ObjectOutput, HasClose)
+<a name="332"/>   private
+<a name="333"/>      ptr
+<a name="334"/>
+<a name="335"/>   public static const
+<a name="336"/>      RESIZE,
+<a name="337"/>      MOVE,
+<a name="338"/>      STATE,
+<a name="339"/>      FOCUS_IN,
+<a name="340"/>      FOCUS_OUT,
+<a name="341"/>      CLOSE_BUTTON,
+<a name="342"/>      INVOKE_LATER,
+<a name="343"/>      # The format of a `Window` constructed with empty display
+<a name="344"/>      # parameter.  This will be `&amp;null` if no window could be created.
+<a name="345"/>      FORMAT
+<a name="346"/>
+<a name="347"/>   private static const
+<a name="348"/>      PATTERNS
+<a name="349"/>
+<a name="350"/>   private static mk_pattern(s)
+<a name="351"/>      return Pixels(8, 8, Pixels.PALETTE1).set_data(s)
+<a name="352"/>   end
+<a name="353"/>
+<a name="354"/>   private static init()
+<a name="355"/>      local t
+<a name="356"/>      STATE :=         -8
+<a name="357"/>      MOVE :=          -9
+<a name="358"/>      RESIZE :=       -10
+<a name="359"/>      CLOSE_BUTTON := -11
+<a name="360"/>      INVOKE_LATER := -40
+<a name="361"/>      FOCUS_IN :=     -25
+<a name="362"/>      FOCUS_OUT :=    -26
+<a name="363"/>      PATTERNS := table(,
+<a name="364"/>                        Pattern.BLACK, mk_pattern("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
+<a name="365"/>                        Pattern.VERY_DARK, mk_pattern("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
+<a name="366"/>                        Pattern.DARK_GRAY, mk_pattern("w\xddw\xddw\xddw\xdd\x00"),
+<a name="367"/>                        Pattern.GRAY, mk_pattern("U\xaaU\xaaU\xaaU\xaa\x00"),
+<a name="368"/>                        Pattern.LIGHT_GRAY, mk_pattern("\x11D\x11D\x11D\x11D\x00"),
+<a name="369"/>                        Pattern.VERY_LIGHT, mk_pattern("\x01\x00\x10\x00\x01\x00\x10\x00\x00"),
+<a name="370"/>                        Pattern.WHITE, mk_pattern("\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
+<a name="371"/>                        Pattern.VERTICAL, mk_pattern("\x10\x10\x10\x10\x10\x10\x10\x10\x00"),
+<a name="372"/>                        Pattern.DIAGONAL, mk_pattern("\x80@ \x10\b\x04\x02\x01\x00"),
+<a name="373"/>                        Pattern.HORIZONTAL, mk_pattern("\x00\x00\x00\xff\x00\x00\x00\x00\x00"),
+<a name="374"/>                        Pattern.GRID, mk_pattern("\x10\x10\x10\xff\x10\x10\x10\x10\x00"),
+<a name="375"/>                        Pattern.TRELLIS, mk_pattern("\x82D(\x10(D\x82\x01\x00"),
+<a name="376"/>                        Pattern.CHECKERS, mk_pattern("\x0f\x0f\x0f\x0f\xf0\xf0\xf0\xf0\x00"),
+<a name="377"/>                        Pattern.GRAINS, mk_pattern("\e\x18\x81\xb16\x06`c\x00"),
+<a name="378"/>                        Pattern.SCALES, mk_pattern("\x02\x02\x05\xf8  P\x8f\x00"),
+<a name="379"/>                        Pattern.WAVES, mk_pattern("\x03\x84H0\x03\x84H0\x00"))
+<a name="380"/>      use {
+<a name="381"/>         t := Window(),
+<a name="382"/>         FORMAT := t.get_format()
+<a name="383"/>      }
+<a name="384"/>   end
+<a name="385"/>
+<a name="386"/>   private static create_for_ptr(ptr)
+<a name="387"/>      local i
+<a name="388"/>      i := Class.create_instance()
+<a name="389"/>      i.ptr := ptr
+<a name="390"/>      return i
+<a name="391"/>   end
+<a name="392"/>
+<a name="393"/>   #
+<a name="394"/>   # Open a new window.  The meaning of the optional parameter
+<a name="395"/>   # `display` (a string) is system dependent; on X11 it specifies the
+<a name="396"/>   # display to connect to.
+<a name="397"/>   #
+<a name="398"/>   public new(display)
+<a name="399"/>      self.ptr := new_impl(display) | fail
+<a name="400"/>      return
+<a name="401"/>   end
+<a name="402"/>
+<a name="403"/>   protected override object_output(oo)
+<a name="404"/>      local s
+<a name="405"/>      s := if /ptr then "closed" else
+<a name="406"/>         get_width() || "x" || get_height() || " " || get_canvas()
+<a name="407"/>      oo.object_string(self, s)
+<a name="408"/>   end
+<a name="409"/>
+<a name="410"/>   #
+<a name="411"/>   # Produces a new window value that combines the canvas of `self`
+<a name="412"/>   # with a new graphics context. The new graphics attributes are
+<a name="413"/>   # copied from `self`.
+<a name="414"/>   #
+<a name="415"/>   public clone()
+<a name="416"/>      return create_for_ptr(clone_impl())
+<a name="417"/>   end
+<a name="418"/>
+<a name="419"/>   #
+<a name="420"/>   # Return a new instance which shares both canvas and context of
+<a name="421"/>   # `self`.
+<a name="422"/>   #
+<a name="423"/>   public shared_copy()
+<a name="424"/>      return couple(self)
+<a name="425"/>   end
+<a name="426"/>
+<a name="427"/>   #
+<a name="428"/>   # Produces a new window value that binds the canvas of `self` with
+<a name="429"/>   # the graphics context of `other`.
+<a name="430"/>   #
+<a name="431"/>   public couple(other)
+<a name="432"/>      return create_for_ptr(couple_impl(other))
+<a name="433"/>   end
+<a name="434"/>
+<a name="435"/>   private static native new_impl(display)
+<a name="436"/>   private native clone_impl()
+<a name="437"/>   private native couple_impl(other)
+<a name="438"/>
+<a name="439"/>   #
+<a name="440"/>   # Grab the pointer so that all mouse events are directed to this
+<a name="441"/>   # window.
+<a name="442"/>   #
+<a name="443"/>   public native grab_pointer()
+<a name="444"/>
+<a name="445"/>   #
+<a name="446"/>   # Undoes the effect of `grab_pointer()`.
+<a name="447"/>   #
+<a name="448"/>   public native ungrab_pointer()
+<a name="449"/>
+<a name="450"/>   #
+<a name="451"/>   # Grab the keyboard so that all key events are directed to this
+<a name="452"/>   # window.
+<a name="453"/>   #
+<a name="454"/>   public native grab_keyboard()
+<a name="455"/>
+<a name="456"/>   #
+<a name="457"/>   # Undoes the effect of `grab_keyboard()`.
+<a name="458"/>   #
+<a name="459"/>   public native ungrab_keyboard()
+<a name="460"/>
+<a name="461"/>   #
+<a name="462"/>   # Return the ascent height of the font in pixels.
+<a name="463"/>   #
+<a name="464"/>   public native get_font_ascent()
+<a name="465"/>
+<a name="466"/>   #
+<a name="467"/>   # Return the background colour as set by `set_bg()`
+<a name="468"/>   #
+<a name="469"/>   public native get_bg()
+<a name="470"/>
+<a name="471"/>   #
+<a name="472"/>   # Return the canvas type as set by `set_canvas()`
+<a name="473"/>   #
+<a name="474"/>   public native get_canvas()
+<a name="475"/>
+<a name="476"/>   #
+<a name="477"/>   # Return the depth in bits used by the window system for this window.
+<a name="478"/>   #
+<a name="479"/>   public native get_depth()
+<a name="480"/>
+<a name="481"/>   #
+<a name="482"/>   # Return the descent height of the font in pixels.
+<a name="483"/>   #
+<a name="484"/>   public native get_font_descent()
+<a name="485"/>
+<a name="486"/>   #
+<a name="487"/>   # Return the display value used when this window was constructed,
+<a name="488"/>   # or the default setting if no display parameter was used.
+<a name="489"/>   #
+<a name="490"/>   public native get_display()
+<a name="491"/>
+<a name="492"/>   #
+<a name="493"/>   # Return a system-dependent string which can identify the visible
+<a name="494"/>   # window to external programs.  Fails if the window is hidden.
+<a name="495"/>   #
+<a name="496"/>   public native get_id()
+<a name="497"/>
+<a name="498"/>   #
+<a name="499"/>   # Return a system-dependent integer which represents the connection
+<a name="500"/>   # to the window system.
+<a name="501"/>   #
+<a name="502"/>   public native get_fd()
+<a name="503"/>
+<a name="504"/>   #
+<a name="505"/>   # Return the drawing operator as set by `set_draw_op()`.
+<a name="506"/>   #
+<a name="507"/>   public native get_draw_op()
+<a name="508"/>
+<a name="509"/>   #
+<a name="510"/>   # Return the x offset, as set by `set_dx()`.
+<a name="511"/>   #
+<a name="512"/>   public native get_dx()
+<a name="513"/>
+<a name="514"/>   #
+<a name="515"/>   # Return the y offset, as set by `set_dy()`.
+<a name="516"/>   #
+<a name="517"/>   public native get_dy()
+<a name="518"/>
+<a name="519"/>   #
+<a name="520"/>   # Return the font leading value, as set by `set_leading()`.
+<a name="521"/>   #
+<a name="522"/>   public native get_leading()
+<a name="523"/>
+<a name="524"/>   #
+<a name="525"/>   # Return the foreground colour as set by `set_fg()`
+<a name="526"/>   #
+<a name="527"/>   public native get_fg()
+<a name="528"/>
+<a name="529"/>   #
+<a name="530"/>   # Return the font as set by `set_font()`.  Note that the system's
+<a name="531"/>   # identifier of the font will be returned, rather than the exact
+<a name="532"/>   # value passed to `set_font()`.
+<a name="533"/>   #
+<a name="534"/>   public native get_font()
+<a name="535"/>
+<a name="536"/>   #
+<a name="537"/>   # Return the font width in pixels of the current font; for a
+<a name="538"/>   # proportional font this is the maximum width of one character.
+<a name="539"/>   #
+<a name="540"/>   public native get_font_width()
+<a name="541"/>
+<a name="542"/>   #
+<a name="543"/>   # Return the height of this window; see `get_size()`.
+<a name="544"/>   #
+<a name="545"/>   public native get_height()
+<a name="546"/>
+<a name="547"/>   #
+<a name="548"/>   # Return the window label as set by `set_label()`.
+<a name="549"/>   #
+<a name="550"/>   public native get_label()
+<a name="551"/>
+<a name="552"/>   #
+<a name="553"/>   # Return the line style setting as set by `set_line_end()`.
+<a name="554"/>   #
+<a name="555"/>   public native get_line_end()
+<a name="556"/>
+<a name="557"/>   #
+<a name="558"/>   # Return the line style setting as set by `set_line_join()`.
+<a name="559"/>   #
+<a name="560"/>   public native get_line_join()
+<a name="561"/>
+<a name="562"/>   #
+<a name="563"/>   # Return the line width (a real), as set by `set_line_width()`.
+<a name="564"/>   #
+<a name="565"/>   public native get_line_width()
+<a name="566"/>
+<a name="567"/>   #
+<a name="568"/>   # Return the fill rule setting as set by `set_fill_rule()`.
+<a name="569"/>   #
+<a name="570"/>   public native get_fill_rule()
+<a name="571"/>
+<a name="572"/>   #
+<a name="573"/>   # Return the maximum allowed height of this window, see `get_max_size()`.
+<a name="574"/>   #
+<a name="575"/>   public native get_max_height()
+<a name="576"/>
+<a name="577"/>   #
+<a name="578"/>   # Return the maximum allowed width of this window, see `get_max_size()`.
+<a name="579"/>   #
+<a name="580"/>   public native get_max_width()
+<a name="581"/>
+<a name="582"/>   #
+<a name="583"/>   # Return the minimum allowed height of this window; see `get_min_size()`.
+<a name="584"/>   #
+<a name="585"/>   public native get_min_height()
+<a name="586"/>
+<a name="587"/>   #
+<a name="588"/>   # Return the minimum allowed width of this window; see `get_min_size()`.
+<a name="589"/>   #
+<a name="590"/>   public native get_min_width()
+<a name="591"/>
+<a name="592"/>   #
+<a name="593"/>   # Return the mouse pointer as set by `set_pointer()`.
+<a name="594"/>   #
+<a name="595"/>   public native get_pointer()
+<a name="596"/>
+<a name="597"/>   #
+<a name="598"/>   # Return the window's x position on the screen; see `get_pos()`.
+<a name="599"/>   #
+<a name="600"/>   public native get_x()
+<a name="601"/>
+<a name="602"/>   #
+<a name="603"/>   # Return the window's y position on the screen; see `get_pos()`.
+<a name="604"/>   #
+<a name="605"/>   public native get_y()
+<a name="606"/>
+<a name="607"/>   #
+<a name="608"/>   # Succeed iff the window is resizable, according to the flag set
+<a name="609"/>   # with `set_resize()`.
+<a name="610"/>   #
+<a name="611"/>   public native can_resize()
+<a name="612"/>
+<a name="613"/>   #
+<a name="614"/>   # Return the width of this window; see `get_size()`.
+<a name="615"/>   #
+<a name="616"/>   public native get_width()
+<a name="617"/>
+<a name="618"/>   #
+<a name="619"/>   # Return the `dx, dy` offset as a `Vector` record.
+<a name="620"/>   #
+<a name="621"/>   public get_offset()
+<a name="622"/>      return Vector(get_dx(), get_dy())
+<a name="623"/>   end
+<a name="624"/>
+<a name="625"/>   #
+<a name="626"/>   # Set the `dx, dy` offset; see `set_dx()` and `set_dy()`.
+<a name="627"/>   #
+<a name="628"/>   public set_offset(dx, dy)
+<a name="629"/>      return set_dx(dx).set_dy(dy)
+<a name="630"/>   end
+<a name="631"/>
+<a name="632"/>   #
+<a name="633"/>   # Return the current clip as a `Rectangle` record, or fail if there
+<a name="634"/>   # is no clip set.
+<a name="635"/>   #
+<a name="636"/>   public get_clip()
+<a name="637"/>      return get_clip_impl(Rectangle)
+<a name="638"/>   end
+<a name="639"/>
+<a name="640"/>   private native get_clip_impl(r)
+<a name="641"/>
+<a name="642"/>   #
+<a name="643"/>   # Temporarily stop copying graphic operations from the backing
+<a name="644"/>   # image to the visible window.  This call must be followed by a
+<a name="645"/>   # call to `restore()`.
+<a name="646"/>   #
+<a name="647"/>   public native hold()
+<a name="648"/>
+<a name="649"/>   #
+<a name="650"/>   # After a call to `hold()`, update the visible window with the
+<a name="651"/>   # drawing that has taken place since `hold()`, by copying the given
+<a name="652"/>   # region from the off-screen buffer to the visible window.  This
+<a name="653"/>   # can be used as a form of double-buffering, with several drawing
+<a name="654"/>   # operations taking place off-screen, and being updated in one go.
+<a name="655"/>   #
+<a name="656"/>   public native restore(x, y, width, height)
+<a name="657"/>
+<a name="658"/>   #
+<a name="659"/>   # Return the size of the window as a `Size` record.
+<a name="660"/>   #
+<a name="661"/>   public get_size()
+<a name="662"/>      return Size(get_width(), get_height())
+<a name="663"/>   end
+<a name="664"/>
+<a name="665"/>   #
+<a name="666"/>   # Return the maximum size of the window as a `Size` record.
+<a name="667"/>   #
+<a name="668"/>   public get_max_size()
+<a name="669"/>      return Size(get_max_width(), get_max_height())
+<a name="670"/>   end
+<a name="671"/>
+<a name="672"/>   #
+<a name="673"/>   # Return the minimum size of the window as a `Size` record.
+<a name="674"/>   #
+<a name="675"/>   public get_min_size()
+<a name="676"/>      return Size(get_min_width(), get_min_height())
+<a name="677"/>   end
+<a name="678"/>
+<a name="679"/>   #
+<a name="680"/>   # Return the position of this window as a `Size` record.  If the
+<a name="681"/>   # window is hidden, or the position is unavailable, this method
+<a name="682"/>   # fails.
+<a name="683"/>   #
+<a name="684"/>   # Note that, for a bordered window, this method always returns the
+<a name="685"/>   # location of the inner client area.  This is distinct from the
+<a name="686"/>   # corresponding `set_pos()` method.
+<a name="687"/>   #
+<a name="688"/>   public get_pos()
+<a name="689"/>      return Point(get_x(), get_y())
+<a name="690"/>   end
+<a name="691"/>
+<a name="692"/>   #
+<a name="693"/>   # Return the geometry of this window as a `Rectangle` record; see
+<a name="694"/>   # `get_pos()` and `get_size()`.
+<a name="695"/>   #
+<a name="696"/>   public get_geometry()
+<a name="697"/>      return Rectangle(get_x(), get_y(), get_width(), get_height())
+<a name="698"/>   end
+<a name="699"/>
+<a name="700"/>   #
+<a name="701"/>   # Return the number of references to this window's canvas and
+<a name="702"/>   # context, as a `References` record.
+<a name="703"/>   #
+<a name="704"/>   public get_references()
+<a name="705"/>      return get_references_impl(References())
+<a name="706"/>   end
+<a name="707"/>
+<a name="708"/>   private native get_references_impl(r)
+<a name="709"/>
+<a name="710"/>   #
+<a name="711"/>   # Set the current background color.
+<a name="712"/>   #
+<a name="713"/>   public native set_bg(v)
+<a name="714"/>
+<a name="715"/>   #
+<a name="716"/>   # The canvas attribute canvas specifies the window visibility.
+<a name="717"/>   # Possible values are system dependent, but include "hidden",
+<a name="718"/>   # "normal", and "popup".  The X11 implementation also provides
+<a name="719"/>   # "iconic", "fullscreen", "maximized", "root", "withdrawn".  (See
+<a name="720"/>   # `Canvas` for symbolic constants).
+<a name="721"/>   #
+<a name="722"/>   public native set_canvas(v)
+<a name="723"/>
+<a name="724"/>   #
+<a name="725"/>   # Set the drawing operator, which specifies the way in which newly
+<a name="726"/>   # drawn pixels are combined with the pixels that are already in a
+<a name="727"/>   # window.  Possible values are system dependent, but include "over"
+<a name="728"/>   # and "source".  The X11 implementation also allows the Porter-Duff
+<a name="729"/>   # operators "atop", "clear", "dest", "dest atop", "dest in", "dest
+<a name="730"/>   # out", "dest over", "in", "out", and several other more exotic
+<a name="731"/>   # ones.  (See `DrawOp` for these, as well as symbolic constants).
+<a name="732"/>   #
+<a name="733"/>   public native set_draw_op(v)
+<a name="734"/>
+<a name="735"/>   #
+<a name="736"/>   # Set the line leading, which specifies extra space to add to font
+<a name="737"/>   # ascent, descent and height, to calculate line ascent, descent and
+<a name="738"/>   # height.  It is specified as a real number, being the proportion
+<a name="739"/>   # of font height.  The default leading value is `0.075`, and this
+<a name="740"/>   # can be changed by setting the environment variable `OI_LEADING`.
+<a name="741"/>   #
+<a name="742"/>   public native set_leading(v)
+<a name="743"/>
+<a name="744"/>   #
+<a name="745"/>   # Set `dx`, a horizontal offset that is added to the x value of
+<a name="746"/>   # every coordinate pair before interpretation.
+<a name="747"/>   #
+<a name="748"/>   public native set_dx(v)
+<a name="749"/>
+<a name="750"/>   #
+<a name="751"/>   # Set `dy`, a vertical offset that is added to the y value of every
+<a name="752"/>   # coordinate pair before interpretation.
+<a name="753"/>   #
+<a name="754"/>   public native set_dy(v)
+<a name="755"/>
+<a name="756"/>   #
+<a name="757"/>   # Set the current foreground color.
+<a name="758"/>   #
+<a name="759"/>   public native set_fg(v)
+<a name="760"/>
+<a name="761"/>   #
+<a name="762"/>   # Set the current text font.
+<a name="763"/>   #
+<a name="764"/>   public native set_font(v)
+<a name="765"/>
+<a name="766"/>   #
+<a name="767"/>   # Specifies the position and size of the window; see `set_pos()`
+<a name="768"/>   # and `set_size()`.
+<a name="769"/>   #
+<a name="770"/>   public native set_geometry(x, y, width, height)
+<a name="771"/>
+<a name="772"/>   #
+<a name="773"/>   # Set the height of the window in pixels; see `set_size()`.
+<a name="774"/>   #
+<a name="775"/>   public native set_height(height)
+<a name="776"/>
+<a name="777"/>   #
+<a name="778"/>   # Specifies an image to load into the window.  On success, the
+<a name="779"/>   # window is resized to the size of the image.  The given parameter
+<a name="780"/>   # `v` may be raw binary image data (eg a gif file), or the name of
+<a name="781"/>   # a file containing an image, or a `Pixels` instance.
+<a name="782"/>   #
+<a name="783"/>   # Note that mask and draw_op settings are not changed before
+<a name="784"/>   # drawing the image; if the image could be transparent it may be
+<a name="785"/>   # desirable to set draw_op to "source" beforehand, so that the
+<a name="786"/>   # image does not mix with the existing background.
+<a name="787"/>   #
+<a name="788"/>   public set_image(v)
+<a name="789"/>      return if is(v, Pixels) then {
+<a name="790"/>         set_size(v.get_width(), v.get_height())
+<a name="791"/>         draw_image(,, v)
+<a name="792"/>      } else use {
+<a name="793"/>         v := Pixels(v),
+<a name="794"/>         set_image(v)
+<a name="795"/>      }
+<a name="796"/>   end
+<a name="797"/>
+<a name="798"/>   #
+<a name="799"/>   # Specify an image used to identify the window.  If null, then the
+<a name="800"/>   # setting is cleared.  The parameter takes the same format as
+<a name="801"/>   # `set_image()`.
+<a name="802"/>   #
+<a name="803"/>   public set_icon(v)
+<a name="804"/>      return if /v | is(v, Pixels) then
+<a name="805"/>         set_icon_impl(v)
+<a name="806"/>      else use {
+<a name="807"/>         v := Pixels(v),
+<a name="808"/>         set_icon_impl(v)
+<a name="809"/>      }
+<a name="810"/>   end
+<a name="811"/>
+<a name="812"/>   private native set_icon_impl(id)
+<a name="813"/>
+<a name="814"/>   #
+<a name="815"/>   # The canvas attribute label specifies a title used to identify the
+<a name="816"/>   # window.
+<a name="817"/>   #
+<a name="818"/>   public native set_label(v)
+<a name="819"/>
+<a name="820"/>   #
+<a name="821"/>   # Set the line style, which specifies how `draw_line()` draws the
+<a name="822"/>   # ends of a line.  Possible values are "flat", "point", "round",
+<a name="823"/>   # and "square".  (See `LineEnd` for symbolic constants).
+<a name="824"/>   #
+<a name="825"/>   public native set_line_end(v)
+<a name="826"/>
+<a name="827"/>   #
+<a name="828"/>   # Set the line style, which specifies how `draw_line()` draws the
+<a name="829"/>   # joins of a line.  Possible values are "bevel", "miter", "round".
+<a name="830"/>   # (See `LineJoin` for symbolic constants).
+<a name="831"/>   #
+<a name="832"/>   public native set_line_join(v)
+<a name="833"/>
+<a name="834"/>   #
+<a name="835"/>   # Set the width of drawn lines.
+<a name="836"/>   #
+<a name="837"/>   public native set_line_width(v)
+<a name="838"/>
+<a name="839"/>   #
+<a name="840"/>   # Set the fill rule, which specifies how `fill_polygon()` fills
+<a name="841"/>   # polygons with overlapping edges.  Possible values are "even-odd",
+<a name="842"/>   # "non-zero".  (See `FillRule` for symbolic constants).
+<a name="843"/>   #
+<a name="844"/>   public native set_fill_rule(v)
+<a name="845"/>
+<a name="846"/>   #
+<a name="847"/>   # Set the maximum height of the window in pixels.  This only
+<a name="848"/>   # affects visible windows, not hidden windows.
+<a name="849"/>   #
+<a name="850"/>   public native set_max_height(height)
+<a name="851"/>
+<a name="852"/>   #
+<a name="853"/>   # Set the maximum size of the window in pixels.  This only affects
+<a name="854"/>   # visible windows, not hidden windows.
+<a name="855"/>   #
+<a name="856"/>   public native set_max_size(width, height)
+<a name="857"/>
+<a name="858"/>   #
+<a name="859"/>   # Set the maximum width of the window in pixels.  This only affects
+<a name="860"/>   # visible windows, not hidden windows.
+<a name="861"/>   #
+<a name="862"/>   public native set_max_width(width)
+<a name="863"/>
+<a name="864"/>   #
+<a name="865"/>   # Set the minimum height of the window in pixels.  This only
+<a name="866"/>   # affects visible windows, not hidden windows.
+<a name="867"/>   #
+<a name="868"/>   public native set_min_height(height)
+<a name="869"/>
+<a name="870"/>   #
+<a name="871"/>   # Set the minimum size of the window in pixels.  This only affects
+<a name="872"/>   # visible windows, not hidden windows.
+<a name="873"/>   #
+<a name="874"/>   public native set_min_size(width, height)
+<a name="875"/>
+<a name="876"/>   #
+<a name="877"/>   # Set the minimum width of the window in pixels.  This only affects
+<a name="878"/>   # visible windows, not hidden windows.
+<a name="879"/>   #
+<a name="880"/>   public native set_min_width(width)
+<a name="881"/>
+<a name="882"/>   #
+<a name="883"/>   # Set the base height to use in aspect ratio and resize increment
+<a name="884"/>   # calculations.
+<a name="885"/>   # 
+<a name="886"/>   # This value is currently only effective on X11.
+<a name="887"/>   #
+<a name="888"/>   public native set_base_height(height)
+<a name="889"/>
+<a name="890"/>   #
+<a name="891"/>   # Set the base width to use in aspect ratio and resize increment
+<a name="892"/>   # calculations.
+<a name="893"/>   # 
+<a name="894"/>   # This value is currently only effective on X11.
+<a name="895"/>   #
+<a name="896"/>   public native set_base_width(width)
+<a name="897"/>
+<a name="898"/>   #
+<a name="899"/>   # Set the base size to use in aspect ratio and resize increment
+<a name="900"/>   # calculations.
+<a name="901"/>   # 
+<a name="902"/>   # This value is currently only effective on X11.
+<a name="903"/>   #
+<a name="904"/>   public native set_base_size(width, height)
+<a name="905"/>
+<a name="906"/>   #
+<a name="907"/>   # Return the base height; see `set_base_height()`.
+<a name="908"/>   #
+<a name="909"/>   public native get_base_height()
+<a name="910"/>
+<a name="911"/>   #
+<a name="912"/>   # Return the base width; see `set_base_width()`.
+<a name="913"/>   #
+<a name="914"/>   public native get_base_width()
+<a name="915"/>
+<a name="916"/>   #
+<a name="917"/>   # Return the base size as a `Size` record; see `set_base_size()`.
+<a name="918"/>   #
+<a name="919"/>   public get_base_size()
+<a name="920"/>      return Size(get_base_width(), get_base_height())
+<a name="921"/>   end
+<a name="922"/>
+<a name="923"/>   #
+<a name="924"/>   # Set the resize increment height to use during resizing.
+<a name="925"/>   # 
+<a name="926"/>   # This value is currently only effective on X11.
+<a name="927"/>   #
+<a name="928"/>   public native set_increment_height(height)
+<a name="929"/>
+<a name="930"/>   #
+<a name="931"/>   # Set the resize increment width to use during resizing.
+<a name="932"/>   # 
+<a name="933"/>   # This value is currently only effective on X11.
+<a name="934"/>   #
+<a name="935"/>   public native set_increment_width(width)
+<a name="936"/>
+<a name="937"/>   #
+<a name="938"/>   # Set the resize increment size to use during resizing.
+<a name="939"/>   # 
+<a name="940"/>   # This value is currently only effective on X11.
+<a name="941"/>   #
+<a name="942"/>   public native set_increment_size(width, height)
+<a name="943"/>
+<a name="944"/>   #
+<a name="945"/>   # Get the resize increment height; see `set_increment_height()`.
+<a name="946"/>   #
+<a name="947"/>   public native get_increment_height()
+<a name="948"/>
+<a name="949"/>   #
+<a name="950"/>   # Get the resize increment width; see `set_increment_width()`.
+<a name="951"/>   #
+<a name="952"/>   public native get_increment_width()
+<a name="953"/>
+<a name="954"/>   #
+<a name="955"/>   # Return the increment size as a `Size` record; see `set_increment_size()`.
+<a name="956"/>   #
+<a name="957"/>   public get_increment_size()
+<a name="958"/>      return Size(get_increment_width(), get_increment_height())
+<a name="959"/>   end
+<a name="960"/>
+<a name="961"/>   #
+<a name="962"/>   # Set the maximum aspect ratio allowed during resizing.
+<a name="963"/>   # 
+<a name="964"/>   # This value is currently only effective on X11.
+<a name="965"/>   #
+<a name="966"/>   public native set_max_aspect_ratio(r)
+<a name="967"/>
+<a name="968"/>   #
+<a name="969"/>   # Return the maximum aspect ratio allowed during resizing, or fail
+<a name="970"/>   # if no value is set; see `set_max_aspect_ratio()`.
+<a name="971"/>   #
+<a name="972"/>   public native get_max_aspect_ratio()
+<a name="973"/>
+<a name="974"/>   #
+<a name="975"/>   # Set the minimum aspect ratio allowed during resizing.
+<a name="976"/>   # 
+<a name="977"/>   # This value is currently only effective on X11.
+<a name="978"/>   #
+<a name="979"/>   public native set_min_aspect_ratio(r)
+<a name="980"/>
+<a name="981"/>   #
+<a name="982"/>   # Return the minimum aspect ratio allowed during resizing, or fail
+<a name="983"/>   # if no value is set; see `set_min_aspect_ratio()`.
+<a name="984"/>   #
+<a name="985"/>   public native get_min_aspect_ratio()
+<a name="986"/>
+<a name="987"/>   #
+<a name="988"/>   # A helpful method to set the pattern to something equivalent to
+<a name="989"/>   # the old Icon pattern of the same name using a textured fill
+<a name="990"/>   # style.  (See `Pattern` for symbolic constant pattern names).
+<a name="991"/>   #
+<a name="992"/>   public set_textured_pattern(s)
+<a name="993"/>      local p
+<a name="994"/>      return use {
+<a name="995"/>         p := get_fill_pattern(s, get_fg(), get_bg()),
+<a name="996"/>         set_pattern(p)
+<a name="997"/>      }
+<a name="998"/>   end
+<a name="999"/>
+<a name="1000"/>   #
+<a name="1001"/>   # A helpful method to set the pattern to something equivalent to
+<a name="1002"/>   # the old Icon pattern of the same name using a masked fill
+<a name="1003"/>   # style.  (See `Pattern` for symbolic constant pattern names).
+<a name="1004"/>   #
+<a name="1005"/>   public set_masked_pattern(s)
+<a name="1006"/>      local p
+<a name="1007"/>      return use {
+<a name="1008"/>         p := get_fill_pattern(s, get_fg(), "transparent"),
+<a name="1009"/>         set_pattern(p)
+<a name="1010"/>      }
+<a name="1011"/>   end
+<a name="1012"/>
+<a name="1013"/>   #
+<a name="1014"/>   # Return a new `Pixels` instance with a paletted image which
+<a name="1015"/>   # represents the classic Icon pattern of the given name, with the
+<a name="1016"/>   # given foreground and background colours.
+<a name="1017"/>   #
+<a name="1018"/>   public static get_fill_pattern(s, fg, bg)
+<a name="1019"/>      local p
+<a name="1020"/>      p := member(PATTERNS, s) | return error("Unknown pattern name")
+<a name="1021"/>      return p.clone().
+<a name="1022"/>         set_palette(0, fg).
+<a name="1023"/>         set_palette(1, bg)
+<a name="1024"/>   end
+<a name="1025"/>
+<a name="1026"/>   #
+<a name="1027"/>   # Set the fill pattern (texture) to fill shapes (instead of the
+<a name="1028"/>   # foreground colour).  If no parameter is given, the setting is
+<a name="1029"/>   # cleared and the foreground colour is used again.  Otherwise, the
+<a name="1030"/>   # parameter should be a `Pixels` instance or raw image data, or an
+<a name="1031"/>   # image filename.
+<a name="1032"/>   #
+<a name="1033"/>   public set_pattern(v)
+<a name="1034"/>      return if /v | is(v, Pixels) then
+<a name="1035"/>         set_pattern_impl(v)
+<a name="1036"/>      else use {
+<a name="1037"/>         v := Pixels(v),
+<a name="1038"/>         set_pattern_impl(v)
+<a name="1039"/>      }
+<a name="1040"/>   end
+<a name="1041"/>
+<a name="1042"/>   private native set_pattern_impl(v)
+<a name="1043"/>
+<a name="1044"/>   #
+<a name="1045"/>   # Set a mask to use with certain drawing operations.
+<a name="1046"/>   #
+<a name="1047"/>   # If no parameter is given, the setting is cleared and the
+<a name="1048"/>   # foreground colour is used again.  Otherwise, the parameter should
+<a name="1049"/>   # be a `Pixels` instance or raw image data, or an image filename.
+<a name="1050"/>   #
+<a name="1051"/>   public set_mask(v)
+<a name="1052"/>      return if /v | is(v, Pixels) then
+<a name="1053"/>         set_mask_impl(v)
+<a name="1054"/>      else use {
+<a name="1055"/>         v := Pixels(v),
+<a name="1056"/>         set_mask_impl(v)
+<a name="1057"/>      }
+<a name="1058"/>   end
+<a name="1059"/>
+<a name="1060"/>   private native set_mask_impl(v)
+<a name="1061"/>
+<a name="1062"/>   #
+<a name="1063"/>   # Set the shape of the figure that represents the mouse position.
+<a name="1064"/>   # The recognised values for string `v` are system dependent; see
+<a name="1065"/>   # the `cursors` example program for the available pointer shapes.
+<a name="1066"/>   #
+<a name="1067"/>   public native set_pointer(v)
+<a name="1068"/>
+<a name="1069"/>   #
+<a name="1070"/>   # Set the position of the window on the screen.  If the window is
+<a name="1071"/>   # currently hidden, then either `x` or `y` may be null, meaning
+<a name="1072"/>   # that the underlying window system will place the window at a
+<a name="1073"/>   # default position when it is unhidden.
+<a name="1074"/>   #
+<a name="1075"/>   # For a bordered window, the position normally refers to the
+<a name="1076"/>   # positon of the border rather than the client area.  However, this
+<a name="1077"/>   # is system dependent.
+<a name="1078"/>   #
+<a name="1079"/>   # After a call to `set_pos()` on an unhidden window, the value of
+<a name="1080"/>   # `get_pos()` will normally only be updated after a window system
+<a name="1081"/>   # event.
+<a name="1082"/>   #
+<a name="1083"/>   public native set_pos(x, y)
+<a name="1084"/>
+<a name="1085"/>   #
+<a name="1086"/>   # Set the x position of the window on the screen; see `set_pos()`.
+<a name="1087"/>   #
+<a name="1088"/>   public native set_x(v)
+<a name="1089"/>
+<a name="1090"/>   #
+<a name="1091"/>   # Set the y position of the window on the screen; see `set_pos()`.
+<a name="1092"/>   #
+<a name="1093"/>   public native set_y(v)
+<a name="1094"/>
+<a name="1095"/>   #
+<a name="1096"/>   # Configure whether the window can or cannot be resized by the
+<a name="1097"/>   # user.  The parameter should be a flag value.
+<a name="1098"/>   #
+<a name="1099"/>   public native set_resize(v)
+<a name="1100"/>
+<a name="1101"/>   #
+<a name="1102"/>   # Set the size of the window in pixels.
+<a name="1103"/>   #
+<a name="1104"/>   public native set_size(width, height)
+<a name="1105"/>
+<a name="1106"/>   #
+<a name="1107"/>   # Set the width of the window in pixels; see `set_size()`.
+<a name="1108"/>   #
+<a name="1109"/>   public native set_width(width)
+<a name="1110"/>
+<a name="1111"/>   #
+<a name="1112"/>   # Configure this window so that it is transient in respect of the
+<a name="1113"/>   # given window `w`.  This generally means that the transient window
+<a name="1114"/>   # stays on top of the other window, although the exact behaviour
+<a name="1115"/>   # depends on the window system.
+<a name="1116"/>   # 
+<a name="1117"/>   # When calling this method, this window must not be visible, and
+<a name="1118"/>   # the other window must be visible; if that is not the case this
+<a name="1119"/>   # method fails.
+<a name="1120"/>   #
+<a name="1121"/>   public native set_transient_for(w)
+<a name="1122"/>
+<a name="1123"/>   #
+<a name="1124"/>   # Produces a beep or other signal to attract attention.
+<a name="1125"/>   #
+<a name="1126"/>   public native alert(volume)
+<a name="1127"/>
+<a name="1128"/>   #
+<a name="1129"/>   # Sets the clipping region to the specified rectangle; subsequent
+<a name="1130"/>   # output extending outside its bounds is discarded. To disable
+<a name="1131"/>   # clipping, use `unclip()`.
+<a name="1132"/>   #
+<a name="1133"/>   public native clip(x, y, width, height)
+<a name="1134"/>
+<a name="1135"/>   #
+<a name="1136"/>   # Clear the clip settings
+<a name="1137"/>   #
+<a name="1138"/>   public native unclip()
+<a name="1139"/>
+<a name="1140"/>   #
+<a name="1141"/>   # Return the r,g,b values (plus possibly a if not opaque) of the
+<a name="1142"/>   # given color, as a color string
+<a name="1143"/>   #
+<a name="1144"/>   public static native color_value(k)
+<a name="1145"/>
+<a name="1146"/>   #
+<a name="1147"/>   # Return the r,g,b,a values of the given color string, as a `Color`
+<a name="1148"/>   # record.
+<a name="1149"/>   #
+<a name="1150"/>   public static parse_color(k)
+<a name="1151"/>      return parse_color_impl(k, Color)
+<a name="1152"/>   end
+<a name="1153"/>
+<a name="1154"/>   private static native parse_color_impl(k, con)
+<a name="1155"/>
+<a name="1156"/>   #
+<a name="1157"/>   # Draw the given arc of an ellipse (centre `x`, `y`, major radius
+<a name="1158"/>   # `rx`, minor radius `ry`), starting at `angle1` radians clockwise
+<a name="1159"/>   # from the positive x-axis (default `0`), and going round clockwise
+<a name="1160"/>   # `angle2` further radians (default `2*pi`).
+<a name="1161"/>   #
+<a name="1162"/>   public native draw_arc(x, y, rx, ry, angle1, angle2)
+<a name="1163"/>
+<a name="1164"/>   #
+<a name="1165"/>   # Return an event from this window, failing if none is available.
+<a name="1166"/>   #
+<a name="1167"/>   public native event()
+<a name="1168"/>
+<a name="1169"/>   #
+<a name="1170"/>   # Draw the given circle (centre `x`, `y` with radius `r`), starting
+<a name="1171"/>   # at `angle1` radians clockwise from the positive x-axis (default
+<a name="1172"/>   # `0`), and going round clockwise `angle2` further radians (default
+<a name="1173"/>   # `2*pi`).
+<a name="1174"/>   #
+<a name="1175"/>   #
+<a name="1176"/>   public draw_circle(x, y, r, angle1, angle2)
+<a name="1177"/>      return draw_arc(x, y, r, r, angle1, angle2)
+<a name="1178"/>   end
+<a name="1179"/>
+<a name="1180"/>   #
+<a name="1181"/>   # Draw a smooth curve through the given points `(x1,y1,...xN,yN)`.
+<a name="1182"/>   # At least 3 points (6 parameters) must be given.
+<a name="1183"/>   #
+<a name="1184"/>   public native draw_curve(a[])
+<a name="1185"/>
+<a name="1186"/>   #
+<a name="1187"/>   # Draw an image at `x1`, `y1`.  The image `src` can be raw image data,
+<a name="1188"/>   # a filename, or a `Pixels` instance.
+<a name="1189"/>   #
+<a name="1190"/>   # The optional parameters after `src` specify a region of the source
+<a name="1191"/>   # image to copy; they default to the whole image.
+<a name="1192"/>   #
+<a name="1193"/>   public draw_image(x1, y1, src, x2, y2, width, height)
+<a name="1194"/>      return if is(src, Pixels) then
+<a name="1195"/>         draw_image_impl(x1, y1, src, x2, y2, width, height)
+<a name="1196"/>      else use {
+<a name="1197"/>         src := Pixels(src),
+<a name="1198"/>         draw_image_impl(x1, y1, src, x2, y2, width, height)
+<a name="1199"/>      }
+<a name="1200"/>   end
+<a name="1201"/>
+<a name="1202"/>   private native draw_image_impl(x1, y1, src, x2, y2, width, height)
+<a name="1203"/>
+<a name="1204"/>   #
+<a name="1205"/>   # Copy a rectangular area from this window to another window, `dest`, at `x2`.
+<a name="1206"/>   # `y2`.
+<a name="1207"/>   #
+<a name="1208"/>   public native copy_to(x1, y1, width, height, dest, x2, y2)
+<a name="1209"/>
+<a name="1210"/>   #
+<a name="1211"/>   # Draw a line through the points `(x1,y1,...xN,yN)`.  At least 2
+<a name="1212"/>   # points (4 parameters) must be given.
+<a name="1213"/>   #
+<a name="1214"/>   public native draw_line(a[])
+<a name="1215"/>
+<a name="1216"/>   #
+<a name="1217"/>   # Fill a single pixel at x, y
+<a name="1218"/>   #
+<a name="1219"/>   public draw_point(x, y)
+<a name="1220"/>      return fill_rectangle(x, y, 1, 1)
+<a name="1221"/>   end
+<a name="1222"/>
+<a name="1223"/>   #
+<a name="1224"/>   # Draw a polygon defined by the points `(x1,y1,...xN,yN)`.
+<a name="1225"/>   #
+<a name="1226"/>   public draw_polygon(a[])
+<a name="1227"/>      if *a &gt; 1 then
+<a name="1228"/>         every put(a, a[1 | 2])
+<a name="1229"/>      return draw_line!a
+<a name="1230"/>   end
+<a name="1231"/>
+<a name="1232"/>   #
+<a name="1233"/>   # A boundary of the given thickness (default 1 pixel) is filled
+<a name="1234"/>   # inside the given rectangle, so that the area drawn is always
+<a name="1235"/>   # bounded by exactly that rectangle.  If the thickness is too wide
+<a name="1236"/>   # to leave a gap inside the rectangle, then the rectangle is simply
+<a name="1237"/>   # filled.
+<a name="1238"/>   #
+<a name="1239"/>   public native draw_rectangle(x, y, width, height, thickness)
+<a name="1240"/>
+<a name="1241"/>   #
+<a name="1242"/>   # Draw a string (or ucs) `s` at `x`, `y`.
+<a name="1243"/>   #
+<a name="1244"/>   public native draw_string(x, y, s)
+<a name="1245"/>
+<a name="1246"/>   #
+<a name="1247"/>   # Clear an area of the window by filling with the background
+<a name="1248"/>   # colour.
+<a name="1249"/>   #
+<a name="1250"/>   public native erase_area(x, y, width, height)
+<a name="1251"/>
+<a name="1252"/>   #
+<a name="1253"/>   # Return the window's event queue (a list) after bringing it
+<a name="1254"/>   # up-to-date with any events from the window system.
+<a name="1255"/>   #
+<a name="1256"/>   # The list may be edited to add events to the queue; in this case
+<a name="1257"/>   # the caller must ensure the addition makes sense, or a fatal error
+<a name="1258"/>   # will occur when `event` is called (see the function wgetevent in
+<a name="1259"/>   # rwindow.r for details).
+<a name="1260"/>   #
+<a name="1261"/>   public native pending()
+<a name="1262"/>
+<a name="1263"/>   #
+<a name="1264"/>   # Return the event code of the next event (without removing it), or
+<a name="1265"/>   # fail if there is no event available.  It will give the same
+<a name="1266"/>   # result as
+<a name="1267"/>   # ~
+<a name="1268"/>   #     pending()[1]
+<a name="1269"/>   # ~
+<a name="1270"/>   #
+<a name="1271"/>   public native peek()
+<a name="1272"/>
+<a name="1273"/>   #
+<a name="1274"/>   # Fill the given arc of an ellipse; the parameters are as for
+<a name="1275"/>   # `draw_arc()`.
+<a name="1276"/>   #
+<a name="1277"/>   public native fill_arc(x, y, rx, ry, angle1, angle2)
+<a name="1278"/>
+<a name="1279"/>   #
+<a name="1280"/>   # Fill the given circle; the parameters are as for `draw_circle()`.
+<a name="1281"/>   #
+<a name="1282"/>   public fill_circle(x, y, r, angle1, angle2)
+<a name="1283"/>      return fill_arc(x, y, r, r, angle1, angle2)
+<a name="1284"/>   end
+<a name="1285"/>
+<a name="1286"/>   #
+<a name="1287"/>   # Fill a polygon given by the points `(x1, y1, ...xN, yN)`.  At
+<a name="1288"/>   # least 3 points (6 parameters) must be given.
+<a name="1289"/>   #
+<a name="1290"/>   public native fill_polygon(a[])
+<a name="1291"/>
+<a name="1292"/>   #
+<a name="1293"/>   # Fill triangles defined by `(topx1, topy1, leftx1, lefty1,
+<a name="1294"/>   # rightx1, righty1, ...)`.
+<a name="1295"/>   #
+<a name="1296"/>   public native fill_triangles(a[])
+<a name="1297"/>
+<a name="1298"/>   #
+<a name="1299"/>   # Fill the given rectangle.
+<a name="1300"/>   #
+<a name="1301"/>   public native fill_rectangle(x, y, width, height)
+<a name="1302"/>
+<a name="1303"/>   #
+<a name="1304"/>   # Lower this window to the bottom of the window stack
+<a name="1305"/>   #
+<a name="1306"/>   public native lower()
+<a name="1307"/>
+<a name="1308"/>   #
+<a name="1309"/>   # Return the characters forming keys to palette p
+<a name="1310"/>   #
+<a name="1311"/>   public static native palette_chars(p)
+<a name="1312"/>
+<a name="1313"/>   #
+<a name="1314"/>   # Return color of key s2 in palette s1
+<a name="1315"/>   #
+<a name="1316"/>   public static native palette_color(s1, s2)
+<a name="1317"/>
+<a name="1318"/>   #
+<a name="1319"/>   # Like `palette_color()`, but returns a `Color` record.
+<a name="1320"/>   #
+<a name="1321"/>   public static palette_color_rgb(s1, s2)
+<a name="1322"/>      return palette_color_rgb_impl(s1, s2, Color)
+<a name="1323"/>   end
+<a name="1324"/>
+<a name="1325"/>   private static native palette_color_rgb_impl(s1, s2, con)
+<a name="1326"/>
+<a name="1327"/>   #
+<a name="1328"/>   # Return key of closest color to s2 in palette s1
+<a name="1329"/>   #
+<a name="1330"/>   public static native palette_key(s1, s2)
+<a name="1331"/>
+<a name="1332"/>   #
+<a name="1333"/>   # Like `palette_key()`, but takes integer color values.
+<a name="1334"/>   #
+<a name="1335"/>   public static native palette_key_rgb(s1, r, g, b)
+<a name="1336"/>
+<a name="1337"/>   #
+<a name="1338"/>   # Get the default font for a window, as optionally specified with
+<a name="1339"/>   # the OI_FONT environment variable.
+<a name="1340"/>   #
+<a name="1341"/>   public static native get_default_font()
+<a name="1342"/>
+<a name="1343"/>   #
+<a name="1344"/>   # Get the default font size for a font, as optionally specified
+<a name="1345"/>   # with the OI_FONT_SIZE environment variable.
+<a name="1346"/>   #
+<a name="1347"/>   public static native get_default_font_size()
+<a name="1348"/>
+<a name="1349"/>   #
+<a name="1350"/>   # Get the default leading, as optionally specified with the
+<a name="1351"/>   # OI_LEADING environment variable.
+<a name="1352"/>   #
+<a name="1353"/>   public static native get_default_leading()
+<a name="1354"/>
+<a name="1355"/>   #
+<a name="1356"/>   # Return the `Pixels` format this window uses internally.
+<a name="1357"/>   #
+<a name="1358"/>   public native get_format()
+<a name="1359"/>
+<a name="1360"/>   #
+<a name="1361"/>   # Get the contents of some pixels as a `Pixels` object.
+<a name="1362"/>   #
+<a name="1363"/>   public get_pixels(x, y, width, height)
+<a name="1364"/>      return Pixels.create_for_ptr(get_pixels_impl(x, y, width, height))
+<a name="1365"/>   end
+<a name="1366"/>
+<a name="1367"/>   private native get_pixels_impl(x, y, width, height)
+<a name="1368"/>
+<a name="1369"/>   #
+<a name="1370"/>   # Filter the given pixels according to the given filter spec.
+<a name="1371"/>   #
+<a name="1372"/>   public filter(x, y, width, height, filter)
+<a name="1373"/>      local r, p, t
+<a name="1374"/>      if r := drawable(x, y, width, height) then
+<a name="1375"/>         use {
+<a name="1376"/>            p := get_pixels!r,
+<a name="1377"/>            if p.filter(,,,, filter) then {
+<a name="1378"/>               use {
+<a name="1379"/>                  t := clone(),
+<a name="1380"/>                  t.set_draw_op("source").
+<a name="1381"/>                     set_mask().
+<a name="1382"/>                     draw_image(r.x, r.y, p)
+<a name="1383"/>               }
+<a name="1384"/>            }
+<a name="1385"/>         } | fail
+<a name="1386"/>      link
+<a name="1387"/>   end
+<a name="1388"/>
+<a name="1389"/>   #
+<a name="1390"/>   # Return a `Rectangle` record, representing that part of the given
+<a name="1391"/>   # rectangle which would be drawable on the canvas; ie the
+<a name="1392"/>   # intersection of the rectangle, the window and the clip area if
+<a name="1393"/>   # set.  If the result would be an empty area, the method fails.
+<a name="1394"/>   #
+<a name="1395"/>   # `x` and `y` default to the top left of the window, whilst `width`
+<a name="1396"/>   # and `height` default to extending to the right or bottom edge
+<a name="1397"/>   # respectively.
+<a name="1398"/>   #
+<a name="1399"/>   public drawable(x, y, width, height)
+<a name="1400"/>      return rectangle_impl(1, x, y, width, height, Rectangle)
+<a name="1401"/>   end
+<a name="1402"/>
+<a name="1403"/>   #
+<a name="1404"/>   # This is the same as `drawable`, but ignores the clip region.
+<a name="1405"/>   #
+<a name="1406"/>   public viewable(x, y, width, height)
+<a name="1407"/>      return rectangle_impl(0, x, y, width, height, Rectangle)
+<a name="1408"/>   end
+<a name="1409"/>
+<a name="1410"/>   #
+<a name="1411"/>   # Return a `Rectangle` created from the given parameters, after
+<a name="1412"/>   # applying the same defaults as `drawable()`.  Negative width or
+<a name="1413"/>   # height values are set to zero.
+<a name="1414"/>   #
+<a name="1415"/>   # The resulting rectangle may be partially or fully off-screen, or
+<a name="1416"/>   # empty.
+<a name="1417"/>   #
+<a name="1418"/>   public canonical(x, y, width, height)
+<a name="1419"/>      return rectangle_impl(2, x, y, width, height, Rectangle)
+<a name="1420"/>   end
+<a name="1421"/>
+<a name="1422"/>   private native rectangle_impl(mode, x, y, width, height, con)
+<a name="1423"/>
+<a name="1424"/>   #
+<a name="1425"/>   # Return the current root pointer position as a `Point` record.
+<a name="1426"/>   #
+<a name="1427"/>   public query_root_pointer()
+<a name="1428"/>      return query_root_pointer_impl(Point)
+<a name="1429"/>   end
+<a name="1430"/>
+<a name="1431"/>   private native query_root_pointer_impl(con)
+<a name="1432"/>
+<a name="1433"/>   #
+<a name="1434"/>   # Return the current display size in pixels, as a `Size` record.
+<a name="1435"/>   #
+<a name="1436"/>   public get_display_size()
+<a name="1437"/>      return get_display_size_impl(Size)
+<a name="1438"/>   end
+<a name="1439"/>
+<a name="1440"/>   private native get_display_size_impl(con)
+<a name="1441"/>
+<a name="1442"/>   #
+<a name="1443"/>   # Return the current display size in millimeters, as a `Size`
+<a name="1444"/>   # record.
+<a name="1445"/>   #
+<a name="1446"/>   public get_display_size_mm()
+<a name="1447"/>      return get_display_size_mm_impl(Size)
+<a name="1448"/>   end
+<a name="1449"/>
+<a name="1450"/>   private native get_display_size_mm_impl(con)
+<a name="1451"/>
+<a name="1452"/>   #
+<a name="1453"/>   # Return the pointer's current position as a `Point` record,
+<a name="1454"/>   # relative to this window.
+<a name="1455"/>   #
+<a name="1456"/>   public query_pointer()
+<a name="1457"/>      return query_pointer_impl(Point)
+<a name="1458"/>   end
+<a name="1459"/>
+<a name="1460"/>   private native query_pointer_impl(con)
+<a name="1461"/>
+<a name="1462"/>   #
+<a name="1463"/>   # Warp the pointer to the given location, relative to this window.
+<a name="1464"/>   #
+<a name="1465"/>   public native warp_pointer(x, y)
+<a name="1466"/>
+<a name="1467"/>   #
+<a name="1468"/>   # Raise window to the top of the window stack
+<a name="1469"/>   #
+<a name="1470"/>   public native raise()
+<a name="1471"/>
+<a name="1472"/>   #
+<a name="1473"/>   # Give the window the input focus
+<a name="1474"/>   #
+<a name="1475"/>   public native focus()
+<a name="1476"/>
+<a name="1477"/>   #
+<a name="1478"/>   # Returns the width of string s, in pixels, as drawn using the
+<a name="1479"/>   # current font.
+<a name="1480"/>   #
+<a name="1481"/>   public native text_width(s)
+<a name="1482"/>
+<a name="1483"/>   #
+<a name="1484"/>   # Set the window system's selection.  The value returned is an
+<a name="1485"/>   # integer, which should be the result of any future selection of
+<a name="1486"/>   # the TIMESTAMP property (this is relevant to X11 only).
+<a name="1487"/>   #
+<a name="1488"/>   public native own_selection(selection)
+<a name="1489"/>
+<a name="1490"/>   #
+<a name="1491"/>   # Send a response to a selection request event.
+<a name="1492"/>   #
+<a name="1493"/>   public native send_selection_response(requestor, property, target, selection, data)
+<a name="1494"/>
+<a name="1495"/>   #
+<a name="1496"/>   # Get the window system's selection
+<a name="1497"/>   #
+<a name="1498"/>   public native request_selection(selection, target_type)
+<a name="1499"/>
+<a name="1500"/>   #
+<a name="1501"/>   # Define a custom pointer.  `name` is the name of the pointer, to
+<a name="1502"/>   # be used subsequently with `set_pointer()`.  `v` may be a `Pixels`
+<a name="1503"/>   # instance, a raw binary image data (eg a gif file), or the name of
+<a name="1504"/>   # a file containing an image.  `x` and `y` specify the pointer's
+<a name="1505"/>   # hotspot (such as the exact tip of an arrow cursor) and default to
+<a name="1506"/>   # zero.
+<a name="1507"/>   #
+<a name="1508"/>   public define_pointer(name, v, x, y)
+<a name="1509"/>      return if is(v, Pixels) then
+<a name="1510"/>         define_pointer_impl(name, v, x, y)
+<a name="1511"/>      else use {
+<a name="1512"/>         v := Pixels(v),
+<a name="1513"/>         define_pointer_impl(name, v, x, y)
+<a name="1514"/>      }
+<a name="1515"/>   end
+<a name="1516"/>
+<a name="1517"/>   private native define_pointer_impl(name, v, x, y)
+<a name="1518"/>
+<a name="1519"/>   #
+<a name="1520"/>   # Make the destination pointer be the same as the src.
+<a name="1521"/>   # :Parameters :
+<a name="1522"/>   # :  `dest` - the destination name, which need not currently be defined
+<a name="1523"/>   # :  `src` - the current name.
+<a name="1524"/>   #
+<a name="1525"/>   public native copy_pointer(dest, src)
+<a name="1526"/>
+<a name="1527"/>   #
+<a name="1528"/>   # Close this binding to the window.  If no other bindings to the
+<a name="1529"/>   # same canvas exist, the underlying window is closed.
+<a name="1530"/>   #
+<a name="1531"/>   public override native close()
+<a name="1532"/>
+<a name="1533"/>   #
+<a name="1534"/>   # Return the absolute leading, which is the pixels equivalent of
+<a name="1535"/>   # the leading attribute.  It is the rounded value of the current
+<a name="1536"/>   # font height multiplied by the leading attribute.
+<a name="1537"/>   #
+<a name="1538"/>   public native get_absolute_leading()
+<a name="1539"/>
+<a name="1540"/>   #
+<a name="1541"/>   # Return the font height, which is always the sum of the font
+<a name="1542"/>   # ascent and the descent.
+<a name="1543"/>   #
+<a name="1544"/>   public get_font_height()
+<a name="1545"/>      return get_font_ascent() + get_font_descent()
+<a name="1546"/>   end
+<a name="1547"/>
+<a name="1548"/>   #
+<a name="1549"/>   # Return the line height, which is always the sum of the font
+<a name="1550"/>   # ascent, the font descent, and two amounts of the absolute leading
+<a name="1551"/>   # (notionally one for the top and one for the bottom of the line).
+<a name="1552"/>   # This sum is also equal to the line ascent plus the line descent.
+<a name="1553"/>   #
+<a name="1554"/>   public get_line_height()
+<a name="1555"/>      return get_font_ascent() + get_font_descent() + 2 * get_absolute_leading()
+<a name="1556"/>   end
+<a name="1557"/>
+<a name="1558"/>   #
+<a name="1559"/>   # Return the line ascent, which is the font ascent plus the
+<a name="1560"/>   # absolute leading.
+<a name="1561"/>   #
+<a name="1562"/>   public get_line_ascent()
+<a name="1563"/>      return get_font_ascent() + get_absolute_leading()
+<a name="1564"/>   end
+<a name="1565"/>
+<a name="1566"/>   #
+<a name="1567"/>   # Return the line descent, which is the font descent plus the
+<a name="1568"/>   # absolute leading.
+<a name="1569"/>   #
+<a name="1570"/>   public get_line_descent()
+<a name="1571"/>      return get_font_descent() + get_absolute_leading()
+<a name="1572"/>   end
+<a name="1573"/>
+<a name="1574"/>   #
+<a name="1575"/>   # Convenient method to open an image and return a hidden window with
+<a name="1576"/>   # its contents.
+<a name="1577"/>   # :Parameters :
+<a name="1578"/>   # :  `img` - the image
+<a name="1579"/>   #
+<a name="1580"/>   public static open_image(img)
+<a name="1581"/>      local w, t
+<a name="1582"/>      w := Window() | fail
+<a name="1583"/>      unless use {
+<a name="1584"/>         t := w.clone(),
+<a name="1585"/>         t.set_draw_op("source").set_image(img)
+<a name="1586"/>      } then {
+<a name="1587"/>         w.close()
+<a name="1588"/>         fail
+<a name="1589"/>      }
+<a name="1590"/>      return w
+<a name="1591"/>   end
+<a name="1592"/>end
+<a name="1593"/>
+<a name="1594"/>#
+<a name="1595"/># Check that x is a `Window`, signalling a runtime error otherwise.
+<a name="1596"/>#
+<a name="1597"/>procedure need_Window(x)
+<a name="1598"/>   is(x, Window) | runerr("Window expected", x)
+<a name="1599"/>   return x
+<a name="1600"/>end
+<a name="1601"/>
+<a name="1602"/>#
+<a name="1603"/># Check that x is a `Pixels`, signalling a runtime error otherwise.
+<a name="1604"/>#
+<a name="1605"/>procedure need_Pixels(x)
+<a name="1606"/>   is(x, Pixels) | runerr("Pixels expected", x)
+<a name="1607"/>   return x
+<a name="1608"/>end
+<a name="1609"/>
+<a name="1610"/>#
+<a name="1611"/># Event codes for selection events.
+<a name="1612"/>#
+<a name="1613"/>final abstract class Selection()
+<a name="1614"/>   public static const
+<a name="1615"/>      # Selection request event
+<a name="1616"/>      REQUEST,     
+<a name="1617"/>      # Selection response event
+<a name="1618"/>      RESPONSE,
+<a name="1619"/>      # Selection clear event
+<a name="1620"/>      CLEAR,
+<a name="1621"/>      # Set of any of the three event types
+<a name="1622"/>      EVENTS,
+<a name="1623"/>      PRIMARY,
+<a name="1624"/>      SECONDARY,
+<a name="1625"/>      CLIPBOARD,
+<a name="1626"/>      UTF8_STRING_TARGET,
+<a name="1627"/>      STRING_TARGET,
+<a name="1628"/>      TIMESTAMP_TARGET,
+<a name="1629"/>      URI_LIST_TARGET,
+<a name="1630"/>      TARGETS_TARGET
+<a name="1631"/>
+<a name="1632"/>   private static init()
+<a name="1633"/>      REQUEST := -30
+<a name="1634"/>      CLEAR := -31
+<a name="1635"/>      RESPONSE := -32
+<a name="1636"/>      EVENTS := set(REQUEST, CLEAR, RESPONSE)
+<a name="1637"/>      PRIMARY := "PRIMARY"      # These 3 must correspond to X Atom names.
+<a name="1638"/>      SECONDARY := "SECONDARY"
+<a name="1639"/>      CLIPBOARD := "CLIPBOARD"
+<a name="1640"/>      STRING_TARGET := "STRING"
+<a name="1641"/>      UTF8_STRING_TARGET := "UTF8_STRING"
+<a name="1642"/>      URI_LIST_TARGET := "text/uri-list"
+<a name="1643"/>      TIMESTAMP_TARGET := "TIMESTAMP"
+<a name="1644"/>      TARGETS_TARGET := "TARGETS"
+<a name="1645"/>   end
+<a name="1646"/>end
+<a name="1647"/>
+<a name="1648"/>#
+<a name="1649"/># Event codes for mouse events.
+<a name="1650"/>#
+<a name="1651"/>final abstract class Mouse()
+<a name="1652"/>   public static const
+<a name="1653"/>      LEFT_PRESS,
+<a name="1654"/>      MIDDLE_PRESS,
+<a name="1655"/>      RIGHT_PRESS,
+<a name="1656"/>      PRESS,
+<a name="1657"/>      LEFT_RELEASE,
+<a name="1658"/>      MIDDLE_RELEASE,
+<a name="1659"/>      RIGHT_RELEASE,
+<a name="1660"/>      RELEASE,
+<a name="1661"/>      DRAG,
+<a name="1662"/>      MOVEMENT,
+<a name="1663"/>      WHEEL_UP,
+<a name="1664"/>      WHEEL_DOWN,
+<a name="1665"/>      WHEEL_LEFT,
+<a name="1666"/>      WHEEL_RIGHT,
+<a name="1667"/>      WHEEL,
+<a name="1668"/>      DRAG_OR_MOVEMENT,
+<a name="1669"/>      ENTER,
+<a name="1670"/>      EXIT,
+<a name="1671"/>      CROSSING
+<a name="1672"/>
+<a name="1673"/>   private static init()
+<a name="1674"/>      LEFT_PRESS :=           -1
+<a name="1675"/>      MIDDLE_PRESS :=         -2
+<a name="1676"/>      RIGHT_PRESS :=          -3
+<a name="1677"/>      PRESS := set(LEFT_PRESS, MIDDLE_PRESS, RIGHT_PRESS)
+<a name="1678"/>      LEFT_RELEASE :=         -4
+<a name="1679"/>      MIDDLE_RELEASE :=       -5
+<a name="1680"/>      RIGHT_RELEASE :=        -6
+<a name="1681"/>      RELEASE := set(LEFT_RELEASE, MIDDLE_RELEASE, RIGHT_RELEASE)
+<a name="1682"/>      MOVEMENT :=            -12
+<a name="1683"/>      WHEEL_UP :=            -16
+<a name="1684"/>      WHEEL_DOWN :=          -17
+<a name="1685"/>      WHEEL_LEFT :=          -21
+<a name="1686"/>      WHEEL_RIGHT :=         -22
+<a name="1687"/>      WHEEL := set(WHEEL_UP, WHEEL_DOWN, WHEEL_LEFT, WHEEL_RIGHT)
+<a name="1688"/>      ENTER :=               -18
+<a name="1689"/>      EXIT :=                -19
+<a name="1690"/>      CROSSING := set(ENTER, EXIT)
+<a name="1691"/>      DRAG :=                -20
+<a name="1692"/>      DRAG_OR_MOVEMENT := set(DRAG, MOVEMENT)
+<a name="1693"/>   end
+<a name="1694"/>end
+<a name="1695"/>
+<a name="1696"/>#
+<a name="1697"/># Event codes for key events.
+<a name="1698"/>#
+<a name="1699"/>final abstract class Key()
+<a name="1700"/>   public static const
+<a name="1701"/>      # Modifier flags
+<a name="1702"/>      MOD_SHIFT,
+<a name="1703"/>      MOD_LOCK,
+<a name="1704"/>      MOD_CTRL,
+<a name="1705"/>      MOD_META,
+<a name="1706"/>      MOD_META2,
+<a name="1707"/>      MOD_META3,
+<a name="1708"/>      MOD_META4,
+<a name="1709"/>      MOD_META5,
+<a name="1710"/>      MOD_RELEASE,
+<a name="1711"/>      # Key event codes
+<a name="1712"/>      COMPOSE,
+<a name="1713"/>      DO,
+<a name="1714"/>      DOWN,
+<a name="1715"/>      END,
+<a name="1716"/>      F1,
+<a name="1717"/>      F2,
+<a name="1718"/>      F3,
+<a name="1719"/>      F4,
+<a name="1720"/>      F5,
+<a name="1721"/>      F6,
+<a name="1722"/>      F7,
+<a name="1723"/>      F8,
+<a name="1724"/>      F9,
+<a name="1725"/>      F10,
+<a name="1726"/>      F11,
+<a name="1727"/>      F12,
+<a name="1728"/>      F13,
+<a name="1729"/>      F14,
+<a name="1730"/>      F15,
+<a name="1731"/>      F16,
+<a name="1732"/>      F17,
+<a name="1733"/>      F18,
+<a name="1734"/>      F19,
+<a name="1735"/>      F20,
+<a name="1736"/>      F21,
+<a name="1737"/>      F22,
+<a name="1738"/>      F23,
+<a name="1739"/>      F24,
+<a name="1740"/>      FIND,
+<a name="1741"/>      HELP,
+<a name="1742"/>      HOME,
+<a name="1743"/>      INSERT,
+<a name="1744"/>      BEGIN,
+<a name="1745"/>      L1,
+<a name="1746"/>      L2,
+<a name="1747"/>      L3,
+<a name="1748"/>      L4,
+<a name="1749"/>      L5,
+<a name="1750"/>      L6,
+<a name="1751"/>      L7,
+<a name="1752"/>      L8,
+<a name="1753"/>      L9,
+<a name="1754"/>      L10,
+<a name="1755"/>      LEFT,
+<a name="1756"/>      PF1,
+<a name="1757"/>      PF2,
+<a name="1758"/>      PF3,
+<a name="1759"/>      PF4,
+<a name="1760"/>      PAUSE,
+<a name="1761"/>      PGDN,
+<a name="1762"/>      PGUP,
+<a name="1763"/>      PRSC,
+<a name="1764"/>      R1,
+<a name="1765"/>      R2,
+<a name="1766"/>      R3,
+<a name="1767"/>      R4,
+<a name="1768"/>      R5,
+<a name="1769"/>      R6,
+<a name="1770"/>      R7,
+<a name="1771"/>      R8,
+<a name="1772"/>      R9,
+<a name="1773"/>      R10,
+<a name="1774"/>      R11,
+<a name="1775"/>      R12,
+<a name="1776"/>      R13,
+<a name="1777"/>      R14,
+<a name="1778"/>      R15,
+<a name="1779"/>      RIGHT,
+<a name="1780"/>      SCROLL_LOCK,
+<a name="1781"/>      SELECT,
+<a name="1782"/>      UP,
+<a name="1783"/>      CURSOR,
+<a name="1784"/>      CURSOR_V,
+<a name="1785"/>      CURSOR_H,
+<a name="1786"/>      SUPER_L,
+<a name="1787"/>      SUPER_R,
+<a name="1788"/>      MENU,
+<a name="1789"/>      NAVIGATE,
+<a name="1790"/>      SHIFT_L,
+<a name="1791"/>      SHIFT_R,
+<a name="1792"/>      CONTROL_L,
+<a name="1793"/>      CONTROL_R,
+<a name="1794"/>      CAPS_LOCK,
+<a name="1795"/>      SHIFT_LOCK,
+<a name="1796"/>      NUM_LOCK,
+<a name="1797"/>      META_L,
+<a name="1798"/>      META_R,
+<a name="1799"/>      ALT_L,
+<a name="1800"/>      ALT_R,
+<a name="1801"/>      HYPER_L,
+<a name="1802"/>      HYPER_R,
+<a name="1803"/>      BROWSER_BACK,
+<a name="1804"/>      BROWSER_FORWARD,
+<a name="1805"/>      BROWSER_STOP,
+<a name="1806"/>      BROWSER_REFRESH,
+<a name="1807"/>      BROWSER_SEARCH,
+<a name="1808"/>      BROWSER_FAVORITES,
+<a name="1809"/>      BROWSER_HOME,
+<a name="1810"/>      LAUNCH_MAIL,
+<a name="1811"/>      VOLUME_MUTE,
+<a name="1812"/>      VOLUME_DOWN,
+<a name="1813"/>      VOLUME_UP,
+<a name="1814"/>      MEDIA_PLAY_PAUSE,
+<a name="1815"/>      MEDIA_STOP,
+<a name="1816"/>      MEDIA_PREV_TRACK,
+<a name="1817"/>      MEDIA_NEXT_TRACK,
+<a name="1818"/>      LAUNCH_MEDIA_SELECT,
+<a name="1819"/>      LAUNCH_APP1,
+<a name="1820"/>      LAUNCH_APP2,
+<a name="1821"/>      SLEEP
+<a name="1822"/>
+<a name="1823"/>   private static init()
+<a name="1824"/>      MOD_SHIFT :=    1
+<a name="1825"/>      MOD_LOCK :=     2
+<a name="1826"/>      MOD_CTRL :=     4
+<a name="1827"/>      MOD_META :=     8 
+<a name="1828"/>      MOD_META2 :=   16
+<a name="1829"/>      MOD_META3 :=   32
+<a name="1830"/>      MOD_META4 :=   64
+<a name="1831"/>      MOD_META5 :=   128
+<a name="1832"/>      MOD_RELEASE := 256
+<a name="1833"/>$if _X_WINDOW_SYSTEM
+<a name="1834"/>      COMPOSE :=             65312
+<a name="1835"/>      DO :=                  65383
+<a name="1836"/>      DOWN :=                65364
+<a name="1837"/>      END :=                 65367
+<a name="1838"/>      F1 :=                  65470
+<a name="1839"/>      F2 :=                  65471
+<a name="1840"/>      F3 :=                  65472
+<a name="1841"/>      F4 :=                  65473
+<a name="1842"/>      F5 :=                  65474
+<a name="1843"/>      F6 :=                  65475
+<a name="1844"/>      F7 :=                  65476
+<a name="1845"/>      F8 :=                  65477
+<a name="1846"/>      F9 :=                  65478
+<a name="1847"/>      F10 :=                 65479
+<a name="1848"/>      F11 :=                 65480
+<a name="1849"/>      F12 :=                 65481
+<a name="1850"/>      F13 :=                 65482
+<a name="1851"/>      F14 :=                 65483
+<a name="1852"/>      F15 :=                 65484
+<a name="1853"/>      F16 :=                 65485
+<a name="1854"/>      F17 :=                 65486
+<a name="1855"/>      F18 :=                 65487
+<a name="1856"/>      F19 :=                 65488
+<a name="1857"/>      F20 :=                 65489
+<a name="1858"/>      F21 :=                 65490
+<a name="1859"/>      F22 :=                 65491
+<a name="1860"/>      F23 :=                 65492
+<a name="1861"/>      F24 :=                 65493
+<a name="1862"/>      FIND :=                65384
+<a name="1863"/>      HELP :=                65386
+<a name="1864"/>      HOME :=                65360
+<a name="1865"/>      INSERT :=              65379
+<a name="1866"/>      BEGIN :=               65368
+<a name="1867"/>      L1 :=                  65480  # clash with f11
+<a name="1868"/>      L2 :=                  65481  # clash with f12
+<a name="1869"/>      L3 :=                  65482
+<a name="1870"/>      L4 :=                  65483
+<a name="1871"/>      L5 :=                  65484
+<a name="1872"/>      L6 :=                  65485
+<a name="1873"/>      L7 :=                  65486
+<a name="1874"/>      L8 :=                  65487
+<a name="1875"/>      L9 :=                  65488
+<a name="1876"/>      L10 :=                 65489
+<a name="1877"/>      LEFT :=                65361
+<a name="1878"/>      PF1 :=                 65425
+<a name="1879"/>      PF2 :=                 65426
+<a name="1880"/>      PF3 :=                 65427
+<a name="1881"/>      PF4 :=                 65428
+<a name="1882"/>      PAUSE :=               65299
+<a name="1883"/>      PGDN :=                65366
+<a name="1884"/>      PGUP :=                65365
+<a name="1885"/>      PRSC :=                65377
+<a name="1886"/>      R1 :=                  65490
+<a name="1887"/>      R2 :=                  65491
+<a name="1888"/>      R3 :=                  65492
+<a name="1889"/>      R4 :=                  65493
+<a name="1890"/>      R5 :=                  65494
+<a name="1891"/>      R6 :=                  65495
+<a name="1892"/>      R7 :=                  65496
+<a name="1893"/>      R8 :=                  65497
+<a name="1894"/>      R9 :=                  65498
+<a name="1895"/>      R10 :=                 65499
+<a name="1896"/>      R11 :=                 65500
+<a name="1897"/>      R12 :=                 65501
+<a name="1898"/>      R13 :=                 65502
+<a name="1899"/>      R14 :=                 65503
+<a name="1900"/>      R15 :=                 65504
+<a name="1901"/>      RIGHT :=               65363
+<a name="1902"/>      SCROLL_LOCK :=         65300
+<a name="1903"/>      SELECT :=              65376
+<a name="1904"/>      UP :=                  65362
+<a name="1905"/>      SUPER_L :=             65515
+<a name="1906"/>      SUPER_R :=             65516
+<a name="1907"/>      MENU :=                65383
+<a name="1908"/>      SHIFT_L :=             65505
+<a name="1909"/>      SHIFT_R :=             65506
+<a name="1910"/>      CONTROL_L :=           65507
+<a name="1911"/>      CONTROL_R :=           65508
+<a name="1912"/>      CAPS_LOCK :=           65509
+<a name="1913"/>      SHIFT_LOCK :=          65510
+<a name="1914"/>      META_L :=              65511
+<a name="1915"/>      META_R :=              65512
+<a name="1916"/>      ALT_L :=               65513
+<a name="1917"/>      ALT_R :=               65514
+<a name="1918"/>      HYPER_L :=             65517
+<a name="1919"/>      HYPER_R :=             65518
+<a name="1920"/>      NUM_LOCK :=            65407
+<a name="1921"/>      BROWSER_BACK :=        269025062
+<a name="1922"/>      BROWSER_FORWARD :=     269025063
+<a name="1923"/>      BROWSER_STOP :=        65385
+<a name="1924"/>      BROWSER_REFRESH :=     269025139
+<a name="1925"/>      BROWSER_SEARCH :=      269025051
+<a name="1926"/>      BROWSER_FAVORITES :=   269025072
+<a name="1927"/>      BROWSER_HOME :=        269025048
+<a name="1928"/>      LAUNCH_MAIL :=         269025049
+<a name="1929"/>      VOLUME_MUTE :=         269025042
+<a name="1930"/>      VOLUME_DOWN :=         269025041
+<a name="1931"/>      VOLUME_UP :=           269025043
+<a name="1932"/>      MEDIA_PLAY_PAUSE :=    269025044
+<a name="1933"/>      MEDIA_STOP :=          269025045
+<a name="1934"/>      MEDIA_PREV_TRACK :=    269025046
+<a name="1935"/>      MEDIA_NEXT_TRACK :=    269025047
+<a name="1936"/>      LAUNCH_MEDIA_SELECT := 269025153
+<a name="1937"/>      LAUNCH_APP1 :=         269025117
+<a name="1938"/>      LAUNCH_APP2 :=         269025053
+<a name="1939"/>      SLEEP :=               269025071
+<a name="1940"/>
+<a name="1941"/>$elsif _MS_WIN32
+<a name="1942"/>      DOWN :=               40
+<a name="1943"/>      END :=                35
+<a name="1944"/>      SCROLL_LOCK :=        145
+<a name="1945"/>      F1 :=                 112
+<a name="1946"/>      F2 :=                 113
+<a name="1947"/>      F3 :=                 114
+<a name="1948"/>      F4 :=                 115
+<a name="1949"/>      F5 :=                 116
+<a name="1950"/>      F6 :=                 117
+<a name="1951"/>      F7 :=                 118
+<a name="1952"/>      F8 :=                 119
+<a name="1953"/>      F9 :=                 120
+<a name="1954"/>      F10 :=                121
+<a name="1955"/>      F11 :=                122
+<a name="1956"/>      F12 :=                123
+<a name="1957"/>      F13 :=                124
+<a name="1958"/>      F14 :=                125
+<a name="1959"/>      F15 :=                126
+<a name="1960"/>      F16 :=                127
+<a name="1961"/>      F17 :=                128
+<a name="1962"/>      F18 :=                129
+<a name="1963"/>      F19 :=                130
+<a name="1964"/>      F20 :=                131
+<a name="1965"/>      F21 :=                132
+<a name="1966"/>      F22 :=                133
+<a name="1967"/>      F23 :=                134
+<a name="1968"/>      F24 :=                135
+<a name="1969"/>      HELP :=               47
+<a name="1970"/>      HOME :=               36
+<a name="1971"/>      INSERT :=             45
+<a name="1972"/>      LEFT :=               37
+<a name="1973"/>      PAUSE :=              19
+<a name="1974"/>      PGDN :=               34
+<a name="1975"/>      PGUP :=               33
+<a name="1976"/>      PRSC :=               44
+<a name="1977"/>      RIGHT :=              39
+<a name="1978"/>      SELECT :=             41
+<a name="1979"/>      UP :=                 38
+<a name="1980"/>      COMPOSE :=            0
+<a name="1981"/>      DO :=                 93
+<a name="1982"/>      FIND :=               0
+<a name="1983"/>      L1 :=                 0
+<a name="1984"/>      L2 :=                 0
+<a name="1985"/>      L3 :=                 0
+<a name="1986"/>      L4 :=                 0
+<a name="1987"/>      L5 :=                 0
+<a name="1988"/>      L6 :=                 0
+<a name="1989"/>      L7 :=                 0
+<a name="1990"/>      L8 :=                 0
+<a name="1991"/>      L9 :=                 0
+<a name="1992"/>      L10 :=                0
+<a name="1993"/>      PF1 :=                0
+<a name="1994"/>      PF2 :=                0
+<a name="1995"/>      PF3 :=                0
+<a name="1996"/>      PF4 :=                0
+<a name="1997"/>      R1 :=                 0
+<a name="1998"/>      R2 :=                 0
+<a name="1999"/>      R3 :=                 0
+<a name="2000"/>      R4 :=                 0
+<a name="2001"/>      R5 :=                 0
+<a name="2002"/>      R6 :=                 0
+<a name="2003"/>      R7 :=                 0
+<a name="2004"/>      R8 :=                 0
+<a name="2005"/>      R9 :=                 0
+<a name="2006"/>      R10 :=                0
+<a name="2007"/>      R11 :=                0
+<a name="2008"/>      R12 :=                0
+<a name="2009"/>      R13 :=                0
+<a name="2010"/>      R14 :=                0
+<a name="2011"/>      R15 :=                0
+<a name="2012"/>      HYPER_L :=            0
+<a name="2013"/>      HYPER_R :=            0
+<a name="2014"/>      BEGIN :=              12     # VK_CLEAR
+<a name="2015"/>      META_L :=             0
+<a name="2016"/>      META_R :=             0
+<a name="2017"/>      SHIFT_LOCK :=         0
+<a name="2018"/>      CAPS_LOCK :=          20
+<a name="2019"/>      SHIFT_L :=            16
+<a name="2020"/>      SHIFT_R :=            16
+<a name="2021"/>      SUPER_L :=            91
+<a name="2022"/>      SUPER_R :=            92
+<a name="2023"/>      MENU :=               93
+<a name="2024"/>      CONTROL_L :=          17
+<a name="2025"/>      CONTROL_R :=          17
+<a name="2026"/>      ALT_L :=              18
+<a name="2027"/>      ALT_R :=              0
+<a name="2028"/>      NUM_LOCK :=           144
+<a name="2029"/>      BROWSER_BACK :=       166
+<a name="2030"/>      BROWSER_FORWARD :=    167
+<a name="2031"/>      BROWSER_STOP :=       169
+<a name="2032"/>      BROWSER_REFRESH :=    168
+<a name="2033"/>      BROWSER_SEARCH :=     170
+<a name="2034"/>      BROWSER_FAVORITES :=  171
+<a name="2035"/>      BROWSER_HOME :=       172
+<a name="2036"/>      LAUNCH_MAIL :=        180
+<a name="2037"/>      VOLUME_MUTE :=        173
+<a name="2038"/>      VOLUME_DOWN :=        174
+<a name="2039"/>      VOLUME_UP :=          175
+<a name="2040"/>      MEDIA_PLAY_PAUSE :=   179
+<a name="2041"/>      MEDIA_STOP :=         178
+<a name="2042"/>      MEDIA_PREV_TRACK :=   177
+<a name="2043"/>      MEDIA_NEXT_TRACK :=   176
+<a name="2044"/>      LAUNCH_MEDIA_SELECT := 181
+<a name="2045"/>      LAUNCH_APP1 :=        182
+<a name="2046"/>      LAUNCH_APP2 :=        183
+<a name="2047"/>      SLEEP :=               95
+<a name="2048"/>
+<a name="2049"/>$endif
+<a name="2050"/>      NAVIGATE := set(UP, DOWN, LEFT, RIGHT, PGUP, PGDN, HOME, END)
+<a name="2051"/>      CURSOR := set(UP, DOWN, LEFT, RIGHT)
+<a name="2052"/>      CURSOR_V := set(UP, DOWN)
+<a name="2053"/>      CURSOR_H := set(LEFT, RIGHT)
+<a name="2054"/>   end
+<a name="2055"/>end
+<a name="2056"/>
+<a name="2057"/>#
+<a name="2058"/># This class provides symbolic names for the drawing operations
+<a name="2059"/># supported by `Window.set_draw_op()`.
+<a name="2060"/>#
+<a name="2061"/>final abstract class DrawOp()
+<a name="2062"/>   public static const
+<a name="2063"/>      ATOP,
+<a name="2064"/>      CLEAR,
+<a name="2065"/>      DEST,
+<a name="2066"/>      DEST_ATOP,
+<a name="2067"/>      DEST_IN,
+<a name="2068"/>      DEST_OUT,
+<a name="2069"/>      DEST_OVER,
+<a name="2070"/>      IN,
+<a name="2071"/>      OUT,
+<a name="2072"/>      OVER,
+<a name="2073"/>      SOURCE,
+<a name="2074"/>      XOR,
+<a name="2075"/>      ADD,
+<a name="2076"/>      COLOR_BURN,
+<a name="2077"/>      COLOR_DODGE,
+<a name="2078"/>      DARKEN,
+<a name="2079"/>      DIFFERENCE,
+<a name="2080"/>      EXCLUSION,
+<a name="2081"/>      HARD_LIGHT,
+<a name="2082"/>      HSL_COLOR,
+<a name="2083"/>      HSL_HUE,
+<a name="2084"/>      HSL_LUMINOSITY,
+<a name="2085"/>      HSL_SATURATION,
+<a name="2086"/>      LIGHTEN,
+<a name="2087"/>      MULTIPLY,
+<a name="2088"/>      OVERLAY,
+<a name="2089"/>      SATURATE,
+<a name="2090"/>      SCREEN,
+<a name="2091"/>      SOFT_LIGHT
+<a name="2092"/>
+<a name="2093"/>   private static init()
+<a name="2094"/>      ATOP := "atop"
+<a name="2095"/>      CLEAR := "clear"
+<a name="2096"/>      DEST := "dest"
+<a name="2097"/>      DEST_ATOP := "dest atop"
+<a name="2098"/>      DEST_IN := "dest in"
+<a name="2099"/>      DEST_OUT := "dest out"
+<a name="2100"/>      DEST_OVER := "dest over"
+<a name="2101"/>      IN := "in"
+<a name="2102"/>      OUT := "out"
+<a name="2103"/>      OVER := "over"
+<a name="2104"/>      SOURCE := "source"
+<a name="2105"/>      XOR := "xor"
+<a name="2106"/>      ADD := "add"
+<a name="2107"/>      COLOR_BURN := "color burn"
+<a name="2108"/>      COLOR_DODGE := "color dodge"
+<a name="2109"/>      DARKEN := "darken"
+<a name="2110"/>      DIFFERENCE := "difference"
+<a name="2111"/>      EXCLUSION := "exclusion"
+<a name="2112"/>      HARD_LIGHT := "hard light"
+<a name="2113"/>      HSL_COLOR := "hsl color"
+<a name="2114"/>      HSL_HUE := "hsl hue"
+<a name="2115"/>      HSL_LUMINOSITY := "hsl luminosity"
+<a name="2116"/>      HSL_SATURATION := "hsl saturation"
+<a name="2117"/>      LIGHTEN := "lighten"
+<a name="2118"/>      MULTIPLY := "multiply"
+<a name="2119"/>      OVERLAY := "overlay"
+<a name="2120"/>      SATURATE := "saturate"
+<a name="2121"/>      SCREEN := "screen"
+<a name="2122"/>      SOFT_LIGHT := "soft light"
+<a name="2123"/>   end
+<a name="2124"/>end
+<a name="2125"/>
+<a name="2126"/>#
+<a name="2127"/># This class provides symbolic names for the styles supported by
+<a name="2128"/># `Window.set_line_end()`.
+<a name="2129"/>#
+<a name="2130"/>final abstract class LineEnd()
+<a name="2131"/>   public static const
+<a name="2132"/>      FLAT,
+<a name="2133"/>      ROUND,
+<a name="2134"/>      SQUARE,
+<a name="2135"/>      POINT
+<a name="2136"/>
+<a name="2137"/>   private static init()
+<a name="2138"/>      FLAT := "flat"
+<a name="2139"/>      ROUND := "round"
+<a name="2140"/>      SQUARE := "square"
+<a name="2141"/>      POINT := "point"
+<a name="2142"/>   end
+<a name="2143"/>end
+<a name="2144"/>
+<a name="2145"/>#
+<a name="2146"/># This class provides symbolic names for the styles supported by
+<a name="2147"/># `Window.set_line_join()`.
+<a name="2148"/>#
+<a name="2149"/>final abstract class LineJoin()
+<a name="2150"/>   public static const
+<a name="2151"/>      BEVEL,
+<a name="2152"/>      MITER,
+<a name="2153"/>      ROUND
+<a name="2154"/>
+<a name="2155"/>   private static init()
+<a name="2156"/>      BEVEL := "bevel"
+<a name="2157"/>      MITER := "miter"
+<a name="2158"/>      ROUND := "round"
+<a name="2159"/>   end
+<a name="2160"/>end
+<a name="2161"/>
+<a name="2162"/>#
+<a name="2163"/># This class provides symbolic names for the styles supported by
+<a name="2164"/># `Window.set_fill_rule()`.
+<a name="2165"/>#
+<a name="2166"/>final abstract class FillRule()
+<a name="2167"/>   public static const
+<a name="2168"/>      EVEN_ODD,
+<a name="2169"/>      NON_ZERO
+<a name="2170"/>
+<a name="2171"/>   private static init()
+<a name="2172"/>      EVEN_ODD := "even-odd"
+<a name="2173"/>      NON_ZERO := "non-zero"
+<a name="2174"/>   end
+<a name="2175"/>end
+<a name="2176"/>
+<a name="2177"/>#
+<a name="2178"/># This class provides symbolic names for the canvas types supported by
+<a name="2179"/># `Window.set_canvas()`.
+<a name="2180"/>#
+<a name="2181"/>final abstract class Canvas()
+<a name="2182"/>   public static const
+<a name="2183"/>      FULLSCREEN,
+<a name="2184"/>      HIDDEN,
+<a name="2185"/>      ICONIC,
+<a name="2186"/>      MAXIMIZED,
+<a name="2187"/>      NORMAL,
+<a name="2188"/>      POPUP,
+<a name="2189"/>      ROOT,
+<a name="2190"/>      WITHDRAWN
+<a name="2191"/>
+<a name="2192"/>   private static init()
+<a name="2193"/>      FULLSCREEN := "fullscreen"
+<a name="2194"/>      HIDDEN := "hidden"
+<a name="2195"/>      ICONIC := "iconic"
+<a name="2196"/>      MAXIMIZED := "maximized"
+<a name="2197"/>      NORMAL := "normal"
+<a name="2198"/>      POPUP := "popup"
+<a name="2199"/>      ROOT := "root"
+<a name="2200"/>      WITHDRAWN := "withdrawn"
+<a name="2201"/>   end
+<a name="2202"/>end
+<a name="2203"/>
+<a name="2204"/>#
+<a name="2205"/># This class provides symbolic names for the pattern names supported
+<a name="2206"/># by `Window.set_textured_pattern()` and  `Window.set_masked_pattern()`.
+<a name="2207"/>#
+<a name="2208"/>final abstract class Pattern()
+<a name="2209"/>   public static const
+<a name="2210"/>      BLACK,
+<a name="2211"/>      VERY_DARK,
+<a name="2212"/>      DARK_GRAY,
+<a name="2213"/>      GRAY,
+<a name="2214"/>      LIGHT_GRAY,
+<a name="2215"/>      VERY_LIGHT,
+<a name="2216"/>      WHITE,
+<a name="2217"/>      VERTICAL,
+<a name="2218"/>      DIAGONAL,
+<a name="2219"/>      HORIZONTAL,
+<a name="2220"/>      GRID,
+<a name="2221"/>      TRELLIS,
+<a name="2222"/>      CHECKERS,
+<a name="2223"/>      GRAINS,
+<a name="2224"/>      SCALES,
+<a name="2225"/>      WAVES
+<a name="2226"/>
+<a name="2227"/>   private static init()
+<a name="2228"/>      BLACK := "black"
+<a name="2229"/>      VERY_DARK := "verydark"
+<a name="2230"/>      DARK_GRAY := "darkgray"
+<a name="2231"/>      GRAY := "gray"
+<a name="2232"/>      LIGHT_GRAY := "lightgray"
+<a name="2233"/>      VERY_LIGHT := "verylight"
+<a name="2234"/>      WHITE := "white"
+<a name="2235"/>      VERTICAL := "vertical"
+<a name="2236"/>      DIAGONAL := "diagonal"
+<a name="2237"/>      HORIZONTAL := "horizontal"
+<a name="2238"/>      GRID := "grid"
+<a name="2239"/>      TRELLIS := "trellis"
+<a name="2240"/>      CHECKERS := "checkers"
+<a name="2241"/>      GRAINS := "grains"
+<a name="2242"/>      SCALES := "scales"
+<a name="2243"/>      WAVES := "waves"
+<a name="2244"/>   end
+<a name="2245"/>end
+</pre></body></html>

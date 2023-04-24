@@ -1,0 +1,328 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>XmlDocument</title></head><body>
+<h1>XmlDocument</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="xml.Document.html" target="displayFrame">xml.Document</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+An XML document.
+<p/><a href="xml-xmldocument.icn.html#13" target="displayFrame">Source - xmldocument.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html">xml.Node</a>
+<a href="xml.Document.html">xml.Document</a>
+<a href="xml.XmlDocument.html">xml.XmlDocument</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from xml.Node</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html#add">add()</a>
+<a href="xml.Node.html#add_string">add_string()</a>
+<a href="xml.Node.html#find_string">find_string()</a>
+<a href="xml.Node.html#find_trimmed_string">find_trimmed_string()</a>
+<a href="xml.Node.html#get_children">get_children()</a>
+<a href="xml.Node.html#get_children_no_whitespace">get_children_no_whitespace()</a>
+<a href="xml.Node.html#get_compacted_children">get_compacted_children()</a>
+<a href="xml.Node.html#get_nth_string">get_nth_string()</a>
+<a href="xml.Node.html#get_nth_trimmed_string">get_nth_trimmed_string()</a>
+<a href="xml.Node.html#get_parent">get_parent()</a>
+<a href="xml.Node.html#get_string_content">get_string_content()</a>
+<a href="xml.Node.html#get_string_content_with_cdata">get_string_content_with_cdata()</a>
+<a href="xml.Node.html#get_trimmed_children">get_trimmed_children()</a>
+<a href="xml.Node.html#get_trimmed_string_content">get_trimmed_string_content()</a>
+<a href="xml.Node.html#get_trimmed_string_content_with_cdata">get_trimmed_string_content_with_cdata()</a>
+<a href="xml.Node.html#has_string">has_string()</a>
+<a href="xml.Node.html#has_trimmed_string">has_trimmed_string()</a>
+<a href="xml.Node.html#print_structure">print_structure()</a>
+<a href="xml.Node.html#traverse_all_postorder">traverse_all_postorder()</a>
+<a href="xml.Node.html#traverse_all_preorder">traverse_all_preorder()</a>
+<a href="xml.Node.html#traverse_nodes_postorder">traverse_nodes_postorder()</a>
+<a href="xml.Node.html#traverse_nodes_preorder">traverse_nodes_preorder()</a>
+<a href="xml.Node.html#xml_trim">xml_trim()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from xml.Node</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html#children">children</a>
+<a href="xml.Node.html#parent">parent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from xml.Document</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Document.html#get_root_element">get_root_element()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_attribute_lists">get_attribute_lists()</a>
+<a href="#get_element_declarations">get_element_declarations()</a>
+<a href="#get_general_entities">get_general_entities()</a>
+<a href="#get_id_attribute_values">get_id_attribute_values()</a>
+<a href="#get_notation_declarations">get_notation_declarations()</a>
+<a href="#get_parameter_entities">get_parameter_entities()</a>
+<a href="#get_validity_errors">get_validity_errors()</a>
+<a href="#get_warnings">get_warnings()</a>
+<a href="#is_standalone">is_standalone()</a>
+<a href="#new">new()</a>
+<a href="#show_attribute_lists">show_attribute_lists()</a>
+<a href="#show_element_declarations">show_element_declarations()</a>
+<a href="#show_entities">show_entities()</a>
+<a href="#show_id_attributes">show_id_attributes()</a>
+<a href="#show_notation_declarations">show_notation_declarations()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#attribute_lists">attribute_lists</a>
+<a href="#element_declarations">element_declarations</a>
+<a href="#general_entities">general_entities</a>
+<a href="#id_attribute_values">id_attribute_values</a>
+<a href="#notation_declarations">notation_declarations</a>
+<a href="#parameter_entities">parameter_entities</a>
+<a href="#standalone">standalone</a>
+<a href="#validity_errors">validity_errors</a>
+<a href="#warnings">warnings</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_attribute_lists"/>
+<h3>get_attribute_lists()</h3>
+public<p/>
+<dl>
+<dd>
+Return the attribute_lists.  A table mapping element names to AttList objects.
+<p/><a href="xml-xmldocument.icn.html#146" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="get_element_declarations"/>
+<h3>get_element_declarations()</h3>
+public<p/>
+<dl>
+<dd>
+Return the element_declarations.  This is a table mapping names to
+ContentSpec objects, ie the root of the parsed regular expression.
+<p/><a href="xml-xmldocument.icn.html#130" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="get_general_entities"/>
+<h3>get_general_entities()</h3>
+public<p/>
+<dl>
+<dd>
+Return the general_entities.  This is a table mapping names to
+EntityDef objects.
+<p/><a href="xml-xmldocument.icn.html#122" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="get_id_attribute_values"/>
+<h3>get_id_attribute_values()</h3>
+public<p/>
+<dl>
+<dd>
+Return the id_attribute_values.  A set of all the ID attribute values 
+encountered during parsing
+<p/><a href="xml-xmldocument.icn.html#153" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="get_notation_declarations"/>
+<h3>get_notation_declarations()</h3>
+public<p/>
+<dl>
+<dd>
+Return the notation_declarations.  A table mapping names to 
+NotationDecl objects.
+<p/><a href="xml-xmldocument.icn.html#138" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parameter_entities"/>
+<h3>get_parameter_entities()</h3>
+public<p/>
+<dl>
+<dd>
+Return the parameter_entities.  This is a table mapping names to
+EntityDef objects.
+<p/><a href="xml-xmldocument.icn.html#114" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="get_validity_errors"/>
+<h3>get_validity_errors()</h3>
+public<p/>
+<dl>
+<dd>
+Get the number of validity errors during parsing
+<p/><a href="xml-xmldocument.icn.html#28" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="get_warnings"/>
+<h3>get_warnings()</h3>
+public<p/>
+<dl>
+<dd>
+Get the number of warnings during parsing
+<p/><a href="xml-xmldocument.icn.html#35" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="is_standalone"/>
+<h3>is_standalone()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff this is a standalone document
+<p/><a href="xml-xmldocument.icn.html#42" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="xml.Node.html#new">new()</a> in <a href="xml.Node.html" target="displayFrame">xml.Node</a></dd>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#161" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="show_attribute_lists"/>
+<h3>show_attribute_lists()</h3>
+public<p/>
+<dl>
+<dd>
+Debug function: Dump the attribute declarations
+<p/><a href="xml-xmldocument.icn.html#90" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="show_element_declarations"/>
+<h3>show_element_declarations()</h3>
+public<p/>
+<dl>
+<dd>
+Debug function: Dump the element declarations
+<p/><a href="xml-xmldocument.icn.html#66" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="show_entities"/>
+<h3>show_entities()</h3>
+public<p/>
+<dl>
+<dd>
+Debug function: Dump the entity definitions.
+<p/><a href="xml-xmldocument.icn.html#49" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="show_id_attributes"/>
+<h3>show_id_attributes()</h3>
+public<p/>
+<dl>
+<dd>
+Debug function: Show the ID attribute values
+<p/><a href="xml-xmldocument.icn.html#104" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="show_notation_declarations"/>
+<h3>show_notation_declarations()</h3>
+public<p/>
+<dl>
+<dd>
+Debug function: Dump the notation declarations
+<p/><a href="xml-xmldocument.icn.html#78" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="attribute_lists"/>
+<h3>attribute_lists</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#22" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="element_declarations"/>
+<h3>element_declarations</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#20" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="general_entities"/>
+<h3>general_entities</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#19" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="id_attribute_values"/>
+<h3>id_attribute_values</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#23" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="notation_declarations"/>
+<h3>notation_declarations</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#21" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="parameter_entities"/>
+<h3>parameter_entities</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#18" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="standalone"/>
+<h3>standalone</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#26" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="validity_errors"/>
+<h3>validity_errors</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#24" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+<a name="warnings"/>
+<h3>warnings</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmldocument.icn.html#25" target="displayFrame">Source - xmldocument.icn </a>
+</dd>
+</dl><hr>
+</body></html>

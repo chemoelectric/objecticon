@@ -1,0 +1,377 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Rat</title></head><body>
+<h1>Rat</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+</dl><p/>
+A class representing rational numbers.
+<p/>
+All instances are immutable and are stored in a normalized form, so
+that two instances representing the same number always have the same
+numerator and denominator.
+<p/><a href="numbers-numbers.icn.html#366" target="displayFrame">Source - numbers.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="numbers.Number.html">numbers.Number</a>
+<a href="numbers.RealNumber.html">numbers.RealNumber</a>
+<a href="numbers.Rat.html">numbers.Rat</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#init">init()</a>
+<a href="numbers.Number.html#object_output">object_output()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#REAL_DIGS">REAL_DIGS</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from numbers.RealNumber</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.RealNumber.html#abs">abs()</a>
+<a href="numbers.RealNumber.html#cmp">cmp()</a>
+<a href="numbers.RealNumber.html#sub_sign">sub_sign()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#commas">commas()</a>
+<a href="#decimal">decimal()</a>
+<a href="#div">div()</a>
+<a href="#integer">integer()</a>
+<a href="#inv">inv()</a>
+<a href="#mul">mul()</a>
+<a href="#neg">neg()</a>
+<a href="#new">new()</a>
+<a href="#normalize">normalize()</a>
+<a href="#parse">parse()</a>
+<a href="#rational">rational()</a>
+<a href="#real">real()</a>
+<a href="#reciprocal">reciprocal()</a>
+<a href="#reduce">reduce()</a>
+<a href="#sign">sign()</a>
+<a href="#str">str()</a>
+<a href="#sub">sub()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#d">d</a>
+<a href="#n">n</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#add">add()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Add this rational to another.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#455" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="commas"/>
+<h3>commas(n, f)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#379" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="decimal"/>
+<h3>decimal(rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#decimal">decimal()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Try to convert to an equivalent <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> instance.  If <code>rnd</code> is
+omitted, then this method only succeeds if this rational number
+can be precisely expressed as a decimal.  If so, that a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> is
+returned, otherwise this method fails.  If <code>rnd</code> is given, then
+this method always succeeds and returns a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> with the division
+calculated with that rounding.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#423" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="div"/>
+<h3>div(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#div">div()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Divide this rational by another.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#484" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="integer"/>
+<h3>integer()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#integer">integer()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Returns the integer whole number part of this rational.
+<p/><a href="numbers-numbers.icn.html#442" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="inv"/>
+<h3>inv()</h3>
+public<p/>
+<dl>
+<dd>
+Return the inverse of this rational.
+<p/><a href="numbers-numbers.icn.html#500" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="mul"/>
+<h3>mul(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#mul">mul()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Multiply this rational by another.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#474" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="neg"/>
+<h3>neg()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#neg">neg()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Return this rational negated.
+<p/><a href="numbers-numbers.icn.html#494" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance.  If <code>x</code> and <code>y</code> are given, then they must
+both be integers representing the numerator and denominator
+respectively.  Otherwise, if only <code>x</code> is given, then <code>x</code> may be :-
+<p/>
+<ul>
+<li>
+an integer, which produces a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> of corresponding value,
+with denominator 1.
+</li>
+<li>
+another <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>, which gives a copy of it
+</li>
+<li>
+a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> instance, which produces the corresponding exact
+rational value.
+</li>
+<li>
+a string, which is parsed.  If it contains a ".", or an "e" or
+an "E" then it represents a decimal, which is parsed and then
+converted to a rational equivalent.  Otherwise it is parsed as
+a rational number, with a "/" separating numerator and
+denominator. If the string cannot be parsed, the constructor
+fails.
+<p/>
+</li>
+</ul>
+On failure, <code>&amp;why</code> is set indicating the reason.
+<p/><a href="numbers-numbers.icn.html#567" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="normalize"/>
+<h3>normalize()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#554" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#517" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="rational"/>
+<h3>rational()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#rational">rational()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Returns self
+<p/><a href="numbers-numbers.icn.html#437" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="real"/>
+<h3>real()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#real">real()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Returns a real number approximating this rational, or fails if
+the result would be outside real's expressible range.
+<p/><a href="numbers-numbers.icn.html#448" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="reciprocal"/>
+<h3>reciprocal()</h3>
+public<p/>
+<dl>
+<dd>
+Return the reciprocal of this rational.
+<p/><a href="numbers-numbers.icn.html#512" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="reduce"/>
+<h3>reduce()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#reduce">reduce()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+If the numerator is 0 or 1, then return the numerator as a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>;
+otherwise return self.
+<p/><a href="numbers-numbers.icn.html#413" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sign"/>
+<h3>sign()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#sign">sign()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Return the sign of this rational.
+<p/><a href="numbers-numbers.icn.html#506" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str(f)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#str">str()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Convert to a string.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> -  A cset of flags.  If c contains ',' then commas
+are introduced into the non-fractional part of the number;
+if c contains '+' then a leading + is added to positive
+numbers.  If c contains 't' then no whole number is output
+before the fractional part (eg 4/3 rather than 1 1/3).
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#386" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sub"/>
+<h3>sub(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#sub">sub()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Subtract another rational from this one.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#465" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="d"/>
+<h3>d</h3>
+public const<p/>
+<dl>
+<dd>
+The integer denominator, which is always positive.
+<p/><a href="numbers-numbers.icn.html#376" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="n"/>
+<h3>n</h3>
+public const<p/>
+<dl>
+<dd>
+The integer numerator
+<p/><a href="numbers-numbers.icn.html#374" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+</body></html>

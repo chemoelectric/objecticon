@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>bkutil.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     bkutil.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for HP95LX phone books and appointment books
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/># Utility procedures for HP95LX phone book and appointment book processing.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  See also: abkform.icn, pbkform.icn
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>
+<a name="25"/>package ipl.bkutil
+<a name="26"/>
+<a name="27"/>import
+<a name="28"/>   io(reads)
+<a name="29"/>
+<a name="30"/>procedure bk_int(i)
+<a name="31"/>   return char(i % 256) || char(i / 256)
+<a name="32"/>end
+<a name="33"/>
+<a name="34"/>procedure bk_read_int(f)
+<a name="35"/>   return ord(reads(f)) + 256 * ord(reads(f))
+<a name="36"/>end
+<a name="37"/>
+<a name="38"/>procedure bk_format_lines(s,width)
+<a name="39"/>   local lines,lines2,line,c,lineSeg
+<a name="40"/>   /width := 39
+<a name="41"/>   lines := []
+<a name="42"/>   #
+<a name="43"/>   #  Make a list of the actual lines, as delimited by "\0".
+<a name="44"/>   #
+<a name="45"/>   s ? {
+<a name="46"/>      while put(lines,tab(find("\0"))) do move(1)
+<a name="47"/>      put(lines,"" ~== tab(0))
+<a name="48"/>      }
+<a name="49"/>   #
+<a name="50"/>   #  Now build a new list, with lines longer than "width" broken at
+<a name="51"/>   #  word boundaries.
+<a name="52"/>   #
+<a name="53"/>   lines2 := []
+<a name="54"/>   every line := !lines do {
+<a name="55"/>      while *line &gt; width do {
+<a name="56"/>	 line ? {
+<a name="57"/>	    #
+<a name="58"/>	    #  Scan back from end of string to find a space
+<a name="59"/>	    #
+<a name="60"/>	    tab(width + 2)
+<a name="61"/>	    until pos(1) do {
+<a name="62"/>	       c := move(-1)
+<a name="63"/>	       if c == " " then break
+<a name="64"/>	       }
+<a name="65"/>	    if pos(1) then {
+<a name="66"/>	       #
+<a name="67"/>	       #  No space was found -- use next "width" chars.
+<a name="68"/>	       #
+<a name="69"/>	       lineSeg := move(width)
+<a name="70"/>	       line := tab(0)
+<a name="71"/>	       }
+<a name="72"/>	    else {
+<a name="73"/>	       #
+<a name="74"/>	       #  A space was found -- break line there.
+<a name="75"/>	       #
+<a name="76"/>	       lineSeg := &amp;subject[1:&amp;pos]
+<a name="77"/>	       move(1)
+<a name="78"/>	       line := tab(0)
+<a name="79"/>	       }
+<a name="80"/>	    put(lines2,lineSeg)
+<a name="81"/>	    }
+<a name="82"/>	 }
+<a name="83"/>      put(lines2,line)
+<a name="84"/>      }
+<a name="85"/>   return lines2
+<a name="86"/>end
+</pre></body></html>

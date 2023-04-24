@@ -1,0 +1,1039 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>scan.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     scan.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures related to scanning
+<a name="6"/>#
+<a name="7"/>#	Author:   Richard L. Goerwitz, David A. Gamey, and Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#  This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Contributors:  Randal L. Schwartz and Cheyenne Wills
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  Richard L. Goerwitz:
+<a name="22"/>#
+<a name="23"/>#  I am often frustrated at bal()'s inability to deal elegantly with
+<a name="24"/>#  the common \backslash escaping convention (a way of telling Unix
+<a name="25"/>#  Bourne and C shells, for instance, not to interpret a given
+<a name="26"/>#  character as a "metacharacter").  I recognize that bal()'s generic
+<a name="27"/>#  behavior is a must, and so I wrote slashbal() to fill the gap.
+<a name="28"/>#
+<a name="29"/>#  Slashbal behaves like bal, except that it ignores, for purposes of
+<a name="30"/>#  balancing, any c2/c3 char which is preceded by a backslash.  Note
+<a name="31"/>#  that we are talking about internally represented backslashes, and
+<a name="32"/>#  not necessarily the backslashes used in Icon string literals.  If
+<a name="33"/>#  you have "\(" in your source code, the string produced will have no
+<a name="34"/>#  backslash.  To get this effect, you would need to write "\\(."
+<a name="35"/>#
+<a name="36"/>#  BUGS:  Note that, like bal() (v8), slashbal() cannot correctly
+<a name="37"/>#  handle cases where c2 and c3 intersect.  Note also that older ver-
+<a name="38"/>#  sions of this routine counted from the beginning of the string,
+<a name="39"/>#  instead of from i.  This feature came to be regarded as a bug when
+<a name="40"/>#  put into actual use (especially when I realized that bal() doesn't
+<a name="41"/>#  work this way).
+<a name="42"/>#
+<a name="43"/>############################################################################
+<a name="44"/>
+<a name="45"/>$encoding UTF-8
+<a name="46"/>
+<a name="47"/>package ipl.scan
+<a name="48"/>
+<a name="49"/>import
+<a name="50"/>   io(write, writes),
+<a name="51"/>   util(save_state, PosState, need_cset,
+<a name="52"/>        need_integer, need_text, ce_param, similar_string_type),
+<a name="53"/>   lang(Text)
+<a name="54"/>
+<a name="55"/># `bal()` with escape processing
+<a name="56"/>procedure slashbal(c1, c2, c3, s, i, j)	
+<a name="57"/>
+<a name="58"/>    local twocs, allcs, a, POS, chr, chr2, count
+<a name="59"/>
+<a name="60"/>    /c1 := &amp;cset
+<a name="61"/>    /c2 := '('
+<a name="62"/>    /c3 := ')'
+<a name="63"/>    twocs := c2 ++ c3
+<a name="64"/>    allcs := c1 ++ c2 ++ c3 ++ '\\'
+<a name="65"/>
+<a name="66"/>    a := begin_analysis(s, i, j) | fail
+<a name="67"/>    s := a.s; i := a.i; j := a.j
+<a name="68"/>
+<a name="69"/>    count := 0; POS := i - 1
+<a name="70"/>    s[i:j] ? {
+<a name="71"/>	while tab(upto(allcs)) do {
+<a name="72"/>	    chr := move(1)
+<a name="73"/>	    if chr == "\\" &amp; any(twocs) then {
+<a name="74"/>		chr2 := move(1)
+<a name="75"/>		if any(c1, chr) &amp; count = 0 then
+<a name="76"/>		    suspend POS + .&amp;pos - 2
+<a name="77"/>		if any(c1, chr2) &amp; count = 0 then
+<a name="78"/>		    suspend POS + .&amp;pos - 1
+<a name="79"/>	    }
+<a name="80"/>	    else {
+<a name="81"/>		if any(c1, chr) &amp; count = 0 then
+<a name="82"/>		    suspend POS + .&amp;pos - 1
+<a name="83"/>		if any(c2, chr) then
+<a name="84"/>		    count +:= 1
+<a name="85"/>		else if any(c3, chr) &amp; count &gt; 0 then
+<a name="86"/>		    count -:= 1
+<a name="87"/>	    }
+<a name="88"/>	}
+<a name="89"/>    }
+<a name="90"/>
+<a name="91"/>end
+<a name="92"/>
+<a name="93"/>############################################################################
+<a name="94"/>#
+<a name="95"/>#  Richard L. Goerwitz:
+<a name="96"/>#
+<a name="97"/>#  Slashupto works just like upto, except that it ignores backslash
+<a name="98"/>#  escaped characters.  I can't even begin to express how often I've
+<a name="99"/>#  run into problems applying Icon's string scanning facilities to
+<a name="100"/>#  to input that uses backslash escaping.  Normally, I tokenize first,
+<a name="101"/>#  and then work with lists.  With slshupto() I can now postpone or
+<a name="102"/>#  even eliminate the traditional tokenizing step, and let Icon's
+<a name="103"/>#  string scanning facilities to more of the work.
+<a name="104"/>#
+<a name="105"/>#  If you're confused:
+<a name="106"/>#
+<a name="107"/>#  Typically UNIX utilities (and probably others) use backslashes to
+<a name="108"/>#  "escape" (i.e. remove the special meaning of) metacharacters.  For
+<a name="109"/>#  instance, UNIX shells normally accept "*" as a shorthand for "any
+<a name="110"/>#  series of zero or more characters.  You can make the "*" a literal
+<a name="111"/>#  "*," with no special meaning, by prepending a backslash.  The rou-
+<a name="112"/>#  tine slshupto() understands these backslashing conventions.  You
+<a name="113"/>#  can use it to find the "*" and other special characters because it
+<a name="114"/>#  will ignore "escaped" characters.
+<a name="115"/>#
+<a name="116"/>#
+<a name="117"/># `slashupto`:  cset `x` string `x` integer `x` integer -&gt; integers  
+<a name="118"/>#             `(c, s, i, j)` -&gt; `I`s (a generator)
+<a name="119"/>#
+<a name="120"/>#    where `I`s are the integer positions in `s[i:j]` before characters
+<a name="121"/>#    in `c` that is not preceded by a backslash escape
+<a name="122"/>#
+<a name="123"/># upto() with escapes
+<a name="124"/>procedure slashupto(c, s, i, j)		
+<a name="125"/>
+<a name="126"/>    local c2, a
+<a name="127"/>
+<a name="128"/>    a := begin_analysis(s, i, j) | fail
+<a name="129"/>    s := a.s; i := a.i; j := a.j
+<a name="130"/>    
+<a name="131"/>    /c := &amp;cset
+<a name="132"/>    c2 := '\\' ++ c
+<a name="133"/>    s[1:j] ? {
+<a name="134"/>        tab(i)
+<a name="135"/>        while tab(upto(c2)) do {
+<a name="136"/>            if ="\\" then {
+<a name="137"/>		move(1) | {
+<a name="138"/>		    if find("\\", c)
+<a name="139"/>		    then return &amp;pos - 1
+<a name="140"/>		}
+<a name="141"/>		next
+<a name="142"/>	    }
+<a name="143"/>            suspend .&amp;pos
+<a name="144"/>            move(1)
+<a name="145"/>        }
+<a name="146"/>    }
+<a name="147"/>
+<a name="148"/>end
+<a name="149"/>
+<a name="150"/>############################################################################
+<a name="151"/>#
+<a name="152"/>#     The procedure `snapshot(title,len)` writes a snapshot of the state
+<a name="153"/>#  of string scanning, showing the value of `&amp;subject` and `&amp;pos`, an
+<a name="154"/>#  optional title, and (again optionally) wrapping the display
+<a name="155"/>#  for `len` width.
+<a name="156"/>#
+<a name="157"/>#  For example,
+<a name="158"/>#  ~~
+<a name="159"/>#     "((a+b)-delta)/(c*d))" ? {
+<a name="160"/>#	 tab(bal('+\-/*'))
+<a name="161"/>#	 snapshot("example")
+<a name="162"/>#	 }
+<a name="163"/>#  ~~
+<a name="164"/>#
+<a name="165"/>#  produces
+<a name="166"/>#
+<a name="167"/>#  ~~
+<a name="168"/>#	---example---------------------------
+<a name="169"/>#	|				    |
+<a name="170"/>#	|				    |
+<a name="171"/>#	| &amp;subject = "((a+b)-delta)/(c*d))" |
+<a name="172"/>#	|			   |	    |
+<a name="173"/>#	|			    	    |
+<a name="174"/>#	-------------------------------------
+<a name="175"/>#  ~~
+<a name="176"/>#
+<a name="177"/>#     Note that the bar showing the `&amp;pos` is positioned under the `&amp;pos`th
+<a name="178"/>#  character (actual positions are between characters).  If `&amp;pos` is
+<a name="179"/>#  at the end of `&amp;subject`, the bar is positioned under the quotation
+<a name="180"/>#  mark delimiting the subject. For example,
+<a name="181"/>#
+<a name="182"/>#  ~~
+<a name="183"/>#     "abcdefgh" ? (tab(0) &amp; snapshot())
+<a name="184"/>#  ~~
+<a name="185"/>#
+<a name="186"/>#  produces
+<a name="187"/>#
+<a name="188"/>#  ~~
+<a name="189"/>#	-------------------------
+<a name="190"/>#	|			|
+<a name="191"/>#	|			|
+<a name="192"/>#	| &amp;subject = "abcdefgh" |
+<a name="193"/>#	|		      | |
+<a name="194"/>#	|			|
+<a name="195"/>#	-------------------------
+<a name="196"/>#  ~~
+<a name="197"/>#
+<a name="198"/>#     Escape sequences are handled properly. For example,
+<a name="199"/>#
+<a name="200"/>#  ~~
+<a name="201"/>#     "abc\tdef\nghi" ? (tab(upto('\n')) &amp; snapshot())
+<a name="202"/>#  ~~
+<a name="203"/>#
+<a name="204"/>#  produces
+<a name="205"/>#
+<a name="206"/>#  ~~
+<a name="207"/>#	------------------------------
+<a name="208"/>#	|			     |
+<a name="209"/>#	|			     |
+<a name="210"/>#	| &amp;subject = "abc\tdef\nghi" |
+<a name="211"/>#	|		      |      |
+<a name="212"/>#	|			     |
+<a name="213"/>#	------------------------------
+<a name="214"/>#  ~~
+<a name="215"/>#
+<a name="216"/>#  The title argument places a title into the top bar, as in
+<a name="217"/>#
+<a name="218"/>#  ~~
+<a name="219"/>#	"abc\tdef\nghi" ? (tab(upto('\n')) &amp; snapshot("upto('\n')")
+<a name="220"/>#  ~~
+<a name="221"/>#
+<a name="222"/>#  which produces
+<a name="223"/>#
+<a name="224"/>#  ~~
+<a name="225"/>#      --upto('\n')-------------------
+<a name="226"/>#      |                             |
+<a name="227"/>#      |                             |
+<a name="228"/>#      | &amp;subject = "abc\tdef\nghi"  |
+<a name="229"/>#      |                     |       |
+<a name="230"/>#      |                             |
+<a name="231"/>#      -------------------------------
+<a name="232"/>#  ~~
+<a name="233"/>#
+<a name="234"/>#  The len argument rewraps the display for a screen of len width.
+<a name="235"/>#
+<a name="236"/>procedure snapshot(title,len)		
+<a name="237"/>
+<a name="238"/>   local bar1, bar2, bar3, is, is0, prefix, titlel, placement, POS
+<a name="239"/>
+<a name="240"/>   /title := ""			# no meaningful default
+<a name="241"/>   \len &lt;:= 20			# any less is really not useful
+<a name="242"/>   prefix := "&amp;subject = "
+<a name="243"/>   is := image(&amp;subject)
+<a name="244"/>   is0 := *image(&amp;subject[1:&amp;pos]) | fail
+<a name="245"/>   if type(&amp;subject)=="ucs" then
+<a name="246"/>      is0 -:= 1  # Because of the closing bracket image gives
+<a name="247"/>
+<a name="248"/>   #
+<a name="249"/>   # Set up top and bottom bars (not exceeding len width, if
+<a name="250"/>   # len is nonnull).  Fit title into top bar (bar1).
+<a name="251"/>   #
+<a name="252"/>   bar1 := bar3 := repl("-", *is + *prefix + 4)[1:\len-4|0]
+<a name="253"/>   # in *is + *prefix + 4, the 4 is for two vbars/two spaces
+<a name="254"/>   titlel := (*title &gt; *bar3-4) | *title[1:\len-4|0]
+<a name="255"/>   bar1 ?:= move(3) || (tab(4+titlel), title) || tab(0)
+<a name="256"/>
+<a name="257"/>   #
+<a name="258"/>   # Write bar1, then spacers (bar2).  Then write out len-size chunks
+<a name="259"/>   # of &amp;subject, with the | pointer-line, where appropriate. Finally,
+<a name="260"/>   # write out bar3 (like bar1, but with no title).
+<a name="261"/>   #
+<a name="262"/>   write(bar1)
+<a name="263"/>   bar2 := "|" || repl(" ", *bar3 - 2) || "|"
+<a name="264"/>   write(bar2, "\n", bar2)
+<a name="265"/>   placement := *prefix + is0
+<a name="266"/>   (prefix || is) ? {
+<a name="267"/>       until pos(0) do {
+<a name="268"/>	   POS := &amp;pos - 1
+<a name="269"/>	   write("| ", move(*bar3-4) | left(tab(0), *bar3-4), " |")
+<a name="270"/>	   if POS &lt; placement &lt; &amp;pos then {
+<a name="271"/>	       writes("| ")
+<a name="272"/>	       writes(left(repl(" ", placement - POS - 1) || "|", *bar3-4))
+<a name="273"/>	       write(" |\n", bar2)
+<a name="274"/>	   }
+<a name="275"/>	   else write(bar2, "\n", bar2)
+<a name="276"/>       }
+<a name="277"/>   }
+<a name="278"/>   write(bar3)
+<a name="279"/>   return			# nothing useful to return
+<a name="280"/>
+<a name="281"/>end
+<a name="282"/>
+<a name="283"/>############################################################################
+<a name="284"/>#
+<a name="285"/>#  David A. Gamey:
+<a name="286"/>#
+<a name="287"/>#  ~~
+<a name="288"/>#     balq( c1, c2, c3, c4, c5, s, i1, i2 ) : i3
+<a name="289"/>#  ~~
+<a name="290"/>#
+<a name="291"/>#        generates the sequence of integer positions in `s` preceding a 
+<a name="292"/>#        character of `c1` in `s[i1:i2]` that is (a) balanced with respect to
+<a name="293"/>#        characters in `c2` and `c3` and (b) not "quoted" by characters in `c4` 
+<a name="294"/>#        with "escape" sequences as defined in `c5`, but 
+<a name="295"/>#        fails if there is no such position.
+<a name="296"/>#
+<a name="297"/>#        defaults:   same as for `bal`,  
+<a name="298"/>#                    `c4`  the single and double quote characters ' and "  
+<a name="299"/>#                    `c5`  the backwards slash \  
+<a name="300"/>#        errors:     same as for bal,  
+<a name="301"/>#                    `c4` &amp; `c5` not csets
+<a name="302"/>#
+<a name="303"/>#  ~~
+<a name="304"/>#     balqc( c1, c2, c3, c4, c5, s1, s2, s3, i1, i2 ) : i3
+<a name="305"/>#  ~~
+<a name="306"/>#
+<a name="307"/>#        like `balq` with the addition that balanced characters within 
+<a name="308"/>#        "comments", as delimited by the strings `s1` and `s2`, are also 
+<a name="309"/>#        excluded from balancing.  In addition, if `s1` is given and `s2` 
+<a name="310"/>#        is `&amp;null` then the comment terminates at the end of string.
+<a name="311"/>#
+<a name="312"/>#        defaults:   same as for `balq`,  
+<a name="313"/>#                    `s3` is the subject string  
+<a name="314"/>#                    `s1` "/*"  
+<a name="315"/>#                    `s2` "*/" if s1 defaults, null otherwise  
+<a name="316"/>#        errors:     same as for `balq`,  
+<a name="317"/>#                    `s1` is not a string  
+<a name="318"/>#                    `s2` is not a string (if s1 defaults or is specified)   
+<a name="319"/>#
+<a name="320"/>procedure balq(				
+<a name="321"/>               cstop, copen, cclose, cquote, cescape, s, i1, i2)
+<a name="322"/>
+<a name="323"/>   local quote, pcount, spos
+<a name="324"/>   local ca, c, sp, a
+<a name="325"/>
+<a name="326"/>   a := begin_analysis(s, i1, i2) | fail
+<a name="327"/>   s := a.s; i1 := a.i; i2 := a.j
+<a name="328"/>
+<a name="329"/>   /cstop   := &amp;cset                                     # stopping characters
+<a name="330"/>   /copen   := '('                                       # open characters
+<a name="331"/>   /cclose  := ')'                                       # close characters
+<a name="332"/>   /cquote  := '\'\"'                                    # quote characters
+<a name="333"/>   /cescape := '\\'                                      # escape characters
+<a name="334"/>
+<a name="335"/>
+<a name="336"/>   pcount := 0                                           # "parenthesis" counter
+<a name="337"/>   spos   := i1                                          # scanning position
+<a name="338"/>
+<a name="339"/>   ca := cstop ++ copen ++ cclose ++ cquote ++ cescape   # characters to check
+<a name="340"/>
+<a name="341"/>   while sp := s[ spos := upto( ca, s, spos, i2 ) ] do { 
+<a name="342"/>      
+<a name="343"/>      if /quote &amp; ( pcount = 0 ) &amp; any( cstop, sp) then suspend spos
+<a name="344"/>      
+<a name="345"/>      if any( c := ( copen | cclose | cquote | cescape ), sp ) then
+<a name="346"/>         
+<a name="347"/>         case c of {
+<a name="348"/>            
+<a name="349"/>            copen  : if /quote then 
+<a name="350"/>               pcount +:= 1
+<a name="351"/>            
+<a name="352"/>            cclose : if /quote then 
+<a name="353"/>               if ( pcount -:= 1 ) &lt; 0 then
+<a name="354"/>                  fail
+<a name="355"/>            
+<a name="356"/>            cquote : if /quote then 
+<a name="357"/>               quote := sp 
+<a name="358"/>            else 
+<a name="359"/>               if quote == sp then quote := &amp;null
+<a name="360"/>            
+<a name="361"/>            cescape: if \quote then
+<a name="362"/>               spos +:= 1
+<a name="363"/>         }
+<a name="364"/>      
+<a name="365"/>      spos +:= 1
+<a name="366"/>      
+<a name="367"/>   }
+<a name="368"/>
+<a name="369"/>end
+<a name="370"/>
+<a name="371"/># ~ 
+<a name="372"/>#   balqc(c1, c2, c3, c4, c5, s1, s2, s3, i1, i2)
+<a name="373"/># ~
+<a name="374"/># like `balq()` with the addition that balanced characters within
+<a name="375"/># "comments", as delimited by the strings `s1` and `s2`, are also
+<a name="376"/># excluded from balancing.  In addition, if `s1` is given and `s2`
+<a name="377"/>#
+<a name="378"/>procedure balqc(			
+<a name="379"/>                cstop, copen, cclose, cquote, cescape, scm, ecm, s, i1, i2)
+<a name="380"/>
+<a name="381"/>   local quote, pcount, spos
+<a name="382"/>   local ca, c, sp
+<a name="383"/>   local ccom, comnt, a
+<a name="384"/>
+<a name="385"/>   a := begin_analysis(s, i1, i2) | fail
+<a name="386"/>   s := a.s; i1 := a.i; i2 := a.j
+<a name="387"/>
+<a name="388"/>   /cstop   := &amp;cset                                     # stopping characters
+<a name="389"/>   /copen   := '('                                       # open characters
+<a name="390"/>   /cclose  := ')'                                       # close characters
+<a name="391"/>   /cquote  := '\'\"'                                    # quote characters
+<a name="392"/>   /cescape := '\\'                                      # escape characters
+<a name="393"/>
+<a name="394"/>   if /scm &amp; /ecm then {
+<a name="395"/>      scm := "/*"                                        # start of comment
+<a name="396"/>      ecm := "*/"                                        # end of comment
+<a name="397"/>   }
+<a name="398"/>   else 
+<a name="399"/>      if \scm &amp; /ecm then 
+<a name="400"/>         ecm := &amp;null                                    # icon style comment
+<a name="401"/>
+<a name="402"/>   ccom := ''
+<a name="403"/>   ccom ++:= cset(\scm[1])
+<a name="404"/>   ccom ++:= cset(\ecm[1])
+<a name="405"/>
+<a name="406"/>   pcount := 0                                           # "parenthesis" counter
+<a name="407"/>   spos   := i1                                          # scanning position
+<a name="408"/>
+<a name="409"/>   ca := cstop ++ copen ++ cclose ++ cquote ++ cescape ++ ccom # chars to check
+<a name="410"/>
+<a name="411"/>   while sp := s[ spos := upto( ca, s, spos, i2 ) ] do { 
+<a name="412"/>      
+<a name="413"/>      if /quote &amp; ( pcount = 0 ) &amp; /comnt &amp; any( cstop, sp) then 
+<a name="414"/>         suspend spos
+<a name="415"/>      
+<a name="416"/>      if any( c := ( copen | cclose | cquote | cescape | ccom ), sp ) then
+<a name="417"/>         
+<a name="418"/>         case c of {
+<a name="419"/>            
+<a name="420"/>            copen  : if /quote &amp; /comnt then 
+<a name="421"/>               pcount +:= 1
+<a name="422"/>            
+<a name="423"/>            cclose : if /quote &amp; /comnt then 
+<a name="424"/>               if ( pcount -:= 1 ) &lt; 0 then
+<a name="425"/>                  fail
+<a name="426"/>            
+<a name="427"/>            cquote : if /comnt then
+<a name="428"/>               if /quote then 
+<a name="429"/>                  quote := sp 
+<a name="430"/>               else 
+<a name="431"/>                  if quote == sp then quote := &amp;null
+<a name="432"/>            
+<a name="433"/>            cescape: if \quote then 
+<a name="434"/>               spos +:= 1
+<a name="435"/>
+<a name="436"/>            ccom   : if /quote then 
+<a name="437"/>               if /comnt then {
+<a name="438"/>                  if comnt := ( s[ spos +: *scm ] == scm ) then
+<a name="439"/>                     spos +:= *scm - 1
+<a name="440"/>               }
+<a name="441"/>               else
+<a name="442"/>                  if \ecm == s[ spos +: *ecm ] then {
+<a name="443"/>                     spos +:= *ecm - 1
+<a name="444"/>                     comnt := &amp;null
+<a name="445"/>                  }
+<a name="446"/>            
+<a name="447"/>         }
+<a name="448"/>      
+<a name="449"/>      spos +:= 1
+<a name="450"/>      
+<a name="451"/>   }
+<a name="452"/>
+<a name="453"/>end
+<a name="454"/>
+<a name="455"/>#############################################################################
+<a name="456"/>#
+<a name="457"/>#  This matching function illustrates how every can be 
+<a name="458"/>#  used in string scanning.   
+<a name="459"/>#
+<a name="460"/>#                 1. Each element of the list argument is matched in 
+<a name="461"/>#                    succession. 
+<a name="462"/>#                 2. Leading characters in the subject are skipped over
+<a name="463"/>#                    to match the first element.
+<a name="464"/>#                 3. The strings listed may be seperated by other characters
+<a name="465"/>#                    provided they are specified in a cset of characters to 
+<a name="466"/>#                    be ignored.
+<a name="467"/>#
+<a name="468"/>#                 It could be used to find things in text that have varying
+<a name="469"/>#                 representations, for example: "i.e.", "e.g.", "P.O.", etc.
+<a name="470"/>#
+<a name="471"/>#  ~~
+<a name="472"/>#  limatch(l,i)
+<a name="473"/>#  ~~
+<a name="474"/>#  
+<a name="475"/>#        `l`  list of strings to be found  
+<a name="476"/>#        `i`  cset containing characters to be ignored between each string
+<a name="477"/>#
+<a name="478"/>#        returns the last cursor position scanned to, or fails
+<a name="479"/>#
+<a name="480"/>procedure limatch(l,i)			
+<a name="481"/>
+<a name="482"/>   local s, f, p
+<a name="483"/>
+<a name="484"/>   p := &amp;pos
+<a name="485"/>   every ( s := !l ) | ( return p ) do
+<a name="486"/>   {
+<a name="487"/>      if /f := 1 then tab(find(s))        #  startup - position at first string
+<a name="488"/>      tab(match(s)) | fail                #  fail if not matched
+<a name="489"/>      tab(many(i) | &amp;pos)                 #  skip ignore chars. if any
+<a name="490"/>      p := &amp;pos                           #  remember last position
+<a name="491"/>   }
+<a name="492"/>end
+<a name="493"/>
+<a name="494"/>#
+<a name="495"/># What is just ahead in the current scan?
+<a name="496"/>#
+<a name="497"/>procedure ahead(i, j)
+<a name="498"/>   /j := 0
+<a name="499"/>   return .&amp;subject[&amp;pos+j +: i]
+<a name="500"/>end
+<a name="501"/>
+<a name="502"/>#
+<a name="503"/># Like `many`, but succeeds with the position `i` if zero matching chars. Many needs
+<a name="504"/># one or more to succeed.
+<a name="505"/>#
+<a name="506"/>procedure many0(c, s, i, j)
+<a name="507"/>   local a
+<a name="508"/>   a := begin_analysis(s, i, j) | fail
+<a name="509"/>   return many(c, a.s, a.i, a.j) | .a.i
+<a name="510"/>end
+<a name="511"/>
+<a name="512"/>#
+<a name="513"/># Like `any`, but succeeds with the position `i` if there is no matching char.
+<a name="514"/>#
+<a name="515"/>procedure any0(c, s, i, j)
+<a name="516"/>   local a
+<a name="517"/>   a := begin_analysis(s, i, j) | fail
+<a name="518"/>   return any(c, a.s, a.i, a.j) | .a.i
+<a name="519"/>end
+<a name="520"/>
+<a name="521"/>#
+<a name="522"/># Like `match`, but succeeds with the position `i` if there is no matching string.
+<a name="523"/>#
+<a name="524"/>procedure match0(s1, s2, i, j)
+<a name="525"/>   local a
+<a name="526"/>   a := begin_analysis(s2, i, j) | fail
+<a name="527"/>   return match(s1, a.s, a.i, a.j) | .a.i
+<a name="528"/>end
+<a name="529"/>
+<a name="530"/>#
+<a name="531"/># Search for a string using `find` and suspend the position after the string,
+<a name="532"/># if found.
+<a name="533"/>#
+<a name="534"/>procedure past(s1, s2, i, j)
+<a name="535"/>   local a
+<a name="536"/>   # Note that the usual conversions are necessary, since they potentially
+<a name="537"/>   # change the type of s1 (and hence *s1).
+<a name="538"/>   a := begin_analysis(s2, i, j) | fail
+<a name="539"/>   s2 := a.s; i := a.i; j := a.j
+<a name="540"/>   s1 := similar_string_type(s1, s2)
+<a name="541"/>   suspend find(s1, s2, i, j) + *s1
+<a name="542"/>end
+<a name="543"/>
+<a name="544"/>#
+<a name="545"/># Like `many`, but limit number of characters matched to `max`.
+<a name="546"/>#
+<a name="547"/>procedure max_many(c, max, s, i, j)
+<a name="548"/>   local a
+<a name="549"/>   a := begin_analysis(s, i, j) | fail
+<a name="550"/>   return many(c, a.s, a.i, min(a.j, a.i + max))
+<a name="551"/>end
+<a name="552"/>
+<a name="553"/># Like `util.save_state(e, ScanState())`.
+<a name="554"/>#
+<a name="555"/>procedure save_scan(e)
+<a name="556"/>   "" ? suspend |@e
+<a name="557"/>end
+<a name="558"/>
+<a name="559"/>#
+<a name="560"/># Evaluate `e`, restoring `&amp;pos` with each suspended result.
+<a name="561"/>#
+<a name="562"/>procedure excursion(e)
+<a name="563"/>   suspend save_state(e, PosState(&amp;pos))
+<a name="564"/>end
+<a name="565"/>
+<a name="566"/>#
+<a name="567"/># String scanning encapsulated in a class
+<a name="568"/>#
+<a name="569"/>class Scan()
+<a name="570"/>   private readable
+<a name="571"/>      ksubject, kpos
+<a name="572"/>
+<a name="573"/>   public move(i)
+<a name="574"/>      i := kpos + need_integer(i)
+<a name="575"/>      if i &gt; 0 then
+<a name="576"/>         suspend tab(i)
+<a name="577"/>   end
+<a name="578"/>
+<a name="579"/>   public tab(i)
+<a name="580"/>      local oldpos
+<a name="581"/>      i := cvpos(i) | fail
+<a name="582"/>      oldpos := kpos
+<a name="583"/>      kpos := i
+<a name="584"/>      suspend .ksubject[oldpos:kpos]
+<a name="585"/>      if oldpos &gt; *ksubject + 1 then
+<a name="586"/>         runerr(205, kpos)
+<a name="587"/>      kpos := oldpos
+<a name="588"/>   end
+<a name="589"/>
+<a name="590"/>   public pos(i)
+<a name="591"/>      return kpos = cvpos(i) 
+<a name="592"/>   end
+<a name="593"/>
+<a name="594"/>   # Set the subject, and reset the position to 1.
+<a name="595"/>   #
+<a name="596"/>   public set_subject(s)
+<a name="597"/>      s := need_text(s)
+<a name="598"/>      ksubject := s
+<a name="599"/>      kpos := 1
+<a name="600"/>      link
+<a name="601"/>   end
+<a name="602"/>
+<a name="603"/>   # Set the position, failing if the given value is out of range.
+<a name="604"/>   #
+<a name="605"/>   public set_pos(i)
+<a name="606"/>      link kpos := cvpos(i)
+<a name="607"/>   end
+<a name="608"/>
+<a name="609"/>   private cvpos(i)
+<a name="610"/>      \i | runerr(101, i)   # Since match would default i to 1
+<a name="611"/>      return default.match("", ksubject, i)
+<a name="612"/>   end
+<a name="613"/>
+<a name="614"/>   public tabmat(s)
+<a name="615"/>      suspend tab(match(s))
+<a name="616"/>   end
+<a name="617"/>
+<a name="618"/>   public many(c)
+<a name="619"/>      return default.many(c, ksubject, kpos)
+<a name="620"/>   end
+<a name="621"/>
+<a name="622"/>   public match(s)
+<a name="623"/>      return default.match(s, ksubject, kpos)
+<a name="624"/>   end
+<a name="625"/>
+<a name="626"/>   public upto(c)
+<a name="627"/>      suspend default.upto(c, ksubject, kpos)
+<a name="628"/>   end
+<a name="629"/>
+<a name="630"/>   public any(c)
+<a name="631"/>      return default.any(c, ksubject, kpos)
+<a name="632"/>   end
+<a name="633"/>
+<a name="634"/>   public bal(c1, c2, c3)
+<a name="635"/>      suspend default.bal(c1, c2, c3, ksubject, kpos)
+<a name="636"/>   end
+<a name="637"/>
+<a name="638"/>   public find(s)
+<a name="639"/>      suspend default.find(s, ksubject, kpos)
+<a name="640"/>   end
+<a name="641"/>
+<a name="642"/>   private qswap()
+<a name="643"/>      local t
+<a name="644"/>      t := &amp;pos
+<a name="645"/>      &amp;subject :=: ksubject
+<a name="646"/>      &amp;pos := kpos
+<a name="647"/>      kpos := t
+<a name="648"/>   end
+<a name="649"/>
+<a name="650"/>   # This method allows other string scanning functions to be used
+<a name="651"/>   # with this class.  The co-expression `e` is evaluated for its
+<a name="652"/>   # results, with `&amp;subject` and `&amp;pos` being repeatedly swapped with
+<a name="653"/>   # `ksubject` and `kpos`.  For example :-
+<a name="654"/>   #
+<a name="655"/>   # ~
+<a name="656"/>   #    s := Scan("Mary had a little lamb").set_pos(0)
+<a name="657"/>   #    s.q{ backto('a') }     # Generates 21, 11, 8, 3.
+<a name="658"/>   # ~
+<a name="659"/>   #
+<a name="660"/>   public q(e)
+<a name="661"/>      suspend save_state(e, qswap)
+<a name="662"/>   end
+<a name="663"/>
+<a name="664"/>   # Create a new instance with subject `s`.
+<a name="665"/>   #
+<a name="666"/>   public new(s)
+<a name="667"/>      set_subject(s)
+<a name="668"/>      return
+<a name="669"/>   end
+<a name="670"/>end
+<a name="671"/>
+<a name="672"/>#
+<a name="673"/># Matching functions.
+<a name="674"/>#
+<a name="675"/>
+<a name="676"/># Match zero or more of expression `e`, suspending in longest first
+<a name="677"/># order (the empty string will be the last result generated).
+<a name="678"/>#
+<a name="679"/>procedure star(e)
+<a name="680"/>   suspend (|@e || star(^e)) | move(0)
+<a name="681"/>end
+<a name="682"/>
+<a name="683"/># Match one or more of expression `e`, in longest first order.
+<a name="684"/>#
+<a name="685"/>procedure plus(e)
+<a name="686"/>   suspend |@e || star(^e)
+<a name="687"/>end
+<a name="688"/>
+<a name="689"/># Match one or zero instances of `e`.
+<a name="690"/>#
+<a name="691"/>procedure query(e)
+<a name="692"/>   suspend |@e | move(0)
+<a name="693"/>end
+<a name="694"/>
+<a name="695"/># Match `e` between `min` and `max` times, in longest first order.  `min`
+<a name="696"/># defaults to zero, `max` to infinity.
+<a name="697"/>#
+<a name="698"/>procedure range(e, min, max)
+<a name="699"/>   min := ce_param(min) | fail
+<a name="700"/>   min := need_integer(\min) | 0
+<a name="701"/>   max := ce_param(max) | fail
+<a name="702"/>   \max := need_integer(max)
+<a name="703"/>   suspend range_impl(e, 0, min, max)
+<a name="704"/>end
+<a name="705"/>
+<a name="706"/>package procedure range_impl(e, i, min, max)
+<a name="707"/>   if /max | (i &lt;= max) then
+<a name="708"/>      suspend (|@e || range_impl(^e, i + 1, min, max)) | (if i &gt;= min then move(0))
+<a name="709"/>end
+<a name="710"/>
+<a name="711"/># Match zero or more chars in cset `c`, in longest first order.
+<a name="712"/># Equivalent to `star{ch(c)}`.
+<a name="713"/>#
+<a name="714"/>procedure star_ch(c)
+<a name="715"/>   suspend tab(many0(c) to &amp;pos by -1)
+<a name="716"/>end
+<a name="717"/>
+<a name="718"/># Match one or more chars in cset `c`, in longest first order.
+<a name="719"/># Equivalent to `plus{ch(c)}`.
+<a name="720"/>#
+<a name="721"/>procedure plus_ch(c)
+<a name="722"/>   suspend tab(many(c) to &amp;pos + 1 by -1)
+<a name="723"/>end
+<a name="724"/>
+<a name="725"/># Match one or zero chars in cset `c`, in longest first order.
+<a name="726"/># Equivalent to `query{ch(c)}`.
+<a name="727"/>#
+<a name="728"/>procedure query_ch(c)
+<a name="729"/>   suspend tab(any0(c) to &amp;pos by -1)
+<a name="730"/>end
+<a name="731"/>
+<a name="732"/># Match exactly one char in cset `c`; if c omitted then match any one char.
+<a name="733"/>#
+<a name="734"/>procedure ch(c)
+<a name="735"/>   suspend if /c then move(1) else tab(any(c))
+<a name="736"/>end
+<a name="737"/>
+<a name="738"/># Match the string `s` exactly once.  Note this is equivalent to `=s`.
+<a name="739"/>#
+<a name="740"/>procedure str(s)
+<a name="741"/>   suspend =s
+<a name="742"/>end
+<a name="743"/>
+<a name="744"/># Match arbitrary chars to end of string, longest first.
+<a name="745"/>#
+<a name="746"/>procedure rarb()
+<a name="747"/>   suspend tab(*&amp;subject + 1 to &amp;pos by -1)
+<a name="748"/>end
+<a name="749"/>
+<a name="750"/># Match arbitrary chars to end of string, shortest first (first result
+<a name="751"/># is empty string).
+<a name="752"/>#
+<a name="753"/>procedure arb()
+<a name="754"/>   suspend tab(&amp;pos to *&amp;subject + 1)
+<a name="755"/>end
+<a name="756"/>
+<a name="757"/># If at position `i` produce empty string.
+<a name="758"/>#
+<a name="759"/>procedure at(i)			
+<a name="760"/>   if pos(i) then
+<a name="761"/>      suspend move(0)
+<a name="762"/>end
+<a name="763"/>
+<a name="764"/># Match to position `i`.  This is like builtin tab, but the position
+<a name="765"/># must be equal to, or to the right of, `&amp;pos`.
+<a name="766"/>#
+<a name="767"/>procedure tab_to(i)
+<a name="768"/>   if match("",, i) &gt;= &amp;pos then
+<a name="769"/>      suspend tab(i)
+<a name="770"/>end
+<a name="771"/>
+<a name="772"/># Reverse the sequence of matches produced by `e`.  NB - if `e` is an
+<a name="773"/># infinite sequence this will consume memory indefinitely.
+<a name="774"/>#
+<a name="775"/>procedure rev(e)
+<a name="776"/>   local r
+<a name="777"/>   r := []
+<a name="778"/>   while @e do
+<a name="779"/>      push(r, &amp;pos)
+<a name="780"/>   suspend tab(!r)
+<a name="781"/>end
+<a name="782"/>
+<a name="783"/>package record StringAnalysis(s, i, j)
+<a name="784"/>
+<a name="785"/>#
+<a name="786"/># This procedure can be used to normalize the three parameters
+<a name="787"/># commonly given to string analysis functions (like upto, find etc).
+<a name="788"/>#
+<a name="789"/># The defaults applied are :-
+<a name="790"/>#
+<a name="791"/>#  * `s` - `&amp;subject`
+<a name="792"/>#  * `i` - `&amp;pos` if `s` is defaulted, otherwise `1`
+<a name="793"/>#  * `j` - `0`
+<a name="794"/># 
+<a name="795"/># The result is a `StringAnalysis` record with the normalized values
+<a name="796"/># of `s`, `i` and `j`, or failure if `i` and/or `j` are out of bounds.
+<a name="797"/>#
+<a name="798"/># Note that the returned values in the `StringAnalysis` record will be
+<a name="799"/># adjusted so that `i &lt;= j`.
+<a name="800"/>#
+<a name="801"/>procedure begin_analysis(s, i, j)
+<a name="802"/>   if /s := &amp;subject then
+<a name="803"/>      (/i := &amp;pos) | (i := match("", s, i)) | fail
+<a name="804"/>   else {
+<a name="805"/>      s := need_text(s)
+<a name="806"/>      (/i := 1) | (i := match("", s, i)) | fail
+<a name="807"/>   }
+<a name="808"/>   (/j := *s + 1) | (j := match("", s, j)) | fail
+<a name="809"/>   if i &gt; j then
+<a name="810"/>      i :=: j
+<a name="811"/>   return StringAnalysis(s, i, j)
+<a name="812"/>end
+<a name="813"/>
+<a name="814"/># This procedure is similar to `begin_analysis`, but provides
+<a name="815"/># different defaults, more suited to procedures that search backwards,
+<a name="816"/># as follows :-
+<a name="817"/>#
+<a name="818"/>#  * `s` - `&amp;subject`
+<a name="819"/>#  * `i` - `&amp;pos` if `s` is defaulted, otherwise `0`
+<a name="820"/>#  * `j` - `1` 
+<a name="821"/># 
+<a name="822"/># Note that the returned values in a `StringAnalysis` record
+<a name="823"/># will still be adjusted so that `i &lt;= j`.
+<a name="824"/>#
+<a name="825"/>procedure begin_rev_analysis(s, i, j)
+<a name="826"/>   if /s := &amp;subject then
+<a name="827"/>      (/i := &amp;pos) | (i := match("", s, i)) | fail
+<a name="828"/>   else {
+<a name="829"/>      s := need_text(s)
+<a name="830"/>      (/i := *s + 1) | (i := match("", s, i)) | fail
+<a name="831"/>   }
+<a name="832"/>   (/j := 1) | (j := match("", s, j)) | fail
+<a name="833"/>   if i &gt; j then
+<a name="834"/>      i :=: j
+<a name="835"/>   return StringAnalysis(s, i, j)
+<a name="836"/>end
+<a name="837"/>
+<a name="838"/>#
+<a name="839"/># Caseless version of `match()`
+<a name="840"/>#
+<a name="841"/>procedure caseless_match(s1, s2, i, j)
+<a name="842"/>   local a, t
+<a name="843"/>   a := begin_analysis(s2, i, j) | fail
+<a name="844"/>   s2 := a.s; i := a.i; j := a.j
+<a name="845"/>   s1 := similar_string_type(s1, s2)
+<a name="846"/>   t := i + *s1
+<a name="847"/>   if j &gt;= t &amp; Text.lower(s1) == Text.lower(s2[i:t]) then
+<a name="848"/>      return t
+<a name="849"/>end
+<a name="850"/>
+<a name="851"/>#
+<a name="852"/># Caseless version of `find()`
+<a name="853"/>#
+<a name="854"/>procedure caseless_find(s1, s2, i, j)
+<a name="855"/>   local c, p, a, t
+<a name="856"/>   a := begin_analysis(s2, i, j) | fail
+<a name="857"/>   s2 := a.s; i := a.i; j := a.j
+<a name="858"/>   s1 := similar_string_type(s1, s2)
+<a name="859"/>   # Special case if s1 empty
+<a name="860"/>   if *s1 = 0 then {
+<a name="861"/>      suspend i to j
+<a name="862"/>      fail
+<a name="863"/>   }
+<a name="864"/>   s1 := Text.lower(s1)
+<a name="865"/>   # Cset of first char in upper and lower case; eg if searching for
+<a name="866"/>   # "cat", c = 'cC'.
+<a name="867"/>   c := Text.caseless_cset(s1[1], s2)
+<a name="868"/>   every p := upto(c, s2, i, j) do {
+<a name="869"/>      t := p + *s1 
+<a name="870"/>      if t &gt; j then
+<a name="871"/>         break
+<a name="872"/>      if s1 == Text.lower(s2[p:t]) then
+<a name="873"/>         suspend p
+<a name="874"/>   }
+<a name="875"/>end
+<a name="876"/>
+<a name="877"/>#
+<a name="878"/># Caseless version of `past()`
+<a name="879"/>#
+<a name="880"/>procedure caseless_past(s1, s2, i, j)
+<a name="881"/>   local a
+<a name="882"/>   # Note that the usual conversions are necessary, since they potentially
+<a name="883"/>   # change the type of s1 (and hence *s1).
+<a name="884"/>   a := begin_analysis(s2, i, j) | fail
+<a name="885"/>   s2 := a.s; i := a.i; j := a.j
+<a name="886"/>   s1 := similar_string_type(s1, s2)
+<a name="887"/>   suspend caseless_find(s1, s2, i, j) + *s1
+<a name="888"/>end
+<a name="889"/>
+<a name="890"/>#
+<a name="891"/># Search backwards in s[i:j], for chars in cset c, beginning at the
+<a name="892"/># end.  For each one found, the position just to the right is
+<a name="893"/># suspended.
+<a name="894"/>#
+<a name="895"/># For example - 
+<a name="896"/># ~
+<a name="897"/>#    backto('aeiou', "quick brown fox") -&gt; {15,10,4,3} 
+<a name="898"/># ~
+<a name="899"/># Note that, if no parameters are defaulted,
+<a name="900"/># ~
+<a name="901"/>#    backto(c, s, i, j) - 1
+<a name="902"/># ~
+<a name="903"/># gives the same sequence of results as
+<a name="904"/># ~
+<a name="905"/>#    upto(c, s, i, j)
+<a name="906"/># ~
+<a name="907"/># but in reverse order.
+<a name="908"/>#
+<a name="909"/># Defaults:
+<a name="910"/>#
+<a name="911"/>#  * `s` - `&amp;subject`
+<a name="912"/>#  * `i` - `&amp;pos` if `s` is defaulted, otherwise `0`
+<a name="913"/>#  * `j` - `1` 
+<a name="914"/>#
+<a name="915"/>procedure backto(c, s, i, j)
+<a name="916"/>   local a
+<a name="917"/>   c := need_cset(c)
+<a name="918"/>   a := begin_rev_analysis(s, i, j) | fail
+<a name="919"/>   s := a.s; i := a.i; j := a.j
+<a name="920"/>   while j &gt; i do {
+<a name="921"/>      if any(c, s, j - 1) then
+<a name="922"/>         suspend j
+<a name="923"/>      j -:= 1
+<a name="924"/>   }
+<a name="925"/>end
+<a name="926"/>
+<a name="927"/>
+<a name="928"/># This behaves like `many`, but searches backward from the end of the
+<a name="929"/># string.  The position just to the left of the last char which is in
+<a name="930"/># `c` is returned, but fails if there is no such character.
+<a name="931"/>#
+<a name="932"/># The parameters take the same defaults as `backto`.
+<a name="933"/>#
+<a name="934"/>procedure rev_many(c, s, i, j)
+<a name="935"/>   local a
+<a name="936"/>   c := need_cset(c)
+<a name="937"/>   a := begin_rev_analysis(s, i, j) | fail
+<a name="938"/>   s := a.s; i := a.i; j := a.j
+<a name="939"/>   while j &gt; i &amp; any(c, s, j - 1) do
+<a name="940"/>      j -:= 1
+<a name="941"/>   return a.j ~= j
+<a name="942"/>end
+<a name="943"/>
+<a name="944"/># This is like `rev_many`, but is the corresponding function for any.
+<a name="945"/>#
+<a name="946"/>procedure rev_any(c, s, i, j)
+<a name="947"/>   local a
+<a name="948"/>   c := need_cset(c)
+<a name="949"/>   a := begin_rev_analysis(s, i, j) | fail
+<a name="950"/>   s := a.s; i := a.i; j := a.j
+<a name="951"/>   if j &gt; i &amp; any(c, s, j - 1) then
+<a name="952"/>      return j - 1
+<a name="953"/>end
+<a name="954"/>
+<a name="955"/>#
+<a name="956"/># Like `rev_many`, but succeeds with the position of the end of the
+<a name="957"/># string if there are no matching chars. `rev_many` needs one or more
+<a name="958"/># to succeed.
+<a name="959"/>#
+<a name="960"/>procedure rev_many0(c, s, i, j)
+<a name="961"/>   local a
+<a name="962"/>   a := begin_rev_analysis(s, i, j) | fail
+<a name="963"/>   return rev_many(c, a.s, a.i, a.j) | .a.j
+<a name="964"/>end
+<a name="965"/>
+<a name="966"/>#
+<a name="967"/># Like `rev_any`, but succeeds with the position with the position of
+<a name="968"/># the end of the string if there is no matching char.
+<a name="969"/>#
+<a name="970"/>procedure rev_any0(c, s, i, j)
+<a name="971"/>   local a
+<a name="972"/>   a := begin_rev_analysis(s, i, j) | fail
+<a name="973"/>   return rev_any(c, a.s, a.i, a.j) | .a.j
+<a name="974"/>end
+<a name="975"/>
+<a name="976"/># Search backwards for s1 in s2[i:j].  For each match, the position
+<a name="977"/># just to the right of the match is generated.
+<a name="978"/>#
+<a name="979"/># If no parameters are defaulted, the sequence generated is equivalent
+<a name="980"/># to
+<a name="981"/># ~~
+<a name="982"/>#      find(s1, s2, i, j) + *s1
+<a name="983"/># ~~
+<a name="984"/># but in reverse order.
+<a name="985"/>#
+<a name="986"/># Defaults:
+<a name="987"/>#
+<a name="988"/>#  * `s2` - `&amp;subject`
+<a name="989"/>#  * `i` - `&amp;pos` if `s` is defaulted, otherwise `0`
+<a name="990"/>#  * `j` - `1` 
+<a name="991"/>#
+<a name="992"/>procedure rev_find(s1, s2, i, j)
+<a name="993"/>   local c, p, a, t
+<a name="994"/>   a := begin_rev_analysis(s2, i, j) | fail
+<a name="995"/>   s2 := a.s; i := a.i; j := a.j
+<a name="996"/>   s1 := similar_string_type(s1, s2)
+<a name="997"/>   # Special case if s1 empty
+<a name="998"/>   if *s1 = 0 then {
+<a name="999"/>      suspend j to i by -1
+<a name="1000"/>      fail
+<a name="1001"/>   }
+<a name="1002"/>   c := cset(s1[-1])
+<a name="1003"/>   every p := backto(c, s2, i, j) do {
+<a name="1004"/>      t := p - *s1
+<a name="1005"/>      if t &lt; i then
+<a name="1006"/>         break
+<a name="1007"/>      if match(s1, s2, t, p) then
+<a name="1008"/>         suspend p
+<a name="1009"/>   }
+<a name="1010"/>end
+<a name="1011"/>
+<a name="1012"/># If s2[i:j] ends with s1, produce the position just to the left of
+<a name="1013"/># that substring.  The defaults are the same as `rev_find`.
+<a name="1014"/>#
+<a name="1015"/>procedure rev_match(s1, s2, i, j)
+<a name="1016"/>   local a, t
+<a name="1017"/>   a := begin_rev_analysis(s2, i, j) | fail
+<a name="1018"/>   s2 := a.s; i := a.i; j := a.j
+<a name="1019"/>   s1 := similar_string_type(s1, s2)
+<a name="1020"/>   t := j - *s1
+<a name="1021"/>   if t &gt;= i &amp; match(s1, s2, t, j) then
+<a name="1022"/>      return t
+<a name="1023"/>end
+<a name="1024"/>
+<a name="1025"/>#
+<a name="1026"/># This is a function to extract part of `&amp;subject` relative to `&amp;pos`.
+<a name="1027"/># First `&amp;pos` is added to `off`, then the substring of length `len` is
+<a name="1028"/># taken from that position.  Either parameter may be -ve; no change is
+<a name="1029"/># made to `&amp;subject` or `&amp;pos`.
+<a name="1030"/>#
+<a name="1031"/>procedure pos_off(off, len)
+<a name="1032"/>   /len := 1
+<a name="1033"/>   off +:= &amp;pos
+<a name="1034"/>   if off &gt;= 1 then
+<a name="1035"/>      return .&amp;subject[off +: len]
+<a name="1036"/>end
+</pre></body></html>

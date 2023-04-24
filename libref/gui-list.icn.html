@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>list.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: list.icn 8828 2021-01-08 12:48:33Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import
+<a name="12"/>   util,
+<a name="13"/>   ipl.pdco(MaxNN)
+<a name="14"/>
+<a name="15"/>#
+<a name="16"/>#
+<a name="17"/># This component is for selecting one string from a list of
+<a name="18"/># several.  When a button is pressed a list appears (possibly
+<a name="19"/># with a scroll bar) from which one item can be selected.
+<a name="20"/># 
+<a name="21"/># A Event.SELECTION_CHANGED is generated whenever an item is selected from the
+<a name="22"/># list.
+<a name="23"/>#
+<a name="24"/># Example :-
+<a name="25"/># ~
+<a name="26"/>#   l := List()
+<a name="27"/>#   l.set_selection_list(["Red", "Green", "Yellow", "Blue", "Orange"])
+<a name="28"/>#   l.set_size(120)
+<a name="29"/>#   l.set_pos(100, 100)
+<a name="30"/>#   l.set_selection(2)  # Green will be the first selection
+<a name="31"/>#   self.add(l)
+<a name="32"/># ~
+<a name="33"/>class List(SelectionDropDown)
+<a name="34"/>   public 
+<a name="35"/>      old_selection,
+<a name="36"/>      constant_label
+<a name="37"/>
+<a name="38"/>   public override start_change(e)
+<a name="39"/>      self.old_selection := self.selection
+<a name="40"/>   end
+<a name="41"/>
+<a name="42"/>   public override end_change(e)
+<a name="43"/>      if self.old_selection ~=== self.selection then
+<a name="44"/>         fire(Event.SELECTION_CHANGED, e)
+<a name="45"/>   end
+<a name="46"/>
+<a name="47"/>   public override apply_selection()
+<a name="48"/>      local s
+<a name="49"/>      s := \self.constant_label | convert_element(object_get_selection()) | ""
+<a name="50"/>      self.view.set_label(s)
+<a name="51"/>   end
+<a name="52"/>
+<a name="53"/>   #
+<a name="54"/>   # The given string will always appear in the text part of the
+<a name="55"/>   # component, rather than the currently selected item.
+<a name="56"/>   #
+<a name="57"/>   public set_constant_label(x)
+<a name="58"/>      self.constant_label := need_text(x)
+<a name="59"/>      apply_selection()
+<a name="60"/>      link
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   public override create_view()
+<a name="64"/>      return DropDownLabel()
+<a name="65"/>   end
+<a name="66"/>
+<a name="67"/>   public override get_default_width()
+<a name="68"/>      local t
+<a name="69"/>      t := if \self.constant_label then
+<a name="70"/>         self.cbwin.text_width(self.constant_label)
+<a name="71"/>      else
+<a name="72"/>         MaxNN{ self.cbwin.text_width(convert_element(!self.selection_list)) }
+<a name="73"/>      return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
+<a name="74"/>   end
+<a name="75"/>end
+<a name="76"/>
+<a name="77"/># A subclass of `List` which has a null border and a zero size view,
+<a name="78"/># leaving just the button visible.  The button can then be customized
+<a name="79"/># by overriding `create_button`, giving a `List` with just a button.
+<a name="80"/>#
+<a name="81"/>abstract class ButtonOnlyList(List)
+<a name="82"/>   public override layout()
+<a name="83"/>      view.x := b.x := x
+<a name="84"/>      view.y := b.y := y
+<a name="85"/>      b.w := w
+<a name="86"/>      b.h := h
+<a name="87"/>      view.w := view.h := 0
+<a name="88"/>      b.layout()
+<a name="89"/>      view.layout()
+<a name="90"/>   end
+<a name="91"/>
+<a name="92"/>   public override get_default_width()
+<a name="93"/>      return b.get_preferred_width()
+<a name="94"/>   end
+<a name="95"/>
+<a name="96"/>   public override get_default_height(dw)
+<a name="97"/>      return b.get_preferred_height(dw)
+<a name="98"/>   end
+<a name="99"/>
+<a name="100"/>   public override set_selection_list(x)
+<a name="101"/>      # This is overridden to avoid setting the selection to 1 if
+<a name="102"/>      # &amp;null.  Since we can't see the label, it makes no sense to set
+<a name="103"/>      # the selection to 1.  If we did that, and opened the list, and
+<a name="104"/>      # selected the first item, we wouldn't fire an event.
+<a name="105"/>      self.selection_list := need_list(x)
+<a name="106"/>      constrain_selection()
+<a name="107"/>      apply_selection()
+<a name="108"/>      link
+<a name="109"/>   end
+<a name="110"/>
+<a name="111"/>   public override new()
+<a name="112"/>      List.new()
+<a name="113"/>      view.set_is_hidden(&amp;yes)
+<a name="114"/>      set_border(NullBorder())
+<a name="115"/>      set_use_wheel(&amp;no)
+<a name="116"/>      return
+<a name="117"/>   end
+<a name="118"/>end
+</pre></body></html>

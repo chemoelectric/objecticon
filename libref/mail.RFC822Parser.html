@@ -1,0 +1,742 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>RFC822Parser</title></head><body>
+<h1>RFC822Parser</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="mail-package.html" target="listFrame">mail</a></dd>
+</dl><p/>
+<p/><a href="mail-rfc822parser.icn.html#11" target="displayFrame">Source - rfc822parser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#end_check">end_check()</a>
+<a href="#escape_1521_value">escape_1521_value()</a>
+<a href="#init">init()</a>
+<a href="#next_token">next_token()</a>
+<a href="#parse_2dig">parse_2dig()</a>
+<a href="#parse_addr_spec">parse_addr_spec()</a>
+<a href="#parse_address_list">parse_address_list()</a>
+<a href="#parse_address_list_impl">parse_address_list_impl()</a>
+<a href="#parse_and_convert_quoted_string">parse_and_convert_quoted_string()</a>
+<a href="#parse_atom">parse_atom()</a>
+<a href="#parse_comment">parse_comment()</a>
+<a href="#parse_content_disposition">parse_content_disposition()</a>
+<a href="#parse_content_disposition_impl">parse_content_disposition_impl()</a>
+<a href="#parse_content_transfer_encoding">parse_content_transfer_encoding()</a>
+<a href="#parse_content_transfer_encoding_impl">parse_content_transfer_encoding_impl()</a>
+<a href="#parse_content_type">parse_content_type()</a>
+<a href="#parse_content_type_impl">parse_content_type_impl()</a>
+<a href="#parse_date_time">parse_date_time()</a>
+<a href="#parse_date_time_impl">parse_date_time_impl()</a>
+<a href="#parse_day">parse_day()</a>
+<a href="#parse_disposition_type">parse_disposition_type()</a>
+<a href="#parse_domain">parse_domain()</a>
+<a href="#parse_domain_literal">parse_domain_literal()</a>
+<a href="#parse_field">parse_field()</a>
+<a href="#parse_field_impl">parse_field_impl()</a>
+<a href="#parse_group">parse_group()</a>
+<a href="#parse_group_impl">parse_group_impl()</a>
+<a href="#parse_local_part">parse_local_part()</a>
+<a href="#parse_mailbox">parse_mailbox()</a>
+<a href="#parse_mailbox_impl">parse_mailbox_impl()</a>
+<a href="#parse_mailbox_list">parse_mailbox_list()</a>
+<a href="#parse_mailbox_list_impl">parse_mailbox_list_impl()</a>
+<a href="#parse_mailbox_or_group">parse_mailbox_or_group()</a>
+<a href="#parse_month">parse_month()</a>
+<a href="#parse_parameter">parse_parameter()</a>
+<a href="#parse_phrase">parse_phrase()</a>
+<a href="#parse_quoted_string">parse_quoted_string()</a>
+<a href="#parse_route">parse_route()</a>
+<a href="#parse_route_addr">parse_route_addr()</a>
+<a href="#parse_sub_domain">parse_sub_domain()</a>
+<a href="#parse_subtype">parse_subtype()</a>
+<a href="#parse_token_1521">parse_token_1521()</a>
+<a href="#parse_type">parse_type()</a>
+<a href="#parse_value">parse_value()</a>
+<a href="#parse_word">parse_word()</a>
+<a href="#parse_year">parse_year()</a>
+<a href="#parse_zone">parse_zone()</a>
+<a href="#quote_string">quote_string()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ATOM_CHAR">ATOM_CHAR</a>
+<a href="#ATOM_CHAR_1521">ATOM_CHAR_1521</a>
+<a href="#CTEXT_CHAR">CTEXT_CHAR</a>
+<a href="#CTL_CHAR">CTL_CHAR</a>
+<a href="#DAYS">DAYS</a>
+<a href="#DTEXT_CHAR">DTEXT_CHAR</a>
+<a href="#FIELD_NAME_CHARS">FIELD_NAME_CHARS</a>
+<a href="#LWSP_CHAR">LWSP_CHAR</a>
+<a href="#MONTHS">MONTHS</a>
+<a href="#QTEXT_CHAR">QTEXT_CHAR</a>
+<a href="#SPACE">SPACE</a>
+<a href="#SPECIALS">SPECIALS</a>
+<a href="#TSPECIALS">TSPECIALS</a>
+<a href="#TZ_CHARS">TZ_CHARS</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="end_check"/>
+<h3>end_check(o)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#688" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="escape_1521_value"/>
+<h3>escape_1521_value(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Little utility function for quoting a string (if necessary).
+<p/><a href="mail-rfc822parser.icn.html#117" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#28" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="next_token"/>
+<h3>next_token()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#181" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_2dig"/>
+<h3>parse_2dig()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#433" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_addr_spec"/>
+<h3>parse_addr_spec(mb)</h3>
+private<p/>
+<dl>
+<dd>
+addr_spec = local-part "@" domain
+<p/><a href="mail-rfc822parser.icn.html#255" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_address_list"/>
+<h3>parse_address_list(s, can_be_empty)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#702" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_address_list_impl"/>
+<h3>parse_address_list_impl(can_be_empty)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#368" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_and_convert_quoted_string"/>
+<h3>parse_and_convert_quoted_string()</h3>
+private<p/>
+<dl>
+<dd>
+As above, but returns the string without the surrounding quotes, and any
+escape sequences converted.
+<p/><a href="mail-rfc822parser.icn.html#80" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_atom"/>
+<h3>parse_atom()</h3>
+private<p/>
+<dl>
+<dd>
+atom        =  1*&lt;any CHAR except specials, SPACE and CTLs&gt;
+ie one or more atom_char
+<p/>
+Must be preceded by a call to next_token()
+<p/><a href="mail-rfc822parser.icn.html#128" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_comment"/>
+<h3>parse_comment()</h3>
+private<p/>
+<dl>
+<dd>
+comment     =  "(" *(ctext / quoted-pair / comment) ")"
+<p/><a href="mail-rfc822parser.icn.html#160" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content_disposition"/>
+<h3>parse_content_disposition(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#722" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content_disposition_impl"/>
+<h3>parse_content_disposition_impl()</h3>
+private<p/>
+<dl>
+<dd>
+See rfc 2183 (formerly 1806)
+<p/>
+disposition := "Content-Disposition" ":"
+disposition-type
+*(";" disposition-parm)
+<p/>
+disposition-type := "inline"
+/ "attachment"
+/ extension-token
+; values are not case-sensitive
+<p/>
+NB - These are all parsed as 'parameter'; further parsing being done
+within the ContentDisposition class itself (thus they are treated the
+same as headers in a Message, ie stored a strings, but with get/set
+methods for the appropriate object types).
+<p/>
+disposition-parm := filename-parm
+/ creation-date-parm
+/ modification-date-parm
+/ read-date-parm
+/ size-parm
+/ parameter
+<p/>
+filename-parm := "filename" "=" value
+<p/>
+creation-date-parm := "creation-date" "=" quoted-date-time
+modification-date-parm := "modification-date" "=" quoted-date-time
+read-date-parm := "read-date" "=" quoted-date-time
+<p/>
+size-parm := "size" "=" 1*DIGIT
+<p/>
+quoted-date-time := quoted-string
+; contents MUST be an RFC 822 <code>date-time</code>
+; numeric timezones (+HHMM or -HHMM) MUST be used
+<p/><a href="mail-rfc822parser.icn.html#635" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content_transfer_encoding"/>
+<h3>parse_content_transfer_encoding(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#726" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content_transfer_encoding_impl"/>
+<h3>parse_content_transfer_encoding_impl()</h3>
+private<p/>
+<dl>
+<dd>
+See rfc 2045 (formerly 1521)
+<p/>
+encoding := "Content-Transfer-Encoding" ":" mechanism
+<p/>
+mechanism := "7bit" / "8bit" / "binary" /
+"quoted-printable" / "base64" /
+ietf-token / x-token
+; These values are not case sensitive
+<p/><a href="mail-rfc822parser.icn.html#502" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content_type"/>
+<h3>parse_content_type(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#718" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content_type_impl"/>
+<h3>parse_content_type_impl()</h3>
+private<p/>
+<dl>
+<dd>
+See rfc 2045 (formerly 1521)
+<p/>
+content := "Content-Type" ":" type "/" subtype
+*(";" parameter)
+; Matching of media type and subtype
+; is ALWAYS case-insensitive.
+<p/>
+attribute := token
+; Matching of attributes
+; is ALWAYS case-insensitive.
+<p/>
+value := token / quoted-string
+<p/><a href="mail-rfc822parser.icn.html#590" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_date_time"/>
+<h3>parse_date_time(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#710" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_date_time_impl"/>
+<h3>parse_date_time_impl()</h3>
+private<p/>
+<dl>
+<dd>
+date-time = [ day "," ] date time
+day =  "Mon"  / "Tue" /  "Wed"  / "Thu"/  "Fri"  / "Sat" /  "Sun"
+date = 1*2DIGIT month 2*4DIGIT ; see rfc1123, s5.2.14
+time =  hour zone                    <br>
+hour =  2DIGIT ":" 2DIGIT [":" 2DIGIT]
+<p/><a href="mail-rfc822parser.icn.html#448" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_day"/>
+<h3>parse_day()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#415" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_disposition_type"/>
+<h3>parse_disposition_type()</h3>
+private<p/>
+<dl>
+<dd>
+disposition-type := "inline"
+/ "attachment"
+/ extension-token
+; values are not case-sensitive
+<p/><a href="mail-rfc822parser.icn.html#626" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_domain"/>
+<h3>parse_domain()</h3>
+private<p/>
+<dl>
+<dd>
+domain      =  sub-domain *("." sub-domain)
+<p/><a href="mail-rfc822parser.icn.html#213" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_domain_literal"/>
+<h3>parse_domain_literal()</h3>
+private<p/>
+<dl>
+<dd>
+domain-literal =  "[" *(dtext / quoted-pair) "]"
+dtext =  &lt;any CHAR excluding "[","]", "\" &amp; CR&gt;
+<p/>
+Must be preceded by a call to next_token()
+<p/><a href="mail-rfc822parser.icn.html#138" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_field"/>
+<h3>parse_field(s, message)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#714" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_field_impl"/>
+<h3>parse_field_impl(message)</h3>
+private<p/>
+<dl>
+<dd>
+field           =    field-name ":" [field-body] CRLF
+field-name      =  1*&lt;any CHAR, excluding CTLs, SPACE, and ":"&gt;
+field-body      =   *text [CRLF LWSP-char field-body]
+<p/><a href="mail-rfc822parser.icn.html#483" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_group"/>
+<h3>parse_group(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#698" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_group_impl"/>
+<h3>parse_group_impl()</h3>
+private<p/>
+<dl>
+<dd>
+group =  phrase ":" [#mailbox] ";"
+#X means empty or X,X,X...
+<p/>
+<p/><a href="mail-rfc822parser.icn.html#331" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_local_part"/>
+<h3>parse_local_part()</h3>
+private<p/>
+<dl>
+<dd>
+local-part  =  word *("." word)             <br>
+<p/><a href="mail-rfc822parser.icn.html#202" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_mailbox"/>
+<h3>parse_mailbox(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#694" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_mailbox_impl"/>
+<h3>parse_mailbox_impl()</h3>
+private<p/>
+<dl>
+<dd>
+See RFC1123 5.2.15
+mailbox =  addr-spec            ; simple address
+/ [phrase] route-addr   ; name &amp; addr-spec
+<p/><a href="mail-rfc822parser.icn.html#307" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_mailbox_list"/>
+<h3>parse_mailbox_list(s, can_be_empty)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#706" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_mailbox_list_impl"/>
+<h3>parse_mailbox_list_impl(can_be_empty)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#385" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_mailbox_or_group"/>
+<h3>parse_mailbox_or_group()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#356" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_month"/>
+<h3>parse_month()</h3>
+private<p/>
+<dl>
+<dd>
+month =  "Jan"  /  "Feb" /  "Mar"  /  "Apr" /  "May"  /  "Jun" /  <br>
+"Jul"  /  "Aug" /  "Sep"  /  "Oct" /  "Nov"  /  "Dec"
+<p/><a href="mail-rfc822parser.icn.html#402" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_parameter"/>
+<h3>parse_parameter(o)</h3>
+private<p/>
+<dl>
+<dd>
+parameter := attribute "=" value
+<p/>
+attribute := token
+; Matching of attributes
+; is ALWAYS case-insensitive.
+<p/>
+On success the resulting value is placed into o.
+<p/><a href="mail-rfc822parser.icn.html#571" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_phrase"/>
+<h3>parse_phrase()</h3>
+private<p/>
+<dl>
+<dd>
+phrase =  1*word
+<p/><a href="mail-rfc822parser.icn.html#236" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_quoted_string"/>
+<h3>parse_quoted_string()</h3>
+private<p/>
+<dl>
+<dd>
+The first four parse objects are the fundamental lexical components, other
+than inidividual special characters (see rfc822).  Therefore, they must
+be preceded by a call to next_token, to move the position to the correct
+point to parse them.
+<p/>
+<p/>
+qtext = &lt;any CHAR excepting &lt;"&gt;, "\" &amp; CR, and including 
+linear-white-space&gt;
+quoted-pair =  "\" CHAR
+quoted-string = &lt;"&gt; *(qtext/quoted-pair) &lt;"&gt;
+<p/>
+Must be preceded by a call to next_token()
+<p/><a href="mail-rfc822parser.icn.html#46" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_route"/>
+<h3>parse_route(mb)</h3>
+private<p/>
+<dl>
+<dd>
+route       =  1#("@" domain) ":" 
+where 1#X means '(X *("," X))' 
+<p/><a href="mail-rfc822parser.icn.html#269" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_route_addr"/>
+<h3>parse_route_addr(mb)</h3>
+private<p/>
+<dl>
+<dd>
+route-addr  =  "&lt;" [route] addr-spec "&gt;"
+<p/><a href="mail-rfc822parser.icn.html#290" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_sub_domain"/>
+<h3>parse_sub_domain()</h3>
+private<p/>
+<dl>
+<dd>
+sub-domain  =  domain-ref / domain-literal
+domain-ref  =  atom
+<p/><a href="mail-rfc822parser.icn.html#224" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_subtype"/>
+<h3>parse_subtype()</h3>
+private<p/>
+<dl>
+<dd>
+subtype := extension-token / iana-token
+<p/>
+iana-token := &lt;A publicly-defined extension token. Tokens
+of this form must be registered with IANA
+as specified in RFC 2048   <br>
+<p/><a href="mail-rfc822parser.icn.html#536" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_token_1521"/>
+<h3>parse_token_1521()</h3>
+private<p/>
+<dl>
+<dd>
+token  :=  1*&lt;any (ASCII) CHAR except SPACE, CTLs,
+or tspecials&gt;
+<p/>
+tspecials :=  "(" / ")" / "&lt;" / "&gt;" / "@"
+/  "," / ";" / ":" / "\" / &lt;"&gt;
+/  "/" / "[" / "]" / "?" / "="
+; Must be in quoted-string,
+; to use within parameter values
+<p/><a href="mail-rfc822parser.icn.html#547" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_type"/>
+<h3>parse_type()</h3>
+private<p/>
+<dl>
+<dd>
+type := discrete-type / composite-type
+discrete-type := "text" / "image" / "audio" / "video" /
+"application" / extension-token
+<p/>
+composite-type := "message" / "multipart" / extension-token
+<p/>
+extension-token := ietf-token / x-token
+<p/>
+ietf-token := &lt;An extension token defined by a
+standards-track RFC and registered
+with IANA.&gt;
+<p/>
+x-token := &lt;The two characters "X-" or "x-" followed, with
+no intervening white space, by any token&gt;
+<p/><a href="mail-rfc822parser.icn.html#516" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_value"/>
+<h3>parse_value()</h3>
+private<p/>
+<dl>
+<dd>
+value := token / quoted-string
+<p/><a href="mail-rfc822parser.icn.html#561" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_word"/>
+<h3>parse_word()</h3>
+private<p/>
+<dl>
+<dd>
+word =  atom / quoted-string
+<p/><a href="mail-rfc822parser.icn.html#191" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_year"/>
+<h3>parse_year()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#424" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_zone"/>
+<h3>parse_zone()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#442" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="quote_string"/>
+<h3>quote_string(s, c)</h3>
+public static<p/>
+<dl>
+<dd>
+Helper to add quotes to a string <code>s</code>, and escape any characters
+in <code>c</code>, which defaults to <code></code>\"\\\r'<code>.</code>
+<p/><a href="mail-rfc822parser.icn.html#103" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ATOM_CHAR"/>
+<h3>ATOM_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#16" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="ATOM_CHAR_1521"/>
+<h3>ATOM_CHAR_1521</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#26" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="CTEXT_CHAR"/>
+<h3>CTEXT_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#17" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="CTL_CHAR"/>
+<h3>CTL_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#13" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="DAYS"/>
+<h3>DAYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#22" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="DTEXT_CHAR"/>
+<h3>DTEXT_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#20" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_NAME_CHARS"/>
+<h3>FIELD_NAME_CHARS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#18" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="LWSP_CHAR"/>
+<h3>LWSP_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#21" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="MONTHS"/>
+<h3>MONTHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#23" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="QTEXT_CHAR"/>
+<h3>QTEXT_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#19" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="SPACE"/>
+<h3>SPACE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#14" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="SPECIALS"/>
+<h3>SPECIALS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#15" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="TSPECIALS"/>
+<h3>TSPECIALS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#25" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+<a name="TZ_CHARS"/>
+<h3>TZ_CHARS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-rfc822parser.icn.html#24" target="displayFrame">Source - rfc822parser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

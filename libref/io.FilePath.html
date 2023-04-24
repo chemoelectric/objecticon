@@ -1,0 +1,373 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>FilePath</title></head><body>
+<h1>FilePath</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+This class manipulates file paths by treating them as a list of
+elements.
+<p/>
+Instances of this class are immutable.
+<p/><a href="io-files.icn.html#712" target="displayFrame">Source - files.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="io.FilePath.html">io.FilePath</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#absolute">absolute()</a>
+<a href="#append">append()</a>
+<a href="#back">back()</a>
+<a href="#canonical">canonical()</a>
+<a href="#child">child()</a>
+<a href="#equiv">equiv()</a>
+<a href="#from_list">from_list()</a>
+<a href="#gen">gen()</a>
+<a href="#get">get()</a>
+<a href="#is_absolute">is_absolute()</a>
+<a href="#is_prefix">is_prefix()</a>
+<a href="#is_unc">is_unc()</a>
+<a href="#liberal_ucs">liberal_ucs()</a>
+<a href="#new">new()</a>
+<a href="#normal">normal()</a>
+<a href="#object_output">object_output()</a>
+<a href="#parent">parent()</a>
+<a href="#sibling">sibling()</a>
+<a href="#size">size()</a>
+<a href="#slice">slice()</a>
+<a href="#standard_case">standard_case()</a>
+<a href="#str">str()</a>
+<a href="#str_path">str_path()</a>
+<a href="#to_url">to_url()</a>
+<a href="#ucs">ucs()</a>
+<a href="#ucs_path">ucs_path()</a>
+<a href="#walk">walk()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#l">l</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="absolute"/>
+<h3>absolute(other)</h3>
+public<p/>
+<dl>
+<dd>
+Return a path which represents the absolute path of this path.
+<code>other</code> is an optional <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code> being the directory with which
+to calculate the absolute path; by default it is the current
+working directory, or, if that is not evaluable, the first root
+directory.
+<p/><a href="io-files.icn.html#819" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="append"/>
+<h3>append(other)</h3>
+public<p/>
+<dl>
+<dd>
+Returns the path formed by appending the elements of <code>other</code> to
+this path.  <code>other</code> must be something convertible to a <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code>.
+<p/><a href="io-files.icn.html#758" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="back"/>
+<h3>back()</h3>
+public<p/>
+<dl>
+<dd>
+Generate the elements in the path in reverse order
+<p/><a href="io-files.icn.html#742" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="canonical"/>
+<h3>canonical()</h3>
+public<p/>
+<dl>
+<dd>
+Canonicalize a path, which means trying to turn it into a
+standard form.  This involves (at least) getting the absolute
+path and removing any redundant path elements.
+<p/><a href="io-files.icn.html#866" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="child"/>
+<h3>child(s)</h3>
+public<p/>
+<dl>
+<dd>
+Return the child path, ie a path with the same elements plus the
+element <code>s</code>.
+<p/><a href="io-files.icn.html#791" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="equiv"/>
+<h3>equiv(x, y)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed iff two FilePaths represent the same path, based on their
+<code><a href="io.FilePath.html#str">str()</a></code> values.
+<p/><a href="io-files.icn.html#939" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="from_list"/>
+<h3>from_list(l)</h3>
+package static<p/>
+<dl>
+<dd>
+Create a new instance from a list of elements, without taking a
+copy.
+<p/><a href="io-files.icn.html#947" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen()</h3>
+public<p/>
+<dl>
+<dd>
+Generate the elements in the path.
+<p/><a href="io-files.icn.html#735" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get"/>
+<h3>get(i)</h3>
+public<p/>
+<dl>
+<dd>
+Return the <code>i</code>th element in the path.
+<p/><a href="io-files.icn.html#728" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_absolute"/>
+<h3>is_absolute()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff this path represents an absolute path.
+<p/><a href="io-files.icn.html#859" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_prefix"/>
+<h3>is_prefix()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff this path is an absolute directory, and one which is
+a necessary prefix for such a path.  On Unix, this is just the
+root directory, and on Windows it is either a drive root or the
+three (or fewer) top-level elements of a UNC path.
+<p/><a href="io-files.icn.html#929" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_unc"/>
+<h3>is_unc()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if this instance represents a Windows UNC path, meaning
+that its first element is a "\\".  This method always fails on
+non-Windows systems.
+<p/><a href="io-files.icn.html#920" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="liberal_ucs"/>
+<h3>liberal_ucs()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to give Text.liberal_ucs(str()); will never fail.
+<p/><a href="io-files.icn.html#852" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(x)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance from <code>x</code>, which may be another <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code>,
+in which case an equivalent new instance is returned, a list of
+strings representing the elements of the new instance, or a
+string/ucs to parse.
+<p/><a href="io-files.icn.html#958" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="normal"/>
+<h3>normal()</h3>
+public<p/>
+<dl>
+<dd>
+Normalize a path, which means removing any redundant path
+elements.
+<p/><a href="io-files.icn.html#875" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+<p/><a href="io-files.icn.html#787" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="parent"/>
+<h3>parent()</h3>
+public<p/>
+<dl>
+<dd>
+Return the parent path, ie a path with everything but the last
+element.  Fails if and only if the path has no elements.  Note
+that some results may not be as expected; for example :-
+<pre>
+   FilePath("/").parent()
+</pre>
+gives the empty path (with no elements).
+<p/><a href="io-files.icn.html#774" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="sibling"/>
+<h3>sibling(s)</h3>
+public<p/>
+<dl>
+<dd>
+Return the sibling path, ie a path with the same elements, except the
+last one, which is replaced by <code>s</code>.  Fails if the path has no elements.
+<p/>
+Caution is required with this function, since some results may
+not make much sense, especially if this path is not canonical.
+For example :-
+<pre>
+   FilePath("/").sibling("x")        # Gives FilePath("x")
+   FilePath("/a/b/..").sibling("y")  # Gives FilePath("/a/b/y")
+</pre>
+An alternative may be to use <code><a href="io.FilePath.html#walk">walk("..", s)</a></code>.
+<p/><a href="io-files.icn.html#799" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the number of elements in the path.
+<p/><a href="io-files.icn.html#721" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="slice"/>
+<h3>slice(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Return a new path consisting of elements i:j of the current path
+<p/><a href="io-files.icn.html#749" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="standard_case"/>
+<h3>standard_case()</h3>
+public<p/>
+<dl>
+<dd>
+Return a path with the elements put into a standard case.  For
+case-sensitive file systems, this does nothing and returns self.
+<p/><a href="io-files.icn.html#883" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str()</h3>
+public<p/>
+<dl>
+<dd>
+Convert the path back into a string.  The result is always a string, never ucs.
+<p/><a href="io-files.icn.html#838" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="str_path"/>
+<h3>str_path()</h3>
+public<p/>
+<dl>
+<dd>
+Return another <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code> with the same elements, but as plain
+strings.  Always succeeds.
+<p/><a href="io-files.icn.html#903" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="to_url"/>
+<h3>to_url()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to convert this path to a file URL (as a
+string), using <code><a href="io.Files.html#file_to_url">Files.file_to_url()</a></code>, applied to the absolute
+path converted to string.
+<p/><a href="io-files.icn.html#911" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="ucs"/>
+<h3>ucs()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to give ucs(str()); may fail if str() is not convertible.
+<p/><a href="io-files.icn.html#845" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="ucs_path"/>
+<h3>ucs_path()</h3>
+public<p/>
+<dl>
+<dd>
+Return another <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code> with the same elements, but as ucs
+strings.  Fails if any part cannot be converted to ucs.
+<p/><a href="io-files.icn.html#891" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="walk"/>
+<h3>walk(a[])</h3>
+public<p/>
+<dl>
+<dd>
+Takes a variable arguments list, and returns the path formed by
+appending the elements of that list to this path.
+<p/><a href="io-files.icn.html#766" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="l"/>
+<h3>l</h3>
+package const<p/>
+<dl>
+<dd>
+<p/><a href="io-files.icn.html#719" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+</body></html>

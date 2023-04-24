@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>tuple.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     tuple.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to process n-tuples
+<a name="6"/>#
+<a name="7"/>#	Author:   William H. Mitchell
+<a name="8"/>#
+<a name="9"/>#	Date:     June 10, 1988
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#     This procedure implements a "tuple" feature that produces the effect
+<a name="18"/>#  of multiple keys.  A tuple is created by an expression of the
+<a name="19"/>#  form
+<a name="20"/>#
+<a name="21"/>#	tuple([exrp1, expr2, ..., exprn])
+<a name="22"/>#
+<a name="23"/>#  The result can be used in a case expression or as a table subscript.
+<a name="24"/>#  Lookup is successful provided the values of expr1, expr2, ..., exprn
+<a name="25"/>#  are the same (even if the lists containing them are not).  For example,
+<a name="26"/>#  consider selecting an operation based on the types of two operands.  The
+<a name="27"/>#  expression
+<a name="28"/>#
+<a name="29"/>#	case [type(op1), type(op2)] of  {
+<a name="30"/>#	   ["integer", "integer"]:  op1 + op2
+<a name="31"/>#	   ["string", "integer"] :  op1 || "+" || op2
+<a name="32"/>#	   ["integer", "string"] :  op1 || "+" || op2
+<a name="33"/>#	   ["string", "string"]  :  op1 || "+" || op2
+<a name="34"/>#	   }
+<a name="35"/>#
+<a name="36"/>#  does not work, because the comparison in the case clauses compares lists
+<a name="37"/>#  values, which cannot be the same as control expression, because the lists
+<a name="38"/>#  are different, even though their contents are the same.  With tuples,
+<a name="39"/>#  however, the comparison succeeds, as in
+<a name="40"/>#
+<a name="41"/>#	case tuple([type(op1), type(op2)]) of {
+<a name="42"/>#	   tuple(["integer", "integer"]):  op1 + op2
+<a name="43"/>#	   tuple(["string", "integer"]) :  op1 || "+" || op2
+<a name="44"/>#	   tuple(["integer", "string"]) :  op1 || "+" || op2
+<a name="45"/>#	   tuple(["string", "string"])  :  op1 || "+" || op2
+<a name="46"/>#	   }
+<a name="47"/>#
+<a name="48"/>############################################################################
+<a name="49"/>
+<a name="50"/>package ipl.tuple
+<a name="51"/>
+<a name="52"/>procedure tuple(tl)
+<a name="53"/>   local tb, i, e, le
+<a name="54"/>
+<a name="55"/>   static tuptab
+<a name="56"/>   initial tuptab := table()	# create the root node
+<a name="57"/>
+<a name="58"/>   /tuptab[*tl] := table()	# if there is no table for this size, make one
+<a name="59"/>   tb := tuptab[*tl]		# go to tuple for size of table
+<a name="60"/>   i := 0			# assign default value to i
+<a name="61"/>   every i := 1 to *tl - 1 do {	# iterate though all but last value
+<a name="62"/>      e := tl[i]		# ith value in tuple
+<a name="63"/>      /tb[e] := table()		# if it is not in the table, make a new one
+<a name="64"/>      tb := tb[e]		# go to table for that value
+<a name="65"/>      }
+<a name="66"/>   le := tl[i + 1]		# last value in tuple
+<a name="67"/>   /tb[le] := copy(tl)		# if it is new, entr a copy of the list
+<a name="68"/>   return tb[le]		# return the copy; it is unique
+<a name="69"/>end
+</pre></body></html>

@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>CheckBoxGroup</title></head><body>
+<h1>CheckBoxGroup</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This class is simply a container for several objects
+which then act together as <code></code>radio buttons''.  The objects
+should be subclasses of <code><a href="gui.Toggle.html" target="displayFrame">Toggle</a></code>, but are normally checkboxes.
+<p/>
+An <code><a href="gui.Event.html#SELECTION_CHANGED">Event.SELECTION_CHANGED</a></code> is fired when  the user changes the
+selection (but not when the selection is changed programatically).
+<p/>
+NB - the objects in the group must be added to both the <code><a href="gui.CheckBoxGroup.html" target="displayFrame">CheckBoxGroup</a></code>
+and the dialog box too; a <code><a href="gui.CheckBoxGroup.html" target="displayFrame">CheckBoxGroup</a></code> is not a <code><a href="gui.Component.html" target="displayFrame">Component</a></code>.
+<p/><a href="gui-checkboxgroup.icn.html#13" target="displayFrame">Source - checkboxgroup.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.CheckBoxGroup.html">gui.CheckBoxGroup</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#get_which_one">get_which_one()</a>
+<a href="#new">new()</a>
+<a href="#remove">remove()</a>
+<a href="#set_allow_none_checked">set_allow_none_checked()</a>
+<a href="#set_which_one">set_which_one()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#allow_none_checked_flag">allow_none_checked_flag</a>
+<a href="#checkboxes">checkboxes</a>
+<a href="#which_one">which_one</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(c)</h3>
+public<p/>
+<dl>
+<dd>
+Add the object to the CheckBoxGroup.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The object to add, which must be a subclass of <code><a href="gui.Toggle.html" target="displayFrame">Toggle</a></code>.
+</dd>
+</dl>
+<p/><a href="gui-checkboxgroup.icn.html#46" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<a name="get_which_one"/>
+<h3>get_which_one()</h3>
+public<p/>
+<dl>
+<dd>
+Returns the object which is currently checked, or fail if none are.
+<p/><a href="gui-checkboxgroup.icn.html#39" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.Connectable.html#new">new()</a> in <a href="util.Connectable.html" target="displayFrame">util.Connectable</a></dd>
+<dd>
+<p/><a href="gui-checkboxgroup.icn.html#83" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<a name="remove"/>
+<h3>remove(c)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the object from the CheckBoxGroup.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The object to remove
+</dd>
+</dl>
+<p/><a href="gui-checkboxgroup.icn.html#57" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<a name="set_allow_none_checked"/>
+<h3>set_allow_none_checked(s)</h3>
+public<p/>
+<dl>
+<dd>
+If set, then the group allows the user to press the currently
+checked box, leaving none checked.
+<p/><a href="gui-checkboxgroup.icn.html#30" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<a name="set_which_one"/>
+<h3>set_which_one(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set which CheckBox is checked, or &amp;null to indicate none checked.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - The object which is checked or &amp;null.
+</dd>
+</dl>
+<p/><a href="gui-checkboxgroup.icn.html#70" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="allow_none_checked_flag"/>
+<h3>allow_none_checked_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-checkboxgroup.icn.html#28" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<a name="checkboxes"/>
+<h3>checkboxes</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-checkboxgroup.icn.html#26" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+<a name="which_one"/>
+<h3>which_one</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-checkboxgroup.icn.html#27" target="displayFrame">Source - checkboxgroup.icn </a>
+</dd>
+</dl><hr>
+</body></html>

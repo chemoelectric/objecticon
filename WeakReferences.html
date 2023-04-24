@@ -70,7 +70,7 @@ weakref#3()
 &gt; weakrefval(w)</code></pre>
 <p>Note how the first collection doesn’t affect <code>w</code>, since the variable <code>l</code> still has a strong reference to the list. However, after <code>l</code> is set to <code>&amp;null</code>, <code>w</code> does have the last reference. Therefore the second collection clears the weak reference and reclaims the memory used by the list.</p>
 <h1 id="weakreftable">WeakrefTable</h1>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct-package.html"><code>datastruct</code></a> package contains a table-like data structure, <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.WeakrefTable.html"><code>datastruct.WeakrefTable</code></a>. This is like an ordinary table, but its keys are wrapped in weak references. This means that when the key becomes the last reference, it may be deleted from the table after a garbage collection.</p>
+<p>The <a href="libref/index.html?datastruct-package.html"><code>datastruct</code></a> package contains a table-like data structure, <a href="libref/index.html?datastruct.WeakrefTable.html"><code>datastruct.WeakrefTable</code></a>. This is like an ordinary table, but its keys are wrapped in weak references. This means that when the key becomes the last reference, it may be deleted from the table after a garbage collection.</p>
 <p>The following <code>ieval</code> interaction shows how this works :-</p>
 <pre><code>&gt; l := [1,2,3]
 list#2734[1,2,3]

@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>selectiveobjectcodec.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: selectiveobjectcodec.icn 8938 2021-02-26 12:09:13Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package lang
+<a name="10"/>
+<a name="11"/>import exception(throw)
+<a name="12"/>
+<a name="13"/>package record ClassInfo(template_els, fnum_map)
+<a name="14"/>package record TemplateElement(ident, fnum)
+<a name="15"/>
+<a name="16"/>#
+<a name="17"/># An implementation of `object_encode` and `object_decode`.  The
+<a name="18"/># subclass may override the method `get_template()` to generate
+<a name="19"/># a list of pairs.  The first element of each pair is an arbitrary
+<a name="20"/># identifier used to identify the field; the second element is the
+<a name="21"/># name of the field.
+<a name="22"/>#
+<a name="23"/># Example :-
+<a name="24"/># ~
+<a name="25"/>#     # This will save the three fields increment_size, value and 
+<a name="26"/>#     # is_range_flag.
+<a name="27"/>#     private get_template()
+<a name="28"/>#        suspend
+<a name="29"/>#            ["Increment Size", "increment_size"] |
+<a name="30"/>#            ["Value", "value"] |
+<a name="31"/>#            ["Is Range Flag", "is_range_flag"]
+<a name="32"/>#     end
+<a name="33"/># ~
+<a name="34"/>#
+<a name="35"/># The programmer may change the name of the field afterwards; for
+<a name="36"/># example `value` may be re-named `initial_value`, and the data would
+<a name="37"/># still be restored correctly, so long as the `get_template()` method
+<a name="38"/># was updated appropriately.
+<a name="39"/>#
+<a name="40"/># Alternatively, any of the pairs may be a string field name, in which
+<a name="41"/># the label is the field name itself.  This does not permit the field
+<a name="42"/># name to change without rendering the encoded string invalid.
+<a name="43"/>#
+<a name="44"/># If not implemented by a subclass, a default `get_template()`
+<a name="45"/># suspends all of the fields in the class.
+<a name="46"/>#
+<a name="47"/>abstract class SelectiveObjectCodec(ObjectCodec)
+<a name="48"/>   #
+<a name="49"/>   # This empty method may be overridden; it is invoked just before
+<a name="50"/>   # the object is encoded.
+<a name="51"/>   #
+<a name="52"/>   protected pre_encode()
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   #
+<a name="56"/>   # This empty method may be overridden; it is invoked just after
+<a name="57"/>   # the object has been encoded.
+<a name="58"/>   #
+<a name="59"/>   protected post_encode()
+<a name="60"/>   end
+<a name="61"/>
+<a name="62"/>   #
+<a name="63"/>   # This empty method may be overridden; it is invoked just before
+<a name="64"/>   # the object is decoded.
+<a name="65"/>   #
+<a name="66"/>   protected pre_decode()
+<a name="67"/>   end
+<a name="68"/>
+<a name="69"/>   #
+<a name="70"/>   # This empty method may be overridden; it is invoked just after
+<a name="71"/>   # the object has been decoded.
+<a name="72"/>   #
+<a name="73"/>   protected post_decode()
+<a name="74"/>   end
+<a name="75"/>
+<a name="76"/>   protected override object_encode(e)
+<a name="77"/>      local p, x
+<a name="78"/>
+<a name="79"/>      p := load_structs()
+<a name="80"/>
+<a name="81"/>      pre_encode()
+<a name="82"/>      e.encode(*p.template_els)
+<a name="83"/>      if /e.fast_flag then {
+<a name="84"/>         every x := !p.template_els do {
+<a name="85"/>            e.encode(x.ident)
+<a name="86"/>            e.encode(Class.get(self, x.fnum))
+<a name="87"/>         }
+<a name="88"/>      } else {
+<a name="89"/>         every x := !p.template_els do
+<a name="90"/>            e.encode(Class.get(self, x.fnum))
+<a name="91"/>      }
+<a name="92"/>      post_encode()
+<a name="93"/>   end
+<a name="94"/>
+<a name="95"/>   protected override object_decode(e)
+<a name="96"/>      local p, m, v, f, n, x
+<a name="97"/>
+<a name="98"/>      p := load_structs()
+<a name="99"/>
+<a name="100"/>      pre_decode()
+<a name="101"/>      n := integer(e.decode()) | throw("Integer expected")
+<a name="102"/>      if /e.fast_flag then {
+<a name="103"/>         m := p.fnum_map
+<a name="104"/>         every 1 to n do {
+<a name="105"/>            f := e.decode()
+<a name="106"/>            v := e.decode()
+<a name="107"/>            Class.get(self, \m[f]) := v
+<a name="108"/>         }
+<a name="109"/>      } else {
+<a name="110"/>         n = *p.template_els | throw("Mismatch length versus template_els")
+<a name="111"/>         every x := !p.template_els do {
+<a name="112"/>            v := e.decode()
+<a name="113"/>            Class.get(self, x.fnum) := v
+<a name="114"/>         }
+<a name="115"/>      }
+<a name="116"/>      post_decode()
+<a name="117"/>   end
+<a name="118"/>
+<a name="119"/>   #
+<a name="120"/>   # Get the conversion info structures for the given class, using
+<a name="121"/>   # caching for efficiency.  The result is a record with two items.
+<a name="122"/>   # The first element is a list of pairs of field identifiers and
+<a name="123"/>   # numbers to read/write.  The second element is a table mapping the
+<a name="124"/>   # field ids to field numbers.
+<a name="125"/>   #
+<a name="126"/>   private load_structs()
+<a name="127"/>      local e, fnum, fnum_map, template_els, p, x, cl
+<a name="128"/>      static cache
+<a name="129"/>      initial {
+<a name="130"/>         cache := table()
+<a name="131"/>      }
+<a name="132"/>      cl := classof(self)
+<a name="133"/>      if x := member(cache, cl) then
+<a name="134"/>         return x
+<a name="135"/>
+<a name="136"/>      # Create a list of field ident/number pairs and a table mapping
+<a name="137"/>      # field idents to class field indices.  Check for duplicate
+<a name="138"/>      # names and non-existent variable names.
+<a name="139"/>      #
+<a name="140"/>      template_els := []
+<a name="141"/>      fnum_map := table()
+<a name="142"/>      every e := get_template() do {
+<a name="143"/>         if type(e) == "string" then {
+<a name="144"/>            fnum := Class.get_field_index(cl, e) | runerr("SelectiveObjectCodec: unknown field: " || e)
+<a name="145"/>            (/fnum_map[e] := fnum) | runerr("SelectiveObjectCodec: duplicate field: " || e)
+<a name="146"/>            put(template_els, TemplateElement(e, fnum))
+<a name="147"/>         } else {
+<a name="148"/>            fnum := Class.get_field_index(cl, e[2]) | runerr("SelectiveObjectCodec: unknown field: " || e[2])
+<a name="149"/>            (/fnum_map[e[1]] := fnum) | runerr("SelectiveObjectCodec: duplicate field: " || e[1])
+<a name="150"/>            put(template_els, TemplateElement(e[1], fnum))
+<a name="151"/>         }
+<a name="152"/>      }
+<a name="153"/>
+<a name="154"/>      p := ClassInfo(template_els, fnum_map)
+<a name="155"/>      insert(cache, cl, p)
+<a name="156"/>      return p
+<a name="157"/>   end
+<a name="158"/>
+<a name="159"/>   #
+<a name="160"/>   # This method may be overridden by a subclass to return the field
+<a name="161"/>   # template (see above).  By default, the method generates all of
+<a name="162"/>   # the instance fields of self.
+<a name="163"/>   #
+<a name="164"/>   protected get_template()
+<a name="165"/>      suspend Class.get_instance_field_names(self)
+<a name="166"/>   end
+<a name="167"/>end
+</pre></body></html>

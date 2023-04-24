@@ -1,0 +1,287 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Mapping</title></head><body>
+<h1>Mapping</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="unicode-package.html" target="listFrame">unicode</a></dd>
+</dl><p/>
+<p/><a href="unicode-unicodedata.icn.html#1904" target="displayFrame">Source - unicodedata.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#char_seq">char_seq()</a>
+<a href="#convert_with">convert_with()</a>
+<a href="#fold">fold()</a>
+<a href="#fold_chars">fold_chars()</a>
+<a href="#init">init()</a>
+<a href="#load">load()</a>
+<a href="#lookup">lookup()</a>
+<a href="#lower">lower()</a>
+<a href="#lower_chars">lower_chars()</a>
+<a href="#title">title()</a>
+<a href="#title_chars">title_chars()</a>
+<a href="#upper">upper()</a>
+<a href="#upper_chars">upper_chars()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#FOLD">FOLD</a>
+<a href="#LOWER">LOWER</a>
+<a href="#LOWER_DOMAIN">LOWER_DOMAIN</a>
+<a href="#LOWER_RANGE">LOWER_RANGE</a>
+<a href="#TITLE">TITLE</a>
+<a href="#TITLE_DOMAIN">TITLE_DOMAIN</a>
+<a href="#TITLE_RANGE">TITLE_RANGE</a>
+<a href="#UPPER">UPPER</a>
+<a href="#UPPER_DOMAIN">UPPER_DOMAIN</a>
+<a href="#UPPER_RANGE">UPPER_RANGE</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="char_seq"/>
+<h3>char_seq(s, t)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#2796" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_with"/>
+<h3>convert_with(s, t)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#2789" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="fold"/>
+<h3>fold(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a ucs string using the case folding mapping.
+<p/><a href="unicode-unicodedata.icn.html#2883" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="fold_chars"/>
+<h3>fold_chars(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Return a co-expression, the results of which are the individual
+characters that would comprise <code>string(fold(s))</code>.  For example,
+<pre>
+    fold_chars(u"Spaß")
+</pre>
+generates 5 characters, namely "s", "p", "a", "s", "s".
+<p/>
+This function is useful for doing comparisons.  For example, the
+<code><a href="ipl.sort.convert_cmp.html" target="displayFrame">ipl.sort.convert_cmp</a></code> and <code><a href="ipl.sort.coex_cmp.html" target="displayFrame">ipl.sort.coex_cmp</a></code> procedures can be
+used to create a comparator function as follows :-
+<pre>
+    import ipl.sort
+    ...
+    f := convert_cmp(Mapping.fold_chars, coex_cmp())
+</pre>
+<p/>
+This comparator could then be used to compare strings directly
+or perhaps with a <code>SortTable</code> :-
+<pre>
+    import datastruct
+    ...
+    f(u"Spaß", u"SPASS")   # Gives 0 (ie, equal).
+    ...
+    t := SortTable(, f)
+    t.insert(u"Gefäß", 99)
+    t.member(u"GEFÄSS")    # 99
+    t.member(u"GEFÄß")     # also 99
+    t.select(1)            # u"Gefäß"
+</pre>
+<p/><a href="unicode-unicodedata.icn.html#2825" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1920" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="load"/>
+<h3>load(d, r)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1912" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="lookup"/>
+<h3>lookup(t, i)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#2785" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="lower"/>
+<h3>lower(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a ucs string using the lower case mapping.  Note that
+this gives the same result as <code><a href="lang.Text.html#lower">Text.lower()</a></code>.
+<p/><a href="unicode-unicodedata.icn.html#2868" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="lower_chars"/>
+<h3>lower_chars(s)</h3>
+public static<p/>
+<dl>
+<dd>
+See <code><a href="unicode.Mapping.html#fold_chars">fold_chars</a></code>; this is the equivalent for the lower case
+mapping.
+<p/><a href="unicode-unicodedata.icn.html#2809" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="title"/>
+<h3>title(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a ucs string using the title case mapping.
+<p/><a href="unicode-unicodedata.icn.html#2876" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="title_chars"/>
+<h3>title_chars(s)</h3>
+public static<p/>
+<dl>
+<dd>
+See <code><a href="unicode.Mapping.html#fold_chars">fold_chars</a></code>; this is the equivalent for the title case
+mapping.
+<p/><a href="unicode-unicodedata.icn.html#2817" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="upper"/>
+<h3>upper(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a ucs string using the upper case mapping.  Note that
+this gives the same result as <code><a href="lang.Text.html#upper">Text.upper()</a></code>.
+<p/><a href="unicode-unicodedata.icn.html#2860" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="upper_chars"/>
+<h3>upper_chars(s)</h3>
+public static<p/>
+<dl>
+<dd>
+See <code><a href="unicode.Mapping.html#fold_chars">fold_chars</a></code>; this is the equivalent for the upper case
+mapping.
+<p/><a href="unicode-unicodedata.icn.html#2801" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="FOLD"/>
+<h3>FOLD</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1910" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LOWER"/>
+<h3>LOWER</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1910" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LOWER_DOMAIN"/>
+<h3>LOWER_DOMAIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1906" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="LOWER_RANGE"/>
+<h3>LOWER_RANGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1906" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TITLE"/>
+<h3>TITLE</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1910" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TITLE_DOMAIN"/>
+<h3>TITLE_DOMAIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1908" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="TITLE_RANGE"/>
+<h3>TITLE_RANGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1908" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="UPPER"/>
+<h3>UPPER</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1910" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="UPPER_DOMAIN"/>
+<h3>UPPER_DOMAIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1907" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+<a name="UPPER_RANGE"/>
+<h3>UPPER_RANGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="unicode-unicodedata.icn.html#1907" target="displayFrame">Source - unicodedata.icn </a>
+</dd>
+</dl><hr>
+</body></html>

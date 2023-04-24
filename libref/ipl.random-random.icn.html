@@ -1,0 +1,745 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>random.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     random.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures related to random numbers
+<a name="6"/>#
+<a name="7"/>#	Authors:  Ralph E. Griswold and Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     May 15, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This file contains procedures related to pseudo-random numbers.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>
+<a name="21"/>package ipl.random
+<a name="22"/>
+<a name="23"/>import
+<a name="24"/>   lang(Limit),
+<a name="25"/>   util(Time, need_integer, need_string, ce_param,
+<a name="26"/>        HasClose, HasCloseUnderlying, Math, lclose,
+<a name="27"/>        need_instance),
+<a name="28"/>   ipl.factors(primes),
+<a name="29"/>   ipl.numbers(mod),
+<a name="30"/>   ipl.pdco(Index),
+<a name="31"/>   ipl.printf(stopf),
+<a name="32"/>   ipl.sort(mergesort, field_cmp, rev_internal_cmp),
+<a name="33"/>   io(need_Stream)
+<a name="34"/>
+<a name="35"/># randomize() sets &amp;random to a "random" value, based on the time
+<a name="36"/># of day and the date.
+<a name="37"/>#
+<a name="38"/>procedure randomize()			
+<a name="39"/>   static ncalls
+<a name="40"/>
+<a name="41"/>   initial ncalls := 0
+<a name="42"/>
+<a name="43"/>   ncalls +:= 1
+<a name="44"/>
+<a name="45"/>   &amp;random := map("sSmMhH", "Hh:Mm:Ss", &amp;clock) +
+<a name="46"/>      map("YyXxMmDd", "YyXx/Mm/Dd", &amp;date) + 
+<a name="47"/>      Time.get_system_millis() % 1000 + &amp;time + 1009 * ncalls
+<a name="48"/>
+<a name="49"/>   return
+<a name="50"/>
+<a name="51"/>end
+<a name="52"/>
+<a name="53"/># produces random number in the range min &lt;= i &lt;= max.
+<a name="54"/>procedure randrange(min, max)		
+<a name="55"/>
+<a name="56"/>   return min - 1 + ?(max - min + 1)
+<a name="57"/>
+<a name="58"/>end
+<a name="59"/>
+<a name="60"/># generates the integers from i to j in random order.
+<a name="61"/>procedure randrangeseq(i, j)		
+<a name="62"/>   i := need_integer(i) - 1
+<a name="63"/>   j := need_integer(j)
+<a name="64"/>
+<a name="65"/>   suspend permutation(j - i)  + i
+<a name="66"/>end
+<a name="67"/>
+<a name="68"/># suspend the elements of x in a random order; x should be something which
+<a name="69"/># can be indexed by integer (string, ucs, list, or cset).
+<a name="70"/>#
+<a name="71"/>procedure randelements(x)
+<a name="72"/>   suspend x[permutation(*x)]
+<a name="73"/>end
+<a name="74"/>
+<a name="75"/># Generate a random permutation of the integers 1..n.
+<a name="76"/>#
+<a name="77"/>procedure permutation(n)
+<a name="78"/>   local x, m, a, c, p, r
+<a name="79"/>
+<a name="80"/>   n := need_integer(n)
+<a name="81"/>   if n &lt;= 0 then fail
+<a name="82"/>   if n = 1 then return 1
+<a name="83"/>
+<a name="84"/>   # Create the parameters for a full-cycle LCG
+<a name="85"/>
+<a name="86"/>   # Choose a modulus m &gt;= n in the form of a perfect square of a
+<a name="87"/>   # prime p &gt;= 5.
+<a name="88"/>   p := primes(Math.sqrt(n))
+<a name="89"/>   p &lt;:= 5
+<a name="90"/>   m := p^2
+<a name="91"/>   # Choose c relatively prime to m, ie not divisible by p
+<a name="92"/>   repeat {
+<a name="93"/>      c := ?m
+<a name="94"/>      if c % p &gt; 0 then
+<a name="95"/>         break
+<a name="96"/>   }
+<a name="97"/>   # Choose a such that a=1 (mod p), p being the sole prime factor of
+<a name="98"/>   # m, and also so that a &gt; 1 (mod m), since a = 1 gives a poor
+<a name="99"/>   # random sequence.  We can choose from p*i + 1, for 1 &lt;= i &lt; p. (If
+<a name="100"/>   # i = p then a = p^2 + 1 = 1 (mod m)).
+<a name="101"/>   a := p * ?(p - 1) + 1
+<a name="102"/>
+<a name="103"/>   # Create an LCG with a randomly chosen seed
+<a name="104"/>   r := LCG(a, c, m, ?m)
+<a name="105"/>   every 1 to n do {
+<a name="106"/>      x := n &gt; r.gen()       # discard out-of-range values
+<a name="107"/>      suspend 1 + x
+<a name="108"/>   }
+<a name="109"/>
+<a name="110"/>end
+<a name="111"/>
+<a name="112"/># generates the values of &amp;random, starting at seed,
+<a name="113"/># that occur as the result of using ?x.
+<a name="114"/>#
+<a name="115"/>procedure randseq(seed)			
+<a name="116"/>
+<a name="117"/>   suspend &amp;random := seed
+<a name="118"/>   suspend |?1 &amp; &amp;random
+<a name="119"/>
+<a name="120"/>end
+<a name="121"/>
+<a name="122"/>#  The procedure shuffle(x) shuffles a string, list, or record.
+<a name="123"/>#  In the case that x is a string, a corresponding string with the
+<a name="124"/>#  characters randomly rearranged is produced. In the case that x is
+<a name="125"/>#  list or records the elements are randomly rearranged.
+<a name="126"/>#
+<a name="127"/>procedure shuffle(x)			
+<a name="128"/>   local i
+<a name="129"/>
+<a name="130"/>   x := text(x)		# may fail
+<a name="131"/>   every i := *x to 2 by -1 do
+<a name="132"/>      x[?i] :=: x[i]
+<a name="133"/>   return x
+<a name="134"/>end
+<a name="135"/>
+<a name="136"/>#  Note:  the following procedure is simpler, but does not produce
+<a name="137"/>#  as good a shuffle:
+<a name="138"/>#
+<a name="139"/>#procedure shuffle(x)
+<a name="140"/>#   x := string(x)
+<a name="141"/>#   every !x :=: ?x
+<a name="142"/>#   return x
+<a name="143"/>#end
+<a name="144"/>
+<a name="145"/># Choose k numbers from the range 1..n in ascending order
+<a name="146"/>procedure choose(k, n)
+<a name="147"/>   local i
+<a name="148"/>   k := need_integer(k, 0)
+<a name="149"/>   n := need_integer(n, 0)
+<a name="150"/>   every i := 1 to n do {
+<a name="151"/>      if ?0 &lt; real(k) / (n - i + 1) then {
+<a name="152"/>         suspend i
+<a name="153"/>         k -:= 1
+<a name="154"/>      }
+<a name="155"/>   }
+<a name="156"/>end
+<a name="157"/>
+<a name="158"/>#
+<a name="159"/># An abstract class for random number generators.
+<a name="160"/>#
+<a name="161"/>abstract class Random(HasClose)
+<a name="162"/>   # Return a real number in the range [0, 1).
+<a name="163"/>   #
+<a name="164"/>   public abstract real()
+<a name="165"/>
+<a name="166"/>   # Return an integer in the range [1, n].
+<a name="167"/>   #
+<a name="168"/>   public abstract range(n)
+<a name="169"/>
+<a name="170"/>   # Select an element from structure or string type.
+<a name="171"/>   #
+<a name="172"/>   public choose(i)
+<a name="173"/>      return case type(i) of {
+<a name="174"/>         "list" | "record" | "string" | "ucs" | "cset": 
+<a name="175"/>            i[range(0 &lt; *i)]
+<a name="176"/>         "table" | "set" :
+<a name="177"/>            Index{ !i, range(0 &lt; *i) }
+<a name="178"/>         default:
+<a name="179"/>            choose(need_string(i))
+<a name="180"/>      }
+<a name="181"/>   end
+<a name="182"/>end
+<a name="183"/>
+<a name="184"/>#
+<a name="185"/># A `Random` generator that just wraps the builtin random operator
+<a name="186"/># `?`.
+<a name="187"/>#
+<a name="188"/>class BuiltinRandom(Random)
+<a name="189"/>   public override real()
+<a name="190"/>      return ?0
+<a name="191"/>   end
+<a name="192"/>
+<a name="193"/>   public override range(n)
+<a name="194"/>      return ?n
+<a name="195"/>   end
+<a name="196"/>end
+<a name="197"/>
+<a name="198"/># An abstract class for random generators which generate integers in
+<a name="199"/># the range of an arbitrary fixed modulus (usually a power of 2).
+<a name="200"/>#
+<a name="201"/># The modulus `m` is supplied in the constructor, and a single method,
+<a name="202"/># `get()` is implemented which generates numbers in the range [0, m).
+<a name="203"/>#
+<a name="204"/>abstract class RandomWithModulus(Random)
+<a name="205"/>   public const
+<a name="206"/>      m                 # The modulus
+<a name="207"/>   private readable
+<a name="208"/>      rr, rf            # For calculating reals
+<a name="209"/>   private
+<a name="210"/>      n1, a1, p1, s1    # Some cached values
+<a name="211"/>   public static const
+<a name="212"/>      MAX_REAL_RANGE    # Max range for calculating a `real`
+<a name="213"/>
+<a name="214"/>   private static init() 
+<a name="215"/>      MAX_REAL_RANGE := 2 ^ 53
+<a name="216"/>   end
+<a name="217"/>
+<a name="218"/>   #
+<a name="219"/>   # Return a random number in the range [0, m)
+<a name="220"/>   #
+<a name="221"/>   public abstract get()
+<a name="222"/>
+<a name="223"/>   #
+<a name="224"/>   # Set the range of values to use in calculating the result of
+<a name="225"/>   # `real()`.  The default is `MAX_REAL_RANGE`, which gives the
+<a name="226"/>   # maximum possible range of values, but may involve more calls to
+<a name="227"/>   # `get()` for each real, if it is greater than the modulus.
+<a name="228"/>   #
+<a name="229"/>   public set_real_range(rr)
+<a name="230"/>      self.rr := need_integer(rr, 2, MAX_REAL_RANGE)
+<a name="231"/>      self.rf := 1.0 / self.rr
+<a name="232"/>      link
+<a name="233"/>   end
+<a name="234"/>
+<a name="235"/>   public override real()
+<a name="236"/>      local r
+<a name="237"/>      repeat {
+<a name="238"/>         r := (range(rr) - 1) * rf
+<a name="239"/>         # This test should always succeed, but just in case.
+<a name="240"/>         if r &lt; 1.0 then
+<a name="241"/>            return r
+<a name="242"/>      }
+<a name="243"/>   end
+<a name="244"/>
+<a name="245"/>   # A convenient method to generate a sequence of results by
+<a name="246"/>   # repeatedly calling `get()`.
+<a name="247"/>   #
+<a name="248"/>   public gen()
+<a name="249"/>      suspend |get()
+<a name="250"/>   end
+<a name="251"/>
+<a name="252"/>   #
+<a name="253"/>   # This method combines `p` random numbers from `get()` to give a
+<a name="254"/>   # result in the range [0, m^p).  For example, if m=2^5, `get_n(2)`
+<a name="255"/>   # would return a number in the range [0, m^2) = [0, 2^10).
+<a name="256"/>   #
+<a name="257"/>   public get_n(p)
+<a name="258"/>      local r
+<a name="259"/>      # Invariant: r is in [0, m^i), where i is is the loop iteration,
+<a name="260"/>      #     since (m^i - 1) * m + (m - 1) = m^(i + 1) - 1
+<a name="261"/>      r := 0
+<a name="262"/>      every 1 to p do
+<a name="263"/>         r := r * m + get()
+<a name="264"/>      return r
+<a name="265"/>   end
+<a name="266"/>
+<a name="267"/>   public override range(n)
+<a name="268"/>      local r, b1, m1
+<a name="269"/>      n := need_integer(n, 1)
+<a name="270"/>      # See if we have to update the various cached fields.
+<a name="271"/>      unless n === n1 then {
+<a name="272"/>         # Establish the smallest p1 for which m1 = m^p1 and m1 &gt;= n.
+<a name="273"/>         # m1 will thus be a modulus big enough to encompass n, and
+<a name="274"/>         # formed from combining p1 results from `get()`.
+<a name="275"/>         p1 := 1
+<a name="276"/>         m1 := m
+<a name="277"/>         while m1 &lt; n do {
+<a name="278"/>            m1 *:= m
+<a name="279"/>            p1 +:= 1
+<a name="280"/>         }
+<a name="281"/>         b1 := m1 % n
+<a name="282"/>         # Now since m1 &gt;= n &gt; 0 and 0 &lt;= b1 &lt; n,
+<a name="283"/>         #      m1 = b1 + qn, for some q &gt; 0
+<a name="284"/>         # So (m1 - b1) is positive and divisible by n.
+<a name="285"/>         a1 := m1 - b1
+<a name="286"/>         s1 := a1 / n
+<a name="287"/>         n1 := n
+<a name="288"/>      }
+<a name="289"/>      repeat {
+<a name="290"/>         # Get a random number r in the range [0, m^p1)
+<a name="291"/>         r := get_n(p1)
+<a name="292"/>         # Filter the range of r to eliminate bias
+<a name="293"/>         if r &lt; a1 then
+<a name="294"/>            # We could return 1 + r % n here, but that would depend on
+<a name="295"/>            # the lower order bits of r being a good random source
+<a name="296"/>            # (which will not be the case for a power of 2 LCG).
+<a name="297"/>            #
+<a name="298"/>            # So instead split the range of r, [0, a1), into n equal
+<a name="299"/>            # sections, each of size a1 / n (ie, s1, see above), and
+<a name="300"/>            # see which one r landed in.
+<a name="301"/>            # 
+<a name="302"/>            return 1 + r / s1
+<a name="303"/>      }
+<a name="304"/>   end
+<a name="305"/>
+<a name="306"/>   # Returns `iand(n, 2^64 - 1)`
+<a name="307"/>   #
+<a name="308"/>   public static mod64(n)
+<a name="309"/>      return iand(n, 16rFFFFFFFFFFFFFFFF)
+<a name="310"/>   end
+<a name="311"/>
+<a name="312"/>   # Returns `iand(n, 2^32 - 1)`
+<a name="313"/>   #
+<a name="314"/>   public static mod32(n)
+<a name="315"/>      return iand(n, 16rFFFFFFFF)
+<a name="316"/>   end
+<a name="317"/>
+<a name="318"/>   # The constructor takes the modulus, an integer `m &gt;= 2`.
+<a name="319"/>   public new(m)
+<a name="320"/>      self.m := need_integer(m, 2)
+<a name="321"/>      set_real_range(MAX_REAL_RANGE)
+<a name="322"/>      return
+<a name="323"/>   end
+<a name="324"/>end
+<a name="325"/>
+<a name="326"/># A random number generator which generates numbers based on random
+<a name="327"/># data from a `io.Stream`.
+<a name="328"/>#
+<a name="329"/># For example to produce 64-bit integers from `/dev/urandom` :-
+<a name="330"/># ~
+<a name="331"/>#   r := RandomFromStream(open("/dev/urandom"), 8)
+<a name="332"/># ~
+<a name="333"/>#
+<a name="334"/>class RandomFromStream(RandomWithModulus, HasCloseUnderlying)
+<a name="335"/>   public const
+<a name="336"/>      c, src
+<a name="337"/>
+<a name="338"/>   public override get()
+<a name="339"/>      local s, i, x
+<a name="340"/>      s := src.reads(c) | stopf("Failed to read random source: %w")
+<a name="341"/>      i := 0
+<a name="342"/>      every x := ord(s) do
+<a name="343"/>         i := 256 * i + x
+<a name="344"/>      return i
+<a name="345"/>   end
+<a name="346"/>
+<a name="347"/>   # Close the underlying `io.Stream`.
+<a name="348"/>   #
+<a name="349"/>   public override close()
+<a name="350"/>      if \close_underlying_flag then
+<a name="351"/>         src.close() | fail
+<a name="352"/>      link
+<a name="353"/>   end
+<a name="354"/>
+<a name="355"/>   # Create an instance using `io.Stream` `src` and reading `c`
+<a name="356"/>   # (default 4) bytes at a time.  The modulus is thus `2 ^ (8*c)`.
+<a name="357"/>   #
+<a name="358"/>   public override new(src, c)
+<a name="359"/>      self.src := need_Stream(src)
+<a name="360"/>      self.c := need_integer(\c, 1) | 4
+<a name="361"/>      RandomWithModulus.new(2 ^ (8 * self.c))
+<a name="362"/>      self.close_underlying_flag := &amp;yes
+<a name="363"/>      return
+<a name="364"/>   end
+<a name="365"/>end
+<a name="366"/>
+<a name="367"/>#
+<a name="368"/># A linear congruential random number generator.
+<a name="369"/>#
+<a name="370"/>class LCG(RandomWithModulus)
+<a name="371"/>   public const
+<a name="372"/>      a, c
+<a name="373"/>   private readable
+<a name="374"/>      x
+<a name="375"/>
+<a name="376"/>   #
+<a name="377"/>   # Set the current value of the generator sequence.
+<a name="378"/>   #
+<a name="379"/>   public set(x)
+<a name="380"/>      self.x := need_integer(x, 0)
+<a name="381"/>      link
+<a name="382"/>   end
+<a name="383"/>
+<a name="384"/>   public override get()
+<a name="385"/>      x := (a * x + c) % m
+<a name="386"/>      return .x
+<a name="387"/>   end
+<a name="388"/>
+<a name="389"/>   #
+<a name="390"/>   # Create a generator with multiplier `a`, additive constant `c`,
+<a name="391"/>   # modulus `m`, and initial value `x` (default 0).
+<a name="392"/>   #
+<a name="393"/>   public override new(a, c, m, x)
+<a name="394"/>      RandomWithModulus.new(m)
+<a name="395"/>      self.a := need_integer(a, 1)
+<a name="396"/>      self.c := need_integer(c, 0)
+<a name="397"/>      /x := 0
+<a name="398"/>      set(x)
+<a name="399"/>      return
+<a name="400"/>   end
+<a name="401"/>end
+<a name="402"/>
+<a name="403"/>#
+<a name="404"/># A `RandomWithModulus` generator that uses the values from `&amp;random`.
+<a name="405"/>#
+<a name="406"/>class BuiltinLCG(RandomWithModulus)
+<a name="407"/>   public override get()
+<a name="408"/>      return ?1 &amp; &amp;random
+<a name="409"/>   end
+<a name="410"/>
+<a name="411"/>   public override new()
+<a name="412"/>      RandomWithModulus.new(Limit.MaxWord + 1)
+<a name="413"/>      return
+<a name="414"/>   end
+<a name="415"/>end
+<a name="416"/>
+<a name="417"/># See &lt;https://www.pcg-random.org/&gt;
+<a name="418"/>#
+<a name="419"/># Adapted from the C Implementation from
+<a name="420"/>#    &lt;https://www.pcg-random.org/download.html&gt;
+<a name="421"/>#
+<a name="422"/>class PCG32(RandomWithModulus)
+<a name="423"/>   public const
+<a name="424"/>      a
+<a name="425"/>   private readable
+<a name="426"/>      x, i
+<a name="427"/>
+<a name="428"/>   #
+<a name="429"/>   # Set the current state of the generator sequence.
+<a name="430"/>   #
+<a name="431"/>   public set(x, i)
+<a name="432"/>      x := need_integer(x)
+<a name="433"/>      i := need_integer(i)
+<a name="434"/>      self.x := 0
+<a name="435"/>      self.i := mod64(ior(2 * i, 1))
+<a name="436"/>      get()
+<a name="437"/>      self.x := mod64(self.x + x)
+<a name="438"/>      get()
+<a name="439"/>      link
+<a name="440"/>   end
+<a name="441"/>
+<a name="442"/>   public override get()
+<a name="443"/>      local o, s, r
+<a name="444"/>      o := x
+<a name="445"/>      self.x := mod64(o * a + i)
+<a name="446"/>      s := mod32(ishift(ixor(ishift(o, -18), o), -27))
+<a name="447"/>      r := ishift(o, -59)
+<a name="448"/>      return mod32(ior(ishift(s, -r), ishift(s, iand(-r, 31))))
+<a name="449"/>   end
+<a name="450"/>
+<a name="451"/>   public override new(x, i, a)
+<a name="452"/>      RandomWithModulus.new(16r100000000)
+<a name="453"/>      self.a := need_integer(\a, 1) | 6364136223846793005
+<a name="454"/>      /i := 1442695040888963407
+<a name="455"/>      /x := 9600629759793949339
+<a name="456"/>      set(x, i)
+<a name="457"/>      return
+<a name="458"/>   end
+<a name="459"/>end
+<a name="460"/>
+<a name="461"/>#
+<a name="462"/># 64-bit Mersenne Twister random generator.
+<a name="463"/>#
+<a name="464"/># Adapted from :-
+<a name="465"/>#    &lt;http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/C-LANG/mt19937-64.c&gt;
+<a name="466"/>#
+<a name="467"/>class MersenneTwister64(RandomWithModulus)
+<a name="468"/>   private
+<a name="469"/>      mt,
+<a name="470"/>      mti
+<a name="471"/>
+<a name="472"/>   public static const
+<a name="473"/>      N,
+<a name="474"/>      M,
+<a name="475"/>      MATRIX_A,
+<a name="476"/>      UPPER_MASK,
+<a name="477"/>      LOWER_MASK
+<a name="478"/>
+<a name="479"/>   private static init() 
+<a name="480"/>      N := 312
+<a name="481"/>      M := 156
+<a name="482"/>      MATRIX_A := 16rB5026F5AA96619E9
+<a name="483"/>      UPPER_MASK := 16rFFFFFFFF80000000
+<a name="484"/>      LOWER_MASK := 16r7FFFFFFF
+<a name="485"/>   end
+<a name="486"/>
+<a name="487"/>   public override get()
+<a name="488"/>      local kk, y
+<a name="489"/>
+<a name="490"/>      if mti &gt;= N then {
+<a name="491"/>         every kk := 1 to N - M do {
+<a name="492"/>            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+<a name="493"/>            mt[kk] := ixor(mt[kk + M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+<a name="494"/>         }
+<a name="495"/>         every kk := N - M + 1 to N - 1 do {
+<a name="496"/>            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+<a name="497"/>            mt[kk] := ixor(mt[kk + (M - N)], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+<a name="498"/>         }
+<a name="499"/>         y := ior(iand(mt[N], UPPER_MASK), iand(mt[1], LOWER_MASK))
+<a name="500"/>         mt[N] := ixor(mt[M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+<a name="501"/>
+<a name="502"/>         mti := 0
+<a name="503"/>      }
+<a name="504"/>
+<a name="505"/>      y := mt[mti +:= 1]
+<a name="506"/>      y := ixor(y, iand(ishift(y, -29), 16r5555555555555555))
+<a name="507"/>      y := ixor(y, iand(ishift(y, 17), 16r71D67FFFEDA60000))
+<a name="508"/>      y := ixor(y, iand(ishift(y, 37), 16rFFF7EEE000000000))
+<a name="509"/>      y := ixor(y, ishift(y, -43))
+<a name="510"/>      
+<a name="511"/>      return y
+<a name="512"/>   end
+<a name="513"/>
+<a name="514"/>   public init_list(l)
+<a name="515"/>      local i, j
+<a name="516"/>      init_genrand(19650218)
+<a name="517"/>      i := 1; j := 0
+<a name="518"/>      every 1 to max(N, *l) do {
+<a name="519"/>         mt[i + 1] := mod64(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -62)) * 3935559000370003845) + l[j + 1] + j)
+<a name="520"/>         i +:= 1
+<a name="521"/>         if i &gt;= N then { mt[1] := mt[N]; i := 1 }
+<a name="522"/>         j := (j + 1) % *l
+<a name="523"/>      }
+<a name="524"/>      every 1 to N - 1 do {
+<a name="525"/>         mt[i + 1] := mod64(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -62)) * 2862933555777941757) - i)
+<a name="526"/>         i +:= 1
+<a name="527"/>         if i &gt;= N then { mt[1] := mt[N]; i := 1 }
+<a name="528"/>      }
+<a name="529"/>      mt[1] := 16r8000000000000000
+<a name="530"/>   end
+<a name="531"/>
+<a name="532"/>   private init_genrand(s)
+<a name="533"/>      local i
+<a name="534"/>      mt := [ mod64(s) ]
+<a name="535"/>      every i := 2 to N do
+<a name="536"/>         put(mt, mod64(6364136223846793005 * ixor(mt[-1], ishift(mt[-1], -62)) + (i - 1)))
+<a name="537"/>      mti := N
+<a name="538"/>   end
+<a name="539"/>
+<a name="540"/>   public override new(l)
+<a name="541"/>      RandomWithModulus.new(16r10000000000000000)
+<a name="542"/>      /l := [16r12345, 16r23456, 16r34567, 16r45678]
+<a name="543"/>      init_list(l)
+<a name="544"/>      return
+<a name="545"/>   end
+<a name="546"/>end
+<a name="547"/>
+<a name="548"/>#
+<a name="549"/># 32-bit Mersenne Twister random generator.
+<a name="550"/>#
+<a name="551"/># Adapted from :-
+<a name="552"/>#  &lt;http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c&gt;
+<a name="553"/>#
+<a name="554"/>class MersenneTwister32(RandomWithModulus)
+<a name="555"/>   private
+<a name="556"/>      mt,
+<a name="557"/>      mti
+<a name="558"/>
+<a name="559"/>   public static const
+<a name="560"/>      N,
+<a name="561"/>      M,
+<a name="562"/>      MATRIX_A,
+<a name="563"/>      UPPER_MASK,
+<a name="564"/>      LOWER_MASK
+<a name="565"/>
+<a name="566"/>   private static init() 
+<a name="567"/>      N := 624
+<a name="568"/>      M := 397
+<a name="569"/>      MATRIX_A := 16r9908B0DF
+<a name="570"/>      UPPER_MASK := 16r80000000
+<a name="571"/>      LOWER_MASK := 16r7FFFFFFF
+<a name="572"/>   end
+<a name="573"/>
+<a name="574"/>   public override get()
+<a name="575"/>      local kk, y
+<a name="576"/>
+<a name="577"/>      if mti &gt;= N then {
+<a name="578"/>         every kk := 1 to N - M do {
+<a name="579"/>            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+<a name="580"/>            mt[kk] := ixor(mt[kk + M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+<a name="581"/>         }
+<a name="582"/>         every kk := N - M + 1 to N - 1 do {
+<a name="583"/>            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+<a name="584"/>            mt[kk] := ixor(mt[kk + (M - N)], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+<a name="585"/>         }
+<a name="586"/>         y := ior(iand(mt[N], UPPER_MASK), iand(mt[1], LOWER_MASK))
+<a name="587"/>         mt[N] := ixor(mt[M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+<a name="588"/>
+<a name="589"/>         mti := 0
+<a name="590"/>      }
+<a name="591"/>
+<a name="592"/>      y := mt[mti +:= 1]
+<a name="593"/>      y := ixor(y, ishift(y, -11))
+<a name="594"/>      y := ixor(y, iand(ishift(y, 7), 16r9D2C5680))
+<a name="595"/>      y := ixor(y, iand(ishift(y, 15), 16rEFC60000))
+<a name="596"/>      y := ixor(y, ishift(y, -18))
+<a name="597"/>      
+<a name="598"/>      return y
+<a name="599"/>   end
+<a name="600"/>
+<a name="601"/>   public init_list(l)
+<a name="602"/>      local i, j
+<a name="603"/>      init_genrand(19650218)
+<a name="604"/>      i := 1; j := 0
+<a name="605"/>      every 1 to max(N, *l) do {
+<a name="606"/>         mt[i + 1] := mod32(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -30)) * 1664525) + l[j + 1] + j)
+<a name="607"/>         i +:= 1
+<a name="608"/>         if i &gt;= N then { mt[1] := mt[N]; i := 1 }
+<a name="609"/>         j := (j + 1) % *l
+<a name="610"/>      }
+<a name="611"/>      every 1 to N - 1 do {
+<a name="612"/>         mt[i + 1] := mod32(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -30)) * 1566083941) - i)
+<a name="613"/>         i +:= 1
+<a name="614"/>         if i &gt;= N then { mt[1] := mt[N]; i := 1 }
+<a name="615"/>      }
+<a name="616"/>      mt[1] := 16r80000000
+<a name="617"/>   end
+<a name="618"/>
+<a name="619"/>   private init_genrand(s)
+<a name="620"/>      local i
+<a name="621"/>      mt := [ mod32(s) ]
+<a name="622"/>      every i := 2 to N do
+<a name="623"/>         put(mt, mod32(1812433253 * ixor(mt[-1], ishift(mt[-1], -30)) + (i - 1)))
+<a name="624"/>      mti := N
+<a name="625"/>   end
+<a name="626"/>
+<a name="627"/>   public override new(l)
+<a name="628"/>      RandomWithModulus.new(16r100000000)
+<a name="629"/>      /l := [16r123, 16r234, 16r345, 16r456]
+<a name="630"/>      init_list(l)
+<a name="631"/>      return
+<a name="632"/>   end
+<a name="633"/>end
+<a name="634"/>
+<a name="635"/># This class is a `RandomWithModulus` in which a co-expression
+<a name="636"/># provides the values returned by `get()`.  This enables results from
+<a name="637"/># other generators to be easily modified or combined.
+<a name="638"/>#
+<a name="639"/># For convenience, the constructor optionally accepts PDCO-style
+<a name="640"/># parameters.
+<a name="641"/>#
+<a name="642"/># For example :-
+<a name="643"/># ~
+<a name="644"/>#    import ipl.pdco
+<a name="645"/>#    ...
+<a name="646"/>#    # A generator which uses every third result from a PCG32 source.
+<a name="647"/>#    r1 := PCG32()
+<a name="648"/>#    r := RandomFromGenerator{ r1.m, Index{ r1.gen(), seq(3, 3) } }
+<a name="649"/>#
+<a name="650"/>#    # A generator which XORs two LCGs' results.
+<a name="651"/>#    r1 := LCG(53, 1, 2^16) ; r2 := LCG(525, 11, 2^16)
+<a name="652"/>#    r := RandomFromGenerator{ r1.m, ixor!Parallel{ r1.gen(), r2.gen() } }
+<a name="653"/># ~
+<a name="654"/>#
+<a name="655"/>class RandomFromGenerator(RandomWithModulus)
+<a name="656"/>   private const
+<a name="657"/>      coex
+<a name="658"/>
+<a name="659"/>   public override get()
+<a name="660"/>      return @coex
+<a name="661"/>   end
+<a name="662"/>
+<a name="663"/>   # The constructor takes the modulus, and the co-expression, the
+<a name="664"/>   # results from which must be integers in the range [0, m).
+<a name="665"/>   #
+<a name="666"/>   public override new(m, coex)
+<a name="667"/>      m := ce_param(m) | fail
+<a name="668"/>      RandomWithModulus.new(m)
+<a name="669"/>      self.coex := coex
+<a name="670"/>      return
+<a name="671"/>   end
+<a name="672"/>end
+<a name="673"/>
+<a name="674"/>#
+<a name="675"/># A `Random` which implements `range()` in terms of `real()`.
+<a name="676"/>#
+<a name="677"/>abstract class RandomFromReal(Random)
+<a name="678"/>   public override range(n)
+<a name="679"/>      return 1 + integer(need_integer(n, 1) * real())
+<a name="680"/>   end
+<a name="681"/>end
+<a name="682"/>
+<a name="683"/>#
+<a name="684"/># This class is a `RandomFromReal` in which a co-expression provides
+<a name="685"/># the values of `real()`.  This enables results from other generators
+<a name="686"/># to be easily modified or combined.
+<a name="687"/>#
+<a name="688"/>class RandomFromRealGenerator(RandomFromReal)
+<a name="689"/>   private const
+<a name="690"/>      coex
+<a name="691"/>
+<a name="692"/>   public override real()
+<a name="693"/>      return @coex
+<a name="694"/>   end
+<a name="695"/>
+<a name="696"/>   # The constructor takes a co-expression, the results from which
+<a name="697"/>   # must be reals in the range [0, 1).
+<a name="698"/>   #
+<a name="699"/>   public new(coex)
+<a name="700"/>      self.coex := coex
+<a name="701"/>      return
+<a name="702"/>   end
+<a name="703"/>end
+<a name="704"/>
+<a name="705"/>#
+<a name="706"/># Combine several `RandomWithModulus` instances, using the scheme
+<a name="707"/># described in
+<a name="708"/>#    &lt;https://en.wikipedia.org/wiki/Combined_linear_congruential_generator&gt;
+<a name="709"/>#
+<a name="710"/>class CombinedRandom(RandomWithModulus, HasCloseUnderlying)
+<a name="711"/>   private const
+<a name="712"/>      r
+<a name="713"/>
+<a name="714"/>   public override get()
+<a name="715"/>      local i, o, e
+<a name="716"/>      o := 1
+<a name="717"/>      i := 0
+<a name="718"/>      every e := !r do {
+<a name="719"/>         i +:= o * e.get()
+<a name="720"/>         o := -o
+<a name="721"/>      }
+<a name="722"/>      i := mod(i, m - 1)
+<a name="723"/>      return if i = 0 then m - 1 else i
+<a name="724"/>   end
+<a name="725"/>
+<a name="726"/>   public override close()
+<a name="727"/>      if \close_underlying_flag then
+<a name="728"/>         lclose(r) | fail
+<a name="729"/>      link
+<a name="730"/>   end
+<a name="731"/>
+<a name="732"/>   #
+<a name="733"/>   # The constructor accepts several `RandomWithModulus` instances.
+<a name="734"/>   #
+<a name="735"/>   public override new(r[])
+<a name="736"/>      every need_instance(!r, RandomWithModulus)
+<a name="737"/>      r := mergesort(r, field_cmp("m", rev_internal_cmp))
+<a name="738"/>      RandomWithModulus.new(r[1].m)
+<a name="739"/>      self.r := r
+<a name="740"/>      return
+<a name="741"/>   end
+<a name="742"/>end
+</pre></body></html>

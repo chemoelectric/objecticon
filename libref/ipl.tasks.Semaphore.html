@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Semaphore</title></head><body>
+<h1>Semaphore</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="ipl.tasks-package.html" target="listFrame">ipl.tasks</a></dd>
+</dl><p/>
+A semaphore implementation using <code><a href="io.Task.html" target="displayFrame">io.Task</a></code>s.
+<p/><a href="ipl.tasks-tasks.icn.html#7" target="displayFrame">Source - tasks.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#new">new()</a>
+<a href="#poll">poll()</a>
+<a href="#queuing">queuing()</a>
+<a href="#signal">signal()</a>
+<a href="#wait">wait()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#n">n</a>
+<a href="#wl">wl</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="new"/>
+<h3>new(n)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new semaphore with initial value <code>n</code>, default 0.
+<p/><a href="ipl.tasks-tasks.icn.html#101" target="displayFrame">Source - tasks.icn </a>
+</dd>
+</dl><hr>
+<a name="poll"/>
+<h3>poll(l, t, timeout)</h3>
+public static<p/>
+<dl>
+<dd>
+This is similar to <code><a href="ipl.tasks.Semaphore.html#wait">wait</a></code>, but waits for one of a list of
+semaphores to become available.  On success, the semaphore
+obtained is returned.  Note that the order of <code>l</code> is important,
+with earlier entries having preference over later ones.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - the list of <code><a href="ipl.tasks.Semaphore.html" target="displayFrame">Semaphore</a></code>s to wait for.
+</dd>
+<dd>
+<code>t</code> - the optional, current <code><a href="io.Task.html" target="displayFrame">io.Task</a></code> which may be put to sleep.
+</dd>
+<dd>
+<code>timeout</code> - the optional sleep timeout; ignored if <code>t</code> is null.
+</dd>
+</dl>
+<p/><a href="ipl.tasks-tasks.icn.html#61" target="displayFrame">Source - tasks.icn </a>
+</dd>
+</dl><hr>
+<a name="queuing"/>
+<h3>queuing()</h3>
+public<p/>
+<dl>
+<dd>
+Return the number of tasks queued, waiting for the semaphore.
+<p/><a href="ipl.tasks-tasks.icn.html#94" target="displayFrame">Source - tasks.icn </a>
+</dd>
+</dl><hr>
+<a name="signal"/>
+<h3>signal()</h3>
+public<p/>
+<dl>
+<dd>
+Perform a signal on the semaphore.
+<p/><a href="ipl.tasks-tasks.icn.html#49" target="displayFrame">Source - tasks.icn </a>
+</dd>
+</dl><hr>
+<a name="wait"/>
+<h3>wait(t, timeout)</h3>
+public<p/>
+<dl>
+<dd>
+Perform a wait on the semaphore.
+<p/>
+If the semaphore <code><a href="ipl.tasks.Semaphore.html#n">n</a></code> is positive, then it is decremented and the
+method succeeds immediately.
+<p/>
+Otherwise, if <code>t</code> is null, then the method fails immediately.
+<p/>
+If <code>t</code> is not null, then it specifies an <code><a href="io.Task.html" target="displayFrame">io.Task</a></code>, which will be
+put to sleep with the given timeout (which may be null), to wait
+for the semaphore to become available.  After the task awakes,
+the method succeeds if the caller now holds the semaphore, but
+fails otherwise (for example if the sleep timed out).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - the optional, current <code><a href="io.Task.html" target="displayFrame">io.Task</a></code> which may be put to sleep.
+</dd>
+<dd>
+<code>timeout</code> - the optional sleep timeout; ignored if <code>t</code> is null.
+</dd>
+</dl>
+<p/><a href="ipl.tasks-tasks.icn.html#16" target="displayFrame">Source - tasks.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="n"/>
+<h3>n</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.tasks-tasks.icn.html#11" target="displayFrame">Source - tasks.icn </a>
+</dd>
+</dl><hr>
+<a name="wl"/>
+<h3>wl</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.tasks-tasks.icn.html#13" target="displayFrame">Source - tasks.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,297 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Encode</title></head><body>
+<h1>Encode</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.Stream.html" target="displayFrame">io.Stream</a><br>
+<a href="util.HasCloseUnderlying.html" target="displayFrame">util.HasCloseUnderlying</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+<p/><a href="lang-codec.icn.html#146" target="displayFrame">Source - codec.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="lang.Encode.html">lang.Encode</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#in">in()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#begin">begin()</a>
+<a href="#begin1">begin1()</a>
+<a href="#check_program">check_program()</a>
+<a href="#close">close()</a>
+<a href="#encode">encode()</a>
+<a href="#encode_methp">encode_methp()</a>
+<a href="#encode_string">encode_string()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#get_proc_code">get_proc_code()</a>
+<a href="#line_out">line_out()</a>
+<a href="#new">new()</a>
+<a href="#note_seen">note_seen()</a>
+<a href="#out">out()</a>
+<a href="#set_allow_binary">set_allow_binary()</a>
+<a href="#set_fast">set_fast()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#allow_binary_flag">allow_binary_flag</a>
+<a href="#fast_flag">fast_flag</a>
+<a href="#file">file</a>
+<a href="#seen">seen</a>
+<a href="#tag_count">tag_count</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="begin"/>
+<h3>begin(o)</h3>
+public<p/>
+<dl>
+<dd>
+Reset everything and output a new object.
+<p/><a href="lang-codec.icn.html#156" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="begin1"/>
+<h3>begin1(o)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#168" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="check_program"/>
+<h3>check_program(o, p)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#246" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="lang-codec.icn.html#186" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="encode"/>
+<h3>encode(o)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#250" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="encode_methp"/>
+<h3>encode_methp(mp)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#205" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="encode_string"/>
+<h3>encode_string(s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#192" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="lang-codec.icn.html#182" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="get_proc_code"/>
+<h3>get_proc_code(f)</h3>
+private static<p/>
+<dl>
+<dd>
+Get a code for a procedure value; the first char is "F" for a
+builtin function like upto, "K" for a keyword function, "1","2"
+or "3" for a builtin operator like "+" or "||", "P" for a
+procedure and "M" for a (static) method.
+<p/><a href="lang-codec.icn.html#213" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="line_out"/>
+<h3>line_out(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#388" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(file)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#412" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="note_seen"/>
+<h3>note_seen(o)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#174" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="out"/>
+<h3>out(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#out">out()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="lang-codec.icn.html#178" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="set_allow_binary"/>
+<h3>set_allow_binary(s)</h3>
+public<p/>
+<dl>
+<dd>
+Indicate whether strings may be output as raw binary.  This will
+be faster for long strings such as jpeg images.  Default is no.
+<p/><a href="lang-codec.icn.html#403" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fast"/>
+<h3>set_fast(s)</h3>
+public<p/>
+<dl>
+<dd>
+Indicate whether the output should be in "fast" mode; that is
+indicate to any custom object encoders that there is no
+requirement to make the output robust against underlying
+structure changes to objects.
+<p/><a href="lang-codec.icn.html#392" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="allow_binary_flag"/>
+<h3>allow_binary_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#154" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="fast_flag"/>
+<h3>fast_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#153" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="file"/>
+<h3>file</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#150" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="seen"/>
+<h3>seen</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#149" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+<a name="tag_count"/>
+<h3>tag_count</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-codec.icn.html#148" target="displayFrame">Source - codec.icn </a>
+</dd>
+</dl><hr>
+</body></html>

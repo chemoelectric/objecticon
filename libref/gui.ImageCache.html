@@ -1,0 +1,272 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ImageCache</title></head><body>
+<h1>ImageCache</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+<p/><a href="gui-imagecache.icn.html#55" target="displayFrame">Source - imagecache.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cache_window">cache_window()</a>
+<a href="#copy_key">copy_key()</a>
+<a href="#copy_key_with_resize">copy_key_with_resize()</a>
+<a href="#copy_name">copy_name()</a>
+<a href="#get">get()</a>
+<a href="#get_cached_window">get_cached_window()</a>
+<a href="#get_key">get_key()</a>
+<a href="#get_key_with_resize">get_key_with_resize()</a>
+<a href="#get_named_image">get_named_image()</a>
+<a href="#get_scaled_svg">get_scaled_svg()</a>
+<a href="#get_scaled_svg_key">get_scaled_svg_key()</a>
+<a href="#get_scaled_svg_key_alt">get_scaled_svg_key_alt()</a>
+<a href="#get_with_resize">get_with_resize()</a>
+<a href="#init">init()</a>
+<a href="#load">load()</a>
+<a href="#load_pixels">load_pixels()</a>
+<a href="#name_image">name_image()</a>
+<a href="#show">show()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#imap">imap</a>
+<a href="#names">names</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="cache_window"/>
+<h3>cache_window(key, win)</h3>
+public static<p/>
+<dl>
+<dd>
+Place an entry into the window cache with the given key.  The
+window should not be subsequently closed.  It is a runtime error
+if the key already exists in the table.
+<p/><a href="gui-imagecache.icn.html#157" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_key"/>
+<h3>copy_key(new_key, key)</h3>
+public static<p/>
+<dl>
+<dd>
+Given an existing key, add an entry to the window cache with
+<code>new_key</code>, pointing to the same window.  Fails if <code>key</code> is not an
+existing key into the image table.
+<p/><a href="gui-imagecache.icn.html#170" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_key_with_resize"/>
+<h3>copy_key_with_resize(new_key, s, width, height, win)</h3>
+public static<p/>
+<dl>
+<dd>
+Convenient method to combine <code><a href="gui.ImageCache.html#copy_key">copy_key</a></code> and <code><a href="gui.ImageCache.html#get_key_with_resize">get_key_with_resize</a></code>
+<p/><a href="gui-imagecache.icn.html#262" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_name"/>
+<h3>copy_name(new_key, key)</h3>
+public static<p/>
+<dl>
+<dd>
+Given an existing key, add an entry to the name-data table with
+<code>new_key</code>, pointing to the same data.  Fails if <code>key</code> is not an
+existing key into the data table.
+<p/><a href="gui-imagecache.icn.html#140" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get"/>
+<h3>get(s, win)</h3>
+public static<p/>
+<dl>
+<dd>
+Load an image, using the cache if possible.  The parameter <code>s</code>
+should be either a file name, or the name of an image set by
+<code><a href="gui.ImageCache.html#name_image">name_image()</a></code>.  On a successful load, the image is stored in the
+cache for future use, and thus should not be closed after use.
+<p/>
+In this and subsequent methods, <code>win</code> is a <code><a href="graphics.Window.html" target="displayFrame">Window</a></code>.  This
+parameter is only required if the image data in question is an
+image string.  The window is then used to provide the foreground
+and background palette colours.
+<p/><a href="gui-imagecache.icn.html#187" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_cached_window"/>
+<h3>get_cached_window(key)</h3>
+public static<p/>
+<dl>
+<dd>
+Return an entry in the window cache, or fail if the key is not
+present.
+<p/><a href="gui-imagecache.icn.html#179" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_key"/>
+<h3>get_key(s, win)</h3>
+public static<p/>
+<dl>
+<dd>
+This is the same as <code><a href="gui.ImageCache.html#get">get</a></code>, but returns the key into the cached
+window map, rather than the window.  If it succeeds, then the
+returned key will be in the map, and the window can be retrieved
+by <code><a href="gui.ImageCache.html#get_cached_window">get_cached_window</a></code>.
+<p/><a href="gui-imagecache.icn.html#202" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_key_with_resize"/>
+<h3>get_key_with_resize(s, width, height, win)</h3>
+public static<p/>
+<dl>
+<dd>
+Like <code><a href="gui.ImageCache.html#get_with_resize">get_with_resize</a></code>, but returns the key rather than the
+window.
+<p/><a href="gui-imagecache.icn.html#277" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_named_image"/>
+<h3>get_named_image(name)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the data previously set with <code><a href="gui.ImageCache.html#name_image">name_image</a></code>.  Fails if the
+name is unknown.
+<p/><a href="gui-imagecache.icn.html#149" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_scaled_svg"/>
+<h3>get_scaled_svg(s, width, height)</h3>
+public static<p/>
+<dl>
+<dd>
+This function takes an SVG filename, or key to named SVG data set
+by <code><a href="gui.ImageCache.html#name_image">name_image()</a></code> (ie, an xml document), <code>s</code>, scales the SVG to
+the given size, and returns a cached window.
+<p/><a href="gui-imagecache.icn.html#319" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_scaled_svg_key"/>
+<h3>get_scaled_svg_key(s, width, height)</h3>
+public static<p/>
+<dl>
+<dd>
+Like <code><a href="gui.ImageCache.html#get_scaled_svg">get_scaled_svg</a></code>, but returns the key rather than the window.
+<p/><a href="gui-imagecache.icn.html#328" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_scaled_svg_key_alt"/>
+<h3>get_scaled_svg_key_alt(s, alt_s, width, height)</h3>
+public static<p/>
+<dl>
+<dd>
+A convenient function to try to get a scaled SVG from the given
+data <code>s</code>, but if SVG capability is not available then to use the
+alternative conventional image <code>alt_s</code>, resized in either case to
+the given dimensions.
+<p/><a href="gui-imagecache.icn.html#358" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="get_with_resize"/>
+<h3>get_with_resize(s, width, height, win)</h3>
+public static<p/>
+<dl>
+<dd>
+This is like <code><a href="gui.ImageCache.html#get">get</a></code>, but the resulting cached window will be of
+the given dimensions.
+<p/><a href="gui-imagecache.icn.html#269" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-imagecache.icn.html#60" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="load"/>
+<h3>load(s, win)</h3>
+public static<p/>
+<dl>
+<dd>
+Load an image without using the cache.  The parameter <code>s</code> should
+be either a file name, or the name of an image set by
+<code><a href="gui.ImageCache.html#name_image">name_image()</a></code>.  It may also be raw image data (unlike <code><a href="gui.ImageCache.html#get">get</a></code>).
+The returned image should be closed after use.
+<p/><a href="gui-imagecache.icn.html#233" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="load_pixels"/>
+<h3>load_pixels(s, win)</h3>
+public static<p/>
+<dl>
+<dd>
+This is like <code><a href="gui.ImageCache.html#load">load</a></code>, but a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> is returned instead of a
+<code><a href="graphics.Window.html" target="displayFrame">Window</a></code>.
+<p/><a href="gui-imagecache.icn.html#247" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="name_image"/>
+<h3>name_image(name, data)</h3>
+public static<p/>
+<dl>
+<dd>
+Associate image data (eg gif file data), with a name.  The data
+must be either a string, or a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> instance.  In the latter
+case, the instance must never be closed.
+<p/>
+The name can then be passed to <code><a href="gui.ImageCache.html#get">get</a></code> or <code><a href="gui.ImageCache.html#load">load</a></code> to retrieve a
+window with the corresponding image.  It is a runtime error if
+the key already exists in the table.
+<p/><a href="gui-imagecache.icn.html#122" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="show"/>
+<h3>show()</h3>
+public static<p/>
+<dl>
+<dd>
+Useful debug function to print the contents of the cache.
+<p/><a href="gui-imagecache.icn.html#371" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="imap"/>
+<h3>imap</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-imagecache.icn.html#57" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+<a name="names"/>
+<h3>names</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-imagecache.icn.html#58" target="displayFrame">Source - imagecache.icn </a>
+</dd>
+</dl><hr>
+</body></html>

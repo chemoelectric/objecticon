@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>buttongroup.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: buttongroup.icn 7415 2019-01-25 16:51:58Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>#
+<a name="12"/># This class groups several Buttons together.  Then, when the
+<a name="13"/># mouse is clicked down on one of the Buttons and then dragged
+<a name="14"/># onto another before being released, the other Button will go
+<a name="15"/># "down".  This is the common behaviour for buttons in a bar
+<a name="16"/># along the top of an application.
+<a name="17"/># 
+<a name="18"/># NB - A Button must be added to the `ButtonGroup` and the
+<a name="19"/># `Dialog` too.
+<a name="20"/>#
+<a name="21"/># Example :-
+<a name="22"/># ~
+<a name="23"/>#   bg := ButtonGroup()
+<a name="24"/>#   b := TextButton()
+<a name="25"/>#   b.set_label("Okay")
+<a name="26"/>#   self.add(b)
+<a name="27"/>#   bg.add(b)
+<a name="28"/># ~
+<a name="29"/>class ButtonGroup()
+<a name="30"/>   public 
+<a name="31"/>      buttons
+<a name="32"/>
+<a name="33"/>   #
+<a name="34"/>   # Add the given `Button` to the `ButtonGroup`.
+<a name="35"/>   # :Parameters :
+<a name="36"/>   # :  `c` - The `Button` to add
+<a name="37"/>   #
+<a name="38"/>   public add(c)
+<a name="39"/>      insert(self.buttons, c)
+<a name="40"/>      c.set_parent_button_group(self)
+<a name="41"/>      link
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   #
+<a name="45"/>   # Remove the given `Button` from the `ButtonGroup`.
+<a name="46"/>   # :Parameters :
+<a name="47"/>   # :  `c` - The `Button` to remove
+<a name="48"/>   #
+<a name="49"/>   public remove(c)
+<a name="50"/>      delete(self.buttons, c)
+<a name="51"/>      c.set_parent_button_group()
+<a name="52"/>      link
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   public new()
+<a name="56"/>      self.buttons := set()
+<a name="57"/>      return
+<a name="58"/>   end
+<a name="59"/>end
+<a name="60"/>
+</pre></body></html>

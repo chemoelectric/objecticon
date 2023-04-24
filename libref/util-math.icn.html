@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>math.icn</title></head><body><pre>
+<a name="1"/>package util
+<a name="2"/>
+<a name="3"/>#
+<a name="4"/># This class provides some mathematical constants and static methods
+<a name="5"/># to call some C library math functions.
+<a name="6"/>#
+<a name="7"/>final abstract class Math()
+<a name="8"/>   public static const
+<a name="9"/>      E, PHI, PI
+<a name="10"/>
+<a name="11"/>   private static init()
+<a name="12"/>      PHI := 1.618033988749894848204586834365638117720309180
+<a name="13"/>      PI := 3.14159265358979323846264338327950288419716939937511
+<a name="14"/>      E := 2.71828182845904523536028747135266249775724709369996
+<a name="15"/>   end
+<a name="16"/>
+<a name="17"/>   #
+<a name="18"/>   # With two parameters, return the result of `atan2`; with one
+<a name="19"/>   # return `atan`.
+<a name="20"/>   #
+<a name="21"/>   public static native atan(a, b)
+<a name="22"/>
+<a name="23"/>   #
+<a name="24"/>   # Return the natural logarithm of `x`, or optionally the logarithm
+<a name="25"/>   # to base `b`.
+<a name="26"/>   #
+<a name="27"/>   public static native log(x, b)
+<a name="28"/>
+<a name="29"/>   public static native acos(x)
+<a name="30"/>   public static native asin(x)
+<a name="31"/>   public static native cos(x)
+<a name="32"/>   public static native dtor(x)
+<a name="33"/>   public static native rtod(x)
+<a name="34"/>   public static native tan(x)
+<a name="35"/>   public static native exp(x)
+<a name="36"/>   public static native sin(x)
+<a name="37"/>   public static native sqrt(x)
+<a name="38"/>end
+</pre></body></html>

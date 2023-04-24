@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>pbkform.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     pbkform.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to process HP95 phone book files
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  Icon procedure set to read and write HP95LX phone book (.pbk) files.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/># HP 95LX Phone Book File Format
+<a name="22"/># 
+<a name="23"/># The HP 95LX Phone Book file is structured as a file identification 
+<a name="24"/># record, followed by a variable number of phone book data records, 
+<a name="25"/># and terminated by an end of file record.  Each data record contains
+<a name="26"/># the information for one phone book entry.
+<a name="27"/># 
+<a name="28"/># The format of these phone book records is described below.  In the
+<a name="29"/># descriptions, the type &lt;int&gt; refers to a two byte integer stored least 
+<a name="30"/># significant byte first, the type &lt;char&gt; refers to a one byte integer, 
+<a name="31"/># and the type &lt;ASCII&gt; refers to a string of ASCII characters.
+<a name="32"/># 
+<a name="33"/># HP 95LX Phone Book File Identification Record:
+<a name="34"/># 
+<a name="35"/># Byte Offset      Name            Type     Contents
+<a name="36"/># 
+<a name="37"/># 0                ProductCode     int      -2 (FEh, FFh)
+<a name="38"/># 2                ReleaseNum      int      1 (01h, 00h)
+<a name="39"/># 4                FileType        char     3 (03h)   
+<a name="40"/># 
+<a name="41"/>############################################################################
+<a name="42"/>#
+<a name="43"/>#  Links: bkutil
+<a name="44"/>#
+<a name="45"/>############################################################################
+<a name="46"/>#
+<a name="47"/>#  See also: pbkutil.icn, abkform.icn
+<a name="48"/>#
+<a name="49"/>############################################################################
+<a name="50"/>
+<a name="51"/>package ipl.pbkform
+<a name="52"/>
+<a name="53"/>import
+<a name="54"/>   io(reads, writes),
+<a name="55"/>   ipl.bkutil(bk_int, bk_read_int)
+<a name="56"/>
+<a name="57"/>record pbk_id(releaseNum,fileType)
+<a name="58"/>
+<a name="59"/>procedure pbk_write_id(f)
+<a name="60"/>   writes(f,"\xfe\xff\x01\x00\x03")
+<a name="61"/>   return
+<a name="62"/>end
+<a name="63"/>
+<a name="64"/>procedure pbk_read_id(f)
+<a name="65"/>   bk_read_int(f) = 16rfffe | fail
+<a name="66"/>   return pbk_id(bk_read_int(f),ord(reads(f)))
+<a name="67"/>end
+<a name="68"/>
+<a name="69"/># 
+<a name="70"/># HP 95LX Phone Book Data Record:
+<a name="71"/># 
+<a name="72"/># Byte Offset      Name            Type     Contents
+<a name="73"/># 
+<a name="74"/># 0                RecordType      char     1 (01h)
+<a name="75"/># 1                RecordLength    int      Number of bytes in remainder
+<a name="76"/>#                                           of this data record, see note
+<a name="77"/>#                                           below.
+<a name="78"/># 3                NameLength      char     Length of name text in bytes.
+<a name="79"/># 4                NumberLength    char     Length on number text in bytes.
+<a name="80"/># 5                AddressLength   int      Length of address text in bytes.
+<a name="81"/># 7                NameText        ASCII    Name text, 30 characters maximum.
+<a name="82"/># 7+NameLength     NumberText      ASCII    Number text, 30 characters maximum.
+<a name="83"/># 7+NameLength+
+<a name="84"/>#   NumberLength   AddressText     ASCII    Address text where the null 
+<a name="85"/>#                                           character is used as the line 
+<a name="86"/>#                                           terminator.  Addresses are limited
+<a name="87"/>#                                           to a maximum of 8 lines of 39
+<a name="88"/>#                                           characters per line (not counting
+<a name="89"/>#                                           the line terminator).
+<a name="90"/># 
+<a name="91"/>record pbk_data(name,number,address)
+<a name="92"/>
+<a name="93"/>procedure pbk_write_data(f,data)
+<a name="94"/>   local name,number,address
+<a name="95"/>   name := \data.name | ""
+<a name="96"/>   number := \data.number | ""
+<a name="97"/>   address := \data.address | ""
+<a name="98"/>   writes(f,"\x01",bk_int(*name + *number + *address + 4),char(*name),
+<a name="99"/>	 char(*number),bk_int(*address),name,number,address)
+<a name="100"/>   return data
+<a name="101"/>end
+<a name="102"/>
+<a name="103"/>procedure pbk_read_data(f,id)
+<a name="104"/>   local next_rec,name_len,number_len,address_len,data
+<a name="105"/>   (reads(f) == "\x01" | (f.seek(f.tell() - 1),&amp;fail) &amp;
+<a name="106"/>   next_rec := bk_read_int(f) + f.tell() &amp;
+<a name="107"/>   name_len := ord(reads(f)) &amp;
+<a name="108"/>   number_len := ord(reads(f)) &amp;
+<a name="109"/>   address_len := bk_read_int(f) &amp;
+<a name="110"/>   data := pbk_data(reads(f,0 ~= name_len) | "",reads(f,0 ~= number_len) | "",
+<a name="111"/>	 reads(f,0 ~= address_len) | "") | fail &amp;
+<a name="112"/>   f.seek(next_rec)) | fail
+<a name="113"/>   return data
+<a name="114"/>end
+<a name="115"/>
+<a name="116"/>#
+<a name="117"/># HP 95LX Phone Book End of File Record:
+<a name="118"/># 
+<a name="119"/># Byte Offset      Name            Type     Contents
+<a name="120"/># 
+<a name="121"/># 0                RecordType     char      2 (02h)
+<a name="122"/># 1                RecordLength   int       0 (00h, 00h)
+<a name="123"/># 
+<a name="124"/>procedure pbk_write_end(f)
+<a name="125"/>   writes(f,"\x02\x00\x00")
+<a name="126"/>   return
+<a name="127"/>end
+<a name="128"/>
+<a name="129"/>procedure pbk_read_end(f,id)
+<a name="130"/>   (reads(f) == "\x02" &amp; reads(f,2)) | fail
+<a name="131"/>   return
+<a name="132"/>end
+<a name="133"/>
+<a name="134"/># 
+<a name="135"/># 
+<a name="136"/># Note: Files created by the Phone Book application may contain 
+<a name="137"/># some padding following the last field of some data records.  Hence,
+<a name="138"/># the RecordLength field must be used to determine the start of the
+<a name="139"/># next record.  Phone book files created by other programs need not
+<a name="140"/># have any padding.
+</pre></body></html>

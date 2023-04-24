@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Format</title></head><body>
+<h1>Format</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+</dl><p/>
+<p/><a href="util-format.icn.html#13" target="displayFrame">Source - format.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cset_unescape">cset_unescape()</a>
+<a href="#esc1">esc1()</a>
+<a href="#hex_dig">hex_dig()</a>
+<a href="#init">init()</a>
+<a href="#int_to_string">int_to_string()</a>
+<a href="#int_to_words">int_to_words()</a>
+<a href="#norm">norm()</a>
+<a href="#numeric_to_string">numeric_to_string()</a>
+<a href="#oct_dig">oct_dig()</a>
+<a href="#shell_escape">shell_escape()</a>
+<a href="#string_to_int">string_to_int()</a>
+<a href="#unescape">unescape()</a>
+<a href="#unescape_char">unescape_char()</a>
+<a href="#unescape_ctl">unescape_ctl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#DECIMAL_POINT">DECIMAL_POINT</a>
+<a href="#SIG_DIGITS">SIG_DIGITS</a>
+<a href="#THOUSANDS_SEPARATOR">THOUSANDS_SEPARATOR</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="cset_unescape"/>
+<h3>cset_unescape(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Remove escape sequences from <code>s</code>, but return the corresponding cset rather than
+a string.
+<p/><a href="util-format.icn.html#291" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="esc1"/>
+<h3>esc1()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#255" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="hex_dig"/>
+<h3>hex_dig(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#237" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#19" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="int_to_string"/>
+<h3>int_to_string(subject, base, p)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert an integer to a string.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>base</code> - The desired base of the result, default 16
+</dd>
+<dd>
+<code>p</code> - The minimum width of the result, padding with zeroes
+if necessary.
+</dd>
+</dl>
+<p/><a href="util-format.icn.html#61" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="int_to_words"/>
+<h3>int_to_words(subject)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert the subject integer into words, eg 231 to "Two Hundred and Thirty-One"
+<p/><a href="util-format.icn.html#378" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="norm"/>
+<h3>norm(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#179" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="numeric_to_string"/>
+<h3>numeric_to_string(subject, p, f)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a numeric to a string.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>p</code> - The number of decimal places to produce (default 4).
+</dd>
+<dd>
+<code>f</code> -  A cset of flags.  If c contains 'e' then the output is
+in scientific notation.  'E' is the same, but uses a
+a capital "E" in the result. If c contains ',' then commas
+are introduced into the non-fractional part of the number;
+if c contains '+' then a leading + is added to positive
+numbers.  If c contains 's' then trailing fractional
+zeroes are replaced with spaces, whilst 'z' means drop
+such zeroes altogether.  If c contains 'v' then any
+significant digits beyond <code><a href="util.Format.html#SIG_DIGITS">SIG_DIGITS</a></code> are output
+verbatim; otherwise these are replaced by zeroes, since
+they are usually meaningless.
+</dd>
+</dl>
+<p/><a href="util-format.icn.html#94" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="oct_dig"/>
+<h3>oct_dig()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#244" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="shell_escape"/>
+<h3>shell_escape(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a string into shell format by escaping certain special
+shell characters.
+<p/><a href="util-format.icn.html#350" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="string_to_int"/>
+<h3>string_to_int(s, base)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a string to an integer.  Unlike the idiomatic
+<code>integer("16r" || s)</code> technique, this does not create a temporary
+string.  It is therefore suitable for use in loops which build up
+a lengthy concatenated string result.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - The input string
+</dd>
+<dd>
+<code>base</code> - The desired base of the result, default 16
+<p/>
+</dd>
+</dl>
+<p/><a href="util-format.icn.html#26" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="unescape"/>
+<h3>unescape(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Remove escape sequences from <code>s</code>.
+<p/><a href="util-format.icn.html#259" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="unescape_char"/>
+<h3>unescape_char()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#221" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="unescape_ctl"/>
+<h3>unescape_ctl()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#251" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="DECIMAL_POINT"/>
+<h3>DECIMAL_POINT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#16" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="SIG_DIGITS"/>
+<h3>SIG_DIGITS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#15" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+<a name="THOUSANDS_SEPARATOR"/>
+<h3>THOUSANDS_SEPARATOR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-format.icn.html#17" target="displayFrame">Source - format.icn </a>
+</dd>
+</dl><hr>
+</body></html>

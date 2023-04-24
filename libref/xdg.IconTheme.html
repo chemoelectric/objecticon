@@ -1,0 +1,282 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>IconTheme</title></head><body>
+<h1>IconTheme</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="xdg-package.html" target="listFrame">xdg</a></dd>
+</dl><p/>
+This class contains static methods for looking up XDG icon theme data.
+<p/><a href="xdg-xdg.icn.html#554" target="displayFrame">Source - xdg.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#build_theme_index">build_theme_index()</a>
+<a href="#dir_set">dir_set()</a>
+<a href="#dir_set1">dir_set1()</a>
+<a href="#dump">dump()</a>
+<a href="#find_absolute_path_or_icon">find_absolute_path_or_icon()</a>
+<a href="#find_absolute_path_or_icon_and_cache">find_absolute_path_or_icon_and_cache()</a>
+<a href="#find_icon">find_icon()</a>
+<a href="#find_icon_and_cache">find_icon_and_cache()</a>
+<a href="#find_icon_helper">find_icon_helper()</a>
+<a href="#gen_theme_directories">gen_theme_directories()</a>
+<a href="#gen_theme_parents">gen_theme_parents()</a>
+<a href="#get_current_theme">get_current_theme()</a>
+<a href="#get_theme_index">get_theme_index()</a>
+<a href="#get_theme_index1">get_theme_index1()</a>
+<a href="#has_icon">has_icon()</a>
+<a href="#init">init()</a>
+<a href="#lookup_fallback_icon">lookup_fallback_icon()</a>
+<a href="#lookup_icon">lookup_icon()</a>
+<a href="#refresh">refresh()</a>
+<a href="#set_theme">set_theme()</a>
+<a href="#setup_icon_fallback_cached_dirs">setup_icon_fallback_cached_dirs()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#FIND_ICON_CACHE">FIND_ICON_CACHE</a>
+<a href="#ICON_FALLBACK_CACHED_DIRS">ICON_FALLBACK_CACHED_DIRS</a>
+<a href="#theme">theme</a>
+<a href="#THEMES">THEMES</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="build_theme_index"/>
+<h3>build_theme_index(theme, tm)</h3>
+private static<p/>
+<dl>
+<dd>
+Build a ThemeIndex object given the name and the ini table.
+<p/><a href="xdg-xdg.icn.html#630" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="dir_set"/>
+<h3>dir_set(dir)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#614" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="dir_set1"/>
+<h3>dir_set1(f)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#603" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="dump"/>
+<h3>dump()</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#581" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_absolute_path_or_icon"/>
+<h3>find_absolute_path_or_icon(icon, size, scale)</h3>
+public static<p/>
+<dl>
+<dd>
+This is like <code><a href="xdg.IconTheme.html#find_icon">find_icon()</a></code>, but <code>icon</code> may optionally be an
+absolute path.  This is permitted in the case of a desktop file's
+"Icon" entry.
+<p/><a href="xdg-xdg.icn.html#704" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_absolute_path_or_icon_and_cache"/>
+<h3>find_absolute_path_or_icon_and_cache(icon, size, scale, exact)</h3>
+public static<p/>
+<dl>
+<dd>
+This is like <code><a href="xdg.IconTheme.html#find_icon_and_cache">find_icon_and_cache()</a></code>, but calls
+<code><a href="xdg.IconTheme.html#find_absolute_path_or_icon">find_absolute_path_or_icon()</a></code> instead.
+<p/><a href="xdg-xdg.icn.html#725" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_icon"/>
+<h3>find_icon(icon, size, scale)</h3>
+public static<p/>
+<dl>
+<dd>
+Find an icon given the icon name (string), integer size, and
+optional real scale, which defaults to <code><a href="gui.Gui.html#SCALE">Gui.SCALE</a></code>.  Note that
+<code>size</code> is treated as an already-scaled value.
+<p/><a href="xdg-xdg.icn.html#685" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_icon_and_cache"/>
+<h3>find_icon_and_cache(icon, size, scale, exact)</h3>
+public static<p/>
+<dl>
+<dd>
+This calls <code><a href="xdg.IconTheme.html#find_icon">find_icon</a></code>, caches the result in <code><a href="gui.ImageCache.html" target="displayFrame">ImageCache</a></code>, and
+returns the cache key.  The parameter <code>exact</code> flag indicates
+whether the found icon should be resized to exactly <code>size</code>.
+<p/><a href="xdg-xdg.icn.html#716" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_icon_helper"/>
+<h3>find_icon_helper(icon, size, scale, theme, tried)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#745" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_theme_directories"/>
+<h3>gen_theme_directories(tm)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#622" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_theme_parents"/>
+<h3>gen_theme_parents(tm)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#626" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_theme"/>
+<h3>get_current_theme()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#733" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="get_theme_index"/>
+<h3>get_theme_index(name)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#676" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="get_theme_index1"/>
+<h3>get_theme_index1(name)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#668" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="has_icon"/>
+<h3>has_icon(cached_dir, icon)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#761" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#567" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="lookup_fallback_icon"/>
+<h3>lookup_fallback_icon(icon)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#757" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="lookup_icon"/>
+<h3>lookup_icon(theme_index, icon, size, scale)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#771" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="refresh"/>
+<h3>refresh()</h3>
+public static<p/>
+<dl>
+<dd>
+Reload all the settings and reset everything.
+<p/><a href="xdg-xdg.icn.html#571" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="set_theme"/>
+<h3>set_theme(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Set the icon theme; fails if the theme is invalid.
+<p/><a href="xdg-xdg.icn.html#592" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_icon_fallback_cached_dirs"/>
+<h3>setup_icon_fallback_cached_dirs()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#657" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="FIND_ICON_CACHE"/>
+<h3>FIND_ICON_CACHE</h3>
+private static<p/>
+<dl>
+<dd>
+A cache of find_icon() results, mapping string key to icon
+<p/><a href="xdg-xdg.icn.html#560" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="ICON_FALLBACK_CACHED_DIRS"/>
+<h3>ICON_FALLBACK_CACHED_DIRS</h3>
+private static<p/>
+<dl>
+<dd>
+A list of CachedDir objects
+<p/><a href="xdg-xdg.icn.html#562" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="theme"/>
+<h3>theme</h3>
+private static readable<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#564" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="THEMES"/>
+<h3>THEMES</h3>
+private static<p/>
+<dl>
+<dd>
+A map of theme names (string) to ThemeIndex objects.
+<p/><a href="xdg-xdg.icn.html#559" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+</body></html>

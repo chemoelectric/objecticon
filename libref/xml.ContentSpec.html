@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ContentSpec</title></head><body>
+<h1>ContentSpec</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+This class represents a node in the parse tree of a content specification,
+as contained in an &lt;!ELEMENT ..&gt; declaration.  The parsed tree represents
+the regular expression used to validate content elements.  Each node
+contains an op and two args.
+<p/><a href="xml-contentspec.icn.html#13" target="displayFrame">Source - contentspec.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="xml.ContentSpec.html">xml.ContentSpec</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#is_mixed">is_mixed()</a>
+<a href="#isnt_mixed">isnt_mixed()</a>
+<a href="#new">new()</a>
+<a href="#object_output">object_output()</a>
+<a href="#pattern_match">pattern_match()</a>
+<a href="#pattern_match_element">pattern_match_element()</a>
+<a href="#print_structure">print_structure()</a>
+<a href="#str">str()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#arg1">arg1</a>
+<a href="#arg2">arg2</a>
+<a href="#is_mixed_flag">is_mixed_flag</a>
+<a href="#op">op</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="is_mixed"/>
+<h3>is_mixed()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-contentspec.icn.html#71" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="isnt_mixed"/>
+<h3>isnt_mixed()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-contentspec.icn.html#75" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(op, arg1, arg2)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-contentspec.icn.html#192" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+Output object
+<p/><a href="xml-contentspec.icn.html#185" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="pattern_match"/>
+<h3>pattern_match(subject, pos)</h3>
+public<p/>
+<dl>
+<dd>
+The recursive element of pattern matching, called by the above.  It returns
+the sequence of initial matches of the pattern in subject, starting from pos.
+<p/><a href="xml-contentspec.icn.html#79" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="pattern_match_element"/>
+<h3>pattern_match_element(el)</h3>
+public<p/>
+<dl>
+<dd>
+Match the given Element with the pattern whose root is this object.
+<p/><a href="xml-contentspec.icn.html#47" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="print_structure"/>
+<h3>print_structure(f, indent)</h3>
+public<p/>
+<dl>
+<dd>
+Print the structure to the given file.  For debugging.
+<p/><a href="xml-contentspec.icn.html#26" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str()</h3>
+public<p/>
+<dl>
+<dd>
+Return a readable representation of this <code><a href="xml.ContentSpec.html" target="displayFrame">ContentSpec</a></code> (and its
+children).
+<p/><a href="xml-contentspec.icn.html#150" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="arg1"/>
+<h3>arg1</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-contentspec.icn.html#22" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="arg2"/>
+<h3>arg2</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-contentspec.icn.html#23" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="is_mixed_flag"/>
+<h3>is_mixed_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-contentspec.icn.html#24" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+<a name="op"/>
+<h3>op</h3>
+public<p/>
+<dl>
+<dd>
+op is always a string, never ucs.
+<p/><a href="xml-contentspec.icn.html#21" target="displayFrame">Source - contentspec.icn </a>
+</dd>
+</dl><hr>
+</body></html>

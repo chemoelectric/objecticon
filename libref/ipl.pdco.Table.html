@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Table</title></head><body>
+<h1>Table(e, def)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.pdco-package.html" target="listFrame">ipl.pdco</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Construct a table from a result sequence.  The expression <code>e</code> should
+produce 2-element lists (or records) representing key-value pairs to
+add to the table.
+<p/>
+An optional second parameter provides a default value for the table.
+<p/>
+For example :-
+<pre>
+   Table{(i := 1 to 4, [i, i * i])}
+</pre>
+produces the table
+<pre>
+   {1-&gt;1, 2-&gt;4, 3-&gt;9, 4-&gt;16}
+</pre>
+<p/><a href="ipl.pdco-pdco.icn.html#629" target="displayFrame">Source - pdco.icn </a>
+<p/>
+</body></html>

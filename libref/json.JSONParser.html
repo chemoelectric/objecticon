@@ -1,0 +1,231 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>JSONParser</title></head><body>
+<h1>JSONParser</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="json-package.html" target="listFrame">json</a></dd>
+</dl><p/>
+<p/><a href="json-jsonparser.icn.html#8" target="displayFrame">Source - jsonparser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#end_check">end_check()</a>
+<a href="#err">err()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#next_token">next_token()</a>
+<a href="#parse">parse()</a>
+<a href="#parse_array">parse_array()</a>
+<a href="#parse_impl">parse_impl()</a>
+<a href="#parse_number">parse_number()</a>
+<a href="#parse_object">parse_object()</a>
+<a href="#parse_string">parse_string()</a>
+<a href="#parse_value">parse_value()</a>
+<a href="#set_false">set_false()</a>
+<a href="#set_null">set_null()</a>
+<a href="#set_true">set_true()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#false">false</a>
+<a href="#null">null</a>
+<a href="#true">true</a>
+<a href="#UNESCAPED_CHAR">UNESCAPED_CHAR</a>
+<a href="#utf8_flag">utf8_flag</a>
+<a href="#WS_CHAR">WS_CHAR</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="end_check"/>
+<h3>end_check(o)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#157" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="err"/>
+<h3>err(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#173" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#19" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#184" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="next_token"/>
+<h3>next_token()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#112" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#178" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_array"/>
+<h3>parse_array()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#116" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_impl"/>
+<h3>parse_impl()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#163" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_number"/>
+<h3>parse_number()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#48" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_object"/>
+<h3>parse_object()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#134" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_string"/>
+<h3>parse_string()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#57" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_value"/>
+<h3>parse_value()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#93" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_false"/>
+<h3>set_false(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a value to represent json "false"; by default <code>&amp;no</code>.
+<p/><a href="json-jsonparser.icn.html#32" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_null"/>
+<h3>set_null(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a value to represent json "null"; by default <code>&amp;null</code>.
+<p/><a href="json-jsonparser.icn.html#40" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_true"/>
+<h3>set_true(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a value to represent json "true"; by default <code>&amp;yes</code>.
+<p/><a href="json-jsonparser.icn.html#24" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="false"/>
+<h3>false</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#16" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="null"/>
+<h3>null</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#17" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="true"/>
+<h3>true</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#15" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="UNESCAPED_CHAR"/>
+<h3>UNESCAPED_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#11" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="utf8_flag"/>
+<h3>utf8_flag</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#14" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+<a name="WS_CHAR"/>
+<h3>WS_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonparser.icn.html#10" target="displayFrame">Source - jsonparser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

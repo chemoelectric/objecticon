@@ -1,0 +1,223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>barchart.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     barchart.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for dynamically growing barchart
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	These procedures draw barcharts that can grow dynamically.
+<a name="18"/>#
+<a name="19"/>#	barchart(win, x, y, dx, dy, sf, n, l, w, b) creates a barchart.
+<a name="20"/>#
+<a name="21"/>#	setbar(bc, n, v)	sets the value of a bar.
+<a name="22"/>#
+<a name="23"/>#	rebar(bc, sf)		redraws a barchart with a new scaling factor.
+<a name="24"/>#
+<a name="25"/>############################################################################
+<a name="26"/>#
+<a name="27"/>#   barchart(win, x, y, dx, dy, sf, n, l, w, b) -- establish a barchart
+<a name="28"/>#
+<a name="29"/>#	win      window
+<a name="30"/>#	x,y      position of base of first bar
+<a name="31"/>#	dx,dy    distance to base of second bar (either dx or dy should be
+<a name="32"/>#		  zero)
+<a name="33"/>#	sf       scaling (pixels per unit of value, + or -, need not be
+<a name="34"/>#		  integer)
+<a name="35"/>#	n        number of bars
+<a name="36"/>#	l,w      length (maximum) and width of one bar
+<a name="37"/>#	b        logarithmic base, if bars are to be scaled logarithmically
+<a name="38"/>#
+<a name="39"/>#	barchart() establishes structures for building a barchart.  Any of the
+<a name="40"/>#	eight possible orthogonal orientations can be selected depending on the
+<a name="41"/>#	signs of dx, dy, and sf.
+<a name="42"/>#
+<a name="43"/>#	The absolute value of sf establishes a linear scaling from barchart
+<a name="44"/>#	values to number of pixels.  Scaling is handled such that a value of 1
+<a name="45"/>#	makes the first mark on a bar and then each increment of sf lengthens
+<a name="46"/>#	the bar by one pixel.  If a bar would exceed the limit then the entire
+<a name="47"/>#	chart is rescaled so that only half the range is then used.
+<a name="48"/>#
+<a name="49"/>#   setbar(bc, n, v) - set bar n of barchart bc to represent value v
+<a name="50"/>#
+<a name="51"/>#	It is assumed that v&gt;0 and that bars never shrink; but they may grow.
+<a name="52"/>#
+<a name="53"/>#   rebar(bc, sf) - redraw barchart with new scaling factor sf.
+<a name="54"/>#
+<a name="55"/>#	sf is assumed to be of the same sign as the previous scaling factor.
+<a name="56"/>#
+<a name="57"/>#   Example:
+<a name="58"/>#
+<a name="59"/>#	Suppose "scores" is a list of scores ranging from 0 to 100.
+<a name="60"/>#	This code fragment dynamically draws a histogram using 21 bins.
+<a name="61"/>#
+<a name="62"/>#	The call to barchart() specifies:
+<a name="63"/>#	    The lower left-hand corner of the barchart is (10, 190).
+<a name="64"/>#	    The next bar is 10 pixels to its right, which would be (20, 190).
+<a name="65"/>#	    The bars grow upward, to smaller y values, so the scaling factor
+<a name="66"/>#	    is negative; each score will grow its bar by 5 pixels.
+<a name="67"/>#	    Each bar grows to a maximum length of 180 pixels; the width is 8.
+<a name="68"/>#	    No base is given, so scaling is linear.
+<a name="69"/>#
+<a name="70"/>#	bc := barchart(win, 10, 190, 10, 0, -5, 21, 180, 8)
+<a name="71"/>#	b := list(21, 0)		# histogram bins
+<a name="72"/>#	every n := !scores do {
+<a name="73"/>#	    i := n / 5			# bin (and bar) number
+<a name="74"/>#	    b[i] +:= 1			# increment bin count
+<a name="75"/>#	    setbar(bc, i, b[i])		# update display
+<a name="76"/>#	    }
+<a name="77"/>#
+<a name="78"/>############################################################################
+<a name="79"/>#
+<a name="80"/>#  Requires:  Version 9 graphics
+<a name="81"/>#
+<a name="82"/>############################################################################
+<a name="83"/>
+<a name="84"/>package ipl.barchart
+<a name="85"/>
+<a name="86"/>import 
+<a name="87"/>   util(Math)
+<a name="88"/>
+<a name="89"/>record BC_rec(win, x, y, dx, dy, sf, n, l, w, b, len, val, round)
+<a name="90"/>
+<a name="91"/># draw barchart
+<a name="92"/>procedure barchart(win, x, y, dx, dy, sf, n, l, w, b)	
+<a name="93"/>   local bc
+<a name="94"/>   bc := BC_rec(win, x, y, dx, dy, sf, n, l, w, b)
+<a name="95"/>   bc.len := list(n, 0)
+<a name="96"/>   bc.val := list(n)
+<a name="97"/>   if sf &gt; 0 then
+<a name="98"/>      bc.round := 0.99999
+<a name="99"/>   else
+<a name="100"/>      bc.round := -0.99999
+<a name="101"/>   rebar(bc, sf)				# clear area
+<a name="102"/>   return bc
+<a name="103"/>end
+<a name="104"/>
+<a name="105"/>
+<a name="106"/>## setbar(bc, n, v) - set bar n of barchart bc to represent value v
+<a name="107"/>#
+<a name="108"/>#  It is assumed that v&gt;0 and that bars never shrink; but they may grow.
+<a name="109"/>
+<a name="110"/># set bar value on barchart
+<a name="111"/>procedure setbar(bc, n, v)			
+<a name="112"/>   local x, y,  oldlen, newlen, incr
+<a name="113"/>
+<a name="114"/>   v := Math.log(v, \bc.b)
+<a name="115"/>   oldlen := bc.len[n] | fail
+<a name="116"/>   newlen := integer(v * bc.sf + bc.round)
+<a name="117"/>
+<a name="118"/>   if abs(newlen) &gt; bc.l then {
+<a name="119"/>      # need to rescale first
+<a name="120"/>      rebar(bc, 0.5 * bc.sf * real(bc.l) / real(abs(newlen-1)))
+<a name="121"/>      return setbar(bc, n, v)
+<a name="122"/>      }
+<a name="123"/>
+<a name="124"/>   # lengthen the bar
+<a name="125"/>   if (incr := newlen - oldlen) ~= 0 then {
+<a name="126"/>      if bc.dx ~= 0 then {
+<a name="127"/>
+<a name="128"/>         # horizontal baseline
+<a name="129"/>         x := bc.x + (n - 1) * bc.dx
+<a name="130"/>         y := bc.y + oldlen
+<a name="131"/>         if incr &lt; 0 then
+<a name="132"/>            bc.win.fill_rectangle(x, y + incr, bc.w, -incr)
+<a name="133"/>         else
+<a name="134"/>            bc.win.fill_rectangle(x, y, bc.w, incr)
+<a name="135"/>         }
+<a name="136"/>
+<a name="137"/>      else {
+<a name="138"/>
+<a name="139"/>         # vertical baseline
+<a name="140"/>         x := bc.x + oldlen
+<a name="141"/>         y := bc.y + (n - 1) * bc.dy
+<a name="142"/>         if incr &lt; 0 then
+<a name="143"/>            bc.win.fill_rectangle(x + incr, y, -incr, bc.w)
+<a name="144"/>         else
+<a name="145"/>            bc.win.fill_rectangle(x, y, incr, bc.w)
+<a name="146"/>         }
+<a name="147"/>      bc.len[n] := newlen
+<a name="148"/>      bc.val[n] := v
+<a name="149"/>      }
+<a name="150"/>   return
+<a name="151"/>end
+<a name="152"/>
+<a name="153"/>
+<a name="154"/>## rebar(bc, sf) - redraw barchart with new scaling factor sf.
+<a name="155"/>#
+<a name="156"/>#  sf is assumed to be of the same sign as the previous scaling factor.
+<a name="157"/>
+<a name="158"/># redraw barchart
+<a name="159"/>procedure rebar(bc, sf)				
+<a name="160"/>   local i, l, x, y, dx, dy
+<a name="161"/>
+<a name="162"/>   if bc.sf &gt; 0 then
+<a name="163"/>      l := bc.l
+<a name="164"/>   else
+<a name="165"/>      l := -bc.l
+<a name="166"/>   x := bc.x
+<a name="167"/>   y := bc.y
+<a name="168"/>
+<a name="169"/>   if bc.dx ~= 0 then {
+<a name="170"/>      dx := bc.n * bc.dx
+<a name="171"/>      dy := l
+<a name="172"/>      }
+<a name="173"/>   else {
+<a name="174"/>      dx := l
+<a name="175"/>      dy := bc.n * bc.dy
+<a name="176"/>      }
+<a name="177"/>
+<a name="178"/>   # force all values positive (negative is wrong, but works under OpenWindows!)
+<a name="179"/>   if dx &lt; 0 then {
+<a name="180"/>      x +:= dx
+<a name="181"/>      dx := -dx
+<a name="182"/>      }
+<a name="183"/>   if dy &lt; 0 then {
+<a name="184"/>      y +:= dy
+<a name="185"/>      dy := -dy
+<a name="186"/>      }
+<a name="187"/>   bc.win.erase_area(x, y, dx, dy)
+<a name="188"/>
+<a name="189"/>   bc.len := list(bc.n, 0)
+<a name="190"/>   bc.sf := sf
+<a name="191"/>   every i := 1 to *bc.len do
+<a name="192"/>      setbar(bc, i, \bc.val[i])
+<a name="193"/>   return
+<a name="194"/>end
+<a name="195"/>
+<a name="196"/>
+<a name="197"/>#  ## test program
+<a name="198"/>#  #
+<a name="199"/>#  #  usage:  barchart [dx [dy [sf]]]
+<a name="200"/>#  #
+<a name="201"/>#  #  background is deliberately different in order to see what gets cleared
+<a name="202"/>#
+<a name="203"/>#  procedure main(args)
+<a name="204"/>#     local dx, dy, sf, win, n, l, bc, i
+<a name="205"/>#     dx := args[1] | 5
+<a name="206"/>#     dy := args[2] | 0
+<a name="207"/>#     sf := args[3] | -1
+<a name="208"/>#     win := open("bars", "g", "width=500", "height=500")
+<a name="209"/>#     l := list(50, 0)
+<a name="210"/>#     bc := barchart(win, 250, 250, dx, dy, sf, *l, 200, 4)
+<a name="211"/>#     Fg(win, "papayawhip")
+<a name="212"/>#     FillRectangle(win, 0, 0, 500, 500)
+<a name="213"/>#     Fg(win, "black")
+<a name="214"/>#     every 1 to 5000 do {
+<a name="215"/>#        i := ?5 + ?5 + integer(10 * log(1+20*?0))	# nonuniform random bar
+<a name="216"/>#        setbar(bc, i, l[i] +:= 1)
+<a name="217"/>#        flush(win)
+<a name="218"/>#        }
+<a name="219"/>#     while not upto('qQ', reads(win))
+<a name="220"/>#     end
+</pre></body></html>

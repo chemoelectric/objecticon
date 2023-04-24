@@ -1,0 +1,583 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>scrollarea.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: scrollarea.icn 8351 2020-07-04 20:22:29Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import graphics, util
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This is a base class for displaying an arbitrarily large object
+<a name="15"/># using a pair of scroll bars.  This specification of the object is
+<a name="16"/># provided by implementing methods in a subclass.
+<a name="17"/>#
+<a name="18"/>abstract class ScrollArea(Component, HasUseWheel)
+<a name="19"/>   public 
+<a name="20"/>      hsb,              
+<a name="21"/>      vsb,
+<a name="22"/>      view,
+<a name="23"/>      subject_width,       
+<a name="24"/>      subject_height,
+<a name="25"/>      default_key_listener
+<a name="26"/>
+<a name="27"/>   public static const
+<a name="28"/>      SCROLLBAR_SIZE
+<a name="29"/>
+<a name="30"/>   private static init()
+<a name="31"/>      SCROLLBAR_SIZE := env_scale("OI_SCROLLAREA_SCROLLBAR_SIZE") | 
+<a name="32"/>         ScrollBar.DEFAULT_INNER_SIZE + 2 * Gui.BORDER_WIDTH
+<a name="33"/>   end
+<a name="34"/>
+<a name="35"/>   #
+<a name="36"/>   # The x offset into the object we are viewing
+<a name="37"/>   #
+<a name="38"/>   public get_area_x()
+<a name="39"/>      return (\self.hsb).get_value() | 0
+<a name="40"/>   end
+<a name="41"/>
+<a name="42"/>   #
+<a name="43"/>   # The y offset into the object we are viewing
+<a name="44"/>   #
+<a name="45"/>   public get_area_y()
+<a name="46"/>      return (\self.vsb).get_value() | 0
+<a name="47"/>   end
+<a name="48"/>
+<a name="49"/>   #
+<a name="50"/>   # The virtual x position of the subject
+<a name="51"/>   #
+<a name="52"/>   public get_subject_x()
+<a name="53"/>      return self.view.x - get_area_x()
+<a name="54"/>   end
+<a name="55"/>
+<a name="56"/>   #
+<a name="57"/>   # The virtual y position of the subject
+<a name="58"/>   #
+<a name="59"/>   public get_subject_y()
+<a name="60"/>      return self.view.y - get_area_y()
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   #
+<a name="64"/>   # Recompute the scrollbars and redisplay the object.
+<a name="65"/>   #
+<a name="66"/>   public compute_and_invalidate()
+<a name="67"/>      is_live() | fail
+<a name="68"/>      self.set_internal_fields()
+<a name="69"/>      self.invalidate()
+<a name="70"/>      link
+<a name="71"/>   end
+<a name="72"/>
+<a name="73"/>   public override get_default_height(dw)
+<a name="74"/>      return get_default_subject_height(dw -border.get_total_width()) + border.get_total_height()
+<a name="75"/>   end
+<a name="76"/>
+<a name="77"/>   public override get_default_width()
+<a name="78"/>      return get_default_subject_width() + border.get_total_width()
+<a name="79"/>   end
+<a name="80"/>
+<a name="81"/>   public get_default_subject_height()
+<a name="82"/>      return get_subject_height() 
+<a name="83"/>   end
+<a name="84"/>
+<a name="85"/>   public get_default_subject_width()
+<a name="86"/>      return get_subject_width()
+<a name="87"/>   end
+<a name="88"/>
+<a name="89"/>   public override layout()
+<a name="90"/>      self.set_internal_fields()
+<a name="91"/>   end
+<a name="92"/>
+<a name="93"/>   public on_vsb(e)
+<a name="94"/>      self.refresh()
+<a name="95"/>   end
+<a name="96"/>
+<a name="97"/>   public on_hsb(e)
+<a name="98"/>      self.refresh()
+<a name="99"/>   end
+<a name="100"/>
+<a name="101"/>   #
+<a name="102"/>   # Goto a horizontal pos.
+<a name="103"/>   #
+<a name="104"/>   public set_area_x(horiz)
+<a name="105"/>      local t
+<a name="106"/>      horiz := need_integer(horiz)
+<a name="107"/>      if t := (\self.hsb).value then {
+<a name="108"/>         self.hsb.set_value(horiz)
+<a name="109"/>         if hsb.value ~= t then
+<a name="110"/>            self.refresh()
+<a name="111"/>      }
+<a name="112"/>      link
+<a name="113"/>   end
+<a name="114"/>
+<a name="115"/>   #
+<a name="116"/>   # Goto a vertical pos.
+<a name="117"/>   #
+<a name="118"/>   public set_area_y(vert)
+<a name="119"/>      local t
+<a name="120"/>      vert := need_integer(vert)
+<a name="121"/>      if t := (\self.vsb).value then {
+<a name="122"/>         self.vsb.set_value(vert)
+<a name="123"/>         if vsb.value ~= t then
+<a name="124"/>            self.refresh()
+<a name="125"/>      }
+<a name="126"/>      link
+<a name="127"/>   end
+<a name="128"/>
+<a name="129"/>   public predict_view_width(w, sb)
+<a name="130"/>      local w1
+<a name="131"/>      w1 := w - border.get_total_width()
+<a name="132"/>      if \sb then
+<a name="133"/>         w1 -:= SCROLLBAR_SIZE
+<a name="134"/>      return w1
+<a name="135"/>   end
+<a name="136"/>
+<a name="137"/>   public predict_total_width(vw, sb)
+<a name="138"/>      local w1
+<a name="139"/>      w1 := vw + border.get_total_width()
+<a name="140"/>      if \sb then
+<a name="141"/>         w1 +:= SCROLLBAR_SIZE
+<a name="142"/>      return w1
+<a name="143"/>   end
+<a name="144"/>
+<a name="145"/>   public predict_view_height(h, sb)
+<a name="146"/>      local h1
+<a name="147"/>      h1 := h - border.get_total_height()
+<a name="148"/>      if \sb then
+<a name="149"/>         h1 -:= SCROLLBAR_SIZE
+<a name="150"/>      return h1
+<a name="151"/>   end
+<a name="152"/>
+<a name="153"/>   public predict_total_height(vh, sb)
+<a name="154"/>      local h1
+<a name="155"/>      h1 := vh + border.get_total_height()
+<a name="156"/>      if \sb then
+<a name="157"/>         h1 +:= SCROLLBAR_SIZE
+<a name="158"/>      return h1
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   # Ensure the given region (in area co-ordinates) is visible.
+<a name="162"/>   #
+<a name="163"/>   public ensure_region_visible(r)
+<a name="164"/>      if r.y + r.h &gt; get_area_y() + view.h then
+<a name="165"/>         set_area_y(min(r.y, r.y + r.h - view.h))
+<a name="166"/>      else if r.y &lt; get_area_y() then
+<a name="167"/>         set_area_y(r.y)
+<a name="168"/>
+<a name="169"/>      if r.x + r.w &gt; get_area_x() + view.w then
+<a name="170"/>         set_area_x(min(r.x, r.x + r.w - view.w))
+<a name="171"/>      else if r.x &lt; get_area_x() then
+<a name="172"/>         set_area_x(r.x)
+<a name="173"/>
+<a name="174"/>      link
+<a name="175"/>   end
+<a name="176"/>
+<a name="177"/>   # Center the given region (in area co-ordinates) vertically.
+<a name="178"/>   #
+<a name="179"/>   public center_region_vertically(r)
+<a name="180"/>      return set_area_y(r.y + r.h / 2 - view.h / 2)
+<a name="181"/>   end
+<a name="182"/>
+<a name="183"/>   # Center the given region (in area co-ordinates) horizontally.
+<a name="184"/>   #
+<a name="185"/>   public center_region_horizontally(r)
+<a name="186"/>      return set_area_y(r.x + r.w / 2 - view.w / 2)
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   #
+<a name="190"/>   # Set an ideal size (into w_spec/h_spec) based on the given min and max
+<a name="191"/>   # dimensions.
+<a name="192"/>   #
+<a name="193"/>   public set_ideal_size(min_w, max_w, min_h, max_h)
+<a name="194"/>      local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb, pw, ph
+<a name="195"/>
+<a name="196"/>      # Calculate the preferred view size; don't call
+<a name="197"/>      # get_subject_width()/get_subject_height() since
+<a name="198"/>      # get_default_width()/get_default_height() may have been
+<a name="199"/>      # overridden.
+<a name="200"/>      pw := get_preferred_width()
+<a name="201"/>      ph := get_preferred_height(pw)
+<a name="202"/>      pw := predict_view_width(pw)
+<a name="203"/>      ph := predict_view_height(ph)
+<a name="204"/>
+<a name="205"/>      if /max_w then
+<a name="206"/>         need_hsb := 0
+<a name="207"/>      else {
+<a name="208"/>         max_tw := predict_view_width(max_w)
+<a name="209"/>         min_tw := predict_view_width(max_w, &amp;yes)
+<a name="210"/>         if min_tw &gt;= pw then
+<a name="211"/>            need_hsb := 0
+<a name="212"/>         else if max_tw &gt;= pw then
+<a name="213"/>            need_hsb := 1
+<a name="214"/>         else
+<a name="215"/>            need_hsb := 2
+<a name="216"/>      }
+<a name="217"/>
+<a name="218"/>      if /max_h then
+<a name="219"/>         need_vsb := 0
+<a name="220"/>      else {
+<a name="221"/>         max_th := predict_view_height(max_h)
+<a name="222"/>         min_th := predict_view_height(max_h, &amp;yes)
+<a name="223"/>         if min_th &gt;= ph then
+<a name="224"/>            need_vsb := 0
+<a name="225"/>         else if max_th &gt;= ph then
+<a name="226"/>            need_vsb := 1
+<a name="227"/>         else
+<a name="228"/>            need_vsb := 2
+<a name="229"/>      }
+<a name="230"/>
+<a name="231"/>      # ptw(pvw(x))=x
+<a name="232"/>      # ptw(pvw(x,1),1)=x
+<a name="233"/>      # ptw(x) &lt; ptw(x,1)
+<a name="234"/>      # pvw(x) &gt; pvw(x,1)
+<a name="235"/>
+<a name="236"/>      if (need_vsb &lt; 2) &amp; (need_hsb &lt; 2) then {
+<a name="237"/>         # pw &lt;= pvw(max_w)  (since need_hsb=0 or 1)
+<a name="238"/>         # w_spec = ptw(pw) &lt;= ptw(pvw(max_w)) = max_w
+<a name="239"/>         w_spec := predict_total_width(pw)
+<a name="240"/>         h_spec := predict_total_height(ph)
+<a name="241"/>      } else if (need_hsb + need_vsb &gt; 2) then {
+<a name="242"/>         w_spec := max_w
+<a name="243"/>         h_spec := max_h
+<a name="244"/>      } else if (need_hsb = 0) &amp; (need_vsb = 2) then {
+<a name="245"/>         # pw &lt;= pvw(max_w,1) (since need_hsb=0)
+<a name="246"/>         # w_spec = ptw(pw,1) &lt;= ptw(pvw(max_w,1),1) = max_w
+<a name="247"/>         w_spec := predict_total_width(pw, &amp;yes)
+<a name="248"/>         h_spec := max_h
+<a name="249"/>      } else if (need_hsb = 2) &amp; (need_vsb = 0) then {
+<a name="250"/>         w_spec := max_w
+<a name="251"/>         h_spec := predict_total_height(ph, &amp;yes)
+<a name="252"/>      }
+<a name="253"/>
+<a name="254"/>      w_spec &lt;:= \min_w
+<a name="255"/>      h_spec &lt;:= \min_h
+<a name="256"/>      link
+<a name="257"/>   end
+<a name="258"/>
+<a name="259"/>   #
+<a name="260"/>   # Called on resize, buttons resized, or contents amended
+<a name="261"/>   #
+<a name="262"/>   public set_internal_fields()
+<a name="263"/>      local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb, 
+<a name="264"/>         new_vsb, new_hsb, sb_size
+<a name="265"/>
+<a name="266"/>      sb_size := SCROLLBAR_SIZE
+<a name="267"/>
+<a name="268"/>      #
+<a name="269"/>      # Position and size of scrolling region
+<a name="270"/>      #
+<a name="271"/>      view.x := self.x + border.get_l_inset()
+<a name="272"/>      view.y := self.y + border.get_t_inset()
+<a name="273"/>      max_tw := self.w - border.get_total_width()
+<a name="274"/>      max_th := self.h - border.get_total_height()
+<a name="275"/>      min_th := max_th - sb_size
+<a name="276"/>      min_tw := max_tw - sb_size
+<a name="277"/>
+<a name="278"/>      #
+<a name="279"/>      # Set flags indicating whether scroll bars needed.  0 =&gt; definitely not
+<a name="280"/>      # 1 =&gt; yes if opposite scroll bar needed; 2 =&gt; definitely yes.
+<a name="281"/>      #
+<a name="282"/>      if min_th &gt;= get_subject_height() then
+<a name="283"/>         need_vsb := 0
+<a name="284"/>      else if max_th &gt;= get_subject_height() then
+<a name="285"/>         need_vsb := 1
+<a name="286"/>      else
+<a name="287"/>         need_vsb := 2
+<a name="288"/>
+<a name="289"/>      if min_tw &gt;= get_subject_width() then
+<a name="290"/>         need_hsb := 0
+<a name="291"/>      else if max_tw &gt;= get_subject_width() then
+<a name="292"/>         need_hsb := 1
+<a name="293"/>      else
+<a name="294"/>         need_hsb := 2
+<a name="295"/>
+<a name="296"/>      #
+<a name="297"/>      # Case analysis on flags to set up correct scroll bars, text width
+<a name="298"/>      # and height fields.
+<a name="299"/>      #
+<a name="300"/>      if (need_vsb &lt; 2) &amp; (need_hsb &lt; 2) then {
+<a name="301"/>         #
+<a name="302"/>         # No scroll bars.
+<a name="303"/>         #
+<a name="304"/>         view.w := max_tw
+<a name="305"/>         view.h := max_th
+<a name="306"/>         remove_vsb()
+<a name="307"/>         remove_hsb()
+<a name="308"/>      } else if (need_hsb + need_vsb &gt; 2) then {
+<a name="309"/>         #
+<a name="310"/>         # Two scroll bars.
+<a name="311"/>         #
+<a name="312"/>         if /self.vsb := create_vsb() then
+<a name="313"/>            new_vsb := &amp;yes
+<a name="314"/>         if /self.hsb := create_hsb() then {
+<a name="315"/>            self.hsb.set_is_horizontal(&amp;yes)
+<a name="316"/>            new_hsb := &amp;yes
+<a name="317"/>         }
+<a name="318"/>
+<a name="319"/>         view.w := min_tw
+<a name="320"/>         view.h := min_th
+<a name="321"/>
+<a name="322"/>         self.vsb.x := self.x + self.w - sb_size - border.get_r_inset()
+<a name="323"/>         self.vsb.y := self.y + border.get_t_inset()
+<a name="324"/>         self.vsb.w := sb_size
+<a name="325"/>         self.vsb.h := self.h - sb_size - border.get_total_height()
+<a name="326"/>
+<a name="327"/>         self.hsb.x := self.x + border.get_l_inset()
+<a name="328"/>         self.hsb.y := self.y + self.h - sb_size - border.get_b_inset()
+<a name="329"/>         self.hsb.w := self.w - sb_size - border.get_total_width()
+<a name="330"/>         self.hsb.h := sb_size
+<a name="331"/>      } else if (need_hsb = 0) &amp; (need_vsb = 2) then {
+<a name="332"/>         #
+<a name="333"/>         # One vertical scroll bar.
+<a name="334"/>         #
+<a name="335"/>         if /self.vsb := create_vsb() then
+<a name="336"/>            new_vsb := &amp;yes
+<a name="337"/>         remove_hsb()
+<a name="338"/>
+<a name="339"/>         view.w := min_tw
+<a name="340"/>         view.h := max_th
+<a name="341"/>
+<a name="342"/>         self.vsb.x := self.x + self.w - sb_size - border.get_r_inset()
+<a name="343"/>         self.vsb.y := self.y + border.get_t_inset()
+<a name="344"/>         self.vsb.w := sb_size
+<a name="345"/>         self.vsb.h := self.h  - border.get_total_height()
+<a name="346"/>      } else if (need_hsb = 2) &amp; (need_vsb = 0) then {
+<a name="347"/>         #
+<a name="348"/>         # One horizontal scroll bar.
+<a name="349"/>         #
+<a name="350"/>         if /self.hsb := create_hsb() then {
+<a name="351"/>            self.hsb.set_is_horizontal(&amp;yes)
+<a name="352"/>            new_hsb := &amp;yes
+<a name="353"/>         }
+<a name="354"/>         remove_vsb()
+<a name="355"/>
+<a name="356"/>         view.w := max_tw
+<a name="357"/>         view.h := min_th
+<a name="358"/>
+<a name="359"/>         self.hsb.x := self.x + border.get_l_inset()
+<a name="360"/>         self.hsb.y := self.y + self.h - sb_size - border.get_b_inset()
+<a name="361"/>         self.hsb.w := self.w - border.get_total_width()
+<a name="362"/>         self.hsb.h := sb_size
+<a name="363"/>      }
+<a name="364"/>
+<a name="365"/>      #
+<a name="366"/>      # Initialize scroll bars.
+<a name="367"/>      #
+<a name="368"/>      if \self.vsb then {
+<a name="369"/>         self.vsb.set_page_size(max(view.h, 1))
+<a name="370"/>         self.vsb.set_total_size(get_subject_height())
+<a name="371"/>         if \new_vsb then {
+<a name="372"/>            self.vsb.
+<a name="373"/>               set_use_wheel(&amp;no).
+<a name="374"/>               connect(self.on_vsb, Event.VALUE_CHANGED).
+<a name="375"/>               set_value(0)
+<a name="376"/>            self.add(self.vsb)
+<a name="377"/>         }
+<a name="378"/>         self.vsb.layout()
+<a name="379"/>      } 
+<a name="380"/>
+<a name="381"/>      if \self.hsb then {
+<a name="382"/>         self.hsb.set_page_size(max(view.w, 1))
+<a name="383"/>         self.hsb.set_total_size(get_subject_width())
+<a name="384"/>         if \new_hsb then {
+<a name="385"/>            self.hsb.
+<a name="386"/>               set_use_wheel(&amp;no).
+<a name="387"/>               connect(self.on_hsb, Event.VALUE_CHANGED).
+<a name="388"/>               set_value(0)
+<a name="389"/>            self.add(self.hsb)
+<a name="390"/>         }
+<a name="391"/>         self.hsb.layout()
+<a name="392"/>      }
+<a name="393"/>
+<a name="394"/>      view.layout()
+<a name="395"/>   end
+<a name="396"/>
+<a name="397"/>   public override handle_wheel_up(e)
+<a name="398"/>      local c
+<a name="399"/>      c := if /e.shift then vsb else hsb
+<a name="400"/>      (\c).handle_wheel_up(e)
+<a name="401"/>   end
+<a name="402"/>
+<a name="403"/>   public override handle_wheel_down(e)
+<a name="404"/>      local c
+<a name="405"/>      c := if /e.shift then vsb else hsb
+<a name="406"/>      (\c).handle_wheel_down(e)
+<a name="407"/>   end
+<a name="408"/>
+<a name="409"/>   public override handle_wheel_left(e)
+<a name="410"/>      (\hsb).handle_wheel_left(e)
+<a name="411"/>   end
+<a name="412"/>
+<a name="413"/>   public override handle_wheel_right(e)
+<a name="414"/>      (\hsb).handle_wheel_right(e)
+<a name="415"/>   end
+<a name="416"/>
+<a name="417"/>   public remove_hsb()
+<a name="418"/>      remove(\hsb)
+<a name="419"/>      hsb := &amp;null
+<a name="420"/>      link
+<a name="421"/>   end
+<a name="422"/>
+<a name="423"/>   public remove_vsb()
+<a name="424"/>      remove(\vsb)
+<a name="425"/>      vsb := &amp;null
+<a name="426"/>      link
+<a name="427"/>   end
+<a name="428"/>
+<a name="429"/>   #
+<a name="430"/>   # Invalidate the view area.
+<a name="431"/>   #
+<a name="432"/>   public refresh()
+<a name="433"/>      view.invalidate()
+<a name="434"/>   end
+<a name="435"/>
+<a name="436"/>   public override display()
+<a name="437"/>      border.draw_rect(cbwin, self)
+<a name="438"/>      display_children()
+<a name="439"/>      if \default_key_listener &amp; should_draw_focus() then
+<a name="440"/>         # Allowing the border to draw the focus rect wouldn't look
+<a name="441"/>         # right here, since the scrollbars abut the border.  So we
+<a name="442"/>         # draw it manually around the edge.
+<a name="443"/>         Gui.style.draw_focus_rectangle(cbwin, x, y, w, h)
+<a name="444"/>   end
+<a name="445"/>
+<a name="446"/>   #
+<a name="447"/>   # Move the vertical scrollbar (if any) to the topmost position
+<a name="448"/>   #
+<a name="449"/>   public goto_top()
+<a name="450"/>      return set_area_y(0)
+<a name="451"/>   end
+<a name="452"/>
+<a name="453"/>   #
+<a name="454"/>   # Move the vertical scrollbar (if any) to the bottommost position
+<a name="455"/>   #
+<a name="456"/>   public goto_bottom()
+<a name="457"/>      set_area_y((\self.vsb).total_size)
+<a name="458"/>      link
+<a name="459"/>   end
+<a name="460"/>
+<a name="461"/>   #
+<a name="462"/>   # Succeed if there is no vertical scrollbar, or if it's at the topmost position.
+<a name="463"/>   #
+<a name="464"/>   public at_top()
+<a name="465"/>      return /vsb | vsb.at_top()
+<a name="466"/>   end
+<a name="467"/>
+<a name="468"/>   #
+<a name="469"/>   # Succeed if there is no vertical scrollbar, or if it's at the bottommost position.
+<a name="470"/>   #
+<a name="471"/>   public at_bottom()
+<a name="472"/>      return /vsb | vsb.at_bottom()
+<a name="473"/>   end
+<a name="474"/>
+<a name="475"/>   public on_default_key(e)
+<a name="476"/>      case e.code of {
+<a name="477"/>         Key.HOME : goto_top()
+<a name="478"/>         Key.END : goto_bottom()
+<a name="479"/>         Key.PGUP : set_area_y((\vsb).page_jump(-1))
+<a name="480"/>         Key.PGDN : set_area_y((\vsb).page_jump(1))
+<a name="481"/>         Key.UP : set_area_y((\vsb).small_jump(-1))
+<a name="482"/>         Key.DOWN : set_area_y((\vsb).small_jump(1))
+<a name="483"/>         Key.LEFT : set_area_x((\hsb).small_jump(-1))
+<a name="484"/>         Key.RIGHT : set_area_x((\hsb).small_jump(1))
+<a name="485"/>      }
+<a name="486"/>   end
+<a name="487"/>
+<a name="488"/>   # Configure whether or not to use the default cursor movement keys; default no.
+<a name="489"/>   #
+<a name="490"/>   public set_use_default_keys(s)
+<a name="491"/>      need_flag(s)
+<a name="492"/>      (\default_key_listener).disconnect()
+<a name="493"/>      if /s then {
+<a name="494"/>         set_accepts_focus(&amp;no)
+<a name="495"/>         default_key_listener := &amp;null
+<a name="496"/>      } else {
+<a name="497"/>         set_accepts_focus(&amp;yes)
+<a name="498"/>         default_key_listener := connect(on_default_key, Event.KEY_PRESS).last_listener
+<a name="499"/>      }
+<a name="500"/>      link
+<a name="501"/>   end
+<a name="502"/>
+<a name="503"/>   public override keeps(e)
+<a name="504"/>      succeed \default_key_listener &amp; member(Key.CURSOR, e.code)
+<a name="505"/>   end
+<a name="506"/>
+<a name="507"/>   #
+<a name="508"/>   # Return the width of the subject object
+<a name="509"/>   #
+<a name="510"/>   public get_subject_width()
+<a name="511"/>      /self.subject_width := calculate_subject_width()
+<a name="512"/>      return self.subject_width
+<a name="513"/>   end
+<a name="514"/>
+<a name="515"/>   #
+<a name="516"/>   # This method must be implemented to compute the subject width.  Because
+<a name="517"/>   # this is potentially expensive, the value is calculated as late as
+<a name="518"/>   # possible and the result cached.
+<a name="519"/>   #
+<a name="520"/>   public abstract calculate_subject_width()
+<a name="521"/>
+<a name="522"/>   #
+<a name="523"/>   # Clear the cached value of subject width.
+<a name="524"/>   #
+<a name="525"/>   public invalidate_subject_width()
+<a name="526"/>      self.subject_width := &amp;null
+<a name="527"/>      link
+<a name="528"/>   end
+<a name="529"/>
+<a name="530"/>   #
+<a name="531"/>   # Return the height of the subject object
+<a name="532"/>   #
+<a name="533"/>   public get_subject_height()
+<a name="534"/>      /self.subject_height := calculate_subject_height()
+<a name="535"/>      return self.subject_height
+<a name="536"/>   end
+<a name="537"/>
+<a name="538"/>   #
+<a name="539"/>   # This method must be implemented to compute the subject height.  Because
+<a name="540"/>   # this is potentially expensive, the value is calculated as late as
+<a name="541"/>   # possible and the result cached.
+<a name="542"/>   #
+<a name="543"/>   public abstract calculate_subject_height()
+<a name="544"/>
+<a name="545"/>   #
+<a name="546"/>   # Clear the cached value of subject height.
+<a name="547"/>   #
+<a name="548"/>   public invalidate_subject_height()
+<a name="549"/>      self.subject_height := &amp;null
+<a name="550"/>      link
+<a name="551"/>   end
+<a name="552"/>
+<a name="553"/>   #
+<a name="554"/>   # Create the view component
+<a name="555"/>   #
+<a name="556"/>   public abstract create_view()
+<a name="557"/>
+<a name="558"/>   #
+<a name="559"/>   # Create a scroll bar for scrolling vertically.
+<a name="560"/>   #
+<a name="561"/>   public abstract create_vsb()
+<a name="562"/>
+<a name="563"/>   #
+<a name="564"/>   # Create a scroll bar for scrolling horizontally.
+<a name="565"/>   #
+<a name="566"/>   public abstract create_hsb()
+<a name="567"/>
+<a name="568"/>   public override new()
+<a name="569"/>      Component.new()
+<a name="570"/>      self.set_border(SunkenBorder())
+<a name="571"/>      set_use_wheel(&amp;yes)
+<a name="572"/>      self.view := create_view()
+<a name="573"/>      add(view)
+<a name="574"/>      self.set_constraint("x_fill", &amp;yes)
+<a name="575"/>      self.set_constraint("y_fill", &amp;yes)
+<a name="576"/>      self.set_constraint("x_weight", 1.0)
+<a name="577"/>      self.set_constraint("y_weight",  1.0)
+<a name="578"/>      return
+<a name="579"/>   end
+<a name="580"/>end
+</pre></body></html>

@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>contentspec.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: contentspec.icn 8938 2021-02-26 12:09:13Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>import lang, io
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This class represents a node in the parse tree of a content specification,
+<a name="15"/># as contained in an &lt;!ELEMENT ..&gt; declaration.  The parsed tree represents
+<a name="16"/># the regular expression used to validate content elements.  Each node
+<a name="17"/># contains an op and two args.
+<a name="18"/>#
+<a name="19"/>class ContentSpec(ObjectOutput)
+<a name="20"/>   public
+<a name="21"/>      op,        # op is always a string, never ucs.
+<a name="22"/>      arg1,
+<a name="23"/>      arg2,
+<a name="24"/>      is_mixed_flag
+<a name="25"/>
+<a name="26"/>   #
+<a name="27"/>   # Print the structure to the given file.  For debugging.
+<a name="28"/>   #
+<a name="29"/>   public print_structure(f, indent)
+<a name="30"/>      local i, j, e
+<a name="31"/>      /indent := 0
+<a name="32"/>      i := repl(" ", indent * 5)
+<a name="33"/>      write(f, i || "Op : ", op)
+<a name="34"/>      j := 1
+<a name="35"/>      every e:= \arg1 | \arg2 do {
+<a name="36"/>         writes(i, j, ":")
+<a name="37"/>         if text(e) then
+<a name="38"/>            write(f, image(e))
+<a name="39"/>         else {
+<a name="40"/>            write(f)
+<a name="41"/>            e.print_structure(f, indent + 1)
+<a name="42"/>         }
+<a name="43"/>         j +:= 1
+<a name="44"/>      }
+<a name="45"/>   end
+<a name="46"/>
+<a name="47"/>   #
+<a name="48"/>   # Match the given Element with the pattern whose root is this object.
+<a name="49"/>   #
+<a name="50"/>   public pattern_match_element(el)
+<a name="51"/>      local t, x
+<a name="52"/>      #
+<a name="53"/>      # Create a list to match the pattern against.  The list contains
+<a name="54"/>      # values of &amp;null for character portions, and strings being element names
+<a name="55"/>      # otherwise.
+<a name="56"/>      #
+<a name="57"/>      t := []
+<a name="58"/>      every x := !el.children do {
+<a name="59"/>         if text(x) then {
+<a name="60"/>            /t[-1] | put(t)
+<a name="61"/>         } else {
+<a name="62"/>            if is(x, Element) then
+<a name="63"/>               put(t, x.name)
+<a name="64"/>            else if is(x, CData) then
+<a name="65"/>               /t[-1] | put(t)
+<a name="66"/>         }
+<a name="67"/>      }
+<a name="68"/>      succeed *t = pattern_match(t, 1)
+<a name="69"/>   end
+<a name="70"/>
+<a name="71"/>   public is_mixed()
+<a name="72"/>      succeed \self.is_mixed_flag
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   public isnt_mixed()
+<a name="76"/>      succeed /self.is_mixed_flag
+<a name="77"/>   end
+<a name="78"/>
+<a name="79"/>   #
+<a name="80"/>   # The recursive element of pattern matching, called by the above.  It returns
+<a name="81"/>   # the sequence of initial matches of the pattern in subject, starting from pos.
+<a name="82"/>   #
+<a name="83"/>   public pattern_match(subject, pos)
+<a name="84"/>      local x, y, b
+<a name="85"/>
+<a name="86"/>      case op of {
+<a name="87"/>         "ANY" :
+<a name="88"/>            return *subject - pos + 1
+<a name="89"/>
+<a name="90"/>         "EMPTY" :
+<a name="91"/>            return 0
+<a name="92"/>
+<a name="93"/>         "#PCDATA" : {
+<a name="94"/>            if /subject[pos] then
+<a name="95"/>               return 1
+<a name="96"/>            else
+<a name="97"/>               return 0
+<a name="98"/>         }
+<a name="99"/>
+<a name="100"/>         "name" : {
+<a name="101"/>            if subject[pos] === arg1 then
+<a name="102"/>               return 1
+<a name="103"/>         }
+<a name="104"/>
+<a name="105"/>         "," : {
+<a name="106"/>            every x := arg1.pattern_match(subject, pos) do {
+<a name="107"/>               suspend x + arg2.pattern_match(subject, pos + x)
+<a name="108"/>            }
+<a name="109"/>         }
+<a name="110"/>
+<a name="111"/>         "|" : {
+<a name="112"/>            suspend (arg1 | arg2).pattern_match(subject, pos)
+<a name="113"/>         }
+<a name="114"/>
+<a name="115"/>         "*" : {
+<a name="116"/>            suspend x := 0
+<a name="117"/>            repeat {
+<a name="118"/>               b := 0
+<a name="119"/>               every y := arg1.pattern_match(subject, pos + x) do {
+<a name="120"/>                  suspend x + y
+<a name="121"/>                  b &lt;:= y
+<a name="122"/>               }
+<a name="123"/>               b &gt; 0 | fail
+<a name="124"/>               x +:= b
+<a name="125"/>            }
+<a name="126"/>         }
+<a name="127"/>
+<a name="128"/>         "+" : {
+<a name="129"/>            x := 0
+<a name="130"/>            repeat {
+<a name="131"/>               b := 0
+<a name="132"/>               every y := arg1.pattern_match(subject, pos + x) do {
+<a name="133"/>                  suspend x + y
+<a name="134"/>                  b &lt;:= y
+<a name="135"/>               }
+<a name="136"/>               b &gt; 0 | fail
+<a name="137"/>               x +:= b
+<a name="138"/>            }
+<a name="139"/>         }
+<a name="140"/>
+<a name="141"/>         "?" : {
+<a name="142"/>            suspend 0 | arg1.pattern_match(subject, pos)
+<a name="143"/>         }
+<a name="144"/>
+<a name="145"/>         default:
+<a name="146"/>            runerr("Bad ContentSpec op", op)
+<a name="147"/>      }
+<a name="148"/>   end
+<a name="149"/>
+<a name="150"/>   #
+<a name="151"/>   # Return a readable representation of this `ContentSpec` (and its
+<a name="152"/>   # children).
+<a name="153"/>   #
+<a name="154"/>   public str()
+<a name="155"/>      local s, x
+<a name="156"/>      case op of {
+<a name="157"/>         "ANY" | "EMPTY" | "#PCDATA" :
+<a name="158"/>            return op
+<a name="159"/>
+<a name="160"/>         "name" :
+<a name="161"/>            return arg1
+<a name="162"/>
+<a name="163"/>         "," | "|" : {
+<a name="164"/>            s := ""
+<a name="165"/>            x := self
+<a name="166"/>            repeat {
+<a name="167"/>               s ||:= x.arg1.str()
+<a name="168"/>               s ||:= op
+<a name="169"/>               if x.arg2.op ~== op then
+<a name="170"/>                  break
+<a name="171"/>               x := x.arg2
+<a name="172"/>            }
+<a name="173"/>            return "(" || s || x.arg2.str() || ")"
+<a name="174"/>         }
+<a name="175"/>
+<a name="176"/>         "+" | "*" | "?" :  {
+<a name="177"/>            return arg1.str() || op
+<a name="178"/>         }
+<a name="179"/>
+<a name="180"/>         default:
+<a name="181"/>            runerr("Bad ContentSpec op", op)
+<a name="182"/>      }
+<a name="183"/>   end
+<a name="184"/>
+<a name="185"/>   #
+<a name="186"/>   # Output object
+<a name="187"/>   #
+<a name="188"/>   protected override object_output(oo)
+<a name="189"/>      oo.object_string(self, str())
+<a name="190"/>   end
+<a name="191"/>
+<a name="192"/>   public new(op, arg1, arg2)
+<a name="193"/>      self.op := op
+<a name="194"/>      self.arg1 := arg1
+<a name="195"/>      self.arg2 := arg2
+<a name="196"/>      return
+<a name="197"/>   end
+<a name="198"/>end
+<a name="199"/>
+</pre></body></html>

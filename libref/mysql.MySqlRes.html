@@ -1,0 +1,304 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MySqlRes</title></head><body>
+<h1>MySqlRes</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="mysql-package.html" target="listFrame">mysql</a></dd>
+</dl><p/>
+This class provides a wrapper around an MYSQL_RES object.
+<p/><a href="mysql-mysqlres.icn.html#13" target="displayFrame">Source - mysqlres.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="mysql.MySqlRes.html">mysql.MySqlRes</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#data_seek">data_seek()</a>
+<a href="#fetch_field">fetch_field()</a>
+<a href="#fetch_field_direct">fetch_field_direct()</a>
+<a href="#fetch_field_direct_impl">fetch_field_direct_impl()</a>
+<a href="#fetch_field_impl">fetch_field_impl()</a>
+<a href="#fetch_fields">fetch_fields()</a>
+<a href="#fetch_fields_impl">fetch_fields_impl()</a>
+<a href="#fetch_lengths">fetch_lengths()</a>
+<a href="#fetch_row">fetch_row()</a>
+<a href="#field_seek">field_seek()</a>
+<a href="#field_tell">field_tell()</a>
+<a href="#get_num_fields">get_num_fields()</a>
+<a href="#get_num_rows">get_num_rows()</a>
+<a href="#get_row">get_row()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#row_seek">row_seek()</a>
+<a href="#row_tell">row_tell()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#fields">fields</a>
+<a href="#ptr">ptr</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Invoke mysql_free_result() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#99" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="data_seek"/>
+<h3>data_seek(offset)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_data_seek() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#94" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_field"/>
+<h3>fetch_field()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_fetch_field() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlField.html" target="displayFrame">MySqlField</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysqlres.icn.html#26" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_field_direct"/>
+<h3>fetch_field_direct(fieldnr)</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_fetch_field_direct() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlField.html" target="displayFrame">MySqlField</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysqlres.icn.html#38" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_field_direct_impl"/>
+<h3>fetch_field_direct_impl(fieldnr)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysqlres.icn.html#48" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_field_impl"/>
+<h3>fetch_field_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysqlres.icn.html#36" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_fields"/>
+<h3>fetch_fields()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_fetch_fields() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of <code><a href="mysql.MySqlField.html" target="displayFrame">MySqlField</a></code> instances
+</dd>
+</dl>
+<p/><a href="mysql-mysqlres.icn.html#50" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_fields_impl"/>
+<h3>fetch_fields_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysqlres.icn.html#62" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_lengths"/>
+<h3>fetch_lengths()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_fetch_lengths() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#74" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="fetch_row"/>
+<h3>fetch_row()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_fetch_row() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#79" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="field_seek"/>
+<h3>field_seek(offset)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_field_seek() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#64" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="field_tell"/>
+<h3>field_tell(offset)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_field_tell() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#69" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="get_num_fields"/>
+<h3>get_num_fields()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_num_fields() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#21" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="get_num_rows"/>
+<h3>get_num_rows()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_num_rows() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#104" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="get_row"/>
+<h3>get_row()</h3>
+public<p/>
+<dl>
+<dd>
+This uses <code><a href="mysql.MySqlRes.html#fetch_row">fetch_row()</a></code> and <code><a href="mysql.MySqlRes.html#fetch_fields">fetch_fields()</a></code> together to provide a rather more
+intelligent version of <code><a href="mysql.MySqlRes.html#fetch_row">fetch_row()</a></code>.   The column types are examined and the
+strings are converted to appropriate Icon objects: integer for the integer types,
+real for the floating point types, <code><a href="util.Time.html" target="displayFrame">Time</a></code> for the date/time types, and string for
+the char/blob types.
+<p/><a href="mysql-mysqlres.icn.html#109" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysqlres.icn.html#180" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(ptr)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysqlres.icn.html#184" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="row_seek"/>
+<h3>row_seek(offset)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_row_seek() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#84" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="row_tell"/>
+<h3>row_tell(offset)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_row_tell() for the current connection.
+<p/><a href="mysql-mysqlres.icn.html#89" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="fields"/>
+<h3>fields</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysqlres.icn.html#19" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+<a name="ptr"/>
+<h3>ptr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysqlres.icn.html#18" target="displayFrame">Source - mysqlres.icn </a>
+</dd>
+</dl><hr>
+</body></html>

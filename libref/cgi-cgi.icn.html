@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>cgi.icn</title></head><body><pre>
+<a name="1"/>package cgi
+<a name="2"/>
+<a name="3"/>import io, net, mail, util(error), posix(System), ipl.tables(inserts)
+<a name="4"/>
+<a name="5"/>class CgiParams()
+<a name="6"/>   private readable
+<a name="7"/>      stdin,
+<a name="8"/>      stdin_limit,
+<a name="9"/>      params,
+<a name="10"/>      query_params
+<a name="11"/>
+<a name="12"/>   private static env(k)
+<a name="13"/>      return System.getenv(k) | error("Missing environment variable: " || k)
+<a name="14"/>   end
+<a name="15"/>
+<a name="16"/>   public process()
+<a name="17"/>      local rm, ct, msg, p, cd, key, multi, s
+<a name="18"/>
+<a name="19"/>      stdin := FileStream.stdin.read_all() | fail
+<a name="20"/>      if *stdin &gt; \stdin_limit then
+<a name="21"/>         return error("Too much data read from stdin")
+<a name="22"/>
+<a name="23"/>      # Get the URL query parameters
+<a name="24"/>      s := env("QUERY_STRING") | fail
+<a name="25"/>      query_params := URL.make_cgi_table(s)
+<a name="26"/>
+<a name="27"/>      rm := env("REQUEST_METHOD") | fail
+<a name="28"/>      case rm of {
+<a name="29"/>         "GET": {
+<a name="30"/>            params := query_params
+<a name="31"/>         }
+<a name="32"/>         "POST": {
+<a name="33"/>            p := RFC822Parser()
+<a name="34"/>            s := env("CONTENT_TYPE") | fail
+<a name="35"/>            ct := p.parse_content_type(s) | return error("Couldn't parse CONTENT_TYPE param: " || &amp;why)
+<a name="36"/>            if ct.type == "application" &amp; ct.subtype == "x-www-form-urlencoded" then {
+<a name="37"/>               params := URL.make_cgi_table(stdin)
+<a name="38"/>            } else if ct.type == "multipart" &amp; ct.subtype == "form-data" then {
+<a name="39"/>               msg := Message().
+<a name="40"/>                  set_header("Content-Type", s).
+<a name="41"/>                  set_content(stdin)
+<a name="42"/>               multi := msg.get_content_object() | return error("Couldn't decode multipart: " || &amp;why)
+<a name="43"/>               params := table()
+<a name="44"/>               every p := !multi.parts do {
+<a name="45"/>                  cd := p.get_content_disposition() | return error("No Content-Disposition")
+<a name="46"/>                  key := cd.get_parameter("name")
+<a name="47"/>                  inserts(params, key, p)
+<a name="48"/>               }
+<a name="49"/>            } else 
+<a name="50"/>               params := table()
+<a name="51"/>         }
+<a name="52"/>         default:
+<a name="53"/>            return error("Unknown request method: " || image(rm))
+<a name="54"/>      }
+<a name="55"/>
+<a name="56"/>      link
+<a name="57"/>   end
+<a name="58"/>
+<a name="59"/>   public get_params(key)
+<a name="60"/>      return member(params, key)
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   public get_first_param(key)
+<a name="64"/>      return get_params(key)[1]
+<a name="65"/>   end
+<a name="66"/>
+<a name="67"/>   public get_query_params(key)
+<a name="68"/>      return member(query_params, key)
+<a name="69"/>   end
+<a name="70"/>
+<a name="71"/>   public get_first_query_param(key)
+<a name="72"/>      return get_query_params(key)[1]
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   public set_stdin_limit(n)
+<a name="76"/>      self.stdin_limit := n
+<a name="77"/>      link
+<a name="78"/>   end
+<a name="79"/>end
+</pre></body></html>

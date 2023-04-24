@@ -1,0 +1,414 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>FileStream</title></head><body>
+<h1>FileStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.DescStream.html" target="displayFrame">io.DescStream</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="io.PttyStream.html">io.PttyStream</a><br>
+<a href="io.PipeStream.html">io.PipeStream</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+This class represents a stream based on a local file.
+<p/><a href="io-streams.icn.html#897" target="displayFrame">Source - streams.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.DescStream.html">io.DescStream</a>
+<a href="io.FileStream.html">io.FileStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.DescStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.DescStream.html#dflag">dflag()</a>
+<a href="io.DescStream.html#dup2">dup2()</a>
+<a href="io.DescStream.html#dup2_impl">dup2_impl()</a>
+<a href="io.DescStream.html#dup_impl">dup_impl()</a>
+<a href="io.DescStream.html#flag">flag()</a>
+<a href="io.DescStream.html#get_fd">get_fd()</a>
+<a href="io.DescStream.html#get_mode">get_mode()</a>
+<a href="io.DescStream.html#improve_why">improve_why()</a>
+<a href="io.DescStream.html#poll">poll()</a>
+<a href="io.DescStream.html#poll_in_test">poll_in_test()</a>
+<a href="io.DescStream.html#poll_out_test">poll_out_test()</a>
+<a href="io.DescStream.html#setup">setup()</a>
+<a href="io.DescStream.html#stat">stat()</a>
+<a href="io.DescStream.html#stat_impl">stat_impl()</a>
+<a href="io.DescStream.html#wstat">wstat()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.DescStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.DescStream.html#fd">fd</a>
+<a href="io.DescStream.html#mode">mode</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#adjust_mode">adjust_mode()</a>
+<a href="#chdir">chdir()</a>
+<a href="#close">close()</a>
+<a href="#create_for_fd">create_for_fd()</a>
+<a href="#dup">dup()</a>
+<a href="#in">in()</a>
+<a href="#init">init()</a>
+<a href="#is_flowterm_tty">is_flowterm_tty()</a>
+<a href="#isatty">isatty()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#out">out()</a>
+<a href="#pipe">pipe()</a>
+<a href="#pipe_impl">pipe_impl()</a>
+<a href="#pread">pread()</a>
+<a href="#pwrite">pwrite()</a>
+<a href="#seek">seek()</a>
+<a href="#tell">tell()</a>
+<a href="#truncate">truncate()</a>
+<a href="#ttyname">ttyname()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#stderr">stderr</a>
+<a href="#stdin">stdin</a>
+<a href="#stdout">stdout</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="adjust_mode"/>
+<h3>adjust_mode()</h3>
+private<p/>
+<dl>
+<dd>
+Adjust this FileStream's mode based on the file type returned by
+stat().  If it is a regular file, add SEEK capability, and
+TRUNCATE too for a writable file.
+<p/><a href="io-streams.icn.html#952" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="chdir"/>
+<h3>chdir()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1036" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1042" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="create_for_fd"/>
+<h3>create_for_fd(fd, mode)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#909" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="dup"/>
+<h3>dup()</h3>
+public<p/>
+<dl>
+<dd>
+Return a new instance which has a duplicated file descriptor
+(using the dup() system call), and the same mode as this
+instance.
+<p/><a href="io-streams.icn.html#913" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="in"/>
+<h3>in(n)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#in">in()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1026" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#970" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="is_flowterm_tty"/>
+<h3>is_flowterm_tty()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if this <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> represents a tty supporting links.
+<p/><a href="io-streams.icn.html#1011" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="isatty"/>
+<h3>isatty()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1038" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(name, flags, perm, mode)</h3>
+public<p/>
+<dl>
+<dd>
+Open a new <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> using the underlying system open
+function.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>name</code> - the file name
+</dd>
+<dd>
+<code>flags</code> - the flags, selected from <code><a href="io.FileOpt.html" target="displayFrame">FileOpt</a></code>, if perm
+and mode are omitted, defaults to <code><a href="io.FileOpt.html#RDONLY">FileOpt.RDONLY</a></code>
+</dd>
+<dd>
+<code>perm</code> - the create permissions to use if a file is
+created, selected from <code><a href="io.Mode.html" target="displayFrame">Mode</a></code>.
+</dd>
+<dd>
+<code>mode</code> - the resulting <code><a href="io.Stream.html" target="displayFrame">Stream</a></code>'s mode; if omitted
+this is deduced from <code>flags</code> parameter and the
+type of file being opened.
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#922" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl(path, flags, perm)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#968" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="out"/>
+<h3>out(s)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#out">out()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1028" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="pipe"/>
+<h3>pipe()</h3>
+public static<p/>
+<dl>
+<dd>
+Create a pair of <code><a href="io.PipeStream.html" target="displayFrame">PipeStream</a></code>s using the pipe system call.
+<p/><a href="io-streams.icn.html#976" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="pipe_impl"/>
+<h3>pipe_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#985" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="pread"/>
+<h3>pread(n, offset)</h3>
+public native<p/>
+<dl>
+<dd>
+This method provides an interface to the system pread function.
+<p/>
+NB - for consistency with <code><a href="io.FileStream.html#seek">seek</a></code> and <code><a href="io.FileStream.html#tell">tell</a></code>, <code>offset</code> is one
+based.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - the maximum number of chars to read; n must be &gt; 0.
+</dd>
+<dd>
+<code>offset</code> - the one-based offset to seek to before reading.
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#987" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="pwrite"/>
+<h3>pwrite(s, offset)</h3>
+public native<p/>
+<dl>
+<dd>
+This method provides an interface to the system pwrite function.
+<p/>
+NB - for consistency with <code><a href="io.FileStream.html#seek">seek</a></code> and <code><a href="io.FileStream.html#tell">tell</a></code>, <code>offset</code> is one
+based.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the string to write
+</dd>
+<dd>
+<code>offset</code> - the one-based offset to seek to before writing.
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#999" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="seek"/>
+<h3>seek(offset)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#seek">seek()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1030" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="tell"/>
+<h3>tell()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#tell">tell()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1032" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="truncate"/>
+<h3>truncate(len)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#truncate">truncate()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1034" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="ttyname"/>
+<h3>ttyname()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1040" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="stderr"/>
+<h3>stderr</h3>
+public static const<p/>
+<dl>
+<dd>
+A <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> representing standard error
+<p/><a href="io-streams.icn.html#906" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="stdin"/>
+<h3>stdin</h3>
+public static const<p/>
+<dl>
+<dd>
+A <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> representing standard input
+<p/><a href="io-streams.icn.html#902" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="stdout"/>
+<h3>stdout</h3>
+public static const<p/>
+<dl>
+<dd>
+A <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> representing standard output
+<p/><a href="io-streams.icn.html#904" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+</body></html>

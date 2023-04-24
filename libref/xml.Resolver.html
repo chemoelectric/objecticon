@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Resolver</title></head><body>
+<h1>Resolver</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="xml.EmptyResolver.html">xml.EmptyResolver</a><br>
+<a href="xml.DefaultResolver.html">xml.DefaultResolver</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+Base class for the resolver called by the parser to resolve external IDs.
+<p/><a href="xml-resolver.icn.html#13" target="displayFrame">Source - resolver.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#resolve">resolve()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="resolve"/>
+<h3>resolve(base, external_id)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Resolve the given external ID into a string, or fail if that is
+not possible.  The <code>base</code> may be null, or the returned value from
+a previous resolution (see <code><a href="xml.Resolved.html" target="displayFrame">Resolved</a></code>).
+<p/><a href="xml-resolver.icn.html#17" target="displayFrame">Source - resolver.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,547 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ptable.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import util, ipl.pdco
+<a name="4"/>
+<a name="5"/>#
+<a name="6"/># A column in a `PTable`.
+<a name="7"/>#
+<a name="8"/>abstract class BasePTableColumn()
+<a name="9"/>   public
+<a name="10"/>      ptable,
+<a name="11"/>      fixed_width,   # Optional fixed width
+<a name="12"/>      calc_width,    # Width set from calculate_column_width
+<a name="13"/>      width,         # Width after allocation of extra space
+<a name="14"/>      weight
+<a name="15"/>   
+<a name="16"/>   public initially()
+<a name="17"/>   end
+<a name="18"/>
+<a name="19"/>   public finally()
+<a name="20"/>   end
+<a name="21"/>
+<a name="22"/>   #
+<a name="23"/>   # Set the weight of the column.  Additional horizontal space in the
+<a name="24"/>   # table is distributed among the columns in proportion to column
+<a name="25"/>   # weights.
+<a name="26"/>   #
+<a name="27"/>   public set_weight(w)
+<a name="28"/>      self.weight := need_numeric(w)
+<a name="29"/>      link
+<a name="30"/>   end
+<a name="31"/>
+<a name="32"/>   #
+<a name="33"/>   # Set the initial width of the column, in pixels.  If this is
+<a name="34"/>   # not provided, then the width will be set automatically.
+<a name="35"/>   # :Parameters :
+<a name="36"/>   # :  `x` - The width
+<a name="37"/>   #
+<a name="38"/>   public set_fixed_width(x)
+<a name="39"/>      self.fixed_width := /x | need_integer(x, 0)
+<a name="40"/>      link
+<a name="41"/>   end
+<a name="42"/>
+<a name="43"/>   #
+<a name="44"/>   # The column's index
+<a name="45"/>   #
+<a name="46"/>   public get_column_index()
+<a name="47"/>      return ptable.get_column_index(self)
+<a name="48"/>   end
+<a name="49"/>
+<a name="50"/>   #
+<a name="51"/>   # Generate the column's data, as a slice of the contents list.
+<a name="52"/>   #
+<a name="53"/>   public slice()
+<a name="54"/>      suspend ptable.slice(get_column_index())
+<a name="55"/>   end
+<a name="56"/>
+<a name="57"/>   #
+<a name="58"/>   # Return the desired height of the lines for the cells in this
+<a name="59"/>   # column.  This should return an integer if the heights are all the
+<a name="60"/>   # same, or a list containing the different heights for each line.
+<a name="61"/>   #
+<a name="62"/>   # :Parameters :
+<a name="63"/>   # :  `W` - the cloned window to draw into
+<a name="64"/>   #
+<a name="65"/>   public abstract calculate_line_height(W)
+<a name="66"/>
+<a name="67"/>   public abstract calculate_column_width(W)
+<a name="68"/>
+<a name="69"/>   #
+<a name="70"/>   # Draw an individual cell for this column.
+<a name="71"/>   #
+<a name="72"/>   # :Parameters :
+<a name="73"/>   # :  `W` - the cloned window to draw into
+<a name="74"/>   # :  `data` - the data to draw
+<a name="75"/>   # :  `line` - the line number of the data
+<a name="76"/>   # :  `col` - the column number of the data
+<a name="77"/>   # :  `cx` - the x position of the cell
+<a name="78"/>   # :  `cy` - the y position of the cell
+<a name="79"/>   # :  `ch` - the height of the cell
+<a name="80"/>   #
+<a name="81"/>   public abstract draw_cell(W, data, line, col, cx, cy, ch)
+<a name="82"/>
+<a name="83"/>   public new()
+<a name="84"/>      weight := 0
+<a name="85"/>      return
+<a name="86"/>   end
+<a name="87"/>end
+<a name="88"/>
+<a name="89"/>#
+<a name="90"/># The basic column, which displays simple textual data.
+<a name="91"/>#
+<a name="92"/>class PTableColumn(BasePTableColumn)
+<a name="93"/>   public
+<a name="94"/>      align
+<a name="95"/>
+<a name="96"/>   #
+<a name="97"/>   # Set the column alignment
+<a name="98"/>   # :Parameters :
+<a name="99"/>   # :  `x` - A constant from `Align`
+<a name="100"/>   public set_align(x)
+<a name="101"/>      self.align := x
+<a name="102"/>      link
+<a name="103"/>   end
+<a name="104"/>
+<a name="105"/>   public override calculate_line_height(W)
+<a name="106"/>      return W.get_line_height()
+<a name="107"/>   end
+<a name="108"/>
+<a name="109"/>   public override calculate_column_width(W)
+<a name="110"/>      return \fixed_width |
+<a name="111"/>         MaxNN{ W.text_width(detab(slice())) }
+<a name="112"/>   end
+<a name="113"/>
+<a name="114"/>   public override draw_cell(W, data, line, col, cx, cy, ch)
+<a name="115"/>      local x1, y1
+<a name="116"/>      x1 := case align of {
+<a name="117"/>         Align.R : cx + width - W.text_width(data)
+<a name="118"/>         Align.C : cx + (width - W.text_width(data)) / 2
+<a name="119"/>         Align.L : cx
+<a name="120"/>         default : runerr("Bad column alignment", align)
+<a name="121"/>      }
+<a name="122"/>      y1 := cy + (ch - W.get_line_height()) / 2
+<a name="123"/>      W.draw_string(x1, y1 + W.get_line_ascent(), data)
+<a name="124"/>   end
+<a name="125"/>
+<a name="126"/>   public override new()
+<a name="127"/>      BasePTableColumn.new()
+<a name="128"/>      align := Align.L
+<a name="129"/>      return
+<a name="130"/>   end
+<a name="131"/>end
+<a name="132"/>
+<a name="133"/># A table column which delegates interpretation of the data to
+<a name="134"/># an `ItemPaint` instance.
+<a name="135"/>#
+<a name="136"/>class ItemPaintPTableColumn(BasePTableColumn)
+<a name="137"/>   public
+<a name="138"/>      item_paint,
+<a name="139"/>      item_border
+<a name="140"/>
+<a name="141"/>   public override initially()
+<a name="142"/>      \self.item_paint | runerr("ItemPaint not set")
+<a name="143"/>      BasePTableColumn.initially()
+<a name="144"/>      self.item_paint.initially(ptable)
+<a name="145"/>      self.item_border.initially(ptable)
+<a name="146"/>   end
+<a name="147"/>
+<a name="148"/>   public override finally()
+<a name="149"/>      BasePTableColumn.finally()
+<a name="150"/>      self.item_paint.finally()
+<a name="151"/>      self.item_border.finally()
+<a name="152"/>   end
+<a name="153"/>
+<a name="154"/>   public set_item_paint(r)
+<a name="155"/>      if (\ptable).is_initialized() then {
+<a name="156"/>         (\self.item_paint).finally()
+<a name="157"/>         self.item_paint := r
+<a name="158"/>         self.item_paint.initially(ptable)
+<a name="159"/>      } else
+<a name="160"/>         self.item_paint := r
+<a name="161"/>      link
+<a name="162"/>   end
+<a name="163"/>
+<a name="164"/>   #
+<a name="165"/>   # Set a border to draw along with each Paint instance.
+<a name="166"/>   #
+<a name="167"/>   public set_item_border(b)
+<a name="168"/>      if (\ptable).is_initialized() then {
+<a name="169"/>         (\self.item_border).finally()
+<a name="170"/>         self.item_border := b
+<a name="171"/>         self.item_border.initially(ptable)
+<a name="172"/>      } else
+<a name="173"/>         self.item_border := b
+<a name="174"/>      link
+<a name="175"/>   end
+<a name="176"/>
+<a name="177"/>   public set_align(x)
+<a name="178"/>      self.item_border.x_align := x
+<a name="179"/>      link
+<a name="180"/>   end
+<a name="181"/>
+<a name="182"/>   public override calculate_line_height(W)
+<a name="183"/>      local bh
+<a name="184"/>      bh := item_border.get_total_height()
+<a name="185"/>      return item_paint.get_constant_height(W) + bh |
+<a name="186"/>         ipl.pdco.List{ item_paint.get_height(W, slice()) + bh }
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   public override calculate_column_width(W)
+<a name="190"/>      return \fixed_width |
+<a name="191"/>         MaxNN{ item_paint.get_width(W, slice()) } + item_border.get_total_width()
+<a name="192"/>   end
+<a name="193"/>
+<a name="194"/>   public override draw_cell(W, data, line, col, cx, cy, ch)
+<a name="195"/>      local r
+<a name="196"/>      r := Rect(cx, cy, width, ch)
+<a name="197"/>      item_paint.draw_rect(W, data, item_border.float(r, item_paint.get_size(W, data)))
+<a name="198"/>      item_border.draw_rect(W, r)
+<a name="199"/>   end
+<a name="200"/>
+<a name="201"/>   public override new()
+<a name="202"/>      BasePTableColumn.new()
+<a name="203"/>      self.set_item_border(NullBorder().
+<a name="204"/>                           set_x_align(Align.L))
+<a name="205"/>      return
+<a name="206"/>   end
+<a name="207"/>end
+<a name="208"/>
+<a name="209"/>#
+<a name="210"/># A ptable column that provides on/off checkbox-like behaviour for
+<a name="211"/># each of its lines.   The corresponding data items are &amp;yes or &amp;no
+<a name="212"/># strings, representing on or off button states respectively.
+<a name="213"/>#
+<a name="214"/>class CheckBoxPTableColumn(BasePTableColumn, Connectable)
+<a name="215"/>   public 
+<a name="216"/>      single_selection_flag,
+<a name="217"/>      unchecked_paint, 
+<a name="218"/>      checked_paint,
+<a name="219"/>      mouse_down_listener,
+<a name="220"/>      align
+<a name="221"/>
+<a name="222"/>   #
+<a name="223"/>   # Set the column alignment
+<a name="224"/>   # :Parameters :
+<a name="225"/>   # :  `x` - A constant from `Align`
+<a name="226"/>   public set_align(x)
+<a name="227"/>      self.align := x
+<a name="228"/>      link
+<a name="229"/>   end
+<a name="230"/>
+<a name="231"/>   public override calculate_column_width(W)
+<a name="232"/>      return unchecked_paint.w + scale(8)
+<a name="233"/>   end
+<a name="234"/>
+<a name="235"/>   public override calculate_line_height()
+<a name="236"/>      return unchecked_paint.h + scale(8)
+<a name="237"/>   end
+<a name="238"/>
+<a name="239"/>   #
+<a name="240"/>   # Set whether or not we select one item in the column; the behaviour
+<a name="241"/>   # is then like a column of radio buttons rather than a column of
+<a name="242"/>   # checkboxes.
+<a name="243"/>   #
+<a name="244"/>   public set_single_selection(s)
+<a name="245"/>      self.single_selection_flag := need_flag(s)
+<a name="246"/>      link
+<a name="247"/>   end
+<a name="248"/>
+<a name="249"/>   #
+<a name="250"/>   # Set the up/down icons to the given (distinct) `Paint` instances.
+<a name="251"/>   # The two images must have the same dimensions.
+<a name="252"/>   # :Parameters :
+<a name="253"/>   # :  `x` - The up image
+<a name="254"/>   # :  `y` - The down image
+<a name="255"/>   #
+<a name="256"/>   public set_box_paint(x, y)
+<a name="257"/>      if (\ptable).is_initialized() then {
+<a name="258"/>         (\self.unchecked_paint).finally()
+<a name="259"/>         (\self.checked_paint).finally()
+<a name="260"/>         self.unchecked_paint := x
+<a name="261"/>         self.checked_paint := y
+<a name="262"/>         self.unchecked_paint.initially(ptable)
+<a name="263"/>         self.checked_paint.initially(ptable)
+<a name="264"/>         ptable.invalidate()
+<a name="265"/>         unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
+<a name="266"/>         unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
+<a name="267"/>      } else {
+<a name="268"/>         self.unchecked_paint := x
+<a name="269"/>         self.checked_paint := y
+<a name="270"/>      }
+<a name="271"/>      link
+<a name="272"/>   end
+<a name="273"/>
+<a name="274"/>   public mouse_down(e)
+<a name="275"/>      local line, col
+<a name="276"/>      ptable.get_column_under_pointer(e) === self | fail
+<a name="277"/>      line := ptable.get_line_under_pointer(e) | fail
+<a name="278"/>      col := get_column_index()
+<a name="279"/>      if \self.single_selection_flag then {
+<a name="280"/>         every ptable.slice(col) := &amp;no
+<a name="281"/>         ptable.get_cell(line, col) := &amp;yes
+<a name="282"/>      } else
+<a name="283"/>         ptable.get_cell(line, col) := 
+<a name="284"/>                     toggle_flag(ptable.get_cell(line, col))
+<a name="285"/>      ptable.contents_changed()
+<a name="286"/>      fire(Event.VALUE_CHANGED, line)
+<a name="287"/>   end
+<a name="288"/>
+<a name="289"/>   public override initially()
+<a name="290"/>      BasePTableColumn.initially()
+<a name="291"/>      #
+<a name="292"/>      # Set the icons if necessary
+<a name="293"/>      #
+<a name="294"/>      if /unchecked_paint then {
+<a name="295"/>         # Since the parent ptable is already initialized, the
+<a name="296"/>         # following will initialize the paints.
+<a name="297"/>         if /single_selection_flag then
+<a name="298"/>            set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
+<a name="299"/>         else
+<a name="300"/>            set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
+<a name="301"/>      } else {
+<a name="302"/>         unchecked_paint.initially(ptable)
+<a name="303"/>         checked_paint.initially(ptable)
+<a name="304"/>      }
+<a name="305"/>      mouse_down_listener := ptable.connect(mouse_down, Event.MOUSE_LEFT_PRESS).last_listener
+<a name="306"/>      unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
+<a name="307"/>      unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
+<a name="308"/>   end
+<a name="309"/>
+<a name="310"/>   public override finally()
+<a name="311"/>      BasePTableColumn.finally()
+<a name="312"/>      mouse_down_listener.disconnect()
+<a name="313"/>      unchecked_paint.finally()
+<a name="314"/>      checked_paint.finally()
+<a name="315"/>   end
+<a name="316"/>
+<a name="317"/>   public override draw_cell(W, data, line, col, cx, cy, ch)
+<a name="318"/>      local x1, y1, i
+<a name="319"/>      x1 := case align of {
+<a name="320"/>         Align.R : cx + width - unchecked_paint.h
+<a name="321"/>         Align.C : cx + (width - unchecked_paint.h) / 2
+<a name="322"/>         Align.L : cx
+<a name="323"/>         default : runerr("Bad column alignment", align)
+<a name="324"/>      }
+<a name="325"/>      y1 := cy + (ch - unchecked_paint.h) / 2
+<a name="326"/>      i := if \data then checked_paint else unchecked_paint
+<a name="327"/>      i.draw(W, x1, y1)
+<a name="328"/>   end
+<a name="329"/>
+<a name="330"/>   public override new()
+<a name="331"/>      Connectable.new()
+<a name="332"/>      BasePTableColumn.new()
+<a name="333"/>      align := Align.C
+<a name="334"/>      return
+<a name="335"/>   end
+<a name="336"/>end
+<a name="337"/>
+<a name="338"/>#
+<a name="339"/># A `PTable` is like a `Table`, but without headers.  Column widths can also be calculated
+<a name="340"/># automatically.
+<a name="341"/>#
+<a name="342"/>class PTable(SelectableScrollArea)
+<a name="343"/>   public
+<a name="344"/>      cols,
+<a name="345"/>      inset
+<a name="346"/>
+<a name="347"/>   #
+<a name="348"/>   # Set the inset to use between columns.
+<a name="349"/>   #
+<a name="350"/>   public set_inset(n)
+<a name="351"/>      self.inset := need_integer(n, 0)
+<a name="352"/>      link
+<a name="353"/>   end
+<a name="354"/>
+<a name="355"/>   #
+<a name="356"/>   # Add the given PTableColumn to this PTable.
+<a name="357"/>   # :Parameters :
+<a name="358"/>   # :  `c` - The column to add.
+<a name="359"/>   # :  `i` - The index to add at; if omitted then the new column
+<a name="360"/>   #           is appended to the end.
+<a name="361"/>   #
+<a name="362"/>   public add_column(c, i)
+<a name="363"/>      /i := 0
+<a name="364"/>      insert(cols, i, c)
+<a name="365"/>      c.ptable := self
+<a name="366"/>      if is_initialized() then
+<a name="367"/>         c.initially()
+<a name="368"/>      link
+<a name="369"/>   end
+<a name="370"/>
+<a name="371"/>   #
+<a name="372"/>   # Remove a column
+<a name="373"/>   # :Parameters :
+<a name="374"/>   # :  `c` - The column to remove.
+<a name="375"/>   #
+<a name="376"/>   public remove_column(c)
+<a name="377"/>      remove_column_index(get_column_index(c))
+<a name="378"/>      link
+<a name="379"/>   end
+<a name="380"/>
+<a name="381"/>   #
+<a name="382"/>   # Remove a column
+<a name="383"/>   # :Parameters :
+<a name="384"/>   # :  `i` - The index to remove
+<a name="385"/>   #
+<a name="386"/>   public remove_column_index(i)
+<a name="387"/>      local c
+<a name="388"/>      c := self.cols[i] | fail
+<a name="389"/>      delete(cols, i)
+<a name="390"/>      if is_initialized() then
+<a name="391"/>         c.finally()
+<a name="392"/>      link
+<a name="393"/>   end
+<a name="394"/>
+<a name="395"/>   #
+<a name="396"/>   # Get the index of the given column
+<a name="397"/>   #
+<a name="398"/>   public get_column_index(c)
+<a name="399"/>      return keyof(self.cols, c)
+<a name="400"/>   end
+<a name="401"/>
+<a name="402"/>   public override initially()
+<a name="403"/>      if *cols = 0 then
+<a name="404"/>         runerr("No PTableColumns in PTable")
+<a name="405"/>      SelectableScrollArea.initially()
+<a name="406"/>      every (!cols).initially()
+<a name="407"/>   end
+<a name="408"/>
+<a name="409"/>   public override finally()
+<a name="410"/>      every (!cols).finally()
+<a name="411"/>      SelectableScrollArea.finally()
+<a name="412"/>   end
+<a name="413"/>
+<a name="414"/>   public override calculate_line_height()
+<a name="415"/>      local t, m, h, r, e, i
+<a name="416"/>      t := []
+<a name="417"/>      m := 0
+<a name="418"/>      every h := (!cols).calculate_line_height(self.cbwin) do {
+<a name="419"/>         if integer(h) then
+<a name="420"/>            m &lt;:= h
+<a name="421"/>         else
+<a name="422"/>            put(t, h)
+<a name="423"/>      }
+<a name="424"/>      #
+<a name="425"/>      # Easy case, all columns report fixed line heights, so the line height for the
+<a name="426"/>      # table is the maximum.
+<a name="427"/>      if *t = 0 then
+<a name="428"/>         return m
+<a name="429"/>
+<a name="430"/>      r := list(*t[1], m)
+<a name="431"/>      every e := !t do {
+<a name="432"/>         *e = *contents | syserr("Inconsistent table column line height list sizes returned")
+<a name="433"/>         every i := 1 to *r do
+<a name="434"/>            r[i] &lt;:= e[i]
+<a name="435"/>      }
+<a name="436"/>
+<a name="437"/>      return r
+<a name="438"/>   end
+<a name="439"/>
+<a name="440"/>   public slice(col)
+<a name="441"/>      suspend (!contents)[col]
+<a name="442"/>   end
+<a name="443"/>
+<a name="444"/>   public get_cell(line, col)
+<a name="445"/>      return contents[line, col]
+<a name="446"/>   end
+<a name="447"/>
+<a name="448"/>   public override calculate_subject_width()
+<a name="449"/>      local mw, c
+<a name="450"/>      mw := (*cols + 1) * inset
+<a name="451"/>      every c := !cols do {
+<a name="452"/>         c.calc_width := c.calculate_column_width(self.cbwin)
+<a name="453"/>         mw +:= c.calc_width
+<a name="454"/>      }
+<a name="455"/>      return mw
+<a name="456"/>   end
+<a name="457"/>
+<a name="458"/>   public get_column(n)
+<a name="459"/>      return cols[n]
+<a name="460"/>   end
+<a name="461"/>
+<a name="462"/>   #
+<a name="463"/>   # Return the column under the current x, y cursor.
+<a name="464"/>   #
+<a name="465"/>   public get_column_under_pointer(e)
+<a name="466"/>      local c, colx
+<a name="467"/>      in_region(e) | fail
+<a name="468"/>      colx := get_subject_x() + inset
+<a name="469"/>      every c := !cols do {
+<a name="470"/>         if colx &lt;= e.x &lt; colx + c.width then
+<a name="471"/>            return c
+<a name="472"/>         colx +:= c.width + inset
+<a name="473"/>      }
+<a name="474"/>   end
+<a name="475"/>
+<a name="476"/>   public override draw()
+<a name="477"/>      local yp, i, j, info, h, lh, r, col, cc, colx, W
+<a name="478"/>
+<a name="479"/>      r := view.get_cbwin_clip()
+<a name="480"/>
+<a name="481"/>      info := get_line_info(r) | fail
+<a name="482"/>      h := get_line_height()
+<a name="483"/>
+<a name="484"/>      colx := get_subject_x() + inset
+<a name="485"/>      use {
+<a name="486"/>         W := view.cbwin.clone(), 
+<a name="487"/>         {
+<a name="488"/>            every j := 1 to *cols do {
+<a name="489"/>               col := cols[j]
+<a name="490"/>               # If the column is visible
+<a name="491"/>               if cc := view.cbwin.drawable(colx, r.y, col.width, r.h) then {
+<a name="492"/>                  # Clip on the column.
+<a name="493"/>                  W.clip!cc
+<a name="494"/>                  yp := r.y - info.offset
+<a name="495"/>                  # Write each line in this column
+<a name="496"/>                  every i := info.first to info.last do {
+<a name="497"/>                     lh := integer(h) | h[i]
+<a name="498"/>                     col.draw_cell(W, self.contents[i, j], i, j, colx, yp, lh)
+<a name="499"/>                     yp +:= lh
+<a name="500"/>                  }
+<a name="501"/>               }
+<a name="502"/>               colx +:= col.width + inset
+<a name="503"/>            }
+<a name="504"/>         }
+<a name="505"/>      }
+<a name="506"/>      # Call the superclass draw to do the selection, highlight etc.
+<a name="507"/>      SelectableScrollArea.draw()
+<a name="508"/>   end
+<a name="509"/>
+<a name="510"/>   public override draw_line_data(xp, yp, lh, i)
+<a name="511"/>   end
+<a name="512"/>
+<a name="513"/>   public override set_internal_fields()
+<a name="514"/>      local extra, tw, c, lc, ta, t
+<a name="515"/>      SelectableScrollArea.set_internal_fields()
+<a name="516"/>      # Distribute any extra width to weighted columns.
+<a name="517"/>      every c := !cols do
+<a name="518"/>         c.width := c.calc_width
+<a name="519"/>      extra := view.w - get_subject_width()
+<a name="520"/>      if extra &gt; 0 then {
+<a name="521"/>         tw := Sum{ (!cols).weight }
+<a name="522"/>         if tw &gt; 0 then {
+<a name="523"/>            ta := extra
+<a name="524"/>            every c := !cols do {
+<a name="525"/>               if c.weight &gt; 0 then {
+<a name="526"/>                  t := integer((extra * c.weight) / tw)
+<a name="527"/>                  c.width +:= t
+<a name="528"/>                  ta -:= t
+<a name="529"/>                  lc := c
+<a name="530"/>               }
+<a name="531"/>            }
+<a name="532"/>            # Any leftover to last one
+<a name="533"/>            lc.width +:= ta
+<a name="534"/>         }
+<a name="535"/>      }
+<a name="536"/>   end
+<a name="537"/>   
+<a name="538"/>   public override new()
+<a name="539"/>      SelectableScrollArea.new()
+<a name="540"/>      cols := []
+<a name="541"/>      inset := Gui.TEXT_INSET
+<a name="542"/>      return
+<a name="543"/>   end
+<a name="544"/>end
+</pre></body></html>

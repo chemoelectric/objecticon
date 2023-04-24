@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ThemeDirectory</title></head><body>
+<h1>ThemeDirectory</h1>
+<dl>
+<dt>Type :</dt><dd>package class</dd>
+<dt>Package :</dt><dd><a href="xdg-package.html" target="listFrame">xdg</a></dd>
+</dl><p/>
+Encapsulates a directory in a theme.  This is not an actual directory,
+but gives the meta information about the several actual directories
+that it does relate to.  These actual directories are located under
+the various elements of the base directories path, and each one has
+an element in the cached_dirs member.
+<p/>
+For example an index.theme file may contain the directory group:-
+[16x16/intl]
+Size=16
+Context=International
+Type=Threshold
+<p/>
+This is represented by a ThemeDirectory.  Then, each element from
+gen_data_dirs() is taken and "icons" and the theme name are appended
+to give an actual directory :-
+<p/>
+"/home/rparlett/.local/share/icons/theme/16x16/intl"
+"/usr/local/share/icons/theme/16x16/intl"
+"/usr/share/icons/theme/16x16/intl"
+<p/>
+and the cached contents of those directories are stored in CachedDir
+instances in the cached_dirs list.
+<p/><a href="xdg-xdg.icn.html#79" target="displayFrame">Source - xdg.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#directory_size_distance">directory_size_distance()</a>
+<a href="#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cached_dirs">cached_dirs</a>
+<a href="#maxsize">maxsize</a>
+<a href="#minsize">minsize</a>
+<a href="#scale">scale</a>
+<a href="#size">size</a>
+<a href="#threshold">threshold</a>
+<a href="#type">type</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="directory_size_distance"/>
+<h3>directory_size_distance(desired_size)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#112" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(type, size, minsize, maxsize, threshold, scale, cached_dirs)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#134" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="cached_dirs"/>
+<h3>cached_dirs</h3>
+public const<p/>
+<dl>
+<dd>
+A list of CachedDir objects
+<p/><a href="xdg-xdg.icn.html#110" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="maxsize"/>
+<h3>maxsize</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#107" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="minsize"/>
+<h3>minsize</h3>
+public const<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="xdg-xdg.icn.html#106" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="scale"/>
+<h3>scale</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#109" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size</h3>
+public const<p/>
+<dl>
+<dd>
+Sizes etc, all integers
+<p/><a href="xdg-xdg.icn.html#105" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="threshold"/>
+<h3>threshold</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#108" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="type"/>
+<h3>type</h3>
+public const<p/>
+<dl>
+<dd>
+Type, a string
+<p/><a href="xdg-xdg.icn.html#104" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>LineBasedInputStream</title></head><body>
+<h1>LineBasedInputStream</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.Stream.html" target="displayFrame">io.Stream</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="io.DirStream.html">io.DirStream</a><br>
+<a href="io.LineBasedGeneratorStream.html">io.LineBasedGeneratorStream</a><br>
+<a href="io.LineEditorStream.html">io.LineEditorStream</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+Parent class for classes which wish to define in() in terms of
+reading one line at time, rather than the other way round.
+<p/><a href="io-streams.icn.html#1275" target="displayFrame">Source - streams.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.LineBasedInputStream.html">io.LineBasedInputStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasClose</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html#close">close()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#out">out()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_mode">get_mode()</a>
+<a href="#in">in()</a>
+<a href="#new">new()</a>
+<a href="#read_line">read_line()</a>
+<a href="#read_line_impl">read_line_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#line">line</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1309" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="in"/>
+<h3>in(n)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#in">in()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1293" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1319" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="read_line"/>
+<h3>read_line()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#read_line">read_line()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1283" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="read_line_impl"/>
+<h3>read_line_impl()</h3>
+protected abstract<p/>
+<dl>
+<dd>
+Implemented to read a single line.  The EOL should not be
+included.  Fails on error and returns <code>&amp;null</code> on end-of-file
+<p/><a href="io-streams.icn.html#1313" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="line"/>
+<h3>line</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1280" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+</body></html>

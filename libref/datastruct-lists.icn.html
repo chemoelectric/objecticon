@@ -1,0 +1,1479 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lists.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: sets.icn 3945 2013-02-22 20:36:44Z r.parlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package datastruct
+<a name="6"/>
+<a name="7"/>import lang, util, ipl.pdco-(List)
+<a name="8"/>
+<a name="9"/>#
+<a name="10"/># This is a common superclass for a list-like data structure.
+<a name="11"/>#
+<a name="12"/># A subclass must implement different optional methods depending on
+<a name="13"/># its capability mode, as follows :-
+<a name="14"/>#
+<a name="15"/>#  * `INSERT` - `insert()`
+<a name="16"/>#  * `DELETE` - `delete()`
+<a name="17"/>#
+<a name="18"/># There are several other abstract methods which all classes must of
+<a name="19"/># course implement, and others which may be overridden to provide more
+<a name="20"/># efficient implementations than the default.
+<a name="21"/>#
+<a name="22"/># Note that the behaviour of the various generator methods should the
+<a name="23"/># list be concurrently modified during the course of generation,
+<a name="24"/># depends upon the particular list implementation.
+<a name="25"/>#
+<a name="26"/>abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
+<a name="27"/>   public static const
+<a name="28"/>      # An empty list instance
+<a name="29"/>      EMPTY_LIST,
+<a name="30"/>      # Constant indicating modifiable capability
+<a name="31"/>      MODIFY,
+<a name="32"/>      # Constant indicating insert capability
+<a name="33"/>      INSERT,
+<a name="34"/>      # Constant indicating delete capability
+<a name="35"/>      DELETE
+<a name="36"/>
+<a name="37"/>   private static init()
+<a name="38"/>      EMPTY_LIST := EmptyList()
+<a name="39"/>      MODIFY := 1
+<a name="40"/>      INSERT := 2
+<a name="41"/>      DELETE := 4
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   #
+<a name="45"/>   # Insert a new element `x` at position `i`.  Fails if `i` is
+<a name="46"/>   # invalid; otherwise succeeds and returns `self`.  Only implemented
+<a name="47"/>   # with INSERT capability.
+<a name="48"/>   #
+<a name="49"/>   public optional insert(i, x)
+<a name="50"/>   
+<a name="51"/>   #
+<a name="52"/>   # Delete element at position `i` from the list.  Fails if `i` is
+<a name="53"/>   # invalid; otherwise succeeds and returns `self`.  Only implemented
+<a name="54"/>   # with DELETE capability.
+<a name="55"/>   #
+<a name="56"/>   public optional delete(i)
+<a name="57"/>
+<a name="58"/>   #
+<a name="59"/>   # Return the member at position `i`.  If the list has MODIFY
+<a name="60"/>   # capability, a variable is returned, otherwise a value is
+<a name="61"/>   # returned.
+<a name="62"/>   #
+<a name="63"/>   public abstract at(i)
+<a name="64"/>
+<a name="65"/>   #
+<a name="66"/>   # Remove and return an element from the left end of list.
+<a name="67"/>   #
+<a name="68"/>   public get()
+<a name="69"/>      return 1(.at(1), delete(1))
+<a name="70"/>   end
+<a name="71"/>
+<a name="72"/>   #
+<a name="73"/>   # Remove and return an element from the right end of the list.
+<a name="74"/>   #
+<a name="75"/>   public pull()
+<a name="76"/>      return 1(.at(-1), delete(-1))
+<a name="77"/>   end
+<a name="78"/>
+<a name="79"/>   #
+<a name="80"/>   # Push an element onto the left end of the list.
+<a name="81"/>   #
+<a name="82"/>   public push(x)
+<a name="83"/>      return insert(1, x)
+<a name="84"/>   end
+<a name="85"/>
+<a name="86"/>   #
+<a name="87"/>   # Push an element onto the right end of the list.
+<a name="88"/>   #
+<a name="89"/>   public put(x)
+<a name="90"/>      return insert(0, x)
+<a name="91"/>   end
+<a name="92"/>
+<a name="93"/>   #
+<a name="94"/>   # Generate the members, starting with the element at index `i`,
+<a name="95"/>   # which defaults to 1.  If the list has MODIFY capability,
+<a name="96"/>   # variables are generated, otherwise values are generated.
+<a name="97"/>   #
+<a name="98"/>   public abstract gen(i)
+<a name="99"/>
+<a name="100"/>   #
+<a name="101"/>   # Generate the members in reverse order, starting with the element
+<a name="102"/>   # before index `i` (thus generating the elements in the range 1:i);
+<a name="103"/>   # `i` defaults to 0.  If the list has MODIFY capability, variables
+<a name="104"/>   # are generated, otherwise values are generated.
+<a name="105"/>   #
+<a name="106"/>   public abstract back(i)
+<a name="107"/>
+<a name="108"/>   #
+<a name="109"/>   # Return the size of the list.
+<a name="110"/>   #
+<a name="111"/>   public abstract size()
+<a name="112"/>
+<a name="113"/>   #
+<a name="114"/>   # Clear the list of all elements. Always succeeds and returns
+<a name="115"/>   # `self`.  Only implemented with DELETE capability.
+<a name="116"/>   #
+<a name="117"/>   public clear()
+<a name="118"/>      while delete(1)
+<a name="119"/>      link
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   #
+<a name="123"/>   # Generate the indices i such that at(i) === x
+<a name="124"/>   #
+<a name="125"/>   public keyof(x)
+<a name="126"/>      suspend Positions{ gen(), x }
+<a name="127"/>   end
+<a name="128"/>
+<a name="129"/>   #
+<a name="130"/>   # Return an icon list of the elements.
+<a name="131"/>   #
+<a name="132"/>   public list()
+<a name="133"/>      return ipl.pdco.List{ gen() }
+<a name="134"/>   end
+<a name="135"/>
+<a name="136"/>   #
+<a name="137"/>   # Return an icon list of the elements in the range i:j
+<a name="138"/>   #
+<a name="139"/>   public slice(i, j)
+<a name="140"/>      local s
+<a name="141"/>      s := cvslice(i, j, size()) | fail
+<a name="142"/>      return ipl.pdco.List{ gen(s.lo) \ (s.hi - s.lo) }
+<a name="143"/>   end
+<a name="144"/>
+<a name="145"/>   #
+<a name="146"/>   # Succeed iff the size is zero.
+<a name="147"/>   #
+<a name="148"/>   public empty()
+<a name="149"/>      succeed size() = 0
+<a name="150"/>   end
+<a name="151"/>
+<a name="152"/>   #
+<a name="153"/>   # Return a random value (cf ?l for a list).  If the list has MODIFY
+<a name="154"/>   # capability, a variable is returned, otherwise a value is
+<a name="155"/>   # returned.
+<a name="156"/>   #
+<a name="157"/>   public random()
+<a name="158"/>      return at(?(0 &lt; size()))
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   #
+<a name="162"/>   # Custom equals mirrors the `equals()` behaviour for builtin lists.
+<a name="163"/>   #
+<a name="164"/>   protected override object_equals(other, seen)
+<a name="165"/>      local e, x
+<a name="166"/>      other.size() = size() | fail
+<a name="167"/>      e := create other.gen()
+<a name="168"/>      every x := gen() do
+<a name="169"/>         equals(x, @e, seen) | fail
+<a name="170"/>      return not @e
+<a name="171"/>   end
+<a name="172"/>
+<a name="173"/>   #
+<a name="174"/>   # Custom hash mirrors the `hash()` behaviour for builtin lists.
+<a name="175"/>   #
+<a name="176"/>   protected override object_hash(depth)
+<a name="177"/>      local n, i
+<a name="178"/>      n := size()
+<a name="179"/>      if depth &gt; 1 then
+<a name="180"/>         every i := hash(gen() \ 10, depth - 1) do
+<a name="181"/>            n := 37 * iand(n, 16rffffff)  + i
+<a name="182"/>      return n
+<a name="183"/>   end
+<a name="184"/>
+<a name="185"/>   #
+<a name="186"/>   # Output object
+<a name="187"/>   #
+<a name="188"/>   protected override object_output(oo)
+<a name="189"/>      local e, sep
+<a name="190"/>      if oo.simple{gen()} then {
+<a name="191"/>         oo.object_start(self)
+<a name="192"/>         every e := gen() do {
+<a name="193"/>            if \sep then
+<a name="194"/>               oo.writes1(",")
+<a name="195"/>            oo.traverse(e)
+<a name="196"/>            sep := &amp;yes
+<a name="197"/>         }
+<a name="198"/>         oo.object_end(self)
+<a name="199"/>      } else {
+<a name="200"/>         oo.nl().
+<a name="201"/>            object_start(self).
+<a name="202"/>            iplus()
+<a name="203"/>         every e := gen() do {
+<a name="204"/>            if \sep then
+<a name="205"/>               oo.writes1(",")
+<a name="206"/>            oo.nl().
+<a name="207"/>               traverse(e)
+<a name="208"/>            sep := &amp;yes
+<a name="209"/>         }
+<a name="210"/>         oo.iminus().
+<a name="211"/>            nl().
+<a name="212"/>            object_end(self)
+<a name="213"/>      }
+<a name="214"/>   end
+<a name="215"/>end
+<a name="216"/>
+<a name="217"/>#
+<a name="218"/># A helpful abstract class for a list, which wishes to implement the
+<a name="219"/># generator methods `gen()` and `back()` in terms of `at()`.
+<a name="220"/>#
+<a name="221"/># In the case of changes to the list during generation, the methods
+<a name="222"/># behave like the builtin `forward()` and `back()` functions.
+<a name="223"/>#
+<a name="224"/>abstract class ListImpl1(List)
+<a name="225"/>   public override gen(i)
+<a name="226"/>      if i := first_forward(i, size()) then
+<a name="227"/>         suspend |1(at(i), i +:= 1)
+<a name="228"/>   end
+<a name="229"/>
+<a name="230"/>   public override back(i)
+<a name="231"/>      if i := first_back(i, size()) then
+<a name="232"/>         suspend |1(at(i), i -:= 1)
+<a name="233"/>   end
+<a name="234"/>end
+<a name="235"/>
+<a name="236"/>#
+<a name="237"/># A helpful abstract class for a list which wishes to implement `at()`
+<a name="238"/># in terms of `gen()`.
+<a name="239"/>#
+<a name="240"/>abstract class ListImpl2(List)
+<a name="241"/>   public override at(i)
+<a name="242"/>      return Index{ gen(), cvpos_item(i, size()) }
+<a name="243"/>   end
+<a name="244"/>end
+<a name="245"/>
+<a name="246"/>#
+<a name="247"/># This list wraps another list to provide an unmodifiable view of it.
+<a name="248"/>#
+<a name="249"/>class UnmodifiableList(List)
+<a name="250"/>   protected const
+<a name="251"/>      l
+<a name="252"/>
+<a name="253"/>   public override at(i)
+<a name="254"/>      return .l.at(i)
+<a name="255"/>   end
+<a name="256"/>
+<a name="257"/>   public override gen(i)
+<a name="258"/>      suspend .l.gen(i)
+<a name="259"/>   end
+<a name="260"/>
+<a name="261"/>   public override back(i)
+<a name="262"/>      suspend .l.back(i)
+<a name="263"/>   end
+<a name="264"/>
+<a name="265"/>   public override size()
+<a name="266"/>      return l.size()
+<a name="267"/>   end
+<a name="268"/>
+<a name="269"/>   public override empty()
+<a name="270"/>      return l.empty()
+<a name="271"/>   end
+<a name="272"/>
+<a name="273"/>   public override random()
+<a name="274"/>      return .l.random()
+<a name="275"/>   end
+<a name="276"/>
+<a name="277"/>   public override get_mode()
+<a name="278"/>      return 0
+<a name="279"/>   end
+<a name="280"/>
+<a name="281"/>   public new(l)
+<a name="282"/>      self.l := need_instance(l, List)
+<a name="283"/>      return
+<a name="284"/>   end
+<a name="285"/>end
+<a name="286"/>
+<a name="287"/>#
+<a name="288"/># A `List` that is just a wrapper around a builtin list
+<a name="289"/>#
+<a name="290"/>class BuiltinList(List)
+<a name="291"/>   private const
+<a name="292"/>      l
+<a name="293"/>
+<a name="294"/>   public override insert(i, x)
+<a name="295"/>      link default.insert(l, i, x)
+<a name="296"/>   end
+<a name="297"/>
+<a name="298"/>   public override delete(i)
+<a name="299"/>      link default.delete(l, i)
+<a name="300"/>   end
+<a name="301"/>
+<a name="302"/>   public override at(i)
+<a name="303"/>      return l[i]
+<a name="304"/>   end
+<a name="305"/>
+<a name="306"/>   public override get()
+<a name="307"/>      return default.get(l)
+<a name="308"/>   end
+<a name="309"/>
+<a name="310"/>   public override pull()
+<a name="311"/>      return default.pull(l)
+<a name="312"/>   end
+<a name="313"/>
+<a name="314"/>   public override push(x)
+<a name="315"/>      default.push(l, x)
+<a name="316"/>      link
+<a name="317"/>   end
+<a name="318"/>
+<a name="319"/>   public override put(x)
+<a name="320"/>      default.put(l, x)
+<a name="321"/>      link
+<a name="322"/>   end
+<a name="323"/>
+<a name="324"/>   public override keyof(x)
+<a name="325"/>      suspend default.keyof(l, x)
+<a name="326"/>   end
+<a name="327"/>
+<a name="328"/>   public override gen(i)
+<a name="329"/>      suspend forward(l, i)
+<a name="330"/>   end
+<a name="331"/>
+<a name="332"/>   public override back(i)
+<a name="333"/>      suspend default.back(l, i)
+<a name="334"/>   end
+<a name="335"/>
+<a name="336"/>   public override slice(i, j)
+<a name="337"/>      return l[i:j]
+<a name="338"/>   end
+<a name="339"/>
+<a name="340"/>   public override size()
+<a name="341"/>      return *l
+<a name="342"/>   end
+<a name="343"/>
+<a name="344"/>   public override random()
+<a name="345"/>      return ?l
+<a name="346"/>   end
+<a name="347"/>
+<a name="348"/>   public override clear()
+<a name="349"/>      default.clear(l)
+<a name="350"/>      link
+<a name="351"/>   end
+<a name="352"/>
+<a name="353"/>   public override get_mode()
+<a name="354"/>      return MODIFY + INSERT + DELETE
+<a name="355"/>   end
+<a name="356"/>
+<a name="357"/>   public new(l)
+<a name="358"/>      self.l := need_list(\l) | []
+<a name="359"/>      return
+<a name="360"/>   end
+<a name="361"/>end
+<a name="362"/>
+<a name="363"/>#
+<a name="364"/># An empty list.  An instance of this class is `List.EMPTY_LIST`.
+<a name="365"/>#
+<a name="366"/>class EmptyList(ListImpl1)
+<a name="367"/>   public override at(i)
+<a name="368"/>   end
+<a name="369"/>
+<a name="370"/>   public override size()
+<a name="371"/>      return 0
+<a name="372"/>   end
+<a name="373"/>
+<a name="374"/>   public override get_mode()
+<a name="375"/>      return 0
+<a name="376"/>   end
+<a name="377"/>end
+<a name="378"/>
+<a name="379"/>package record NodeSlice(len, h, t)
+<a name="380"/>
+<a name="381"/>#
+<a name="382"/># A node in a `LinkedList`.
+<a name="383"/>#
+<a name="384"/>final class LinkedListNode()
+<a name="385"/>   package
+<a name="386"/>      nxt
+<a name="387"/>   public
+<a name="388"/>      val
+<a name="389"/>
+<a name="390"/>   #
+<a name="391"/>   # Create and insert a new node immediately after this node, with
+<a name="392"/>   # value `x`.  The new node is returned.
+<a name="393"/>   #
+<a name="394"/>   public insert_after(x)
+<a name="395"/>      nxt := LinkedListNode(nxt, x)
+<a name="396"/>      return .nxt
+<a name="397"/>   end
+<a name="398"/>
+<a name="399"/>   #
+<a name="400"/>   # Unlink the node immediately after this node.  Fails if there is
+<a name="401"/>   # no such node, or returns the unlinked node.  This can be helpful
+<a name="402"/>   # whilst iterating over a list and deleting nodes.
+<a name="403"/>   #
+<a name="404"/>   # Example :-
+<a name="405"/>   # ~
+<a name="406"/>   #   l := LinkedList(3, 3,10,20,3,3,30,3,40,50,60,70,3)
+<a name="407"/>   #   # Delete all the 3's from the list.
+<a name="408"/>   #   # Start with those at the front.
+<a name="409"/>   #   while l.at(1) = 3 do
+<a name="410"/>   #      l.get()
+<a name="411"/>   #   # Then iterate over the rest.
+<a name="412"/>   #   every n := l.node(1).gen() do {
+<a name="413"/>   #      while n.get_next().val = 3 do
+<a name="414"/>   #         n.unlink_next()
+<a name="415"/>   #   }
+<a name="416"/>   #   # Now l is (10,20,30,40,50,60,70)
+<a name="417"/>   # ~
+<a name="418"/>   public unlink_next()
+<a name="419"/>      local n
+<a name="420"/>      if n := \nxt then {
+<a name="421"/>         nxt := n.nxt
+<a name="422"/>         return n
+<a name="423"/>      }
+<a name="424"/>   end
+<a name="425"/>
+<a name="426"/>   #
+<a name="427"/>   # Set the next node to `n`, which may be `&amp;null`.
+<a name="428"/>   #
+<a name="429"/>   public set_next(n)
+<a name="430"/>      need_instance(\n, LinkedListNode)
+<a name="431"/>      nxt := n
+<a name="432"/>      link
+<a name="433"/>   end
+<a name="434"/>
+<a name="435"/>   #
+<a name="436"/>   # Generate this node and all subsequent nodes.
+<a name="437"/>   #
+<a name="438"/>   public gen()
+<a name="439"/>      local n
+<a name="440"/>      n := self
+<a name="441"/>      repeat {
+<a name="442"/>         suspend n
+<a name="443"/>         n := \n.nxt | fail
+<a name="444"/>      }
+<a name="445"/>   end
+<a name="446"/>
+<a name="447"/>   #
+<a name="448"/>   # Return the next node, or fail if there is none.
+<a name="449"/>   #
+<a name="450"/>   public get_next()
+<a name="451"/>      return .\nxt
+<a name="452"/>   end
+<a name="453"/>
+<a name="454"/>   #
+<a name="455"/>   # Move along the list `i` (&gt;= 0) places.  Returns the node at that
+<a name="456"/>   # position, or fail if the end of the list is encountered.
+<a name="457"/>   #
+<a name="458"/>   public move(i)
+<a name="459"/>      local n
+<a name="460"/>      i := need_integer(i, 0)
+<a name="461"/>      n := self
+<a name="462"/>      every 1 to i do
+<a name="463"/>         n := \n.nxt | fail
+<a name="464"/>      return n
+<a name="465"/>   end
+<a name="466"/>
+<a name="467"/>   #
+<a name="468"/>   # Return a new `LinkedList`, with this node as its head.
+<a name="469"/>   #
+<a name="470"/>   public list()
+<a name="471"/>      return LinkedList.from_node(self)
+<a name="472"/>   end
+<a name="473"/>
+<a name="474"/>   package new(nxt, val)
+<a name="475"/>      self.nxt := nxt
+<a name="476"/>      self.val := val
+<a name="477"/>      return
+<a name="478"/>   end
+<a name="479"/>end
+<a name="480"/>
+<a name="481"/>#
+<a name="482"/># A `List` implementation based on a simple linked list.  Note some of
+<a name="483"/># the operations which suspend values may behave differently from the
+<a name="484"/># builtin list if the list is concurrently modified.
+<a name="485"/>#
+<a name="486"/>class LinkedList(List)
+<a name="487"/>   private
+<a name="488"/>      nxt
+<a name="489"/>
+<a name="490"/>   public override insert(i, x)
+<a name="491"/>      link new_node(i, x)
+<a name="492"/>   end
+<a name="493"/>
+<a name="494"/>   #
+<a name="495"/>   # This is like `insert()`, but returns the new node that has been
+<a name="496"/>   # inserted.
+<a name="497"/>   #
+<a name="498"/>   public new_node(i, x)
+<a name="499"/>      local n, r
+<a name="500"/>      n := node_before(i) | fail
+<a name="501"/>      n.nxt := r := LinkedListNode(n.nxt, x)
+<a name="502"/>      return r
+<a name="503"/>   end
+<a name="504"/>
+<a name="505"/>   public override delete(i)
+<a name="506"/>      local n
+<a name="507"/>      n := node_before(i) | fail
+<a name="508"/>      n.nxt := (\n.nxt).nxt | fail
+<a name="509"/>      link
+<a name="510"/>   end
+<a name="511"/>
+<a name="512"/>   public override at(i)
+<a name="513"/>      return node(i).val
+<a name="514"/>   end
+<a name="515"/>
+<a name="516"/>   public override empty()
+<a name="517"/>      return /nxt
+<a name="518"/>   end
+<a name="519"/>
+<a name="520"/>   public override pull()
+<a name="521"/>      local n, v
+<a name="522"/>      n := node_before(-1) | fail
+<a name="523"/>      v := n.nxt.val
+<a name="524"/>      n.nxt := &amp;null
+<a name="525"/>      return v
+<a name="526"/>   end
+<a name="527"/>
+<a name="528"/>   #
+<a name="529"/>   # Generate the nodes in the list, starting at index `i` (default
+<a name="530"/>   # 1).  Each node represents one entry in the list.  The node `val`
+<a name="531"/>   # field may be changed if desired, to edit the value in the list.
+<a name="532"/>   #
+<a name="533"/>   # See also `LinkedListNode.gen()`.
+<a name="534"/>   #
+<a name="535"/>   public nodes(i)
+<a name="536"/>      /i := 1
+<a name="537"/>      suspend node(i).gen()
+<a name="538"/>   end
+<a name="539"/>
+<a name="540"/>   #
+<a name="541"/>   # Generate the nodes in reverse order, starting with the node
+<a name="542"/>   # before index `i` (thus generating the elements in the range 1:i);
+<a name="543"/>   # `i` defaults to 0. (see `nodes()`).
+<a name="544"/>   #
+<a name="545"/>   public back_nodes(i)
+<a name="546"/>      local n
+<a name="547"/>      i := need_integer(\i) | 0
+<a name="548"/>      n := node(i - 1) | fail
+<a name="549"/>      repeat {
+<a name="550"/>         suspend n
+<a name="551"/>         n := before(n) | fail
+<a name="552"/>      }
+<a name="553"/>   end
+<a name="554"/>
+<a name="555"/>   public override gen(i)
+<a name="556"/>      suspend nodes(i).val
+<a name="557"/>   end
+<a name="558"/>
+<a name="559"/>   public override back(i)
+<a name="560"/>      suspend back_nodes(i).val
+<a name="561"/>   end
+<a name="562"/>
+<a name="563"/>   #
+<a name="564"/>   # If node `n` appears in this list, and is not the first element,
+<a name="565"/>   # return the node immediately before it, or fail otherwise.
+<a name="566"/>   #
+<a name="567"/>   public before(n)
+<a name="568"/>      local t
+<a name="569"/>      need_instance(n, LinkedListNode)
+<a name="570"/>      t := nxt
+<a name="571"/>      while \t do {
+<a name="572"/>         if t.nxt === n then
+<a name="573"/>            return t
+<a name="574"/>         t := t.nxt
+<a name="575"/>      }
+<a name="576"/>   end
+<a name="577"/>
+<a name="578"/>   public override size()
+<a name="579"/>      return Length{ nodes() }
+<a name="580"/>   end
+<a name="581"/>
+<a name="582"/>   public override clear()
+<a name="583"/>      nxt := &amp;null
+<a name="584"/>      link
+<a name="585"/>   end
+<a name="586"/>
+<a name="587"/>   public override get_mode()
+<a name="588"/>      return MODIFY + INSERT + DELETE
+<a name="589"/>   end
+<a name="590"/>
+<a name="591"/>   #
+<a name="592"/>   # Return the head value of the list, or fail if the list is empty.
+<a name="593"/>   #
+<a name="594"/>   public head()
+<a name="595"/>      return (\nxt).val
+<a name="596"/>   end
+<a name="597"/>
+<a name="598"/>   #
+<a name="599"/>   # Set the head of the list (ie its first value), or fail if this
+<a name="600"/>   # list is empty.
+<a name="601"/>   #
+<a name="602"/>   public set_head(x)
+<a name="603"/>      link (\nxt).val := x
+<a name="604"/>   end
+<a name="605"/>
+<a name="606"/>   #
+<a name="607"/>   # Return the tail of the list, or fail if the list is empty.
+<a name="608"/>   #
+<a name="609"/>   public tail()
+<a name="610"/>      return from_node((\nxt).nxt)
+<a name="611"/>   end
+<a name="612"/>
+<a name="613"/>   #
+<a name="614"/>   # Set the tail of the list to share the elements of the list
+<a name="615"/>   # `other`, or fail if this list is empty.
+<a name="616"/>   #
+<a name="617"/>   public set_tail(other)
+<a name="618"/>      need_instance(other, LinkedList)
+<a name="619"/>      link (\nxt).nxt := other.nxt
+<a name="620"/>   end
+<a name="621"/>
+<a name="622"/>   #
+<a name="623"/>   # Set the tail of the list to the empty list (leaving just one
+<a name="624"/>   # element), or fail if this list is empty.
+<a name="625"/>   #
+<a name="626"/>   public clear_tail()
+<a name="627"/>      link (\nxt).nxt := &amp;null
+<a name="628"/>   end
+<a name="629"/>
+<a name="630"/>   #
+<a name="631"/>   # Set the head node to the given node, which may be `&amp;null`.
+<a name="632"/>   #
+<a name="633"/>   public set_nxt(n)
+<a name="634"/>      need_instance(\n, LinkedListNode)
+<a name="635"/>      nxt := n
+<a name="636"/>      link
+<a name="637"/>   end
+<a name="638"/>
+<a name="639"/>   #
+<a name="640"/>   # Return the head node, or fail if the list is empty.
+<a name="641"/>   #
+<a name="642"/>   public get_nhead()
+<a name="643"/>      return .\nxt
+<a name="644"/>   end
+<a name="645"/>
+<a name="646"/>   #
+<a name="647"/>   # Set this list to share the same elements as `other`.
+<a name="648"/>   #
+<a name="649"/>   public set_list(other)
+<a name="650"/>      need_instance(other, LinkedList)
+<a name="651"/>      nxt := other.nxt
+<a name="652"/>      link
+<a name="653"/>   end
+<a name="654"/>
+<a name="655"/>   #
+<a name="656"/>   # Return a new list which shares the elements of this list from
+<a name="657"/>   # the notional range `i:0`.  The result may be an empty list.
+<a name="658"/>   #
+<a name="659"/>   public from(i)
+<a name="660"/>      return from_node(node0(i))
+<a name="661"/>   end
+<a name="662"/>
+<a name="663"/>   #
+<a name="664"/>   # Succeed iff this list shares the same elements as list `other`.
+<a name="665"/>   #
+<a name="666"/>   public same(other)
+<a name="667"/>      need_instance(other, LinkedList)
+<a name="668"/>      succeed nxt === other.nxt
+<a name="669"/>   end
+<a name="670"/>
+<a name="671"/>   #
+<a name="672"/>   # Return the list index position of the given node, or fail if it
+<a name="673"/>   # is not in the list.
+<a name="674"/>   #
+<a name="675"/>   public node_index(n)
+<a name="676"/>      need_instance(n, LinkedListNode)
+<a name="677"/>      return Positions{ (\nxt).gen(), n }
+<a name="678"/>   end
+<a name="679"/>
+<a name="680"/>   #
+<a name="681"/>   # Given an index range `i:j`, this method returns the corresponding
+<a name="682"/>   # nodes at the beginning and end of the range.  If the range is out
+<a name="683"/>   # of bounds, the method fails.  Otherwise, a record is returned
+<a name="684"/>   # with `len`, `h` and `t` fields indicating the length of the range
+<a name="685"/>   # and the head and tail nodes respectively.  If the range is empty,
+<a name="686"/>   # then `len` is zero and the other two fields are null.
+<a name="687"/>   #
+<a name="688"/>   public node_cvslice(i, j)
+<a name="689"/>      local n, i1, d, h, t
+<a name="690"/>
+<a name="691"/>      i := need_integer(i)
+<a name="692"/>      j := need_integer(j)
+<a name="693"/>
+<a name="694"/>      if i &gt; j then
+<a name="695"/>         i :=: j
+<a name="696"/>
+<a name="697"/>      unless j &gt; 0 &amp; i &lt;= 0 then {
+<a name="698"/>         # Since i &lt;= j,
+<a name="699"/>         #    i &gt; 0 &amp; j &gt; 0 or i &lt;= 0 &amp; j &lt;= 0
+<a name="700"/>         h := node0(i) | fail
+<a name="701"/>         if i = j then
+<a name="702"/>            return NodeSlice(0)
+<a name="703"/>         t := (\h).move(j - i - 1) | fail
+<a name="704"/>         return NodeSlice(j - i, h, t)
+<a name="705"/>      }
+<a name="706"/>
+<a name="707"/>      # j &gt; 0 &amp; i &lt;= 0
+<a name="708"/>      i1 := i
+<a name="709"/>      n := self
+<a name="710"/>      repeat {
+<a name="711"/>         if j = 1 then
+<a name="712"/>            h := n
+<a name="713"/>         if \t then
+<a name="714"/>            t := t.nxt
+<a name="715"/>         else if i = 0 then
+<a name="716"/>            t := self
+<a name="717"/>         else
+<a name="718"/>            i +:= 1
+<a name="719"/>         n := n.nxt
+<a name="720"/>         j -:= 1
+<a name="721"/>         if /n then {
+<a name="722"/>            if /h | /t then
+<a name="723"/>               fail
+<a name="724"/>            d := i1 - j
+<a name="725"/>            return if d = 0 then
+<a name="726"/>               NodeSlice(0)
+<a name="727"/>            else if d &lt; 0 then
+<a name="728"/>               NodeSlice(-d, t.nxt, h)
+<a name="729"/>            else   # d &gt; 0
+<a name="730"/>               NodeSlice(d, h.nxt, t)
+<a name="731"/>         }
+<a name="732"/>      }
+<a name="733"/>
+<a name="734"/>   end
+<a name="735"/>
+<a name="736"/>   public override slice(i, j)
+<a name="737"/>      local s
+<a name="738"/>      s := node_cvslice(i, j) | fail
+<a name="739"/>      return ipl.pdco.List{ s.h.gen().val \ s.len }
+<a name="740"/>   end
+<a name="741"/>
+<a name="742"/>   #
+<a name="743"/>   # Return the node containing element `i`, or fail if `i` is out of
+<a name="744"/>   # range.
+<a name="745"/>   #
+<a name="746"/>   public node(i)
+<a name="747"/>      return .\node0(i)
+<a name="748"/>   end
+<a name="749"/>
+<a name="750"/>   #
+<a name="751"/>   # Like node(i), but additionally allowing index 0 (or size()+1) to
+<a name="752"/>   # return &amp;null.
+<a name="753"/>   #
+<a name="754"/>   private node0(i)
+<a name="755"/>      return node_before(i).nxt
+<a name="756"/>   end
+<a name="757"/>
+<a name="758"/>   #
+<a name="759"/>   # Return the node before the slice position i; position 1 returns
+<a name="760"/>   # self, the "virtual node" before the first node; this is the case
+<a name="761"/>   # even for an empty list.  0 will return the last element, or self
+<a name="762"/>   # for an empty list.
+<a name="763"/>   #
+<a name="764"/>   private node_before(i)
+<a name="765"/>      local n, r
+<a name="766"/>      i := need_integer(i)
+<a name="767"/>      if i = 1 then
+<a name="768"/>         return self
+<a name="769"/>      if i &gt; 1 then
+<a name="770"/>         return (\nxt).move(i - 2)
+<a name="771"/>      # i &lt;= 0
+<a name="772"/>      n := self
+<a name="773"/>      repeat {
+<a name="774"/>         if \r then
+<a name="775"/>            r := r.nxt
+<a name="776"/>         else if i = 0 then
+<a name="777"/>            r := self
+<a name="778"/>         else
+<a name="779"/>            i +:= 1
+<a name="780"/>         n := n.nxt
+<a name="781"/>         if /n then
+<a name="782"/>            return \r
+<a name="783"/>      }
+<a name="784"/>   end
+<a name="785"/>
+<a name="786"/>   package static from_node(n)
+<a name="787"/>      local i
+<a name="788"/>      i := Class.create_instance()
+<a name="789"/>      i.nxt := n
+<a name="790"/>      return i
+<a name="791"/>   end
+<a name="792"/>
+<a name="793"/>   #
+<a name="794"/>   # Create an instance and add each of the given entries.
+<a name="795"/>   #
+<a name="796"/>   public new(entries[])
+<a name="797"/>      every nxt := LinkedListNode(nxt, default.back(entries))
+<a name="798"/>      return
+<a name="799"/>   end
+<a name="800"/>end
+<a name="801"/>
+<a name="802"/>#
+<a name="803"/># A node in a `DoublyLinkedList`.
+<a name="804"/>#
+<a name="805"/>protected class DoublyLinkedListNode()
+<a name="806"/>   package
+<a name="807"/>      nxt,        # The next node, or &amp;null if this node was unlinked.
+<a name="808"/>      prev        # The previous node, or &amp;null if this node was unlinked.
+<a name="809"/>   public
+<a name="810"/>      val         # The value associated with this node.
+<a name="811"/>
+<a name="812"/>   #
+<a name="813"/>   # Create and insert a new node immediately before this node, with
+<a name="814"/>   # value `x`.  The new node is returned.
+<a name="815"/>   #
+<a name="816"/>   public insert_before(x)
+<a name="817"/>      need_linked()
+<a name="818"/>      prev.nxt := prev := DoublyLinkedListNode(prev, self, x)
+<a name="819"/>      return .prev
+<a name="820"/>   end
+<a name="821"/>
+<a name="822"/>   #
+<a name="823"/>   # Create and insert a new node immediately after this node, with
+<a name="824"/>   # value `x`.  The new node is returned.
+<a name="825"/>   #
+<a name="826"/>   public insert_after(x)
+<a name="827"/>      need_linked()
+<a name="828"/>      return nxt.insert_before(x)
+<a name="829"/>   end
+<a name="830"/>
+<a name="831"/>   #
+<a name="832"/>   # Given a `DoublyLinkedList`, adopt all of its nodes into this
+<a name="833"/>   # list, inserting them before this node.  Afterwards, `other` will
+<a name="834"/>   # be empty.
+<a name="835"/>   #
+<a name="836"/>   public splice_before(other)
+<a name="837"/>      need_linked()
+<a name="838"/>      need_instance(other, DoublyLinkedList)
+<a name="839"/>      unless other.empty() then {
+<a name="840"/>         prev.nxt := other.sentinel.nxt
+<a name="841"/>         other.sentinel.nxt.prev := prev
+<a name="842"/>         prev := other.sentinel.prev
+<a name="843"/>         other.sentinel.prev.nxt := self
+<a name="844"/>         other.clear()
+<a name="845"/>      }
+<a name="846"/>      link
+<a name="847"/>   end
+<a name="848"/>
+<a name="849"/>   #
+<a name="850"/>   # Given a `DoublyLinkedList`, adopt all of its nodes into this
+<a name="851"/>   # list, inserting them after this node.  Afterwards, `other` will
+<a name="852"/>   # be empty.
+<a name="853"/>   #
+<a name="854"/>   public splice_after(other)
+<a name="855"/>      need_linked()
+<a name="856"/>      nxt.splice_before(other)
+<a name="857"/>      link
+<a name="858"/>   end
+<a name="859"/>
+<a name="860"/>   #
+<a name="861"/>   # Remove this node from its list, by unlinking it from its adjacent
+<a name="862"/>   # nodes.
+<a name="863"/>   #
+<a name="864"/>   # After a node has been unlinked it cannot be used for further
+<a name="865"/>   # operations, and any attempt to do so will cause a runtime error.
+<a name="866"/>   # (See also `is_linked`).
+<a name="867"/>   #
+<a name="868"/>   # Example :-
+<a name="869"/>   # ~
+<a name="870"/>   #   l := DoublyLinkedList(99)
+<a name="871"/>   #   r := l.node(1)
+<a name="872"/>   #   r.unlink()
+<a name="873"/>   #   # l is now empty, r unlinked.
+<a name="874"/>   #   r.insert_after(100)      # runtime error
+<a name="875"/>   # ~
+<a name="876"/>   #
+<a name="877"/>   public unlink()
+<a name="878"/>      need_linked()
+<a name="879"/>      prev.nxt := nxt
+<a name="880"/>      nxt.prev := prev
+<a name="881"/>      link
+<a name="882"/>   end
+<a name="883"/>
+<a name="884"/>   #
+<a name="885"/>   # Check if this node is "linked" (hasn't been unlinked), signalling
+<a name="886"/>   # a runtime error otherwise.
+<a name="887"/>   #
+<a name="888"/>   public need_linked()
+<a name="889"/>      is_linked() | runerr("Node has been unlinked", self)
+<a name="890"/>      link
+<a name="891"/>   end
+<a name="892"/>
+<a name="893"/>   #
+<a name="894"/>   # Succeed iff this node is "linked" (meaning it hasn't been
+<a name="895"/>   # unlinked).
+<a name="896"/>   #
+<a name="897"/>   public is_linked()
+<a name="898"/>      succeed prev.nxt === self
+<a name="899"/>   end
+<a name="900"/>
+<a name="901"/>   #
+<a name="902"/>   # Return the previous node, or fail if there is none.
+<a name="903"/>   #
+<a name="904"/>   public get_prev()
+<a name="905"/>      need_linked()
+<a name="906"/>      return prev.real()
+<a name="907"/>   end
+<a name="908"/>
+<a name="909"/>   #
+<a name="910"/>   # Return the next node, or fail if there is none.
+<a name="911"/>   #
+<a name="912"/>   public get_next()
+<a name="913"/>      need_linked()
+<a name="914"/>      return nxt.real()
+<a name="915"/>   end
+<a name="916"/>
+<a name="917"/>   #
+<a name="918"/>   # Return the `DoublyLinkedList` associated with this node, which
+<a name="919"/>   # must be "linked".
+<a name="920"/>   #
+<a name="921"/>   # This method works by moving along the list to the sentinel node,
+<a name="922"/>   # whose value is a reference to the creating list.  It is therefore
+<a name="923"/>   # an O(n) operation.
+<a name="924"/>   #
+<a name="925"/>   # If this list of nodes was orphaned because the parent list
+<a name="926"/>   # performed a `clear()`, then this method fails.
+<a name="927"/>   #
+<a name="928"/>   public get_list()
+<a name="929"/>      local n
+<a name="930"/>      need_linked()
+<a name="931"/>      n := nxt
+<a name="932"/>      while n := n.real().nxt
+<a name="933"/>      return .\n.val
+<a name="934"/>   end
+<a name="935"/>
+<a name="936"/>   #
+<a name="937"/>   # Generate this node and all subsequent nodes.  It is permissible
+<a name="938"/>   # to edit the list during iteration, including unlinking the last
+<a name="939"/>   # node generated.
+<a name="940"/>   #
+<a name="941"/>   # Example :-
+<a name="942"/>   # ~
+<a name="943"/>   #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
+<a name="944"/>   #   # Delete all the 3's from the list.
+<a name="945"/>   #   every n := l.nodes() do
+<a name="946"/>   #      if n.val=3 then n.unlink()
+<a name="947"/>   #   # Now l is (10,20,30,40,50,60,70)
+<a name="948"/>   # ~
+<a name="949"/>   public gen()
+<a name="950"/>      local n
+<a name="951"/>      need_linked()
+<a name="952"/>      n := self
+<a name="953"/>      repeat {
+<a name="954"/>         suspend n
+<a name="955"/>         n := n.nxt.real() | fail
+<a name="956"/>      }
+<a name="957"/>   end
+<a name="958"/>
+<a name="959"/>   #
+<a name="960"/>   # Generate this node and all previous nodes.
+<a name="961"/>   #
+<a name="962"/>   public back()
+<a name="963"/>      local n
+<a name="964"/>      need_linked()
+<a name="965"/>      n := self
+<a name="966"/>      repeat {
+<a name="967"/>         suspend n
+<a name="968"/>         n := n.prev.real() | fail
+<a name="969"/>      }
+<a name="970"/>   end
+<a name="971"/>
+<a name="972"/>   package real()
+<a name="973"/>      link
+<a name="974"/>   end
+<a name="975"/>
+<a name="976"/>   #
+<a name="977"/>   # Return the list index position of this node in its enclosing
+<a name="978"/>   # list.
+<a name="979"/>   #
+<a name="980"/>   public index()
+<a name="981"/>      return Length{ back() }
+<a name="982"/>   end
+<a name="983"/>
+<a name="984"/>   #
+<a name="985"/>   # Return the list index position of this node, relative to the
+<a name="986"/>   # tail, in its enclosing list.  A negative integer is returned.
+<a name="987"/>   #
+<a name="988"/>   public rev_index(n)
+<a name="989"/>      return -Length{ gen() }
+<a name="990"/>   end
+<a name="991"/>
+<a name="992"/>   #
+<a name="993"/>   # Move along the list `i` places; positive means towards the tail,
+<a name="994"/>   # negative means towards the head.  Returns the node at that
+<a name="995"/>   # position, or fail if either end of the list is encountered.
+<a name="996"/>   #
+<a name="997"/>   public move(i)
+<a name="998"/>      local n
+<a name="999"/>      i := need_integer(i)
+<a name="1000"/>      need_linked()
+<a name="1001"/>      n := self
+<a name="1002"/>      if i &gt; 0 then {
+<a name="1003"/>         every 1 to i do
+<a name="1004"/>            n := n.nxt.real() | fail
+<a name="1005"/>      } else {
+<a name="1006"/>         every 1 to -i do
+<a name="1007"/>            n := n.prev.real() | fail
+<a name="1008"/>      }
+<a name="1009"/>      return n
+<a name="1010"/>   end
+<a name="1011"/>
+<a name="1012"/>   #
+<a name="1013"/>   # This method combines a `move` and a `unlink`.  First, `move(i)`
+<a name="1014"/>   # is performed, and the result is noted.  Then the `unlink` is
+<a name="1015"/>   # peformed.  The result of the `move` is returned; if the `move`
+<a name="1016"/>   # failed, then this method fails, but the `unlink` is carried out
+<a name="1017"/>   # regardless.
+<a name="1018"/>   #
+<a name="1019"/>   # This gives an alternative way to iterate over the list and unlink
+<a name="1020"/>   # selected nodes.
+<a name="1021"/>   #
+<a name="1022"/>   # Example :-
+<a name="1023"/>   # ~
+<a name="1024"/>   #   l := DoublyLinkedList(10,20,30,40,50,60,70)
+<a name="1025"/>   #   r := l.node(4)
+<a name="1026"/>   #   r.val     # 40
+<a name="1027"/>   #   r := r.move_unlink(1) # move 1 right, then unlink
+<a name="1028"/>   #   # Now l is (10,20,30,50,60,70)
+<a name="1029"/>   #   r.val     # 50
+<a name="1030"/>   # ~
+<a name="1031"/>   #
+<a name="1032"/>   public move_unlink(i)
+<a name="1033"/>      local t
+<a name="1034"/>      t := move(i)
+<a name="1035"/>      unlink()
+<a name="1036"/>      return \t
+<a name="1037"/>   end
+<a name="1038"/>
+<a name="1039"/>   package new(prev, nxt, val)
+<a name="1040"/>      self.prev := prev
+<a name="1041"/>      self.nxt := nxt
+<a name="1042"/>      self.val := val
+<a name="1043"/>      return
+<a name="1044"/>   end
+<a name="1045"/>end
+<a name="1046"/>
+<a name="1047"/>package class DoublyLinkedListSentinel(DoublyLinkedListNode)
+<a name="1048"/>   package override real()
+<a name="1049"/>   end
+<a name="1050"/>end
+<a name="1051"/>
+<a name="1052"/>#
+<a name="1053"/># A `List` implementation based on a doubly linked list.  Note some of
+<a name="1054"/># the operations which suspend values may behave differently from the
+<a name="1055"/># builtin list if the list is concurrently modified.
+<a name="1056"/>#
+<a name="1057"/>class DoublyLinkedList(List)
+<a name="1058"/>   package
+<a name="1059"/>      sentinel
+<a name="1060"/>
+<a name="1061"/>   public override insert(i, x)
+<a name="1062"/>      link new_node(i, x)
+<a name="1063"/>   end
+<a name="1064"/>
+<a name="1065"/>   #
+<a name="1066"/>   # This is like `insert()`, but returns the new node that has been
+<a name="1067"/>   # inserted.
+<a name="1068"/>   #
+<a name="1069"/>   public new_node(i, x)
+<a name="1070"/>      return node0(i).insert_before(x)
+<a name="1071"/>   end
+<a name="1072"/>
+<a name="1073"/>   public override empty()
+<a name="1074"/>      succeed sentinel.nxt === sentinel
+<a name="1075"/>   end
+<a name="1076"/>
+<a name="1077"/>   private new_sentinel()
+<a name="1078"/>      sentinel := DoublyLinkedListSentinel(,, self)
+<a name="1079"/>      sentinel.nxt := sentinel.prev := sentinel
+<a name="1080"/>   end
+<a name="1081"/>
+<a name="1082"/>   #
+<a name="1083"/>   # This is a constant-time operation that leaves the former list
+<a name="1084"/>   # nodes intact, but entirely divorced from this list.  The old
+<a name="1085"/>   # nodes will remain "linked" to one another, and can still be
+<a name="1086"/>   # operated upon, but without affecting this list.
+<a name="1087"/>   #
+<a name="1088"/>   public override clear()
+<a name="1089"/>      sentinel.val := &amp;null
+<a name="1090"/>      new_sentinel()
+<a name="1091"/>      link
+<a name="1092"/>   end
+<a name="1093"/>
+<a name="1094"/>   #
+<a name="1095"/>   # Insert the contents of another `DoublyLinkedList` at position
+<a name="1096"/>   # `i`.  Afterwards, `other` is empty.  It is not permissible to
+<a name="1097"/>   # splice a list into itself.
+<a name="1098"/>   #
+<a name="1099"/>   # Example :-
+<a name="1100"/>   # ~
+<a name="1101"/>   #   l := DoublyLinkedList(10,20,30,40)
+<a name="1102"/>   #   m := DoublyLinkedList(96,97,98) 
+<a name="1103"/>   #   l.splice(3, m)
+<a name="1104"/>   #   # Now l is (10,20,96,97,98,30,40)
+<a name="1105"/>   #   # and m is empty.
+<a name="1106"/>   # ~
+<a name="1107"/>   #
+<a name="1108"/>   public splice(i, other)
+<a name="1109"/>      link node0(i).splice_before(other)
+<a name="1110"/>   end
+<a name="1111"/>
+<a name="1112"/>   public override delete(i)
+<a name="1113"/>      link node(i).unlink()
+<a name="1114"/>   end
+<a name="1115"/>
+<a name="1116"/>   public override at(i)
+<a name="1117"/>      return node(i).val
+<a name="1118"/>   end
+<a name="1119"/>
+<a name="1120"/>   public override size()
+<a name="1121"/>      return Length{ nodes() }
+<a name="1122"/>   end
+<a name="1123"/>
+<a name="1124"/>   #
+<a name="1125"/>   # Generate the nodes in the list, starting at index `i` (default
+<a name="1126"/>   # 1).  Each node represents one entry in the list.  The node `val`
+<a name="1127"/>   # field may be changed if desired, to edit the value in the list.
+<a name="1128"/>   #
+<a name="1129"/>   # See also `DoublyLinkedListNode.gen()`.
+<a name="1130"/>   #
+<a name="1131"/>   public nodes(i)
+<a name="1132"/>      /i := 1
+<a name="1133"/>      suspend node(i).gen()
+<a name="1134"/>   end
+<a name="1135"/>
+<a name="1136"/>   #
+<a name="1137"/>   # Generate the nodes in reverse order, starting with the node
+<a name="1138"/>   # before index `i` (thus generating the elements in the range 1:i);
+<a name="1139"/>   # `i` defaults to 0. (see `nodes()`).
+<a name="1140"/>   #
+<a name="1141"/>   public back_nodes(i)
+<a name="1142"/>      i := need_integer(\i) | 0
+<a name="1143"/>      suspend node(i - 1).back()
+<a name="1144"/>   end
+<a name="1145"/>
+<a name="1146"/>   public override gen(i)
+<a name="1147"/>      suspend nodes(i).val
+<a name="1148"/>   end
+<a name="1149"/>
+<a name="1150"/>   public override back(i)
+<a name="1151"/>      suspend back_nodes(i).val
+<a name="1152"/>   end
+<a name="1153"/>
+<a name="1154"/>   #
+<a name="1155"/>   # Given a (positive) index i and a known list size, adjust i to an
+<a name="1156"/>   # equivalent negative index, if that would make lookup using
+<a name="1157"/>   # `node()` faster.
+<a name="1158"/>   #
+<a name="1159"/>   public static adjust_index(i, sz)
+<a name="1160"/>      i := need_integer(i, 1)
+<a name="1161"/>      sz := need_integer(sz, 0)
+<a name="1162"/>      if 2 * i &gt; sz + 1 then
+<a name="1163"/>         i -:= sz + 1
+<a name="1164"/>      return i
+<a name="1165"/>   end
+<a name="1166"/>
+<a name="1167"/>   #
+<a name="1168"/>   # Given an index range `i:j`, this method returns the corresponding
+<a name="1169"/>   # nodes at the beginning and end of the range.  If the range is out
+<a name="1170"/>   # of bounds, the method fails.  Otherwise, a record is returned
+<a name="1171"/>   # with `len`, `h` and `t` fields indicating the length of the range
+<a name="1172"/>   # and the head and tail nodes respectively.  If the range is empty,
+<a name="1173"/>   # then `len` is zero and the other two fields are null.
+<a name="1174"/>   #
+<a name="1175"/>   public node_cvslice(i, j)
+<a name="1176"/>      local n, i1, d, h, t
+<a name="1177"/>      i := need_integer(i)
+<a name="1178"/>      j := need_integer(j)
+<a name="1179"/>
+<a name="1180"/>      if i &gt; j then
+<a name="1181"/>         i :=: j
+<a name="1182"/>
+<a name="1183"/>      if i &gt; 0 &amp; j &gt; 0 then {
+<a name="1184"/>         h := node0(i) | fail
+<a name="1185"/>         if i = j then
+<a name="1186"/>            return NodeSlice(0)
+<a name="1187"/>         t := h.real().move(j - i - 1) | fail
+<a name="1188"/>         return NodeSlice(j - i, h, t)
+<a name="1189"/>      }
+<a name="1190"/>
+<a name="1191"/>      if i &lt;= 0 &amp; j &lt;= 0 then {
+<a name="1192"/>         t := node0(j) | fail
+<a name="1193"/>         if i = j then
+<a name="1194"/>            return NodeSlice(0)
+<a name="1195"/>         h := t.move(i - j) | fail
+<a name="1196"/>         return NodeSlice(j - i, h, t.prev)
+<a name="1197"/>      }
+<a name="1198"/>
+<a name="1199"/>      # j &gt; 0 &amp; i &lt;= 0
+<a name="1200"/>      i1 := i
+<a name="1201"/>      n := sentinel
+<a name="1202"/>      repeat {
+<a name="1203"/>         if j = 1 then
+<a name="1204"/>            h := n
+<a name="1205"/>         if \t then
+<a name="1206"/>            t := t.nxt
+<a name="1207"/>         else if i = 0 then
+<a name="1208"/>            t := sentinel
+<a name="1209"/>         else
+<a name="1210"/>            i +:= 1
+<a name="1211"/>         n := n.nxt
+<a name="1212"/>         j -:= 1
+<a name="1213"/>         unless n.real() then {
+<a name="1214"/>            if /h | /t then
+<a name="1215"/>               fail
+<a name="1216"/>            d := i1 - j
+<a name="1217"/>            return if d = 0 then
+<a name="1218"/>               NodeSlice(0)
+<a name="1219"/>            else if d &lt; 0 then
+<a name="1220"/>               NodeSlice(-d, t.nxt, h)
+<a name="1221"/>            else   # d &gt; 0
+<a name="1222"/>               NodeSlice(d, h.nxt, t)
+<a name="1223"/>         }
+<a name="1224"/>      }
+<a name="1225"/>   end
+<a name="1226"/>
+<a name="1227"/>   public override slice(i, j)
+<a name="1228"/>      local s
+<a name="1229"/>      s := node_cvslice(i, j) | fail
+<a name="1230"/>      return ipl.pdco.List{ s.h.gen().val \ s.len }
+<a name="1231"/>   end
+<a name="1232"/>
+<a name="1233"/>   #
+<a name="1234"/>   # Remove the elements in the range `i:j` and return them as another
+<a name="1235"/>   # `DoublyLinkedList` instance.
+<a name="1236"/>   #
+<a name="1237"/>   # Example :-
+<a name="1238"/>   # ~
+<a name="1239"/>   #   l := DoublyLinkedList(10,20,30,40,50,60,70)
+<a name="1240"/>   #   m := l.extract(2, 5)
+<a name="1241"/>   #   # Now l is (10,50,60,70)
+<a name="1242"/>   #   # and m is (20,30,40)
+<a name="1243"/>   # ~
+<a name="1244"/>   #
+<a name="1245"/>   public extract(i, j)
+<a name="1246"/>      local s
+<a name="1247"/>      s := node_cvslice(i, j) | fail
+<a name="1248"/>      return if s.len = 0 then
+<a name="1249"/>         DoublyLinkedList()
+<a name="1250"/>      else
+<a name="1251"/>         from_nodes(s.h, s.t)
+<a name="1252"/>   end
+<a name="1253"/>
+<a name="1254"/>   #
+<a name="1255"/>   # Check that `x` is a "linked" `DoublyLinkedListNode` instance,
+<a name="1256"/>   # signalling a runtime error otherwise.
+<a name="1257"/>   #
+<a name="1258"/>   public static need_node(x)
+<a name="1259"/>      return need_instance(x, DoublyLinkedListNode).need_linked()
+<a name="1260"/>   end
+<a name="1261"/>
+<a name="1262"/>   #
+<a name="1263"/>   # Check nodes `h` forward to `t` form a sub-list, signalling a
+<a name="1264"/>   # runtime error otherwise.
+<a name="1265"/>   #
+<a name="1266"/>   public static need_sublist(h, t)
+<a name="1267"/>      need_node(h)
+<a name="1268"/>      need_node(t)
+<a name="1269"/>      unless h.gen() === t then
+<a name="1270"/>         runerr("Nodes don't form a sublist")
+<a name="1271"/>      return
+<a name="1272"/>   end
+<a name="1273"/>
+<a name="1274"/>   #
+<a name="1275"/>   # Given two nodes `h` and `t`, forming a sub-list with `h` equal to
+<a name="1276"/>   # or coming before `t`, extract that sub-list from its current list
+<a name="1277"/>   # and return it as a new `DoublyLinkedList`, with `h` and `t`
+<a name="1278"/>   # forming the new list's head and tail node respectively.
+<a name="1279"/>   #
+<a name="1280"/>   public static extract_nodes(h, t)
+<a name="1281"/>      need_sublist(h, t)
+<a name="1282"/>      return from_nodes(h, t)
+<a name="1283"/>   end
+<a name="1284"/>
+<a name="1285"/>   #
+<a name="1286"/>   # This is like `extract_nodes`, but foregoes any check of the
+<a name="1287"/>   # mentioned sub-list requirement, and is thus a constant-time
+<a name="1288"/>   # operation.
+<a name="1289"/>   #
+<a name="1290"/>   # Cautionary note: if the sub-list requirement is not satisifed,
+<a name="1291"/>   # then corrupted lists will result.
+<a name="1292"/>   #
+<a name="1293"/>   public static unsafe_extract_nodes(h, t)
+<a name="1294"/>      return from_nodes(need_node(h), need_node(t))
+<a name="1295"/>   end
+<a name="1296"/>
+<a name="1297"/>   private static from_nodes(h, t)
+<a name="1298"/>      local i
+<a name="1299"/>      i := Class.create_instance()
+<a name="1300"/>      h.prev.nxt := t.nxt
+<a name="1301"/>      t.nxt.prev := h.prev
+<a name="1302"/>      i.sentinel := DoublyLinkedListSentinel(t, h, i)
+<a name="1303"/>      t.nxt := h.prev := i.sentinel
+<a name="1304"/>      return i
+<a name="1305"/>   end
+<a name="1306"/>
+<a name="1307"/>   public override get_mode()
+<a name="1308"/>      return MODIFY + INSERT + DELETE
+<a name="1309"/>   end
+<a name="1310"/>
+<a name="1311"/>   #
+<a name="1312"/>   # Like node(i), but additionally allowing index 0 (or size()+1) to
+<a name="1313"/>   # return the sentinel node.
+<a name="1314"/>   #
+<a name="1315"/>   private node0(i)
+<a name="1316"/>      i := need_integer(i)
+<a name="1317"/>      return if i = 0 | (i = 1 &amp; empty()) then
+<a name="1318"/>         sentinel
+<a name="1319"/>      else if i &gt; 1 then
+<a name="1320"/>         node(i - 1).nxt   # May be sentinel
+<a name="1321"/>      else
+<a name="1322"/>         node(i)
+<a name="1323"/>   end
+<a name="1324"/>
+<a name="1325"/>   #
+<a name="1326"/>   # Return the node containing element `i`, or fail if `i` is out of
+<a name="1327"/>   # range.
+<a name="1328"/>   #
+<a name="1329"/>   public node(i)
+<a name="1330"/>      # real() is needed so that node(0) fails
+<a name="1331"/>      return sentinel.move(i).real()
+<a name="1332"/>   end
+<a name="1333"/>
+<a name="1334"/>   #
+<a name="1335"/>   # Create an instance and add each of the given entries.
+<a name="1336"/>   #
+<a name="1337"/>   public new(entries[])
+<a name="1338"/>      new_sentinel()
+<a name="1339"/>      every insert(1, default.back(entries))
+<a name="1340"/>      return
+<a name="1341"/>   end
+<a name="1342"/>end
+<a name="1343"/>
+<a name="1344"/># A convenient equivalent to wrapping a BuiltinList in an
+<a name="1345"/># UnmodifiableList.
+<a name="1346"/>#
+<a name="1347"/>class UnmodifiableBuiltinList(List)
+<a name="1348"/>   private const
+<a name="1349"/>      l
+<a name="1350"/>
+<a name="1351"/>   public override at(i)
+<a name="1352"/>      return .l[i]
+<a name="1353"/>   end
+<a name="1354"/>
+<a name="1355"/>   public override keyof(x)
+<a name="1356"/>      suspend default.keyof(l, x)
+<a name="1357"/>   end
+<a name="1358"/>
+<a name="1359"/>   public override gen(i)
+<a name="1360"/>      suspend .forward(l, i)
+<a name="1361"/>   end
+<a name="1362"/>
+<a name="1363"/>   public override back(i)
+<a name="1364"/>      suspend .default.back(l, i)
+<a name="1365"/>   end
+<a name="1366"/>
+<a name="1367"/>   public override slice(i, j)
+<a name="1368"/>      return l[i:j]
+<a name="1369"/>   end
+<a name="1370"/>
+<a name="1371"/>   public override size()
+<a name="1372"/>      return *l
+<a name="1373"/>   end
+<a name="1374"/>
+<a name="1375"/>   public override random()
+<a name="1376"/>      return .?l
+<a name="1377"/>   end
+<a name="1378"/>
+<a name="1379"/>   public override get_mode()
+<a name="1380"/>      return 0
+<a name="1381"/>   end
+<a name="1382"/>
+<a name="1383"/>   public new(l)
+<a name="1384"/>      self.l := need_list(l)
+<a name="1385"/>      return
+<a name="1386"/>   end
+<a name="1387"/>end
+<a name="1388"/>
+<a name="1389"/>#
+<a name="1390"/># This class provides a view of a sublist of another `List`.  No data is
+<a name="1391"/># stored directly in this list.
+<a name="1392"/>#
+<a name="1393"/># The indices specified in the constructor use Icon list slice
+<a name="1394"/># semantics, and may be zero or negative.  The indices remain
+<a name="1395"/># constant, and the actual range into the underlying list is
+<a name="1396"/># calculated dynamically.  Should this become out-of-range, then the
+<a name="1397"/># sub-list's size is zero, and insert and delete operations fail.
+<a name="1398"/>#
+<a name="1399"/># Example :-
+<a name="1400"/># ~
+<a name="1401"/>#   ll := LinkedList(1,2,3,4,5)
+<a name="1402"/>#   # A view of the elements 3:0 of ll (3, 4, 5)
+<a name="1403"/>#   s := SubList(ll, 3, 0)
+<a name="1404"/>#   # After this s is (3, 4, 5, 99); note how the length is now 4.
+<a name="1405"/>#   s.put(99)
+<a name="1406"/># ~
+<a name="1407"/>#
+<a name="1408"/>class SubList(List)
+<a name="1409"/>   private const other, lo, hi
+<a name="1410"/>
+<a name="1411"/>   public override insert(i, x)
+<a name="1412"/>      local s
+<a name="1413"/>      s := cvslice() | fail
+<a name="1414"/>      i := cvpos(i, s.hi - s.lo) | fail
+<a name="1415"/>      link other.insert(i + s.lo - 1, x)
+<a name="1416"/>   end
+<a name="1417"/>
+<a name="1418"/>   public override delete(i)
+<a name="1419"/>      local s
+<a name="1420"/>      s := cvslice() | fail
+<a name="1421"/>      i := cvpos_item(i, s.hi - s.lo) | fail
+<a name="1422"/>      link other.delete(i + s.lo - 1)
+<a name="1423"/>   end
+<a name="1424"/>
+<a name="1425"/>   public override at(i)
+<a name="1426"/>      local s
+<a name="1427"/>      s := cvslice() | fail
+<a name="1428"/>      i := cvpos_item(i, s.hi - s.lo) | fail
+<a name="1429"/>      return other.at(i + s.lo - 1)
+<a name="1430"/>   end
+<a name="1431"/>
+<a name="1432"/>   public override size()
+<a name="1433"/>      local s
+<a name="1434"/>      return if s := cvslice() then
+<a name="1435"/>         s.hi - s.lo
+<a name="1436"/>      else
+<a name="1437"/>         0
+<a name="1438"/>   end
+<a name="1439"/>
+<a name="1440"/>   public override gen(i)
+<a name="1441"/>      local s
+<a name="1442"/>      /i := 1
+<a name="1443"/>      s := cvslice() | fail
+<a name="1444"/>      i := cvpos_item(i, s.hi - s.lo) | fail
+<a name="1445"/>      i +:= s.lo - 1
+<a name="1446"/>      suspend other.gen(i) \ (s.hi - i)
+<a name="1447"/>   end
+<a name="1448"/>
+<a name="1449"/>   public override back(i)
+<a name="1450"/>      local s
+<a name="1451"/>      /i := 0
+<a name="1452"/>      s := cvslice() | fail
+<a name="1453"/>      i := cvpos(i, s.hi - s.lo) | fail
+<a name="1454"/>      i +:= s.lo - 1
+<a name="1455"/>      suspend other.back(i) \ (i - s.lo)
+<a name="1456"/>   end
+<a name="1457"/>
+<a name="1458"/>   private cvslice()
+<a name="1459"/>      return util.cvslice(lo, hi, other.size())
+<a name="1460"/>   end
+<a name="1461"/>
+<a name="1462"/>   public override get_mode()
+<a name="1463"/>      return other.get_mode()
+<a name="1464"/>   end
+<a name="1465"/>
+<a name="1466"/>   #
+<a name="1467"/>   # Create a new instance using `other` as the underlying list, and
+<a name="1468"/>   # `lo` and `hi` as the slice to view.
+<a name="1469"/>   #
+<a name="1470"/>   public new(other, lo, hi)
+<a name="1471"/>      self.other := need_instance(other, List)
+<a name="1472"/>      self.lo := need_integer(lo)
+<a name="1473"/>      self.hi := need_integer(hi)
+<a name="1474"/>      return
+<a name="1475"/>   end
+<a name="1476"/>end
+</pre></body></html>

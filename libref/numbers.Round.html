@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Round</title></head><body>
+<h1>Round</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+</dl><p/>
+This class encapsulates options for rounding a decimal number.
+<p/><a href="numbers-numbers.icn.html#5" target="displayFrame">Source - numbers.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#parse">parse()</a>
+<a href="#round_dig">round_dig()</a>
+<a href="#uses_all_digits">uses_all_digits()</a>
+<a href="#with_digits">with_digits()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#CEILING">CEILING</a>
+<a href="#digits">digits</a>
+<a href="#DOWN">DOWN</a>
+<a href="#dp_flag">dp_flag</a>
+<a href="#FLOOR">FLOOR</a>
+<a href="#HALF_DOWN">HALF_DOWN</a>
+<a href="#HALF_UP">HALF_UP</a>
+<a href="#mode">mode</a>
+<a href="#UP">UP</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(n)</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to call <code><a href="numbers.Round.html#with_digits">with_digits</a></code> with this instance's
+digits setting plus n.
+<p/><a href="numbers-numbers.icn.html#50" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#33" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(s)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance from string <code>s</code>, which is in the format
+<p/>
+<pre>
+   &lt;digits&gt;["dp"] [mode]
+</pre>
+<p/>
+Digits provides the digit setting; if followed immediately by
+"dp", then this sets the dp_flag.  The mode follows after one or
+more spaces, and defaults to <code><a href="numbers.Round.html#HALF_UP">HALF_UP</a></code>.
+<p/>
+Possible modes are :-
+<p/>
+<pre>
+    "up" or "u" : UP
+    "down", "d", "t" or "trunc" : DOWN
+    "ceiling" or "c" : CEILING
+    "floor" or "f" : FLOOR
+    "half-up" or "hu" : HALF_UP
+    "half-down" or "hd" : HALF_DOWN
+</pre>
+<p/>
+Examples :
+<p/>
+<pre>
+     "8dp trunc"    -  truncate to 8 decimal places.
+     "10 hd"        -  precision 10, with half down
+                       rounding.
+     10             -  precision 10, half up.
+</pre>
+<p/><a href="numbers-numbers.icn.html#134" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#105" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="round_dig"/>
+<h3>round_dig(n, d)</h3>
+public<p/>
+<dl>
+<dd>
+Given a digit <code>n</code>, which is in the range -9 to +9, return -1, 0,
+or 1 indicating how the associated number should be rounded.  <code>d</code>
+indicates whether any digits beyond <code>n</code> have been truncated.  If
+it is 0, then they haven't, otherwise it will have the sign of
+the number being rounded.  For example, if rounding 1.235 to two
+decimal places, n would be 5 and d would be 0; if we were
+rounding 1.2350001, then n would be 5, and d would be &gt;0, to
+indicate that digits existed to the right of 5.
+<p/><a href="numbers-numbers.icn.html#70" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="uses_all_digits"/>
+<h3>uses_all_digits()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if this mode's rounding is influenced by digits truncated
+beyond the first truncated digit.  For example <code><a href="numbers.Round.html#HALF_UP">HALF_UP</a></code> isn't
+influenced; if we are rounding 6.5xxx to one digit then we don't
+care what the digits xxx are; it will round to 7 regardless.  But for
+<code><a href="numbers.Round.html#HALF_DOWN">HALF_DOWN</a></code> it does matter; if xxx is zero then we get 6,
+otherwise we get 7.
+<p/>
+In fact, only <code><a href="numbers.Round.html#HALF_UP">HALF_UP</a></code> and <code><a href="numbers.Round.html#DOWN">DOWN</a></code> don't care about these extra
+truncated digits;
+<p/><a href="numbers-numbers.icn.html#56" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="with_digits"/>
+<h3>with_digits(n)</h3>
+public<p/>
+<dl>
+<dd>
+Return another instance with the same settings, but with digits
+set to <code>n</code>.
+<p/><a href="numbers-numbers.icn.html#42" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="CEILING"/>
+<h3>CEILING</h3>
+public static const<p/>
+<dl>
+<dd>
+Rounding mode to round towards positive infinity.
+<p/><a href="numbers-numbers.icn.html#21" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="digits"/>
+<h3>digits</h3>
+public const<p/>
+<dl>
+<dd>
+The number of digits to round to.
+<p/><a href="numbers-numbers.icn.html#11" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="DOWN"/>
+<h3>DOWN</h3>
+public static const<p/>
+<dl>
+<dd>
+Rounding mode to round towards zero (ie, simple truncation).
+<p/><a href="numbers-numbers.icn.html#19" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="dp_flag"/>
+<h3>dp_flag</h3>
+public const<p/>
+<dl>
+<dd>
+Set if rounding is to decimal places rather than a precision.
+<p/><a href="numbers-numbers.icn.html#9" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="FLOOR"/>
+<h3>FLOOR</h3>
+public static const<p/>
+<dl>
+<dd>
+Rounding mode to round towards negative infinity.
+<p/><a href="numbers-numbers.icn.html#23" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="HALF_DOWN"/>
+<h3>HALF_DOWN</h3>
+public static const<p/>
+<dl>
+<dd>
+Rounding mode to round towards "nearest neighbour" unless both
+neighbours are equidistant, in which case round down.
+<p/><a href="numbers-numbers.icn.html#29" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="HALF_UP"/>
+<h3>HALF_UP</h3>
+public static const<p/>
+<dl>
+<dd>
+Rounding mode to round towards "nearest neighbour" unless both
+neighbours are equidistant, in which case round up.  This is
+conventional rounding.
+<p/><a href="numbers-numbers.icn.html#25" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="mode"/>
+<h3>mode</h3>
+public const<p/>
+<dl>
+<dd>
+The mode, indicating which direction to round
+<p/><a href="numbers-numbers.icn.html#13" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="UP"/>
+<h3>UP</h3>
+public static const<p/>
+<dl>
+<dd>
+Rounding mode to round away from zero.
+<p/><a href="numbers-numbers.icn.html#17" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+</body></html>

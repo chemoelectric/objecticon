@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Internal</title></head><body>
+<h1>Internal</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+This class has some static methods that give access to some useful internal
+interpreter functions.
+<p/><a href="lang-langprocs.icn.html#773" target="displayFrame">Source - langprocs.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#compare">compare()</a>
+<a href="#hash">hash()</a>
+<a href="#order">order()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="compare"/>
+<h3>compare(x, y)</h3>
+public static native<p/>
+<dl>
+<dd>
+This method gives access to the internal ordering method used by
+the interpreter, for example in the builtin <code>sort</code> function.  The
+two values are compared and either <code>-1</code>, <code>0</code>, or <code>+1</code> is returned
+depending on whether <code>x</code> is less than, equal to, or greater than
+<code>y</code>, respectively.
+<p/><a href="lang-langprocs.icn.html#778" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="hash"/>
+<h3>hash(x)</h3>
+public static native<p/>
+<dl>
+<dd>
+This method gives access to the internal hash method used
+by the interpreter, for example in implementing tables and sets.
+It is distinct from the <code><a href="lang.hash.html" target="displayFrame">lang.hash()</a></code> procedure.
+<p/><a href="lang-langprocs.icn.html#787" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="order"/>
+<h3>order(x)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the collating order number for <code>x</code>, which is a small integer
+dependent on the type.
+<p/><a href="lang-langprocs.icn.html#794" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+</body></html>

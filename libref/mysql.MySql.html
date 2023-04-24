@@ -1,0 +1,1780 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MySql</title></head><body>
+<h1>MySql</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="mysql-package.html" target="listFrame">mysql</a></dd>
+</dl><p/>
+This class provides a wrapper around the MySql C API.  Nearly all the
+methods have a single underlying corresponding C function - see the MySql
+documentation for details on what the underlying function does.
+<p/><a href="mysql-mysql.icn.html#20" target="displayFrame">Source - mysql.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="mysql.MySql.html">mysql.MySql</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#change_user">change_user()</a>
+<a href="#close">close()</a>
+<a href="#commit">commit()</a>
+<a href="#connect">connect()</a>
+<a href="#dump_debug_info">dump_debug_info()</a>
+<a href="#esc">esc()</a>
+<a href="#esc_date">esc_date()</a>
+<a href="#esc_datetime">esc_datetime()</a>
+<a href="#esc_str">esc_str()</a>
+<a href="#esc_time">esc_time()</a>
+<a href="#get_affected_rows">get_affected_rows()</a>
+<a href="#get_character_set_name">get_character_set_name()</a>
+<a href="#get_client_info">get_client_info()</a>
+<a href="#get_client_version">get_client_version()</a>
+<a href="#get_errno">get_errno()</a>
+<a href="#get_error">get_error()</a>
+<a href="#get_field_count">get_field_count()</a>
+<a href="#get_host_info">get_host_info()</a>
+<a href="#get_info">get_info()</a>
+<a href="#get_insert_id">get_insert_id()</a>
+<a href="#get_option">get_option()</a>
+<a href="#get_proto_info">get_proto_info()</a>
+<a href="#get_server_info">get_server_info()</a>
+<a href="#get_server_version">get_server_version()</a>
+<a href="#get_sqlstate">get_sqlstate()</a>
+<a href="#get_stat">get_stat()</a>
+<a href="#get_thread_id">get_thread_id()</a>
+<a href="#get_warning_count">get_warning_count()</a>
+<a href="#init">init()</a>
+<a href="#kill">kill()</a>
+<a href="#list_dbs">list_dbs()</a>
+<a href="#list_dbs_impl">list_dbs_impl()</a>
+<a href="#list_fields">list_fields()</a>
+<a href="#list_fields_impl">list_fields_impl()</a>
+<a href="#list_processes">list_processes()</a>
+<a href="#list_processes_impl">list_processes_impl()</a>
+<a href="#list_tables">list_tables()</a>
+<a href="#list_tables_impl">list_tables_impl()</a>
+<a href="#more_results">more_results()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#next_result">next_result()</a>
+<a href="#options">options()</a>
+<a href="#ping">ping()</a>
+<a href="#query">query()</a>
+<a href="#rollback">rollback()</a>
+<a href="#select_db">select_db()</a>
+<a href="#set_autocommit">set_autocommit()</a>
+<a href="#set_server_option">set_server_option()</a>
+<a href="#shutdown">shutdown()</a>
+<a href="#ssl_set">ssl_set()</a>
+<a href="#store_result">store_result()</a>
+<a href="#store_result_impl">store_result_impl()</a>
+<a href="#use_result">use_result()</a>
+<a href="#use_result_impl">use_result_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#CLIENT_COMPRESS">CLIENT_COMPRESS</a>
+<a href="#CLIENT_CONNECT_WITH_DB">CLIENT_CONNECT_WITH_DB</a>
+<a href="#CLIENT_FOUND_ROWS">CLIENT_FOUND_ROWS</a>
+<a href="#CLIENT_IGNORE_SIGPIPE">CLIENT_IGNORE_SIGPIPE</a>
+<a href="#CLIENT_IGNORE_SPACE">CLIENT_IGNORE_SPACE</a>
+<a href="#CLIENT_INTERACTIVE">CLIENT_INTERACTIVE</a>
+<a href="#CLIENT_LOCAL_FILES">CLIENT_LOCAL_FILES</a>
+<a href="#CLIENT_LONG_FLAG">CLIENT_LONG_FLAG</a>
+<a href="#CLIENT_LONG_PASSWORD">CLIENT_LONG_PASSWORD</a>
+<a href="#CLIENT_MULTI_RESULTS">CLIENT_MULTI_RESULTS</a>
+<a href="#CLIENT_MULTI_STATEMENTS">CLIENT_MULTI_STATEMENTS</a>
+<a href="#CLIENT_NO_SCHEMA">CLIENT_NO_SCHEMA</a>
+<a href="#CLIENT_ODBC">CLIENT_ODBC</a>
+<a href="#CLIENT_PROTOCOL_41">CLIENT_PROTOCOL_41</a>
+<a href="#CLIENT_REMEMBER_OPTIONS">CLIENT_REMEMBER_OPTIONS</a>
+<a href="#CLIENT_RESERVED">CLIENT_RESERVED</a>
+<a href="#CLIENT_SECURE_CONNECTION">CLIENT_SECURE_CONNECTION</a>
+<a href="#CLIENT_SSL">CLIENT_SSL</a>
+<a href="#CLIENT_TRANSACTIONS">CLIENT_TRANSACTIONS</a>
+<a href="#CR_ALREADY_CONNECTED">CR_ALREADY_CONNECTED</a>
+<a href="#CR_AUTH_PLUGIN_CANNOT_LOAD">CR_AUTH_PLUGIN_CANNOT_LOAD</a>
+<a href="#CR_AUTH_PLUGIN_ERR">CR_AUTH_PLUGIN_ERR</a>
+<a href="#CR_CANT_READ_CHARSET">CR_CANT_READ_CHARSET</a>
+<a href="#CR_COMMANDS_OUT_OF_SYNC">CR_COMMANDS_OUT_OF_SYNC</a>
+<a href="#CR_CONN_HOST_ERROR">CR_CONN_HOST_ERROR</a>
+<a href="#CR_CONN_UNKNOW_PROTOCOL">CR_CONN_UNKNOW_PROTOCOL</a>
+<a href="#CR_CONNECTION_ERROR">CR_CONNECTION_ERROR</a>
+<a href="#CR_DATA_TRUNCATED">CR_DATA_TRUNCATED</a>
+<a href="#CR_DUPLICATE_CONNECTION_ATTR">CR_DUPLICATE_CONNECTION_ATTR</a>
+<a href="#CR_EMBEDDED_CONNECTION">CR_EMBEDDED_CONNECTION</a>
+<a href="#CR_ERROR_FIRST">CR_ERROR_FIRST</a>
+<a href="#CR_ERROR_LAST">CR_ERROR_LAST</a>
+<a href="#CR_FETCH_CANCELED">CR_FETCH_CANCELED</a>
+<a href="#CR_INSECURE_API_ERR">CR_INSECURE_API_ERR</a>
+<a href="#CR_INVALID_BUFFER_USE">CR_INVALID_BUFFER_USE</a>
+<a href="#CR_INVALID_CONN_HANDLE">CR_INVALID_CONN_HANDLE</a>
+<a href="#CR_INVALID_PARAMETER_NO">CR_INVALID_PARAMETER_NO</a>
+<a href="#CR_IPSOCK_ERROR">CR_IPSOCK_ERROR</a>
+<a href="#CR_LOCALHOST_CONNECTION">CR_LOCALHOST_CONNECTION</a>
+<a href="#CR_MALFORMED_PACKET">CR_MALFORMED_PACKET</a>
+<a href="#CR_NAMEDPIPE_CONNECTION">CR_NAMEDPIPE_CONNECTION</a>
+<a href="#CR_NAMEDPIPEOPEN_ERROR">CR_NAMEDPIPEOPEN_ERROR</a>
+<a href="#CR_NAMEDPIPESETSTATE_ERROR">CR_NAMEDPIPESETSTATE_ERROR</a>
+<a href="#CR_NAMEDPIPEWAIT_ERROR">CR_NAMEDPIPEWAIT_ERROR</a>
+<a href="#CR_NET_PACKET_TOO_LARGE">CR_NET_PACKET_TOO_LARGE</a>
+<a href="#CR_NEW_STMT_METADATA">CR_NEW_STMT_METADATA</a>
+<a href="#CR_NO_DATA">CR_NO_DATA</a>
+<a href="#CR_NO_PARAMETERS_EXISTS">CR_NO_PARAMETERS_EXISTS</a>
+<a href="#CR_NO_PREPARE_STMT">CR_NO_PREPARE_STMT</a>
+<a href="#CR_NO_RESULT_SET">CR_NO_RESULT_SET</a>
+<a href="#CR_NO_STMT_METADATA">CR_NO_STMT_METADATA</a>
+<a href="#CR_NOT_IMPLEMENTED">CR_NOT_IMPLEMENTED</a>
+<a href="#CR_NULL_POINTER">CR_NULL_POINTER</a>
+<a href="#CR_OUT_OF_MEMORY">CR_OUT_OF_MEMORY</a>
+<a href="#CR_PARAMS_NOT_BOUND">CR_PARAMS_NOT_BOUND</a>
+<a href="#CR_PROBE_MASTER_CONNECT">CR_PROBE_MASTER_CONNECT</a>
+<a href="#CR_PROBE_SLAVE_CONNECT">CR_PROBE_SLAVE_CONNECT</a>
+<a href="#CR_PROBE_SLAVE_HOSTS">CR_PROBE_SLAVE_HOSTS</a>
+<a href="#CR_PROBE_SLAVE_STATUS">CR_PROBE_SLAVE_STATUS</a>
+<a href="#CR_SERVER_GONE_ERROR">CR_SERVER_GONE_ERROR</a>
+<a href="#CR_SERVER_HANDSHAKE_ERR">CR_SERVER_HANDSHAKE_ERR</a>
+<a href="#CR_SERVER_LOST">CR_SERVER_LOST</a>
+<a href="#CR_SERVER_LOST_EXTENDED">CR_SERVER_LOST_EXTENDED</a>
+<a href="#CR_SHARED_MEMORY_CONNECT_ABANDONED_ERROR">CR_SHARED_MEMORY_CONNECT_ABANDONED_ERROR</a>
+<a href="#CR_SHARED_MEMORY_CONNECT_ANSWER_ERROR">CR_SHARED_MEMORY_CONNECT_ANSWER_ERROR</a>
+<a href="#CR_SHARED_MEMORY_CONNECT_FILE_MAP_ERROR">CR_SHARED_MEMORY_CONNECT_FILE_MAP_ERROR</a>
+<a href="#CR_SHARED_MEMORY_CONNECT_MAP_ERROR">CR_SHARED_MEMORY_CONNECT_MAP_ERROR</a>
+<a href="#CR_SHARED_MEMORY_CONNECT_REQUEST_ERROR">CR_SHARED_MEMORY_CONNECT_REQUEST_ERROR</a>
+<a href="#CR_SHARED_MEMORY_CONNECT_SET_ERROR">CR_SHARED_MEMORY_CONNECT_SET_ERROR</a>
+<a href="#CR_SHARED_MEMORY_CONNECTION">CR_SHARED_MEMORY_CONNECTION</a>
+<a href="#CR_SHARED_MEMORY_EVENT_ERROR">CR_SHARED_MEMORY_EVENT_ERROR</a>
+<a href="#CR_SHARED_MEMORY_FILE_MAP_ERROR">CR_SHARED_MEMORY_FILE_MAP_ERROR</a>
+<a href="#CR_SHARED_MEMORY_MAP_ERROR">CR_SHARED_MEMORY_MAP_ERROR</a>
+<a href="#CR_SOCKET_CREATE_ERROR">CR_SOCKET_CREATE_ERROR</a>
+<a href="#CR_SSL_CONNECTION_ERROR">CR_SSL_CONNECTION_ERROR</a>
+<a href="#CR_STMT_CLOSED">CR_STMT_CLOSED</a>
+<a href="#CR_TCP_CONNECTION">CR_TCP_CONNECTION</a>
+<a href="#CR_UNKNOWN_ERROR">CR_UNKNOWN_ERROR</a>
+<a href="#CR_UNKNOWN_HOST">CR_UNKNOWN_HOST</a>
+<a href="#CR_UNSUPPORTED_PARAM_TYPE">CR_UNSUPPORTED_PARAM_TYPE</a>
+<a href="#CR_UNUSED_1">CR_UNUSED_1</a>
+<a href="#CR_VERSION_ERROR">CR_VERSION_ERROR</a>
+<a href="#CR_WRONG_HOST_INFO">CR_WRONG_HOST_INFO</a>
+<a href="#CR_WRONG_LICENSE">CR_WRONG_LICENSE</a>
+<a href="#FIELD_TYPE_BLOB">FIELD_TYPE_BLOB</a>
+<a href="#FIELD_TYPE_DATE">FIELD_TYPE_DATE</a>
+<a href="#FIELD_TYPE_DATETIME">FIELD_TYPE_DATETIME</a>
+<a href="#FIELD_TYPE_DECIMAL">FIELD_TYPE_DECIMAL</a>
+<a href="#FIELD_TYPE_DOUBLE">FIELD_TYPE_DOUBLE</a>
+<a href="#FIELD_TYPE_ENUM">FIELD_TYPE_ENUM</a>
+<a href="#FIELD_TYPE_FLOAT">FIELD_TYPE_FLOAT</a>
+<a href="#FIELD_TYPE_GEOMETRY">FIELD_TYPE_GEOMETRY</a>
+<a href="#FIELD_TYPE_INT24">FIELD_TYPE_INT24</a>
+<a href="#FIELD_TYPE_LONG">FIELD_TYPE_LONG</a>
+<a href="#FIELD_TYPE_LONG_BLOB">FIELD_TYPE_LONG_BLOB</a>
+<a href="#FIELD_TYPE_LONGLONG">FIELD_TYPE_LONGLONG</a>
+<a href="#FIELD_TYPE_MEDIUM_BLOB">FIELD_TYPE_MEDIUM_BLOB</a>
+<a href="#FIELD_TYPE_NEWDATE">FIELD_TYPE_NEWDATE</a>
+<a href="#FIELD_TYPE_NULL">FIELD_TYPE_NULL</a>
+<a href="#FIELD_TYPE_SET">FIELD_TYPE_SET</a>
+<a href="#FIELD_TYPE_SHORT">FIELD_TYPE_SHORT</a>
+<a href="#FIELD_TYPE_STRING">FIELD_TYPE_STRING</a>
+<a href="#FIELD_TYPE_TIME">FIELD_TYPE_TIME</a>
+<a href="#FIELD_TYPE_TIMESTAMP">FIELD_TYPE_TIMESTAMP</a>
+<a href="#FIELD_TYPE_TINY">FIELD_TYPE_TINY</a>
+<a href="#FIELD_TYPE_TINY_BLOB">FIELD_TYPE_TINY_BLOB</a>
+<a href="#FIELD_TYPE_VAR_STRING">FIELD_TYPE_VAR_STRING</a>
+<a href="#FIELD_TYPE_YEAR">FIELD_TYPE_YEAR</a>
+<a href="#LOADED">LOADED</a>
+<a href="#MYSQL_INIT_COMMAND">MYSQL_INIT_COMMAND</a>
+<a href="#MYSQL_OPT_COMPRESS">MYSQL_OPT_COMPRESS</a>
+<a href="#MYSQL_OPT_CONNECT_TIMEOUT">MYSQL_OPT_CONNECT_TIMEOUT</a>
+<a href="#MYSQL_OPT_LOCAL_INFILE">MYSQL_OPT_LOCAL_INFILE</a>
+<a href="#MYSQL_OPT_NAMED_PIPE">MYSQL_OPT_NAMED_PIPE</a>
+<a href="#MYSQL_OPTION_MULTI_STATEMENTS_OFF">MYSQL_OPTION_MULTI_STATEMENTS_OFF</a>
+<a href="#MYSQL_OPTION_MULTI_STATEMENTS_ON">MYSQL_OPTION_MULTI_STATEMENTS_ON</a>
+<a href="#MYSQL_READ_DEFAULT_FILE">MYSQL_READ_DEFAULT_FILE</a>
+<a href="#MYSQL_READ_DEFAULT_GROUP">MYSQL_READ_DEFAULT_GROUP</a>
+<a href="#MYSQL_SET_CHARSET_DIR">MYSQL_SET_CHARSET_DIR</a>
+<a href="#MYSQL_SET_CHARSET_NAME">MYSQL_SET_CHARSET_NAME</a>
+<a href="#ptr">ptr</a>
+<a href="#WHY">WHY</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="change_user"/>
+<h3>change_user(user, password, db)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_change_user() for the current connection.
+<p/><a href="mysql-mysql.icn.html#158" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Invoke mysql_close() for the current connection.
+<p/><a href="mysql-mysql.icn.html#168" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="commit"/>
+<h3>commit()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_commit() for the current connection.
+<p/><a href="mysql-mysql.icn.html#415" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="connect"/>
+<h3>connect(host, user, passwd, db, port, unix_socket, client_flag)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_connect() for the current connection.
+<p/><a href="mysql-mysql.icn.html#321" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="dump_debug_info"/>
+<h3>dump_debug_info()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_dump_debug_info() for the current connection.
+<p/><a href="mysql-mysql.icn.html#188" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="esc"/>
+<h3>esc(s)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_real_escape_string() for the current connection.  This
+should be used to escape any strings used to create SQL.
+<p/><a href="mysql-mysql.icn.html#326" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="esc_date"/>
+<h3>esc_date(d)</h3>
+public<p/>
+<dl>
+<dd>
+Convenience method to convert a <code><a href="util.Time.html" target="displayFrame">Time</a></code> instance to a string
+for inclusion in an SQL statement as a DATE.
+<p/><a href="mysql-mysql.icn.html#354" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="esc_datetime"/>
+<h3>esc_datetime(d)</h3>
+public<p/>
+<dl>
+<dd>
+Convenience method to convert a <code><a href="util.Time.html" target="displayFrame">Time</a></code> instance to a string
+for inclusion in an SQL statement as a DATETIME or TIMESTAMP.
+<p/><a href="mysql-mysql.icn.html#343" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="esc_str"/>
+<h3>esc_str(s)</h3>
+public<p/>
+<dl>
+<dd>
+Convenience method to escape a string and place single quotes 
+around it
+<p/><a href="mysql-mysql.icn.html#332" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="esc_time"/>
+<h3>esc_time(d)</h3>
+public<p/>
+<dl>
+<dd>
+Convenience method to convert a <code><a href="util.Time.html" target="displayFrame">Time</a></code> instance to a string
+for inclusion in an SQL statement as a TIME.
+<p/><a href="mysql-mysql.icn.html#365" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_affected_rows"/>
+<h3>get_affected_rows()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_affected_rows() for the current connection.
+<p/><a href="mysql-mysql.icn.html#153" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_character_set_name"/>
+<h3>get_character_set_name()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_get_character_set_name() for the current connection.
+<p/><a href="mysql-mysql.icn.html#163" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_client_info"/>
+<h3>get_client_info()</h3>
+public static native<p/>
+<dl>
+<dd>
+Invoke mysql_get_client_info() for the current connection.
+<p/><a href="mysql-mysql.icn.html#208" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_client_version"/>
+<h3>get_client_version()</h3>
+public static native<p/>
+<dl>
+<dd>
+Invoke mysql_get_client_version() for the current connection.
+<p/><a href="mysql-mysql.icn.html#213" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_errno"/>
+<h3>get_errno()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_errno() for the current connection.
+<p/><a href="mysql-mysql.icn.html#193" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_error"/>
+<h3>get_error()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_error() for the current connection.
+<p/><a href="mysql-mysql.icn.html#198" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_field_count"/>
+<h3>get_field_count()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_field_count() for the current connection.
+<p/><a href="mysql-mysql.icn.html#203" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_host_info"/>
+<h3>get_host_info()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_get_host_info() for the current connection.
+<p/><a href="mysql-mysql.icn.html#218" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_info"/>
+<h3>get_info()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_info() for the current connection.
+<p/><a href="mysql-mysql.icn.html#238" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_insert_id"/>
+<h3>get_insert_id()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_insert_id() for the current connection.
+<p/><a href="mysql-mysql.icn.html#243" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_option"/>
+<h3>get_option(option, arg)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_get_option() for the current connection.
+<p/><a href="mysql-mysql.icn.html#306" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_proto_info"/>
+<h3>get_proto_info()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_get_proto_info() for the current connection.
+<p/><a href="mysql-mysql.icn.html#223" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_server_info"/>
+<h3>get_server_info()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_get_server_info() for the current connection.
+<p/><a href="mysql-mysql.icn.html#228" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_server_version"/>
+<h3>get_server_version()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_get_server_version() for the current connection.
+<p/><a href="mysql-mysql.icn.html#233" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_sqlstate"/>
+<h3>get_sqlstate()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_sqlstate() for the current connection.
+<p/><a href="mysql-mysql.icn.html#178" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_stat"/>
+<h3>get_stat()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_stat() for the current connection.
+<p/><a href="mysql-mysql.icn.html#376" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_thread_id"/>
+<h3>get_thread_id()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_thread_id() for the current connection.
+<p/><a href="mysql-mysql.icn.html#393" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="get_warning_count"/>
+<h3>get_warning_count()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_warning_count() for the current connection.
+<p/><a href="mysql-mysql.icn.html#410" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#454" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="kill"/>
+<h3>kill(pid)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_kill() for the current connection.
+<p/><a href="mysql-mysql.icn.html#248" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_dbs"/>
+<h3>list_dbs(wild)</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_list_dbs() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlRes.html" target="displayFrame">MySqlRes</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysql.icn.html#253" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_dbs_impl"/>
+<h3>list_dbs_impl(wild)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#263" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_fields"/>
+<h3>list_fields(table, wild)</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_list_fields() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlRes.html" target="displayFrame">MySqlRes</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysql.icn.html#265" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_fields_impl"/>
+<h3>list_fields_impl(table, wild)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#275" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_processes"/>
+<h3>list_processes()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_list_processes() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlRes.html" target="displayFrame">MySqlRes</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysql.icn.html#277" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_processes_impl"/>
+<h3>list_processes_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#287" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_tables"/>
+<h3>list_tables(wild)</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_list_tables() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlRes.html" target="displayFrame">MySqlRes</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysql.icn.html#289" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="list_tables_impl"/>
+<h3>list_tables_impl(wild)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#299" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="more_results"/>
+<h3>more_results()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_more_results() for the current connection.
+<p/><a href="mysql-mysql.icn.html#432" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#585" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#452" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="next_result"/>
+<h3>next_result()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_next_result() for the current connection.
+<p/><a href="mysql-mysql.icn.html#437" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="options"/>
+<h3>options(option, arg)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_options() for the current connection.
+<p/><a href="mysql-mysql.icn.html#301" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="ping"/>
+<h3>ping()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_ping() for the current connection.
+<p/><a href="mysql-mysql.icn.html#311" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="query"/>
+<h3>query(q)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_query() for the current connection.
+<p/><a href="mysql-mysql.icn.html#316" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="rollback"/>
+<h3>rollback()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_rollback() for the current connection.
+<p/><a href="mysql-mysql.icn.html#420" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="select_db"/>
+<h3>select_db(db)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_select_db() for the current connection.
+<p/><a href="mysql-mysql.icn.html#442" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="set_autocommit"/>
+<h3>set_autocommit(f)</h3>
+public native<p/>
+<dl>
+<dd>
+Turn autocommit on or off
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> - a flag, either &amp;yes (for on) or &amp;no (for off)
+<p/>
+</dd>
+</dl>
+<p/><a href="mysql-mysql.icn.html#425" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="set_server_option"/>
+<h3>set_server_option(option)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_set_server_option() for the current connection.
+<p/><a href="mysql-mysql.icn.html#173" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="shutdown"/>
+<h3>shutdown()</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_shutdown() for the current connection.
+<p/><a href="mysql-mysql.icn.html#447" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="ssl_set"/>
+<h3>ssl_set(key, cert, ca, capath, cipher)</h3>
+public native<p/>
+<dl>
+<dd>
+Invoke mysql_ssl_set() for the current connection.
+<p/><a href="mysql-mysql.icn.html#183" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="store_result"/>
+<h3>store_result()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_store_result() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlRes.html" target="displayFrame">MySqlRes</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysql.icn.html#381" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="store_result_impl"/>
+<h3>store_result_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#391" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="use_result"/>
+<h3>use_result()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke mysql_use_result() for the current connection.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="mysql.MySqlRes.html" target="displayFrame">MySqlRes</a></code> instance
+</dd>
+</dl>
+<p/><a href="mysql-mysql.icn.html#398" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="use_result_impl"/>
+<h3>use_result_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#408" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="CLIENT_COMPRESS"/>
+<h3>CLIENT_COMPRESS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#67" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_CONNECT_WITH_DB"/>
+<h3>CLIENT_CONNECT_WITH_DB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#65" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_FOUND_ROWS"/>
+<h3>CLIENT_FOUND_ROWS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#63" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_IGNORE_SIGPIPE"/>
+<h3>CLIENT_IGNORE_SIGPIPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#74" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_IGNORE_SPACE"/>
+<h3>CLIENT_IGNORE_SPACE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#70" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_INTERACTIVE"/>
+<h3>CLIENT_INTERACTIVE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#72" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_LOCAL_FILES"/>
+<h3>CLIENT_LOCAL_FILES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#69" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_LONG_FLAG"/>
+<h3>CLIENT_LONG_FLAG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#64" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_LONG_PASSWORD"/>
+<h3>CLIENT_LONG_PASSWORD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#62" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_MULTI_RESULTS"/>
+<h3>CLIENT_MULTI_RESULTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#79" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_MULTI_STATEMENTS"/>
+<h3>CLIENT_MULTI_STATEMENTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#78" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_NO_SCHEMA"/>
+<h3>CLIENT_NO_SCHEMA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#66" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_ODBC"/>
+<h3>CLIENT_ODBC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#68" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_PROTOCOL_41"/>
+<h3>CLIENT_PROTOCOL_41</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#71" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_REMEMBER_OPTIONS"/>
+<h3>CLIENT_REMEMBER_OPTIONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#80" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_RESERVED"/>
+<h3>CLIENT_RESERVED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#76" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_SECURE_CONNECTION"/>
+<h3>CLIENT_SECURE_CONNECTION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#77" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_SSL"/>
+<h3>CLIENT_SSL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#73" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CLIENT_TRANSACTIONS"/>
+<h3>CLIENT_TRANSACTIONS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#75" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_ALREADY_CONNECTED"/>
+<h3>CR_ALREADY_CONNECTED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#141" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_AUTH_PLUGIN_CANNOT_LOAD"/>
+<h3>CR_AUTH_PLUGIN_CANNOT_LOAD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#142" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_AUTH_PLUGIN_ERR"/>
+<h3>CR_AUTH_PLUGIN_ERR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#144" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_CANT_READ_CHARSET"/>
+<h3>CR_CANT_READ_CHARSET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#101" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_COMMANDS_OUT_OF_SYNC"/>
+<h3>CR_COMMANDS_OUT_OF_SYNC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#96" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_CONN_HOST_ERROR"/>
+<h3>CR_CONN_HOST_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#85" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_CONN_UNKNOW_PROTOCOL"/>
+<h3>CR_CONN_UNKNOW_PROTOCOL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#130" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_CONNECTION_ERROR"/>
+<h3>CR_CONNECTION_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#84" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_DATA_TRUNCATED"/>
+<h3>CR_DATA_TRUNCATED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#115" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_DUPLICATE_CONNECTION_ATTR"/>
+<h3>CR_DUPLICATE_CONNECTION_ATTR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#143" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_EMBEDDED_CONNECTION"/>
+<h3>CR_EMBEDDED_CONNECTION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#103" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_ERROR_FIRST"/>
+<h3>CR_ERROR_FIRST</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#81" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_ERROR_LAST"/>
+<h3>CR_ERROR_LAST</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#146" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_FETCH_CANCELED"/>
+<h3>CR_FETCH_CANCELED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#133" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_INSECURE_API_ERR"/>
+<h3>CR_INSECURE_API_ERR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#145" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_INVALID_BUFFER_USE"/>
+<h3>CR_INVALID_BUFFER_USE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#118" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_INVALID_CONN_HANDLE"/>
+<h3>CR_INVALID_CONN_HANDLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#131" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_INVALID_PARAMETER_NO"/>
+<h3>CR_INVALID_PARAMETER_NO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#117" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_IPSOCK_ERROR"/>
+<h3>CR_IPSOCK_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#86" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_LOCALHOST_CONNECTION"/>
+<h3>CR_LOCALHOST_CONNECTION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#92" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_MALFORMED_PACKET"/>
+<h3>CR_MALFORMED_PACKET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#109" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NAMEDPIPE_CONNECTION"/>
+<h3>CR_NAMEDPIPE_CONNECTION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#97" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NAMEDPIPEOPEN_ERROR"/>
+<h3>CR_NAMEDPIPEOPEN_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#99" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NAMEDPIPESETSTATE_ERROR"/>
+<h3>CR_NAMEDPIPESETSTATE_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#100" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NAMEDPIPEWAIT_ERROR"/>
+<h3>CR_NAMEDPIPEWAIT_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#98" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NET_PACKET_TOO_LARGE"/>
+<h3>CR_NET_PACKET_TOO_LARGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#102" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NEW_STMT_METADATA"/>
+<h3>CR_NEW_STMT_METADATA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#140" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NO_DATA"/>
+<h3>CR_NO_DATA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#134" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NO_PARAMETERS_EXISTS"/>
+<h3>CR_NO_PARAMETERS_EXISTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#116" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NO_PREPARE_STMT"/>
+<h3>CR_NO_PREPARE_STMT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#113" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NO_RESULT_SET"/>
+<h3>CR_NO_RESULT_SET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#136" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NO_STMT_METADATA"/>
+<h3>CR_NO_STMT_METADATA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#135" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NOT_IMPLEMENTED"/>
+<h3>CR_NOT_IMPLEMENTED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#137" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_NULL_POINTER"/>
+<h3>CR_NULL_POINTER</h3>
+public static const<p/>
+<dl>
+<dd>
+new 4.1 error codes
+<p/><a href="mysql-mysql.icn.html#111" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_OUT_OF_MEMORY"/>
+<h3>CR_OUT_OF_MEMORY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#90" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_PARAMS_NOT_BOUND"/>
+<h3>CR_PARAMS_NOT_BOUND</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#114" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_PROBE_MASTER_CONNECT"/>
+<h3>CR_PROBE_MASTER_CONNECT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#107" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_PROBE_SLAVE_CONNECT"/>
+<h3>CR_PROBE_SLAVE_CONNECT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#106" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_PROBE_SLAVE_HOSTS"/>
+<h3>CR_PROBE_SLAVE_HOSTS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#105" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_PROBE_SLAVE_STATUS"/>
+<h3>CR_PROBE_SLAVE_STATUS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#104" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SERVER_GONE_ERROR"/>
+<h3>CR_SERVER_GONE_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#88" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SERVER_HANDSHAKE_ERR"/>
+<h3>CR_SERVER_HANDSHAKE_ERR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#94" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SERVER_LOST"/>
+<h3>CR_SERVER_LOST</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#95" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SERVER_LOST_EXTENDED"/>
+<h3>CR_SERVER_LOST_EXTENDED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#138" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_CONNECT_ABANDONED_ERROR"/>
+<h3>CR_SHARED_MEMORY_CONNECT_ABANDONED_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#128" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_CONNECT_ANSWER_ERROR"/>
+<h3>CR_SHARED_MEMORY_CONNECT_ANSWER_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#122" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_CONNECT_FILE_MAP_ERROR"/>
+<h3>CR_SHARED_MEMORY_CONNECT_FILE_MAP_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#123" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_CONNECT_MAP_ERROR"/>
+<h3>CR_SHARED_MEMORY_CONNECT_MAP_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#124" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_CONNECT_REQUEST_ERROR"/>
+<h3>CR_SHARED_MEMORY_CONNECT_REQUEST_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#121" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_CONNECT_SET_ERROR"/>
+<h3>CR_SHARED_MEMORY_CONNECT_SET_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#129" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_CONNECTION"/>
+<h3>CR_SHARED_MEMORY_CONNECTION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#120" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_EVENT_ERROR"/>
+<h3>CR_SHARED_MEMORY_EVENT_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#127" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_FILE_MAP_ERROR"/>
+<h3>CR_SHARED_MEMORY_FILE_MAP_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#125" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SHARED_MEMORY_MAP_ERROR"/>
+<h3>CR_SHARED_MEMORY_MAP_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#126" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SOCKET_CREATE_ERROR"/>
+<h3>CR_SOCKET_CREATE_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#83" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_SSL_CONNECTION_ERROR"/>
+<h3>CR_SSL_CONNECTION_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#108" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_STMT_CLOSED"/>
+<h3>CR_STMT_CLOSED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#139" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_TCP_CONNECTION"/>
+<h3>CR_TCP_CONNECTION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#93" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_UNKNOWN_ERROR"/>
+<h3>CR_UNKNOWN_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#82" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_UNKNOWN_HOST"/>
+<h3>CR_UNKNOWN_HOST</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#87" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_UNSUPPORTED_PARAM_TYPE"/>
+<h3>CR_UNSUPPORTED_PARAM_TYPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#119" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_UNUSED_1"/>
+<h3>CR_UNUSED_1</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#132" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_VERSION_ERROR"/>
+<h3>CR_VERSION_ERROR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#89" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_WRONG_HOST_INFO"/>
+<h3>CR_WRONG_HOST_INFO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#91" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="CR_WRONG_LICENSE"/>
+<h3>CR_WRONG_LICENSE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#110" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_BLOB"/>
+<h3>FIELD_TYPE_BLOB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#47" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_DATE"/>
+<h3>FIELD_TYPE_DATE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#37" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_DATETIME"/>
+<h3>FIELD_TYPE_DATETIME</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#39" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_DECIMAL"/>
+<h3>FIELD_TYPE_DECIMAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#27" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_DOUBLE"/>
+<h3>FIELD_TYPE_DOUBLE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#32" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_ENUM"/>
+<h3>FIELD_TYPE_ENUM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#42" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_FLOAT"/>
+<h3>FIELD_TYPE_FLOAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#31" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_GEOMETRY"/>
+<h3>FIELD_TYPE_GEOMETRY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#50" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_INT24"/>
+<h3>FIELD_TYPE_INT24</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#36" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_LONG"/>
+<h3>FIELD_TYPE_LONG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#30" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_LONG_BLOB"/>
+<h3>FIELD_TYPE_LONG_BLOB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#46" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_LONGLONG"/>
+<h3>FIELD_TYPE_LONGLONG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#35" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_MEDIUM_BLOB"/>
+<h3>FIELD_TYPE_MEDIUM_BLOB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#45" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_NEWDATE"/>
+<h3>FIELD_TYPE_NEWDATE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#41" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_NULL"/>
+<h3>FIELD_TYPE_NULL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#33" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_SET"/>
+<h3>FIELD_TYPE_SET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#43" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_SHORT"/>
+<h3>FIELD_TYPE_SHORT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#29" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_STRING"/>
+<h3>FIELD_TYPE_STRING</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#49" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_TIME"/>
+<h3>FIELD_TYPE_TIME</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#38" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_TIMESTAMP"/>
+<h3>FIELD_TYPE_TIMESTAMP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#34" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_TINY"/>
+<h3>FIELD_TYPE_TINY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#28" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_TINY_BLOB"/>
+<h3>FIELD_TYPE_TINY_BLOB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#44" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_VAR_STRING"/>
+<h3>FIELD_TYPE_VAR_STRING</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#48" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="FIELD_TYPE_YEAR"/>
+<h3>FIELD_TYPE_YEAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#40" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="LOADED"/>
+<h3>LOADED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#147" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_INIT_COMMAND"/>
+<h3>MYSQL_INIT_COMMAND</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#54" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_OPT_COMPRESS"/>
+<h3>MYSQL_OPT_COMPRESS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#52" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_OPT_CONNECT_TIMEOUT"/>
+<h3>MYSQL_OPT_CONNECT_TIMEOUT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#51" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_OPT_LOCAL_INFILE"/>
+<h3>MYSQL_OPT_LOCAL_INFILE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#59" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_OPT_NAMED_PIPE"/>
+<h3>MYSQL_OPT_NAMED_PIPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#53" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_OPTION_MULTI_STATEMENTS_OFF"/>
+<h3>MYSQL_OPTION_MULTI_STATEMENTS_OFF</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#61" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_OPTION_MULTI_STATEMENTS_ON"/>
+<h3>MYSQL_OPTION_MULTI_STATEMENTS_ON</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#60" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_READ_DEFAULT_FILE"/>
+<h3>MYSQL_READ_DEFAULT_FILE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#55" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_READ_DEFAULT_GROUP"/>
+<h3>MYSQL_READ_DEFAULT_GROUP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#56" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_SET_CHARSET_DIR"/>
+<h3>MYSQL_SET_CHARSET_DIR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#57" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="MYSQL_SET_CHARSET_NAME"/>
+<h3>MYSQL_SET_CHARSET_NAME</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#58" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="ptr"/>
+<h3>ptr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#150" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+<a name="WHY"/>
+<h3>WHY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mysql-mysql.icn.html#148" target="displayFrame">Source - mysql.icn </a>
+</dd>
+</dl><hr>
+</body></html>

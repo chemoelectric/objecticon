@@ -1,0 +1,495 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>dropdown.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: dropdown.icn 7875 2019-08-21 13:33:37Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import graphics
+<a name="12"/>
+<a name="13"/>abstract class DropDown(Component, HasUseWheel, MenuMode)
+<a name="14"/>   public
+<a name="15"/>      b,                           
+<a name="16"/>      view,
+<a name="17"/>      popup,
+<a name="18"/>      direction,
+<a name="19"/>      old_focus
+<a name="20"/>
+<a name="21"/>   #
+<a name="22"/>   # Create the view component
+<a name="23"/>   #
+<a name="24"/>   public abstract create_view()
+<a name="25"/>
+<a name="26"/>   public abstract create_popup()
+<a name="27"/>
+<a name="28"/>   public create_button()
+<a name="29"/>      return IconButton().
+<a name="30"/>         set_width(ScrollArea.SCROLLBAR_SIZE).
+<a name="31"/>         set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
+<a name="32"/>   end
+<a name="33"/>
+<a name="34"/>   public override close_all()
+<a name="35"/>      close_popup()
+<a name="36"/>   end
+<a name="37"/>
+<a name="38"/>   public override should_close(e)
+<a name="39"/>      succeed member(Mouse.PRESS, e.code) &amp; not(popup.in_region(e) | b.in_region(e))
+<a name="40"/>   end
+<a name="41"/>
+<a name="42"/>   public override allow_nested(c)
+<a name="43"/>      c := c.get_nesting_component()
+<a name="44"/>      succeed c.gen_parents() === popup
+<a name="45"/>   end
+<a name="46"/>
+<a name="47"/>   public override get_nesting_component()
+<a name="48"/>      link
+<a name="49"/>   end
+<a name="50"/>
+<a name="51"/>   public override gen_popup_components()
+<a name="52"/>      return popup
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   public override finally()
+<a name="56"/>      close_popup()
+<a name="57"/>      Component.finally()
+<a name="58"/>   end
+<a name="59"/>
+<a name="60"/>   protected open_popup(ev)
+<a name="61"/>      local spc_below, spc_above, spc_right, d, dim, win,
+<a name="62"/>         use_direction, rs, pref_w, pref_h, x_adj
+<a name="63"/>
+<a name="64"/>      parent_dialog.enter_menu_mode(self) | fail
+<a name="65"/>
+<a name="66"/>      win := parent_dialog.win
+<a name="67"/>      dim := win.get_display_size()
+<a name="68"/>      # Screen rectangle, in adjusted co-ordinates
+<a name="69"/>      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
+<a name="70"/>
+<a name="71"/>      # Space available for popup limited by screen size
+<a name="72"/>      spc_above := self.y - rs.y
+<a name="73"/>      spc_below := rs.y + rs.h - self.y - self.h
+<a name="74"/>      spc_right := rs.x + rs.w - self.x
+<a name="75"/>
+<a name="76"/>      self.popup := create_popup().
+<a name="77"/>         set_wattrib_ancestor(self).
+<a name="78"/>         set_z(self.parent_dialog.get_top_z())
+<a name="79"/>      self.parent_dialog.add(popup)
+<a name="80"/>      pref_w := popup.get_preferred_width()
+<a name="81"/>      pref_h := popup.get_preferred_height()
+<a name="82"/>      x_adj := max(0, pref_w - spc_right)
+<a name="83"/>
+<a name="84"/>      use_direction := if direction == Direction.BEST then {
+<a name="85"/>         if spc_below &gt;= (pref_h | spc_above) then
+<a name="86"/>            Direction.DOWN
+<a name="87"/>         else
+<a name="88"/>            Direction.UP
+<a name="89"/>      } else
+<a name="90"/>         direction
+<a name="91"/>
+<a name="92"/>      old_focus := parent_dialog.get_focus()
+<a name="93"/>      parent_dialog.set_focus()
+<a name="94"/>
+<a name="95"/>      popup.
+<a name="96"/>         set_pos(win.get_dx() + x - x_adj,
+<a name="97"/>                 win.get_dy() + if use_direction == Direction.DOWN then 
+<a name="98"/>                     y + h
+<a name="99"/>                  else
+<a name="100"/>                     y - pref_h).
+<a name="101"/>         set_size(pref_w, pref_h).
+<a name="102"/>         resize()
+<a name="103"/>
+<a name="104"/>      if Gui.allow_internal_popups() &amp; parent_dialog.contains(popup) then {
+<a name="105"/>         popup.invalidate()
+<a name="106"/>      } else {
+<a name="107"/>         # Remove popup from dialog and add to popup window.
+<a name="108"/>         parent_dialog.remove(popup)
+<a name="109"/>         d := PureDialog().
+<a name="110"/>            set_canvas(Canvas.POPUP).
+<a name="111"/>            set_width(popup.w).
+<a name="112"/>            set_height(popup.h).
+<a name="113"/>            set_dx(-popup.x).
+<a name="114"/>            set_dy(-popup.y).
+<a name="115"/>            set_x(win.get_x() + win.get_dx() + popup.x).
+<a name="116"/>            set_y(win.get_y() + win.get_dy() + popup.y).
+<a name="117"/>            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
+<a name="118"/>            add(popup)
+<a name="119"/>
+<a name="120"/>         popup.set_pos(0, 0)
+<a name="121"/>         parent_dialog.add_popup(d)
+<a name="122"/>         d.show()
+<a name="123"/>      }
+<a name="124"/>
+<a name="125"/>      fire(Event.POPUP_OPENED)
+<a name="126"/>      link
+<a name="127"/>   end
+<a name="128"/>
+<a name="129"/>   protected close_popup()
+<a name="130"/>      local f
+<a name="131"/>      \self.popup | fail
+<a name="132"/>      # Allow views that don't accept focus, and ensure in that case
+<a name="133"/>      # the focus isn't left with the popup.
+<a name="134"/>      f := view.find_focus() | old_focus
+<a name="135"/>      self.parent_dialog.set_focus(f)
+<a name="136"/>      if popup.parent_dialog === parent_dialog then {
+<a name="137"/>         self.popup.invalidate()
+<a name="138"/>         self.parent_dialog.remove(popup)
+<a name="139"/>      } else {
+<a name="140"/>         self.parent_dialog.remove_popup(self.popup.parent_dialog)
+<a name="141"/>         self.popup.parent_dialog.dispose()
+<a name="142"/>      }
+<a name="143"/>      self.popup := old_focus := &amp;null
+<a name="144"/>      self.parent_dialog.exit_menu_mode(self)
+<a name="145"/>      fire(Event.POPUP_CLOSED)
+<a name="146"/>      link
+<a name="147"/>   end
+<a name="148"/>
+<a name="149"/>   public on_button_press(ev)
+<a name="150"/>      if \popup then
+<a name="151"/>         #
+<a name="152"/>         # Button pressed whilst list open; just close
+<a name="153"/>         #
+<a name="154"/>         close_popup()
+<a name="155"/>      else
+<a name="156"/>         #
+<a name="157"/>         # Button pressed whilst no list; open list
+<a name="158"/>         #
+<a name="159"/>         open_popup(ev)
+<a name="160"/>   end
+<a name="161"/>
+<a name="162"/>   #
+<a name="163"/>   # Set the direction to pop-up in.  Options are `Direction.UP`, `Direction.DOWN` or
+<a name="164"/>   # `Direction.BEST` (the default).
+<a name="165"/>   #
+<a name="166"/>   public set_direction(s)
+<a name="167"/>      self.direction := s
+<a name="168"/>      link
+<a name="169"/>   end
+<a name="170"/>
+<a name="171"/>   public override layout()
+<a name="172"/>      local bw
+<a name="173"/>
+<a name="174"/>      bw := b.get_preferred_width()
+<a name="175"/>      #
+<a name="176"/>      # Set button position and size
+<a name="177"/>      #
+<a name="178"/>      b.x := self.x + self.w - bw - border.get_r_inset()
+<a name="179"/>      b.y := self.y + border.get_t_inset()
+<a name="180"/>      b.w := bw
+<a name="181"/>      view.x := self.x + border.get_l_inset()
+<a name="182"/>      view.y := self.y + border.get_t_inset()
+<a name="183"/>      view.w := self.w - border.get_total_width() - bw
+<a name="184"/>      b.h := view.h := self.h - border.get_total_height()
+<a name="185"/>      b.layout()
+<a name="186"/>      view.layout()
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   public override get_default_width()
+<a name="190"/>      return border.get_total_width() + b.get_preferred_width() + view.get_preferred_width()
+<a name="191"/>   end
+<a name="192"/>
+<a name="193"/>   public override get_default_height(dw)
+<a name="194"/>      dw -:= border.get_total_width() + b.get_preferred_width()
+<a name="195"/>      return border.get_total_height() + view.get_preferred_height(dw)
+<a name="196"/>   end
+<a name="197"/>
+<a name="198"/>   public override display()
+<a name="199"/>      border.draw_rect(self.cbwin, self)
+<a name="200"/>      display_children()
+<a name="201"/>   end
+<a name="202"/>
+<a name="203"/>   public override focus_changed(e) 
+<a name="204"/>      view.invalidate()
+<a name="205"/>   end
+<a name="206"/>
+<a name="207"/>   protected forward_key(ev, src, type)
+<a name="208"/>      # In menu mode key events are forwarded to this component,
+<a name="209"/>      # rather than the text list, regardless of the focus.  So we
+<a name="210"/>      # must forward them ourselves.
+<a name="211"/>      if /ev.release &amp; ev.code === "\e" then
+<a name="212"/>         close_all()
+<a name="213"/>      else
+<a name="214"/>         parent_dialog.get_focus().fire(type, ev)
+<a name="215"/>   end
+<a name="216"/>
+<a name="217"/>   public do_increment(ev)
+<a name="218"/>   end
+<a name="219"/>
+<a name="220"/>   public do_decrement(ev)
+<a name="221"/>   end
+<a name="222"/>
+<a name="223"/>   #
+<a name="224"/>   # This may be overridden to monitor for changes to trigger events.  It is
+<a name="225"/>   # invoked before the do_increment/do_decrement methods are called
+<a name="226"/>   #
+<a name="227"/>   public start_change(e)
+<a name="228"/>   end
+<a name="229"/>
+<a name="230"/>   #
+<a name="231"/>   # This may be overridden to monitor for changes to trigger events.  It is
+<a name="232"/>   # invoked after the do_increment/do_decrement methods are called
+<a name="233"/>   #
+<a name="234"/>   public end_change(e)
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   public go_up(e)
+<a name="238"/>      start_change(e)
+<a name="239"/>      do_increment(e)
+<a name="240"/>      end_change(e)
+<a name="241"/>   end
+<a name="242"/>
+<a name="243"/>   public go_down(e)
+<a name="244"/>      start_change(e)
+<a name="245"/>      do_decrement(e)
+<a name="246"/>      end_change(e)
+<a name="247"/>   end
+<a name="248"/>
+<a name="249"/>   public override handle_wheel_up(e)
+<a name="250"/>      if /popup then
+<a name="251"/>         go_up(e)
+<a name="252"/>   end
+<a name="253"/>
+<a name="254"/>   public override handle_wheel_down(e)
+<a name="255"/>      if /popup then
+<a name="256"/>         go_down(e)
+<a name="257"/>   end
+<a name="258"/>
+<a name="259"/>   public override new()
+<a name="260"/>      Component.new()
+<a name="261"/>      self.set_border(SunkenBorder())
+<a name="262"/>      # Make the same width as the button in the scrollbar of the dropdown.
+<a name="263"/>      self.b := create_button().
+<a name="264"/>         connect(self.on_button_press, Event.BUTTON_PRESS).
+<a name="265"/>         set_accepts_focus(&amp;no)
+<a name="266"/>      self.direction := Direction.BEST
+<a name="267"/>      self.add(b)
+<a name="268"/>      self.preferred_focus := self.view := create_view()
+<a name="269"/>      self.add(view)
+<a name="270"/>      self.set_constraint("x_fill", &amp;yes)
+<a name="271"/>      self.set_constraint("x_align", Align.L)
+<a name="272"/>      self.set_constraint("x_weight", 1.0)
+<a name="273"/>      # The wheel is optional; disabling the wheel is useful for
+<a name="274"/>      # dropdown lists that create the list contents dynamically, by
+<a name="275"/>      # overriding `open_popup`.
+<a name="276"/>      set_use_wheel(&amp;yes)
+<a name="277"/>      every connect(self.forward_key, Event.KEY_PRESS | Event.KEY_RELEASE)
+<a name="278"/>      return
+<a name="279"/>   end
+<a name="280"/>end
+<a name="281"/>
+<a name="282"/>#
+<a name="283"/># This class is just a superclass of `List` and `EditList`.
+<a name="284"/>#
+<a name="285"/>abstract class SelectionDropDown(SelectionList, DropDown)
+<a name="286"/>   public 
+<a name="287"/>      max_height,
+<a name="288"/>      max_width
+<a name="289"/>
+<a name="290"/>   public on_popup_selection(ev)
+<a name="291"/>      local tmp
+<a name="292"/>      #
+<a name="293"/>      # Selection in list - close textlist, amend label.
+<a name="294"/>      #
+<a name="295"/>      tmp := popup.get_selections()[1]
+<a name="296"/>      close_popup()
+<a name="297"/>      go_to(\tmp, ev)
+<a name="298"/>   end
+<a name="299"/>
+<a name="300"/>   public convert_element(o)
+<a name="301"/>      return text(o)
+<a name="302"/>   end
+<a name="303"/>
+<a name="304"/>   public override create_popup()
+<a name="305"/>      return TextList()
+<a name="306"/>   end
+<a name="307"/>
+<a name="308"/>   #
+<a name="309"/>   # Set the maximum height of the dropdown list; by default it is as large as is necessary
+<a name="310"/>   # and can be accommodated on the screen.
+<a name="311"/>   #
+<a name="312"/>   public set_max_height(n)
+<a name="313"/>      self.max_height := n
+<a name="314"/>      link
+<a name="315"/>   end
+<a name="316"/>
+<a name="317"/>   #
+<a name="318"/>   # Set the maximum width of the dropdown list; by default it is as wide as is necessary
+<a name="319"/>   # and can be accommodated on the screen.
+<a name="320"/>   #
+<a name="321"/>   public set_max_width(n)
+<a name="322"/>      self.max_width := n
+<a name="323"/>      link
+<a name="324"/>   end
+<a name="325"/>
+<a name="326"/>   public override do_increment(e)
+<a name="327"/>      decrement_selection(e)
+<a name="328"/>   end
+<a name="329"/>
+<a name="330"/>   public override do_decrement(e)
+<a name="331"/>      increment_selection(e)
+<a name="332"/>   end
+<a name="333"/>
+<a name="334"/>   public go_to(x, e)
+<a name="335"/>      start_change(e)
+<a name="336"/>      set_selection(x, e)
+<a name="337"/>      end_change(e)
+<a name="338"/>   end
+<a name="339"/>
+<a name="340"/>   protected override open_popup(ev)
+<a name="341"/>      local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
+<a name="342"/>         use_direction, rs
+<a name="343"/>
+<a name="344"/>      if *selection_list = 0 then
+<a name="345"/>         fail
+<a name="346"/>
+<a name="347"/>      self.parent_dialog.enter_menu_mode(self) | fail
+<a name="348"/>
+<a name="349"/>      win := parent_dialog.win
+<a name="350"/>      dim := win.get_display_size()
+<a name="351"/>      # Screen rectangle, in adjusted co-ordinates
+<a name="352"/>      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
+<a name="353"/>
+<a name="354"/>      # Space available for popup limited by screen size
+<a name="355"/>      spc_above := self.y - rs.y
+<a name="356"/>      spc_below := rs.y + rs.h - self.y - self.h
+<a name="357"/>      spc_right := rs.x + rs.w - self.x
+<a name="358"/>
+<a name="359"/>      max_h := case self.direction of {
+<a name="360"/>         Direction.UP: spc_above
+<a name="361"/>         Direction.DOWN: spc_below
+<a name="362"/>         Direction.BEST: 
+<a name="363"/>            if Gui.POPUP_LIST_DIRECTION_FACTOR * spc_below &gt; spc_above then spc_below else spc_above
+<a name="364"/>         default: runerr("Unknown direction", self.direction)
+<a name="365"/>      }
+<a name="366"/>      max_w := spc_right
+<a name="367"/>      max_w &gt;:= \self.max_width
+<a name="368"/>      max_h &gt;:= \self.max_height
+<a name="369"/>
+<a name="370"/>      self.popup := create_popup().
+<a name="371"/>         set_wattrib_ancestor(self).
+<a name="372"/>         connect(on_popup_selection, Event.SELECTION_CHANGED).
+<a name="373"/>         set_contents(self.selection_list).
+<a name="374"/>         set_draggable_cursor(&amp;yes).
+<a name="375"/>         set_motion_cursor(&amp;yes).
+<a name="376"/>         set_select_mode(Select.ONE).
+<a name="377"/>         set_wrap_on_up_down(&amp;yes).
+<a name="378"/>         set_selection_on_key_moves(&amp;no).
+<a name="379"/>         set_z(self.parent_dialog.get_top_z())
+<a name="380"/>      self.parent_dialog.add(popup)
+<a name="381"/>      self.popup.set_ideal_size(self.w, max_w,
+<a name="382"/>                                scale(5), max_h)
+<a name="383"/>
+<a name="384"/>      use_direction := if direction == Direction.BEST then {
+<a name="385"/>         if spc_below &gt;= (popup.h_spec | spc_above) then
+<a name="386"/>            Direction.DOWN
+<a name="387"/>         else
+<a name="388"/>            Direction.UP
+<a name="389"/>      } else
+<a name="390"/>         direction
+<a name="391"/>
+<a name="392"/>      old_focus := parent_dialog.get_focus()
+<a name="393"/>
+<a name="394"/>      popup.
+<a name="395"/>         set_pos(win.get_dx() + x,
+<a name="396"/>                 win.get_dy() + if use_direction == Direction.DOWN then 
+<a name="397"/>                    y + h
+<a name="398"/>                 else
+<a name="399"/>                    y - popup.h_spec).
+<a name="400"/>         resize()
+<a name="401"/>
+<a name="402"/>      if Gui.allow_internal_popups() &amp; parent_dialog.contains(popup) then {
+<a name="403"/>         popup.invalidate()
+<a name="404"/>      } else {
+<a name="405"/>         # Remove popup from dialog and use add to popup window.
+<a name="406"/>         parent_dialog.remove(popup)
+<a name="407"/>         d := PureDialog().
+<a name="408"/>            set_canvas(Canvas.POPUP).
+<a name="409"/>            set_width(popup.w).
+<a name="410"/>            set_height(popup.h).
+<a name="411"/>            set_dx(-popup.x).
+<a name="412"/>            set_dy(-popup.y).
+<a name="413"/>            set_x(win.get_x() + win.get_dx() + popup.x).
+<a name="414"/>            set_y(win.get_y() + win.get_dy() + popup.y).
+<a name="415"/>            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
+<a name="416"/>            add(popup)
+<a name="417"/>
+<a name="418"/>         popup.set_pos(0, 0)
+<a name="419"/>         parent_dialog.add_popup(d)
+<a name="420"/>         d.show()
+<a name="421"/>      }
+<a name="422"/>      parent_dialog.set_focus(popup)
+<a name="423"/>      # ev may be other than a mouse press if the popup is being
+<a name="424"/>      # opened programatically.  Note that if ev.code is not a mouse
+<a name="425"/>      # press them hold() just fails.
+<a name="426"/>      parent_dialog.hold(popup.view, (\ev).code)
+<a name="427"/>
+<a name="428"/>      if \self.selection then {
+<a name="429"/>         self.popup.
+<a name="430"/>            set_cursor(self.selection).
+<a name="431"/>            center_line(self.selection)
+<a name="432"/>      }
+<a name="433"/>
+<a name="434"/>      fire(Event.POPUP_OPENED)
+<a name="435"/>      link
+<a name="436"/>   end
+<a name="437"/>
+<a name="438"/>   public override initially()
+<a name="439"/>      \self.selection_list | runerr("No selection list specified")
+<a name="440"/>      Component.initially()
+<a name="441"/>   end
+<a name="442"/>end
+<a name="443"/>
+<a name="444"/>class DropDownLabel(Label)
+<a name="445"/>   public override keeps(e)
+<a name="446"/>      succeed member(Key.CURSOR_V, e.code)
+<a name="447"/>   end
+<a name="448"/>
+<a name="449"/>   public on_key(e)
+<a name="450"/>      case e.code of {
+<a name="451"/>         Key.UP : parent.go_up(e)
+<a name="452"/>         Key.DOWN : parent.go_down(e)
+<a name="453"/>         Key.HOME : if is(parent, SelectionDropDown) then
+<a name="454"/>                       parent.go_to(1, e)
+<a name="455"/>         Key.END : if is(parent, SelectionDropDown) then
+<a name="456"/>                      parent.go_to(*parent.selection_list, e)
+<a name="457"/>      }
+<a name="458"/>   end
+<a name="459"/>
+<a name="460"/>   public override new()
+<a name="461"/>      Label.new()
+<a name="462"/>      self.set_label("")
+<a name="463"/>      self.set_accepts_focus(&amp;yes)
+<a name="464"/>      self.connect(self.on_key, Event.KEY_PRESS)
+<a name="465"/>      # Align with the text in the textlist.
+<a name="466"/>      self.set_border(EmptyBorder().
+<a name="467"/>                      set_x_align(Align.L).
+<a name="468"/>                      set_l_inset(Gui.TEXT_INSET).
+<a name="469"/>                      set_r_inset(Gui.TEXT_INSET))
+<a name="470"/>      return
+<a name="471"/>   end
+<a name="472"/>end
+<a name="473"/>
+<a name="474"/>class DropDownTextField(TextField)
+<a name="475"/>   public override keeps(e)
+<a name="476"/>      succeed member(Key.CURSOR, e.code)
+<a name="477"/>   end
+<a name="478"/>
+<a name="479"/>   public on_key(e)
+<a name="480"/>      case e.code of {
+<a name="481"/>         Key.UP : parent.go_up(e)
+<a name="482"/>         Key.DOWN : parent.go_down(e)
+<a name="483"/>      }
+<a name="484"/>   end
+<a name="485"/>
+<a name="486"/>   public override new()
+<a name="487"/>      TextField.new()
+<a name="488"/>      self.connect(self.on_key, Event.KEY_PRESS)
+<a name="489"/>      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+<a name="490"/>      return
+<a name="491"/>   end
+<a name="492"/>end
+</pre></body></html>

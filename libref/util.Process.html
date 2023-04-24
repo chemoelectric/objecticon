@@ -1,0 +1,220 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Process</title></head><body>
+<h1>Process</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.HasTask.html" target="displayFrame">io.HasTask</a><br>
+<a href="io.HasBgProc.html" target="displayFrame">io.HasBgProc</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+</dl><p/>
+This class is a convenient way of creating a sub-process in a
+program.  It sets up a socket connection between the parent and
+child processes to allow them to communicate in a bi-directional
+fashion.
+<p/><a href="util-process.icn.html#13" target="displayFrame">Source - process.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.HasBgProc.html">io.HasBgProc</a>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.Process.html">util.Process</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#do_wait">do_wait()</a>
+<a href="io.HasBgProc.html#get_exit_info">get_exit_info()</a>
+<a href="io.HasBgProc.html#get_pid">get_pid()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#exit_info">exit_info</a>
+<a href="io.HasBgProc.html#pid">pid</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#attempt">attempt()</a>
+<a href="#close">close()</a>
+<a href="#close_sock">close_sock()</a>
+<a href="#do_poll">do_poll()</a>
+<a href="#get_sock">get_sock()</a>
+<a href="#new">new()</a>
+<a href="#poll">poll()</a>
+<a href="#receive">receive()</a>
+<a href="#send">send()</a>
+<a href="#start">start()</a>
+<a href="#stop">stop()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#e">e</a>
+<a href="#sock">sock</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="attempt"/>
+<h3>attempt()</h3>
+public<p/>
+<dl>
+<dd>
+Attempt to get an object from the socket, failing if one is not
+ready immediately.
+<p/><a href="util-process.icn.html#80" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Called by the parent.  The method waits for the child to terminate.  The
+child process will no longer exist after this call, so it resets pid to
+&amp;null and closes the socket.
+<p/><a href="util-process.icn.html#126" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="close_sock"/>
+<h3>close_sock()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="util-process.icn.html#120" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="do_poll"/>
+<h3>do_poll(for, timeout)</h3>
+public<p/>
+<dl>
+<dd>
+Do a <code><a href="util.Process.html#poll">poll</a></code> on the socket.
+<p/><a href="util-process.icn.html#106" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="get_sock"/>
+<h3>get_sock()</h3>
+public<p/>
+<dl>
+<dd>
+Return the socket
+<p/><a href="util-process.icn.html#113" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(e)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance, with the given co-expression as the body
+of the child process.
+<p/><a href="util-process.icn.html#148" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="poll"/>
+<h3>poll(t)</h3>
+public<p/>
+<dl>
+<dd>
+Poll the socket for some available data, waiting for <code>t</code>
+milliseconds.  If data becomes available then return it, else
+fail.
+<p/><a href="util-process.icn.html#88" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="receive"/>
+<h3>receive()</h3>
+public<p/>
+<dl>
+<dd>
+Receive an object from the other process.
+<p/><a href="util-process.icn.html#68" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="send"/>
+<h3>send(obj)</h3>
+public<p/>
+<dl>
+<dd>
+Send an object to the other process.
+<p/>
+<p/><a href="util-process.icn.html#56" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="start"/>
+<h3>start()</h3>
+public<p/>
+<dl>
+<dd>
+Called by the parent process to start the child
+<p/><a href="util-process.icn.html#24" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="stop"/>
+<h3>stop()</h3>
+public<p/>
+<dl>
+<dd>
+Called by the parent to kill the child.  Then the <code><a href="util.Process.html#close">close</a></code> method is invoked.
+<p/><a href="util-process.icn.html#137" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="e"/>
+<h3>e</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="util-process.icn.html#19" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+<a name="sock"/>
+<h3>sock</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="util-process.icn.html#21" target="displayFrame">Source - process.icn </a>
+</dd>
+</dl><hr>
+</body></html>

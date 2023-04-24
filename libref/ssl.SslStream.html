@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SslStream</title></head><body>
+<h1>SslStream</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.Stream.html" target="displayFrame">io.Stream</a><br>
+<a href="util.HasCloseUnderlying.html" target="displayFrame">util.HasCloseUnderlying</a><br>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ssl-package.html" target="listFrame">ssl</a></dd>
+</dl><p/>
+A very simple SSL stream, using the openssl library.
+<p/><a href="ssl-ssl.icn.html#20" target="displayFrame">Source - ssl.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="ssl.SslStream.html">ssl.SslStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#close_impl">close_impl()</a>
+<a href="#connect">connect()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#in">in()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#out">out()</a>
+<a href="#shutdown">shutdown()</a>
+<a href="#verify">verify()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ERROR_NONE">ERROR_NONE</a>
+<a href="#ERROR_SSL">ERROR_SSL</a>
+<a href="#ERROR_SYSCALL">ERROR_SYSCALL</a>
+<a href="#ERROR_WANT_READ">ERROR_WANT_READ</a>
+<a href="#ERROR_WANT_WRITE">ERROR_WANT_WRITE</a>
+<a href="#ERROR_ZERO_RETURN">ERROR_ZERO_RETURN</a>
+<a href="#LOADED">LOADED</a>
+<a href="#other">other</a>
+<a href="#ptr">ptr</a>
+<a href="#WHY">WHY</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Close this connection, and if the close underlying flag has been
+set, the underlying connection.  Note that <code><a href="ssl.SslStream.html#shutdown">shutdown()</a></code> is not
+called on the connection.
+<p/><a href="ssl-ssl.icn.html#73" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="close_impl"/>
+<h3>close_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#86" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="connect"/>
+<h3>connect()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#58" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="ssl-ssl.icn.html#88" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="in"/>
+<h3>in(n)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#in">in()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="ssl-ssl.icn.html#69" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#39" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(other, host)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new SslStream.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>other</code> - an already connected <code><a href="io.SocketStream.html" target="displayFrame">SocketStream</a></code> over which the connection
+will operate
+</dd>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>host</code> - the name of the host corresponding to the connection
+</dd>
+</dl>
+<p/><a href="ssl-ssl.icn.html#94" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl(other, host)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#92" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="out"/>
+<h3>out(s)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#out">out()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="ssl-ssl.icn.html#71" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="shutdown"/>
+<h3>shutdown(full)</h3>
+public native<p/>
+<dl>
+<dd>
+Perform a shutdown on the connection; <code>full</code> is a flag; if set then
+the shutdown will wait for a reply to the "close notify" from the
+server.
+<p/><a href="ssl-ssl.icn.html#62" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="verify"/>
+<h3>verify()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#60" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ERROR_NONE"/>
+<h3>ERROR_NONE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#30" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="ERROR_SSL"/>
+<h3>ERROR_SSL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#31" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="ERROR_SYSCALL"/>
+<h3>ERROR_SYSCALL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#34" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="ERROR_WANT_READ"/>
+<h3>ERROR_WANT_READ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#32" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="ERROR_WANT_WRITE"/>
+<h3>ERROR_WANT_WRITE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#33" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="ERROR_ZERO_RETURN"/>
+<h3>ERROR_ZERO_RETURN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#35" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="LOADED"/>
+<h3>LOADED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#36" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="other"/>
+<h3>other</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#26" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="ptr"/>
+<h3>ptr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#24" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+<a name="WHY"/>
+<h3>WHY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ssl-ssl.icn.html#37" target="displayFrame">Source - ssl.icn </a>
+</dd>
+</dl><hr>
+</body></html>

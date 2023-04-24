@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>walk</title></head><body>
+<h1>walk(v, a[])</h1>
+<dl>
+<dt>Package :</dt><dd><a href="json-package.html" target="listFrame">json</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+A helpful function for descending through a structure (<code>v</code>) of lists
+and tables returned by json parsing.  The list <code>a</code> gives the item to
+select at each level.  Lists must match integer indices and tables
+must have the exact key.  For example :-
+<p/>
+<pre>
+   # Typical parse output
+   v := [9,120,8984,24, table(,"x",2,"y",4)]
+   walk(v, 5,"x")        # Gives 2
+</pre>
+<p/>
+If the list of selectors doesn't lead to an element, then the
+procedure fails, setting <code>&amp;why</code> to indicate where the search ended.
+<p/><a href="json-jsonparser.icn.html#191" target="displayFrame">Source - jsonparser.icn </a>
+<p/>
+</body></html>

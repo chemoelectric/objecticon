@@ -1,0 +1,812 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TextDisplay</title></head><body>
+<h1>TextDisplay</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This class displays a list of strings.
+<p/><a href="gui-textdisplay.icn.html#16" target="displayFrame">Source - textdisplay.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.HasUseWheel.html">gui.HasUseWheel</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="gui.ScrollArea.html">gui.ScrollArea</a>
+<a href="gui.DrawScrollArea.html">gui.DrawScrollArea</a>
+<a href="gui.LineBasedScrollArea.html">gui.LineBasedScrollArea</a>
+<a href="gui.TextDisplay.html">gui.TextDisplay</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#set_use_wheel">set_use_wheel()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#wheel_listeners">wheel_listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#add">add()</a>
+<a href="gui.Component.html#add_list">add_list()</a>
+<a href="gui.Component.html#build_point_chain">build_point_chain()</a>
+<a href="gui.Component.html#can_drag">can_drag()</a>
+<a href="gui.Component.html#can_drop">can_drop()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#drag_event">drag_event()</a>
+<a href="gui.Component.html#drag_reset">drag_reset()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#focus_changed">focus_changed()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_index">get_index()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip">get_tooltip()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#handle_accel">handle_accel()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#initially">initially()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#match_accel">match_accel()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove">remove()</a>
+<a href="gui.Component.html#remove_all">remove_all()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_index">remove_index()</a>
+<a href="gui.Component.html#remove_list">remove_list()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reposition">reposition()</a>
+<a href="gui.Component.html#reposition_index">reposition_index()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout">reset_layout()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_geometry">set_geometry()</a>
+<a href="gui.Component.html#set_height">set_height()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_pos">set_pos()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_size">set_size()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_width">set_width()</a>
+<a href="gui.Component.html#set_x">set_x()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y">set_y()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#shift">shift()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#at_bottom">at_bottom()</a>
+<a href="gui.ScrollArea.html#at_top">at_top()</a>
+<a href="gui.ScrollArea.html#center_region_horizontally">center_region_horizontally()</a>
+<a href="gui.ScrollArea.html#center_region_vertically">center_region_vertically()</a>
+<a href="gui.ScrollArea.html#compute_and_invalidate">compute_and_invalidate()</a>
+<a href="gui.ScrollArea.html#display">display()</a>
+<a href="gui.ScrollArea.html#ensure_region_visible">ensure_region_visible()</a>
+<a href="gui.ScrollArea.html#get_area_x">get_area_x()</a>
+<a href="gui.ScrollArea.html#get_area_y">get_area_y()</a>
+<a href="gui.ScrollArea.html#get_default_height">get_default_height()</a>
+<a href="gui.ScrollArea.html#get_default_width">get_default_width()</a>
+<a href="gui.ScrollArea.html#get_subject_height">get_subject_height()</a>
+<a href="gui.ScrollArea.html#get_subject_width">get_subject_width()</a>
+<a href="gui.ScrollArea.html#get_subject_x">get_subject_x()</a>
+<a href="gui.ScrollArea.html#get_subject_y">get_subject_y()</a>
+<a href="gui.ScrollArea.html#goto_bottom">goto_bottom()</a>
+<a href="gui.ScrollArea.html#goto_top">goto_top()</a>
+<a href="gui.ScrollArea.html#handle_wheel_down">handle_wheel_down()</a>
+<a href="gui.ScrollArea.html#handle_wheel_left">handle_wheel_left()</a>
+<a href="gui.ScrollArea.html#handle_wheel_right">handle_wheel_right()</a>
+<a href="gui.ScrollArea.html#handle_wheel_up">handle_wheel_up()</a>
+<a href="gui.ScrollArea.html#init">init()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_height">invalidate_subject_height()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_width">invalidate_subject_width()</a>
+<a href="gui.ScrollArea.html#keeps">keeps()</a>
+<a href="gui.ScrollArea.html#on_default_key">on_default_key()</a>
+<a href="gui.ScrollArea.html#on_hsb">on_hsb()</a>
+<a href="gui.ScrollArea.html#on_vsb">on_vsb()</a>
+<a href="gui.ScrollArea.html#predict_total_height">predict_total_height()</a>
+<a href="gui.ScrollArea.html#predict_total_width">predict_total_width()</a>
+<a href="gui.ScrollArea.html#predict_view_height">predict_view_height()</a>
+<a href="gui.ScrollArea.html#predict_view_width">predict_view_width()</a>
+<a href="gui.ScrollArea.html#refresh">refresh()</a>
+<a href="gui.ScrollArea.html#remove_hsb">remove_hsb()</a>
+<a href="gui.ScrollArea.html#remove_vsb">remove_vsb()</a>
+<a href="gui.ScrollArea.html#set_area_x">set_area_x()</a>
+<a href="gui.ScrollArea.html#set_area_y">set_area_y()</a>
+<a href="gui.ScrollArea.html#set_ideal_size">set_ideal_size()</a>
+<a href="gui.ScrollArea.html#set_use_default_keys">set_use_default_keys()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#default_key_listener">default_key_listener</a>
+<a href="gui.ScrollArea.html#hsb">hsb</a>
+<a href="gui.ScrollArea.html#SCROLLBAR_SIZE">SCROLLBAR_SIZE</a>
+<a href="gui.ScrollArea.html#subject_height">subject_height</a>
+<a href="gui.ScrollArea.html#subject_width">subject_width</a>
+<a href="gui.ScrollArea.html#view">view</a>
+<a href="gui.ScrollArea.html#vsb">vsb</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.DrawScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.DrawScrollArea.html#create_view">create_view()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.LineBasedScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.LineBasedScrollArea.html#calculate_subject_height">calculate_subject_height()</a>
+<a href="gui.LineBasedScrollArea.html#center_line">center_line()</a>
+<a href="gui.LineBasedScrollArea.html#create_hsb">create_hsb()</a>
+<a href="gui.LineBasedScrollArea.html#create_vsb">create_vsb()</a>
+<a href="gui.LineBasedScrollArea.html#draw">draw()</a>
+<a href="gui.LineBasedScrollArea.html#dump">dump()</a>
+<a href="gui.LineBasedScrollArea.html#ensure_line_visible">ensure_line_visible()</a>
+<a href="gui.LineBasedScrollArea.html#get_area_line_rect">get_area_line_rect()</a>
+<a href="gui.LineBasedScrollArea.html#get_cum_line_height">get_cum_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#get_height_for_line">get_height_for_line()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_count">get_line_count()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_height">get_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_info">get_line_info()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_rect">get_line_rect()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_under_pointer">get_line_under_pointer()</a>
+<a href="gui.LineBasedScrollArea.html#get_nearest_line_to_pointer">get_nearest_line_to_pointer()</a>
+<a href="gui.LineBasedScrollArea.html#get_page_movement">get_page_movement()</a>
+<a href="gui.LineBasedScrollArea.html#goto_first">goto_first()</a>
+<a href="gui.LineBasedScrollArea.html#goto_last">goto_last()</a>
+<a href="gui.LineBasedScrollArea.html#goto_pos">goto_pos()</a>
+<a href="gui.LineBasedScrollArea.html#has_lines">has_lines()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line">invalidate_line()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line_count">invalidate_line_count()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line_height">invalidate_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_lines">invalidate_lines()</a>
+<a href="gui.LineBasedScrollArea.html#pointer_to_line">pointer_to_line()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.LineBasedScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.LineBasedScrollArea.html#cum_line_height">cum_line_height</a>
+<a href="gui.LineBasedScrollArea.html#line_count">line_count</a>
+<a href="gui.LineBasedScrollArea.html#line_height">line_height</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#calculate_line_count">calculate_line_count()</a>
+<a href="#calculate_line_height">calculate_line_height()</a>
+<a href="#calculate_subject_width">calculate_subject_width()</a>
+<a href="#clear_split_list">clear_split_list()</a>
+<a href="#clear_view_list">clear_view_list()</a>
+<a href="#contents_changed">contents_changed()</a>
+<a href="#create_view_list">create_view_list()</a>
+<a href="#draw_line">draw_line()</a>
+<a href="#finally">finally()</a>
+<a href="#find_long_line">find_long_line()</a>
+<a href="#get_contents">get_contents()</a>
+<a href="#get_contents_str">get_contents_str()</a>
+<a href="#get_default_subject_height">get_default_subject_height()</a>
+<a href="#get_default_subject_width">get_default_subject_width()</a>
+<a href="#get_split">get_split()</a>
+<a href="#get_view_list_index">get_view_list_index()</a>
+<a href="#layout">layout()</a>
+<a href="#log">log()</a>
+<a href="#log_str">log_str()</a>
+<a href="#new">new()</a>
+<a href="#set_contents">set_contents()</a>
+<a href="#set_contents_str">set_contents_str()</a>
+<a href="#set_internal_fields">set_internal_fields()</a>
+<a href="#set_split_words">set_split_words()</a>
+<a href="#set_tab_width">set_tab_width()</a>
+<a href="#set_wrap_mode">set_wrap_mode()</a>
+<a href="#update_view_list">update_view_list()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#contents">contents</a>
+<a href="#last_split">last_split</a>
+<a href="#line_splitter">line_splitter</a>
+<a href="#long_line">long_line</a>
+<a href="#split_words_flag">split_words_flag</a>
+<a href="#tab_width">tab_width</a>
+<a href="#view_list">view_list</a>
+<a href="#view_list_split_width">view_list_split_width</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="calculate_line_count"/>
+<h3>calculate_line_count()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#calculate_line_count">calculate_line_count()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#69" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_line_height"/>
+<h3>calculate_line_height()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#calculate_line_height">calculate_line_height()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#278" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_subject_width"/>
+<h3>calculate_subject_width()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#calculate_subject_width">calculate_subject_width()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#282" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_split_list"/>
+<h3>clear_split_list()</h3>
+public<p/>
+<dl>
+<dd>
+Clear the view list, forcing it to be re-created next
+time it's needed.
+<p/>
+<p/><a href="gui-textdisplay.icn.html#119" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_view_list"/>
+<h3>clear_view_list()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#128" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="contents_changed"/>
+<h3>contents_changed()</h3>
+public<p/>
+<dl>
+<dd>
+Call this method if the contents list, previously
+set with <code><a href="gui.TextDisplay.html#set_contents">set_contents()</a></code>, has changed.
+<p/><a href="gui-textdisplay.icn.html#109" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="create_view_list"/>
+<h3>create_view_list()</h3>
+public<p/>
+<dl>
+<dd>
+Create the view_list from the contents.
+<p/>
+<p/><a href="gui-textdisplay.icn.html#293" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_line"/>
+<h3>draw_line(xp, yp, lh, i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#draw_line">draw_line()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#289" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#finally">finally()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#103" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="find_long_line"/>
+<h3>find_long_line()</h3>
+public<p/>
+<dl>
+<dd>
+Run through the view list looking for the longest line.
+<p/>
+<p/><a href="gui-textdisplay.icn.html#134" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="get_contents"/>
+<h3>get_contents()</h3>
+public<p/>
+<dl>
+<dd>
+Return the contents of the <code><a href="gui.ScrollArea.html" target="displayFrame">ScrollArea</a></code>
+<p/><a href="gui-textdisplay.icn.html#271" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="get_contents_str"/>
+<h3>get_contents_str()</h3>
+public<p/>
+<dl>
+<dd>
+Useful method to get the contents as a string, with each line
+separated by the end-of-line character.
+<p/><a href="gui-textdisplay.icn.html#75" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_subject_height"/>
+<h3>get_default_subject_height(dw)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#get_default_subject_height">get_default_subject_height()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#57" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_subject_width"/>
+<h3>get_default_subject_width()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#get_default_subject_width">get_default_subject_width()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#63" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="get_split"/>
+<h3>get_split(sw)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#30" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="get_view_list_index"/>
+<h3>get_view_list_index(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Return the index into view_list containing the content position
+x, y, or fail on out of range x or y.  Binary search is used.
+<p/><a href="gui-textdisplay.icn.html#304" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="layout"/>
+<h3>layout()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#layout">layout()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#350" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="log"/>
+<h3>log(l, max)</h3>
+public<p/>
+<dl>
+<dd>
+Append lines of text and go to the bottom of the content.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - a list of lines to append
+</dd>
+<dd>
+<code>max</code> - optional maximum length of resulting contents
+</dd>
+</dl>
+<p/><a href="gui-textdisplay.icn.html#202" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="log_str"/>
+<h3>log_str(s, max)</h3>
+public<p/>
+<dl>
+<dd>
+Similar to <code><a href="gui.TextDisplay.html#log">log()</a></code>, but log a string, rather than a list of
+lines.  The string is separated into lines and the first is
+appended to the last content line; the remaining lines (if any)
+are appended to the content.
+<p/><a href="gui-textdisplay.icn.html#231" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#new">new()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#396" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="set_contents"/>
+<h3>set_contents(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the data to be displayed.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - The list of data.
+</dd>
+</dl>
+<p/><a href="gui-textdisplay.icn.html#92" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="set_contents_str"/>
+<h3>set_contents_str(s)</h3>
+public<p/>
+<dl>
+<dd>
+Useful method to set the contents from a string in which each line
+is separated by the end-of-line character.
+<p/><a href="gui-textdisplay.icn.html#83" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="set_internal_fields"/>
+<h3>set_internal_fields()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#set_internal_fields">set_internal_fields()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#328" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="set_split_words"/>
+<h3>set_split_words(s)</h3>
+public<p/>
+<dl>
+<dd>
+Indicate, if wrapping, whether to split words or not (default no).
+<p/><a href="gui-textdisplay.icn.html#384" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="set_tab_width"/>
+<h3>set_tab_width(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the tab width to use.  Default is set from the style object.
+<p/><a href="gui-textdisplay.icn.html#338" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="set_wrap_mode"/>
+<h3>set_wrap_mode(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the word-wrap mode, which should be one of the following
+values :-
+<p/>
+&amp;null, "false", "off", "no", meaning don't do word-wrap (the default).
+<p/>
+an integer (eg 20), meaning wrap at that line length.
+<p/>
+"width", meaning wrap at the width of the component.
+<p/><a href="gui-textdisplay.icn.html#356" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="update_view_list"/>
+<h3>update_view_list(index, del, add)</h3>
+public<p/>
+<dl>
+<dd>
+Update the view list, given that the contents have changed.
+This takes care to minimize the work that has to be done.  The
+first param is an index into the contents list.  The second param
+indicates some view_list lines corresponding to those beginning
+with index should be removed; the third param says that some should
+be added.
+<p/>
+Any subject_width/line_count invalidations are done by the caller (or
+end_handle).
+<p/><a href="gui-textdisplay.icn.html#146" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="contents"/>
+<h3>contents</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#21" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="last_split"/>
+<h3>last_split</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#27" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="line_splitter"/>
+<h3>line_splitter</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#26" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="long_line"/>
+<h3>long_line</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#25" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="split_words_flag"/>
+<h3>split_words_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#22" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="tab_width"/>
+<h3>tab_width</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#28" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="view_list"/>
+<h3>view_list</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#23" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+<a name="view_list_split_width"/>
+<h3>view_list_split_width</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textdisplay.icn.html#24" target="displayFrame">Source - textdisplay.icn </a>
+</dd>
+</dl><hr>
+</body></html>

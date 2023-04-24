@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>color.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#       File:     color.icn
+<a name="4"/>#
+<a name="5"/>#       Subject:  Procedures dealing with colors
+<a name="6"/>#
+<a name="7"/>#       Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#       Date:     April 1, 1997
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#       These procedures deal with colors in various ways.
+<a name="18"/>#
+<a name="19"/>#       ScaleGamma(v, g)        scales a number with gamma correction.
+<a name="20"/>#
+<a name="21"/>#       Blend(k1, k2, ...)      generates a sequence of colors.
+<a name="22"/>#
+<a name="23"/>#       Contrast(k)             returns "white" or "black" contrasting with k.
+<a name="24"/>#
+<a name="25"/>#       RandomColor(p)          returns a randomly chosen color from a palette.
+<a name="26"/>#
+<a name="27"/>#       PaletteGrays(p)         returns the gray entries of a palette.
+<a name="28"/>#
+<a name="29"/>############################################################################
+<a name="30"/>#
+<a name="31"/>#  ScaleGamma(v, g) nonlinearly scales the number v (between 0.0 and 1.0)
+<a name="32"/>#  to an integer between 0 and 65535 using a gamma correction factor g.
+<a name="33"/>#  the default value of g is 2.5.
+<a name="34"/>#
+<a name="35"/>#  Blend(color1, color2, color3,...) generates ColorValue(color1), then
+<a name="36"/>#  some intermediate shades, then ColorValue(color2), then some more
+<a name="37"/>#  intermediate shades, and so on, finally generating the color value of
+<a name="38"/>#  the last argument.  An integer argument can be interpolated at any
+<a name="39"/>#  point to set the number of steps (the default is four) from one color
+<a name="40"/>#  to the next.
+<a name="41"/>#
+<a name="42"/>#  Contrast(colr) returns either "white" or "black", depending
+<a name="43"/>#  on which provides the greater contrast with the specified color.
+<a name="44"/>#
+<a name="45"/>#  RandomColor(palette) returns a randomly chosen color from the
+<a name="46"/>#  given image palette, excluding the "extra" grays of the palette, if
+<a name="47"/>#  any.  (Colors are selected from a small finite palette, rather than
+<a name="48"/>#  from the entire color space, to avoid running out of colors if a
+<a name="49"/>#  large number of random choices are desired.)  The default palette
+<a name="50"/>#  for this procedure is "c6".
+<a name="51"/>#
+<a name="52"/>#  PaletteGrays(palette) is like PaletteChars but it returns only
+<a name="53"/>#  the characters corresponding to shades of gray.  The characters are
+<a name="54"/>#  ordered from black to white, and in all palettes the shades of gray
+<a name="55"/>#  are equally spaced.
+<a name="56"/>#
+<a name="57"/>############################################################################
+<a name="58"/>#
+<a name="59"/>#  Requires:  Version 9 graphics
+<a name="60"/>#
+<a name="61"/>############################################################################
+<a name="62"/>
+<a name="63"/>
+<a name="64"/>#   ScaleGamma(v, g) -- scale fraction to int with gamma correction.
+<a name="65"/>
+<a name="66"/>package ipl.graphics
+<a name="67"/>
+<a name="68"/>import
+<a name="69"/>   graphics(Window),
+<a name="70"/>   util(need_string)
+<a name="71"/>
+<a name="72"/># scale with gamma correction
+<a name="73"/>procedure ScaleGamma(v, g)              
+<a name="74"/>   /g := 2.5
+<a name="75"/>   return integer(65535 * v ^ (1.0 / g))
+<a name="76"/>end
+<a name="77"/>
+<a name="78"/>
+<a name="79"/>#  Blend(color1, color2, ...) -- generate sequence of colors
+<a name="80"/>
+<a name="81"/># generate sequence of colors
+<a name="82"/>procedure Blend(args[])                 
+<a name="83"/>   local n, s, a, i, f1, f2, r1, g1, b1, r2, g2, b2, r3, g3, b3
+<a name="84"/>
+<a name="85"/>   n := 4
+<a name="86"/>
+<a name="87"/>   while a := get(args) do
+<a name="88"/>      if integer(a) &gt;= 0 then
+<a name="89"/>         n := integer(a)
+<a name="90"/>      else {
+<a name="91"/>         s := Window.parse_color(a) | fail
+<a name="92"/>         r2 := s.red
+<a name="93"/>         g2 := s.green
+<a name="94"/>         b2 := s.blue
+<a name="95"/>         if /r1 then
+<a name="96"/>            suspend r2 || "," || g2 || "," || b2
+<a name="97"/>         else
+<a name="98"/>            every i := 1 to n do {
+<a name="99"/>               f2 := real(i) / real(n)
+<a name="100"/>               f1 := 1.0 - f2
+<a name="101"/>               r3 := integer(f1 * r1 + f2 * r2)
+<a name="102"/>               g3 := integer(f1 * g1 + f2 * g2)
+<a name="103"/>               b3 := integer(f1 * b1 + f2 * b2)
+<a name="104"/>               suspend r3 || "," || g3 || "," || b3
+<a name="105"/>               }
+<a name="106"/>         r1 := r2
+<a name="107"/>         g1 := g2
+<a name="108"/>         b1 := b2
+<a name="109"/>         }
+<a name="110"/>end
+<a name="111"/>
+<a name="112"/>
+<a name="113"/>#  Contrast(color) -- return "white" or "black" to maximize contrast
+<a name="114"/>
+<a name="115"/># choose contrasting color
+<a name="116"/>procedure Contrast(color)               
+<a name="117"/>   static l
+<a name="118"/>   initial {
+<a name="119"/>      l := ["white", "black"]
+<a name="120"/>      }
+<a name="121"/>       
+<a name="122"/>      return l[1 + Window.palette_key("g2", color)]
+<a name="123"/>end
+<a name="124"/>
+<a name="125"/>
+<a name="126"/>
+<a name="127"/>#   RandomColor(palette) -- choose random color
+<a name="128"/>
+<a name="129"/># choose random color
+<a name="130"/>procedure RandomColor(palette)  
+<a name="131"/>   local s, n
+<a name="132"/>   /palette := "c6"
+<a name="133"/>
+<a name="134"/>   s := Window.palette_chars(palette)
+<a name="135"/>   palette ?
+<a name="136"/>      if ="c" &amp; any('23456') then {
+<a name="137"/>         n := integer(move(1))
+<a name="138"/>         s := s[1 +: n * n * n]
+<a name="139"/>         }
+<a name="140"/>   return Window.palette_color(palette, ?s)
+<a name="141"/>
+<a name="142"/>end
+<a name="143"/>
+<a name="144"/>
+<a name="145"/>#  PaletteGrays(palette) -- return grayscale entries from palette.
+<a name="146"/>
+<a name="147"/># grayscale entries from palette
+<a name="148"/>procedure PaletteGrays(palette)    
+<a name="149"/>   palette := need_string(palette)
+<a name="150"/>
+<a name="151"/>   if palette ? ="g" then
+<a name="152"/>      return Window.palette_chars(palette)
+<a name="153"/>
+<a name="154"/>   return case palette of {
+<a name="155"/>      "c1":     "0123456"
+<a name="156"/>      "c2":     "kxw"
+<a name="157"/>      "c3":     "@abMcdZ"
+<a name="158"/>      "c4":     "0$%&amp;L*+-g/?@}"
+<a name="159"/>      "c5":     "\0}~\177\200\37\201\202\203\204&gt;\205\206\207\210]_
+<a name="160"/>                  \211\212\213\214|"
+<a name="161"/>      "c6":     "\0\330\331\332\333\334+\335\336\337\340\341V\342\343\344\345_
+<a name="162"/>                  \346\201\347\350\351\352\353\254\354\355\356\357\360\327"
+<a name="163"/>      default:  fail
+<a name="164"/>      }
+<a name="165"/>end
+<a name="166"/>
+<a name="167"/>#
+<a name="168"/># Given a color `col`, return the color in "r,g,b,a" string format, with
+<a name="169"/># those values optionally edited by the given parameters.
+<a name="170"/>#
+<a name="171"/>procedure EditRGBA(col, r, g, b, a)
+<a name="172"/>   local l
+<a name="173"/>   l := Window.parse_color(col) | fail
+<a name="174"/>   l.red := \r
+<a name="175"/>   l.green := \g
+<a name="176"/>   l.blue := \b
+<a name="177"/>   l.alpha := \a
+<a name="178"/>   if l.alpha = 65535 then
+<a name="179"/>      return l.red || "," || l.green || "," || l.blue
+<a name="180"/>   else
+<a name="181"/>      return l.red || "," || l.green || "," || l.blue || "," || l.alpha
+<a name="182"/>end
+</pre></body></html>

@@ -1,0 +1,977 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>binary.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     binary.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to pack and unpack values
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/># This is a collection of procedures that support conversion of Icon
+<a name="18"/># data elements to and from binary data formats.  The purpose is to
+<a name="19"/># facilitate dealing with binary data files.
+<a name="20"/>#
+<a name="21"/># The procedures can be used individually or via the "control"
+<a name="22"/># procedures pack() and unpack().
+<a name="23"/>#
+<a name="24"/>############################################################################
+<a name="25"/>#
+<a name="26"/># The individual conversion functions are prefixed by either "pack_" or
+<a name="27"/># "unpack_" and are identified in comments by their format character(s).
+<a name="28"/># The "pack_" procedures convert from Icon to binary and take a single
+<a name="29"/># argument:  the value to be converted.  The "unpack_" procedures
+<a name="30"/># convert from binary to Icon and usually take no parameters -- they are
+<a name="31"/># executed within a string-scanning context and scan the necessary
+<a name="32"/># amount from the &amp;subject string.  Some of the "unpack_" functions take
+<a name="33"/># a parameter that specifies the length of the output string.  The
+<a name="34"/># individual conversion procedures are minimally commented, but their
+<a name="35"/># action is apparent from their procedure names and the documentation
+<a name="36"/># of the pack() and unpack() procedures.
+<a name="37"/>#
+<a name="38"/># The control procedures pack() and unpack() take a format string that
+<a name="39"/># controls conversions of several values (similar to the "printf" C
+<a name="40"/># library function).  pack() and unpack() are patterned after the Perl
+<a name="41"/># (programming language) functions of the same names, and are documented
+<a name="42"/># below.
+<a name="43"/>#
+<a name="44"/>#
+<a name="45"/># pack(template,value1,...) : packed_binary_string
+<a name="46"/># ------------------------------------------------
+<a name="47"/>#
+<a name="48"/># This procedure packs the "values" into a binary structure, returning
+<a name="49"/># the string containing the structure.	The elements of any lists in the
+<a name="50"/># "value" parameters are processed individually as if they were
+<a name="51"/># "spliced" into the "value" parameter list.  The "template" is a
+<a name="52"/># sequence of characters that give the order and type of values, as
+<a name="53"/># follows" (using C language terminology):
+<a name="54"/>#
+<a name="55"/>#   a  An ascii string, will be null padded (unstripped for unpack()).
+<a name="56"/>#   A  An ascii string, will be space padded (trailing nulls and
+<a name="57"/>#      spaces will be stripped for unpack()).
+<a name="58"/>#   b  A bit string, low-to-high order.
+<a name="59"/>#   B  A bit string, high-to-low order.
+<a name="60"/>#   h  A hexadecimal string, low-nybble-first.
+<a name="61"/>#   H  A hexadecimal string, high-nybble-first.
+<a name="62"/>#   c  A signed char value.
+<a name="63"/>#   C  An unsigned char value.
+<a name="64"/>#   s  A signed short value.
+<a name="65"/>#   S  An unsigned short value.
+<a name="66"/>#   i  A signed int value.
+<a name="67"/>#   I  An unsigned int value.
+<a name="68"/>#   l  A signed long value.
+<a name="69"/>#   L  An unsigned long value.
+<a name="70"/>#   n  A short in "network" order (big-endian).
+<a name="71"/>#   N  A long in "network" order (big-endian).
+<a name="72"/>#   v  A short in "vax" order (little-endian).
+<a name="73"/>#   V  A long in "vax" order (little-endian).
+<a name="74"/>#   f  A single-precision float in IEEE Motorola format.
+<a name="75"/>#   d  A double-precision float in IEEE Motorola format.
+<a name="76"/>#   e  An extended-precision float in IEEE Motorola format 80-bit.
+<a name="77"/>#   E  An extended-precision float in IEEE Motorola format 96-bit.
+<a name="78"/>#   x  Skip forward a byte (null-fill for pack()).
+<a name="79"/>#   X  Back up a byte.
+<a name="80"/>#   @  Go to absolute position (null-fill if necessary for pack()).
+<a name="81"/>#   u  A uu-encoded/decoded string.
+<a name="82"/>#
+<a name="83"/># Each letter may optionally be followed by a number which gives a
+<a name="84"/># count.  Together the letter and the count make a field specifier.
+<a name="85"/># Letters and numbers can be separated by white space which will be
+<a name="86"/># ignored.  Types A, a, B, b, H, and h consume one value from the
+<a name="87"/># "value" list and produce a string of the length given as the
+<a name="88"/># field-specifier-count.  The other types consume
+<a name="89"/># "field-specifier-count" values from the "value" list and append the
+<a name="90"/># appropriate data to the packed string.
+<a name="91"/>#
+<a name="92"/>#
+<a name="93"/># unpack(template,string) : value_list
+<a name="94"/># ------------------------------------
+<a name="95"/>#
+<a name="96"/># This procedure does the reverse of pack():  it takes a string
+<a name="97"/># representing a structure and expands it out into a list of values.
+<a name="98"/># The template has mostly the same format as for pack() -- see pack(),
+<a name="99"/># above.
+<a name="100"/>#
+<a name="101"/>#
+<a name="102"/># Endianicity of integers
+<a name="103"/># -----------------------
+<a name="104"/>#
+<a name="105"/># Integer values can be packed and unpacked in either big-endian
+<a name="106"/># (Motorola) or little-endian (Intel) order.  The default is big-endian.
+<a name="107"/># Procedures pack_little_endian() and pack_big_endian() set the
+<a name="108"/># mode for future packs and unpacks.
+<a name="109"/>#
+<a name="110"/>#
+<a name="111"/># Size of ints
+<a name="112"/># ------------
+<a name="113"/>#
+<a name="114"/># The "i" (signed int) and "I" (unsigned int) types can pack and unpack
+<a name="115"/># either 16-bit or 32-bit values.  32-bit is the default.  Procedures
+<a name="116"/># pack_int_as_short() and pack_int_as_long() change the mode for
+<a name="117"/># future packs and unpacks.
+<a name="118"/>#
+<a name="119"/>############################################################################
+<a name="120"/>
+<a name="121"/>
+<a name="122"/>#
+<a name="123"/># To Do List
+<a name="124"/>#
+<a name="125"/># - implement other-endian versions of floats (only big-endian supported
+<a name="126"/>#   now).
+<a name="127"/>#
+<a name="128"/>
+<a name="129"/>#
+<a name="130"/># The implementation
+<a name="131"/>#
+<a name="132"/>
+<a name="133"/>package ipl.binary
+<a name="134"/>
+<a name="135"/>import
+<a name="136"/>   util(Math)
+<a name="137"/>
+<a name="138"/>global pack_short,pack_long,
+<a name="139"/>      unpack_short,unpack_unsigned_short,
+<a name="140"/>      unpack_long,unpack_unsigned_long,
+<a name="141"/>      pack_int_proc,unpack_int_proc,unpack_unsigned_int_proc
+<a name="142"/>
+<a name="143"/>
+<a name="144"/># pack values into a string
+<a name="145"/>procedure pack(template,values[])	
+<a name="146"/>   local result,t,n,c,v,spliced_values
+<a name="147"/>   initial if /pack_short then pack_big_endian()
+<a name="148"/>   spliced_values := []
+<a name="149"/>   every v := !values do {
+<a name="150"/>      if type(v) == "list" then spliced_values |||:= v
+<a name="151"/>      else put(spliced_values,v)
+<a name="152"/>      }
+<a name="153"/>   values := spliced_values
+<a name="154"/>   result := ""
+<a name="155"/>   every t := pack_parse_template(template) do {
+<a name="156"/>      n := t.count
+<a name="157"/>      c := t.conversion
+<a name="158"/>      case c of {
+<a name="159"/>     !"aAbBhH": {
+<a name="160"/>	#
+<a name="161"/>	# Handle string.
+<a name="162"/>	#
+<a name="163"/>	v := string(get(values)) | break
+<a name="164"/>	if n == "*" then n := *v
+<a name="165"/>	result ||:= (case c of {
+<a name="166"/>	   !"aA": if integer(n) then left(v,n,if c == "A" then " "
+<a name="167"/>		 else "\0") else v
+<a name="168"/>	   default: (case c of {
+<a name="169"/>	  "b": pack_bits_low_to_high
+<a name="170"/>	  "B": pack_bits_high_to_low
+<a name="171"/>	  "h": pack_hex_low_to_high
+<a name="172"/>	  "H": pack_hex_high_to_low
+<a name="173"/>	  })(v[1:n + 1 | 0])
+<a name="174"/>	   }) | break
+<a name="175"/>	}
+<a name="176"/>     "@": result := left(result,n + 1,"\0")
+<a name="177"/>     "x": result := left(result,*result + n,"\0")
+<a name="178"/>     "X": result := left(result,*result - n)
+<a name="179"/>     default: {
+<a name="180"/>	#
+<a name="181"/>	# Handle item that consumes argument(s).
+<a name="182"/>	#
+<a name="183"/>	every if n === "*" then &amp;null else 1 to n do {
+<a name="184"/>	   v := get(values) | break
+<a name="185"/>	   result ||:= (case c of {
+<a name="186"/>	  !"cC": pack_char
+<a name="187"/>	  !"sS": pack_short
+<a name="188"/>	  !"iI": pack_int
+<a name="189"/>	  !"lL": pack_long
+<a name="190"/>	  "n": pack_nshort
+<a name="191"/>	  "N": pack_nlong
+<a name="192"/>	  "v": pack_vshort
+<a name="193"/>	  "V": pack_vlong
+<a name="194"/>	  "f": pack_single_float
+<a name="195"/>	  "d": pack_double_float
+<a name="196"/>	  "e": pack_extended_float
+<a name="197"/>	  "E": pack_extended96_float
+<a name="198"/>	  "u": pack_uuencoded_string
+<a name="199"/>	  })(v) | break
+<a name="200"/>	   }
+<a name="201"/>	}
+<a name="202"/>     }
+<a name="203"/>      }
+<a name="204"/>   return result
+<a name="205"/>end
+<a name="206"/>
+<a name="207"/># unpack values from string
+<a name="208"/>procedure unpack(template,binaryString)	
+<a name="209"/>   local result,t,n,c,v
+<a name="210"/>   initial if /unpack_short then pack_big_endian()
+<a name="211"/>   result := []
+<a name="212"/>   binaryString ? {
+<a name="213"/>      every t := pack_parse_template(template) do {
+<a name="214"/>     n := t.count
+<a name="215"/>     c := t.conversion
+<a name="216"/>     case c of {
+<a name="217"/>	"X": move(-integer(n)) | tab(1)
+<a name="218"/>	"x": move(integer(n)) | tab(0)
+<a name="219"/>	"@": tab(if n === "*" then 0 else n)
+<a name="220"/>	!"aA": {
+<a name="221"/>	   v := move(integer(n)) | tab(0)
+<a name="222"/>	   if c == "A" then v := trim(v,' \t\0')
+<a name="223"/>	   put(result,v)
+<a name="224"/>	   }
+<a name="225"/>	!"bBhH": {
+<a name="226"/>	   put(result,(case c of {
+<a name="227"/>	  "b": unpack_bits_low_to_high
+<a name="228"/>	  "B": unpack_bits_high_to_low
+<a name="229"/>	  "h": unpack_hex_low_to_high
+<a name="230"/>	  "H": unpack_hex_high_to_low
+<a name="231"/>	  })(n))
+<a name="232"/>	   }
+<a name="233"/>	default: {
+<a name="234"/>	   every if n === "*" then &amp;null else 1 to n do {
+<a name="235"/>	  if pos(0) then break
+<a name="236"/>	  put(result,(case c of {
+<a name="237"/>	     "c": unpack_char
+<a name="238"/>	     "C": unpack_unsigned_char
+<a name="239"/>	     "s": unpack_short
+<a name="240"/>	     "S": unpack_unsigned_short
+<a name="241"/>	     "i": unpack_int
+<a name="242"/>	     "I": unpack_unsigned_int
+<a name="243"/>	     "l": unpack_long
+<a name="244"/>	     "L": unpack_unsigned_long
+<a name="245"/>	     "n": unpack_nshort
+<a name="246"/>	     "N": unpack_nlong
+<a name="247"/>	     "v": unpack_vshort
+<a name="248"/>	     "V": unpack_vlong
+<a name="249"/>	     "f": unpack_single_float
+<a name="250"/>	     "d": unpack_double_float
+<a name="251"/>	     "e": unpack_extended_float
+<a name="252"/>	     "E": unpack_extended96_float
+<a name="253"/>	     "u": unpack_uuencoded_string
+<a name="254"/>	     })()) | break
+<a name="255"/>	  }
+<a name="256"/>	   }
+<a name="257"/>	}
+<a name="258"/>     }
+<a name="259"/>      }
+<a name="260"/>   return result
+<a name="261"/>end
+<a name="262"/>
+<a name="263"/>record pack_template_rec(conversion,count)
+<a name="264"/>
+<a name="265"/>procedure pack_parse_template(template)
+<a name="266"/>   local c,n
+<a name="267"/>   template ? {
+<a name="268"/>      pack_parse_space()
+<a name="269"/>      while c := tab(any('aAbBhHcCsSiIlLnNvVfdeExX@u')) do {
+<a name="270"/>     pack_parse_space()
+<a name="271"/>     n := ="*" | integer(tab(many(&amp;digits))) | 1
+<a name="272"/>     suspend pack_template_rec(c,n)
+<a name="273"/>     pack_parse_space()
+<a name="274"/>     }
+<a name="275"/>      }
+<a name="276"/>end
+<a name="277"/>
+<a name="278"/>procedure pack_parse_space()
+<a name="279"/>   suspend tab(many(' \t'))
+<a name="280"/>end
+<a name="281"/>
+<a name="282"/>procedure pack_big_endian()
+<a name="283"/>   pack_short := pack_nshort
+<a name="284"/>   pack_long := pack_nlong
+<a name="285"/>   unpack_short := unpack_nshort
+<a name="286"/>   unpack_unsigned_short := unpack_unsigned_nshort
+<a name="287"/>   unpack_long := unpack_nlong
+<a name="288"/>   unpack_unsigned_long := unpack_unsigned_nlong
+<a name="289"/>   case pack_int_proc of {
+<a name="290"/>      pack_vshort: pack_int_as_short()
+<a name="291"/>      pack_vlong:  pack_int_as_long()
+<a name="292"/>      }
+<a name="293"/>   return
+<a name="294"/>end
+<a name="295"/>
+<a name="296"/>procedure pack_little_endian()
+<a name="297"/>   pack_short := pack_vshort
+<a name="298"/>   pack_long := pack_vlong
+<a name="299"/>   unpack_short := unpack_vshort
+<a name="300"/>   unpack_unsigned_short := unpack_unsigned_vshort
+<a name="301"/>   unpack_long := unpack_vlong
+<a name="302"/>   unpack_unsigned_long := unpack_unsigned_vlong
+<a name="303"/>   case pack_int_proc of {
+<a name="304"/>      pack_nshort: pack_int_as_short()
+<a name="305"/>      pack_nlong:  pack_int_as_long()
+<a name="306"/>      }
+<a name="307"/>   return
+<a name="308"/>end
+<a name="309"/>
+<a name="310"/>procedure pack_int_as_long()
+<a name="311"/>   pack_int_proc := pack_long
+<a name="312"/>   unpack_int_proc := unpack_long
+<a name="313"/>   unpack_unsigned_int_proc := unpack_unsigned_long
+<a name="314"/>   return
+<a name="315"/>end
+<a name="316"/>
+<a name="317"/>procedure pack_int_as_short()
+<a name="318"/>   pack_int_proc := pack_short
+<a name="319"/>   unpack_int_proc := unpack_short
+<a name="320"/>   unpack_unsigned_int_proc := unpack_unsigned_short
+<a name="321"/>   return
+<a name="322"/>end
+<a name="323"/>
+<a name="324"/>#
+<a name="325"/># "b"
+<a name="326"/>#
+<a name="327"/>procedure pack_bits_low_to_high(v)
+<a name="328"/>   local result,n,b,buf
+<a name="329"/>   result := ""
+<a name="330"/>   n := buf := 0
+<a name="331"/>   every b := !v do {
+<a name="332"/>      buf := ior(ishift(buf,-1),ishift(b % 2,7))
+<a name="333"/>      n +:= 1
+<a name="334"/>      if n = 8 then {
+<a name="335"/>     result ||:= char(buf)
+<a name="336"/>     n := buf := 0
+<a name="337"/>     }
+<a name="338"/>      }
+<a name="339"/>   if n &gt; 0 then {
+<a name="340"/>      result ||:= char(ishift(buf,-(8 - n)))
+<a name="341"/>      }
+<a name="342"/>   return result
+<a name="343"/>end
+<a name="344"/>
+<a name="345"/>#
+<a name="346"/># "B"
+<a name="347"/>#
+<a name="348"/>procedure pack_bits_high_to_low(v)
+<a name="349"/>   local result,n,b,buf
+<a name="350"/>   result := ""
+<a name="351"/>   n := buf := 0
+<a name="352"/>   every b := !v do {
+<a name="353"/>      buf := ior(ishift(buf,1),b % 2)
+<a name="354"/>      n +:= 1
+<a name="355"/>      if n = 8 then {
+<a name="356"/>     result ||:= char(buf)
+<a name="357"/>     n := buf := 0
+<a name="358"/>     }
+<a name="359"/>      }
+<a name="360"/>   if n &gt; 0 then {
+<a name="361"/>      result ||:= char(ishift(buf,8 - n))
+<a name="362"/>      }
+<a name="363"/>   return result
+<a name="364"/>end
+<a name="365"/>
+<a name="366"/>#
+<a name="367"/># "h"
+<a name="368"/>#
+<a name="369"/>procedure pack_hex_low_to_high(v)
+<a name="370"/>   local result,pair
+<a name="371"/>   result := ""
+<a name="372"/>   v ? {
+<a name="373"/>      while pair := move(2) do {
+<a name="374"/>     result ||:= char(ior(pack_hex_digit(pair[1]),
+<a name="375"/>	   ishift(pack_hex_digit(pair[2]),4)))
+<a name="376"/>     }
+<a name="377"/>      result ||:= char(pack_hex_digit(move(1)))
+<a name="378"/>      }
+<a name="379"/>   return result
+<a name="380"/>end
+<a name="381"/>
+<a name="382"/>#
+<a name="383"/># "H"
+<a name="384"/>#
+<a name="385"/>procedure pack_hex_high_to_low(v)
+<a name="386"/>   local result,pair
+<a name="387"/>   result := ""
+<a name="388"/>   v ? {
+<a name="389"/>      while pair := move(2) do {
+<a name="390"/>     result ||:= char(ior(pack_hex_digit(pair[2]),
+<a name="391"/>	   ishift(pack_hex_digit(pair[1]),4)))
+<a name="392"/>     }
+<a name="393"/>      result ||:= char(ishift(pack_hex_digit(move(1)),4))
+<a name="394"/>      }
+<a name="395"/>   return result
+<a name="396"/>end
+<a name="397"/>
+<a name="398"/>procedure pack_hex_digit(s)
+<a name="399"/>   return (case map(s) of {
+<a name="400"/>      "0": 2r0000
+<a name="401"/>      "1": 2r0001
+<a name="402"/>      "2": 2r0010
+<a name="403"/>      "3": 2r0011
+<a name="404"/>      "4": 2r0100
+<a name="405"/>      "5": 2r0101
+<a name="406"/>      "6": 2r0110
+<a name="407"/>      "7": 2r0111
+<a name="408"/>      "8": 2r1000
+<a name="409"/>      "9": 2r1001
+<a name="410"/>      "a": 2r1010
+<a name="411"/>      "b": 2r1011
+<a name="412"/>      "c": 2r1100
+<a name="413"/>      "d": 2r1101
+<a name="414"/>      "e": 2r1110
+<a name="415"/>      "f": 2r1111
+<a name="416"/>      }) | runerr("Bad hex digit",s)
+<a name="417"/>end
+<a name="418"/>
+<a name="419"/>#
+<a name="420"/># "c" and "C"
+<a name="421"/>#
+<a name="422"/>procedure pack_char(v)
+<a name="423"/>   if v &lt; 0 then v +:= 256
+<a name="424"/>   return char(v)
+<a name="425"/>end
+<a name="426"/>
+<a name="427"/>#
+<a name="428"/># "s" and "S" (big-endian)
+<a name="429"/>#
+<a name="430"/>procedure pack_nshort(v)
+<a name="431"/>   if v &lt; 0 then v +:= 65536
+<a name="432"/>   return char(v / 256) || char(v % 256)
+<a name="433"/>end
+<a name="434"/>
+<a name="435"/>#
+<a name="436"/># "s" and "S" (little-endian)
+<a name="437"/>#
+<a name="438"/>procedure pack_vshort(v)
+<a name="439"/>   if v &lt; 0 then v +:= 65536
+<a name="440"/>   return char(v % 256) || char(v / 256)
+<a name="441"/>end
+<a name="442"/>
+<a name="443"/>#
+<a name="444"/># "i" and "I"
+<a name="445"/>#
+<a name="446"/>procedure pack_int(v)
+<a name="447"/>   initial /pack_int_proc := pack_long
+<a name="448"/>   return pack_int_proc(v)
+<a name="449"/>end
+<a name="450"/>
+<a name="451"/>#
+<a name="452"/># "l" and "L" (big-endian)
+<a name="453"/>#
+<a name="454"/>procedure pack_nlong(v)
+<a name="455"/>   local result
+<a name="456"/>   if v &lt; 0 then v +:= 4294967296
+<a name="457"/>   result := ""
+<a name="458"/>   every 1 to 4 do {
+<a name="459"/>      result ||:= char(v % 256)
+<a name="460"/>      v /:= 256
+<a name="461"/>      }
+<a name="462"/>   return reverse(result)
+<a name="463"/>end
+<a name="464"/>
+<a name="465"/>#
+<a name="466"/># "l" and "L" (little-endian)
+<a name="467"/>#
+<a name="468"/>procedure pack_vlong(v)
+<a name="469"/>   local result
+<a name="470"/>   if v &lt; 0 then v +:= 4294967296
+<a name="471"/>   result := ""
+<a name="472"/>   every 1 to 4 do {
+<a name="473"/>      result ||:= char(v % 256)
+<a name="474"/>      v /:= 256
+<a name="475"/>      }
+<a name="476"/>   return result
+<a name="477"/>end
+<a name="478"/>
+<a name="479"/>#
+<a name="480"/># "u"
+<a name="481"/>#
+<a name="482"/>procedure pack_uuencoded_string(v)
+<a name="483"/>   return UUEncodeString(v)
+<a name="484"/>end
+<a name="485"/>
+<a name="486"/>#
+<a name="487"/># "b"
+<a name="488"/>#
+<a name="489"/>procedure unpack_bits_low_to_high(n)
+<a name="490"/>   local result,c,r
+<a name="491"/>   result := ""
+<a name="492"/>   while *result &lt; n do {
+<a name="493"/>      c := ord(move(1)) | fail
+<a name="494"/>      r := ""
+<a name="495"/>      every 1 to 8 do {
+<a name="496"/>	 r ||:= iand(c,1)
+<a name="497"/>     c := ishift(c,-1)
+<a name="498"/>	 }
+<a name="499"/>      result ||:= r
+<a name="500"/>      }
+<a name="501"/>   return result[1+:n] | result
+<a name="502"/>end
+<a name="503"/>
+<a name="504"/>#
+<a name="505"/># "B"
+<a name="506"/>#
+<a name="507"/>procedure unpack_bits_high_to_low(n)
+<a name="508"/>   local result,c,r
+<a name="509"/>   result := ""
+<a name="510"/>   while *result &lt; n do {
+<a name="511"/>      c := ord(move(1)) | fail
+<a name="512"/>      r := ""
+<a name="513"/>      every 1 to 8 do {
+<a name="514"/>	 r := iand(c,1) || r
+<a name="515"/>     c := ishift(c,-1)
+<a name="516"/>	 }
+<a name="517"/>      result ||:= r
+<a name="518"/>      }
+<a name="519"/>   return result[1+:n] | result
+<a name="520"/>end
+<a name="521"/>
+<a name="522"/>#
+<a name="523"/># "h"
+<a name="524"/>#
+<a name="525"/>procedure unpack_hex_low_to_high(n)
+<a name="526"/>   local result,c
+<a name="527"/>   result := ""
+<a name="528"/>   while *result &lt; n do {
+<a name="529"/>      c := ord(move(1)) | fail
+<a name="530"/>      result ||:= unpack_hex_digit(iand(c,16rf)) ||
+<a name="531"/>	    unpack_hex_digit(ishift(c,-4))
+<a name="532"/>      }
+<a name="533"/>   return result[1+:n] | result
+<a name="534"/>end
+<a name="535"/>
+<a name="536"/>#
+<a name="537"/># "H"
+<a name="538"/>#
+<a name="539"/>procedure unpack_hex_high_to_low(n)
+<a name="540"/>   local result,c
+<a name="541"/>   result := ""
+<a name="542"/>   while *result &lt; n do {
+<a name="543"/>      c := ord(move(1)) | fail
+<a name="544"/>      result ||:= unpack_hex_digit(ishift(c,-4)) ||
+<a name="545"/>	    unpack_hex_digit(iand(c,16rf))
+<a name="546"/>      }
+<a name="547"/>   return result[1+:n] | result
+<a name="548"/>end
+<a name="549"/>
+<a name="550"/>procedure unpack_hex_digit(i)
+<a name="551"/>   return "0123456789abcdef"[i + 1]
+<a name="552"/>end
+<a name="553"/>
+<a name="554"/>#
+<a name="555"/># "c"
+<a name="556"/>#
+<a name="557"/>procedure unpack_char()
+<a name="558"/>   local v
+<a name="559"/>   v := ord(move(1)) | fail
+<a name="560"/>   if v &gt;= 128 then v -:= 256
+<a name="561"/>   return v
+<a name="562"/>end
+<a name="563"/>
+<a name="564"/>#
+<a name="565"/># "C"
+<a name="566"/>#
+<a name="567"/>procedure unpack_unsigned_char()
+<a name="568"/>   return ord(move(1))
+<a name="569"/>end
+<a name="570"/>
+<a name="571"/>#
+<a name="572"/># "n" and "s" (big-endian)
+<a name="573"/>#
+<a name="574"/>procedure unpack_nshort()
+<a name="575"/>   local v
+<a name="576"/>   v := unpack_unsigned_nshort() | fail
+<a name="577"/>   if v &gt;= 32768 then v -:= 65536
+<a name="578"/>   return v
+<a name="579"/>end
+<a name="580"/>
+<a name="581"/>#
+<a name="582"/># "v" and "s" (little-endian)
+<a name="583"/>#
+<a name="584"/>procedure unpack_vshort()
+<a name="585"/>   local v
+<a name="586"/>   v := unpack_unsigned_vshort() | fail
+<a name="587"/>   if v &gt;= 32768 then v -:= 65536
+<a name="588"/>   return v
+<a name="589"/>end
+<a name="590"/>
+<a name="591"/>#
+<a name="592"/># "S" (big-endian)
+<a name="593"/>#
+<a name="594"/>procedure unpack_unsigned_nshort()
+<a name="595"/>   return  256 * ord(move(1)) + ord(move(1))
+<a name="596"/>end
+<a name="597"/>
+<a name="598"/>#
+<a name="599"/># "S" (little-endian)
+<a name="600"/>#
+<a name="601"/>procedure unpack_unsigned_vshort()
+<a name="602"/>   return ord(move(1)) + 256 * ord(move(1))
+<a name="603"/>end
+<a name="604"/>
+<a name="605"/>#
+<a name="606"/># "i"
+<a name="607"/>#
+<a name="608"/>procedure unpack_int()
+<a name="609"/>   initial /unpack_int_proc := unpack_long
+<a name="610"/>   return unpack_int_proc()
+<a name="611"/>end
+<a name="612"/>
+<a name="613"/>#
+<a name="614"/># "I" (aye)
+<a name="615"/>#
+<a name="616"/>procedure unpack_unsigned_int()
+<a name="617"/>   initial /unpack_unsigned_int_proc := unpack_unsigned_long
+<a name="618"/>   return unpack_unsigned_int_proc()
+<a name="619"/>end
+<a name="620"/>
+<a name="621"/>#
+<a name="622"/># "N" and "l" (ell) (big-endian)
+<a name="623"/>#
+<a name="624"/>procedure unpack_nlong()
+<a name="625"/>   local v
+<a name="626"/>   v := 0
+<a name="627"/>   every 1 to 4 do {
+<a name="628"/>      v := 256 * v + ord(move(1)) | fail
+<a name="629"/>      }
+<a name="630"/>   if v &gt;= 2147483648 then v -:= 4294967296
+<a name="631"/>   return v
+<a name="632"/>end
+<a name="633"/>
+<a name="634"/>#
+<a name="635"/># "V" and "l" (ell) (little-endian)
+<a name="636"/>#
+<a name="637"/>procedure unpack_vlong()
+<a name="638"/>   local v,m
+<a name="639"/>   v := 0
+<a name="640"/>   m := 1
+<a name="641"/>   every 1 to 4 do {
+<a name="642"/>      v := v + m * ord(move(1)) | fail
+<a name="643"/>      m *:= 256
+<a name="644"/>      }
+<a name="645"/>   if v &gt;= 2147483648 then v -:= 4294967296
+<a name="646"/>   return v
+<a name="647"/>end
+<a name="648"/>
+<a name="649"/>#
+<a name="650"/># "L" (big-endian)
+<a name="651"/>#
+<a name="652"/>procedure unpack_unsigned_nlong()
+<a name="653"/>   local v
+<a name="654"/>   v := 0
+<a name="655"/>   every 1 to 4 do {
+<a name="656"/>      v := v * 256 + ord(move(1)) | fail
+<a name="657"/>      }
+<a name="658"/>   return v
+<a name="659"/>end
+<a name="660"/>
+<a name="661"/>#
+<a name="662"/># "L" (little-endian)
+<a name="663"/>#
+<a name="664"/>procedure unpack_unsigned_vlong()
+<a name="665"/>   local v,m
+<a name="666"/>   v := 0
+<a name="667"/>   m := 1
+<a name="668"/>   every 1 to 4 do {
+<a name="669"/>      v := v + m * ord(move(1)) | fail
+<a name="670"/>      m *:= 256
+<a name="671"/>      }
+<a name="672"/>   return v
+<a name="673"/>end
+<a name="674"/>
+<a name="675"/>#
+<a name="676"/># "u"
+<a name="677"/>#
+<a name="678"/>procedure unpack_uuencoded_string()
+<a name="679"/>   return UUDecodeString(tab(0))
+<a name="680"/>end
+<a name="681"/>
+<a name="682"/>#
+<a name="683"/>#  Procedures for converting real values from input streams.  These
+<a name="684"/>#  procedures accept standard IEEE floating point values as strings,
+<a name="685"/>#  usually as read from a file, and return their numeric equivalent as a
+<a name="686"/>#  "real".  The degree of accuracy is likely to vary with different
+<a name="687"/>#  implementations of Icon.
+<a name="688"/>#
+<a name="689"/># Requires large integers.
+<a name="690"/>#
+<a name="691"/># Parameter	    Float   Double  Extended Extended96
+<a name="692"/># =================================================================
+<a name="693"/># Size (bytes:bits)	4:32	8:64	10:80	12:96
+<a name="694"/>#
+<a name="695"/># Range of binary exponents
+<a name="696"/>#   Minimum	    -126    -1022   -16383  -16383
+<a name="697"/>#   Maximum	    +127    +1023   +16383  +16383
+<a name="698"/>#   Exponent width in bits   8	11  15	15
+<a name="699"/>#   Exponent bias	+127	+1023	+16383	+16383
+<a name="700"/>#
+<a name="701"/># Significand precision
+<a name="702"/>#   Bits	    24	53  64	64
+<a name="703"/>#   Decimal digits	7-8 15-16   18-19   18-19
+<a name="704"/>#
+<a name="705"/># Decimal range approximate
+<a name="706"/>#   Maximum positive	      3.4E+38	1.7E+308   1.1E+4932
+<a name="707"/>#   Minimum positive norm     1.2E-38	2.3E-308   1.7E-4932
+<a name="708"/>#   Minimum positive denorm   1.5E-45	5.0E-324   1.9E-4951
+<a name="709"/>#   Maximum negative denorm  -1.5E-45  -5.0E-324  -1.9E-4951
+<a name="710"/>#   Maximum negative norm    -1.2E-38  -2.3E-308  -1.7E-4932
+<a name="711"/>#   Minimum negative	     -3.4E+38  -1.7E+308  -1.1E+4932
+<a name="712"/>#
+<a name="713"/>
+<a name="714"/>#
+<a name="715"/># "d"
+<a name="716"/>#
+<a name="717"/>procedure pack_double_float(v)
+<a name="718"/>  local exp,mant,result,av
+<a name="719"/>  static dvsr
+<a name="720"/>  initial dvsr := 2.0 ^ 52
+<a name="721"/>  v := real(v)
+<a name="722"/>  if v = 0.0 then return "\0\0\0\0\0\0\0\0"
+<a name="723"/>  else {
+<a name="724"/>    av := abs(v)
+<a name="725"/>    exp := integer(Math.log(av,2))
+<a name="726"/>    if exp &lt;= -1023 then return "\0\0\0\0\0\0\0\0"
+<a name="727"/>    if exp &gt; 1023 then return if v &lt; 0.0 then "\xff\xf0\0\0\0\0\0\0"
+<a name="728"/>	else "\x7f\xf0\0\0\0\0\0\0"
+<a name="729"/>    mant := integer(av / 2.0 ^ real(exp) * dvsr + 0.5)
+<a name="730"/>    exp +:= 1023
+<a name="731"/>    result := ""
+<a name="732"/>    every 3 to 8 do {
+<a name="733"/>      result := char(mant % 256) || result
+<a name="734"/>      mant /:= 256
+<a name="735"/>    }
+<a name="736"/>    result := char(ior(if v &lt; 0.0 then 16r80 else 0,ishift(exp,-4))) ||
+<a name="737"/>    char(ior(iand(mant % 256,16rf),iand(ishift(exp,4),16rf0))) ||
+<a name="738"/>    result
+<a name="739"/>    return result
+<a name="740"/>  }
+<a name="741"/>end
+<a name="742"/>
+<a name="743"/>#
+<a name="744"/># "f"
+<a name="745"/>#
+<a name="746"/>procedure pack_single_float(v)
+<a name="747"/>  local exp,mant,result,av
+<a name="748"/>  static dvsr
+<a name="749"/>  initial dvsr := 2.0 ^ 23
+<a name="750"/>  v := real(v)
+<a name="751"/>  if v = 0.0 then return "\0\0\0\0"
+<a name="752"/>  else {
+<a name="753"/>    av := abs(v)
+<a name="754"/>    exp := integer(Math.log(av,2))
+<a name="755"/>    if exp &lt;= -127 then return "\0\0\0\0"
+<a name="756"/>    if exp &gt; 127 then return if v &lt; 0.0 then "\xff\x80\0\0"
+<a name="757"/>	else "\x7f\x80\0\0"
+<a name="758"/>    mant := integer(av / 2.0 ^ real(exp) * dvsr + 0.5)
+<a name="759"/>    exp +:= 127
+<a name="760"/>    result := ""
+<a name="761"/>    every 3 to 4 do {
+<a name="762"/>      result := char(mant % 256) || result
+<a name="763"/>      mant /:= 256
+<a name="764"/>    }
+<a name="765"/>    result := char(ior(if v &lt; 0.0 then 16r80 else 0,ishift(exp,-1))) ||
+<a name="766"/>    char(ior(iand(mant % 256,16r7f),iand(ishift(exp,7),16r80))) ||
+<a name="767"/>    result
+<a name="768"/>    return result
+<a name="769"/>  }
+<a name="770"/>end
+<a name="771"/>
+<a name="772"/>#
+<a name="773"/># "e"
+<a name="774"/>#
+<a name="775"/>procedure pack_extended_float(v)
+<a name="776"/>  local exp,mant,result,av
+<a name="777"/>  static dvsr
+<a name="778"/>  initial dvsr := 2.0 ^ 63
+<a name="779"/>  v := real(v)
+<a name="780"/>  if v = 0.0 then return "\0\0\0\0\0\0\0\0\0\0"
+<a name="781"/>  else {
+<a name="782"/>    av := abs(v)
+<a name="783"/>    exp := integer(Math.log(av,2))
+<a name="784"/>    if exp &lt;= -16383 then return "\0\0\0\0\0\0\0\0\0\0"
+<a name="785"/>    if exp &gt; 16383 then return if v &lt; 0.0 then "\xff\xff\0\0\0\0\0\0\0\0"
+<a name="786"/>	else "\x7f\xff\0\0\0\0\0\0\0\0"
+<a name="787"/>    mant := integer(av / 2.0 ^ real(exp) * dvsr + 0.5)
+<a name="788"/>    exp +:= 16383
+<a name="789"/>    result := ""
+<a name="790"/>    every 3 to 10 do {
+<a name="791"/>      result := char(mant % 256) || result
+<a name="792"/>      mant /:= 256
+<a name="793"/>    }
+<a name="794"/>    result := char(ior(if v &lt; 0.0 then 16r80 else 0,ishift(exp,-8))) ||
+<a name="795"/>    char(iand(exp,16rff)) ||
+<a name="796"/>    result
+<a name="797"/>    return result
+<a name="798"/>  }
+<a name="799"/>end
+<a name="800"/>
+<a name="801"/>#
+<a name="802"/># "E"
+<a name="803"/>#
+<a name="804"/>procedure pack_extended96_float(v)
+<a name="805"/>  return pack_x80tox96(pack_extended_float(v))
+<a name="806"/>end
+<a name="807"/>
+<a name="808"/>#
+<a name="809"/># "d"
+<a name="810"/>#
+<a name="811"/>procedure unpack_double_float()
+<a name="812"/>  local exp,mant,v,i,s
+<a name="813"/>  static dvsr
+<a name="814"/>  initial dvsr := 2.0 ^ 52
+<a name="815"/>  (s := move(8)) | fail
+<a name="816"/>  exp := ior(ishift(iand(ord(s[1]),16r7f),4),ishift(ord(s[2]),-4)) - 1023
+<a name="817"/>  v := if exp = -1023 then 0.0
+<a name="818"/>  else {
+<a name="819"/>    mant := ior(16r10,iand(ord(s[2]),16r0f))
+<a name="820"/>    every i := 3 to 8 do
+<a name="821"/>    mant := mant * 256 + ord(s[i])
+<a name="822"/>    mant / dvsr * 2.0 ^ real(exp)
+<a name="823"/>  }
+<a name="824"/>  return if s[1] &gt;&gt;= "\x80" then -v else v
+<a name="825"/>end
+<a name="826"/>
+<a name="827"/>#
+<a name="828"/># "f"
+<a name="829"/>#
+<a name="830"/>procedure unpack_single_float()
+<a name="831"/>  local exp,mant,v,i,s
+<a name="832"/>  static dvsr
+<a name="833"/>  initial dvsr := 2.0 ^ 23
+<a name="834"/>  (s := move(4)) | fail
+<a name="835"/>  exp := ior(ishift(iand(ord(s[1]),16r7f),1),ishift(ord(s[2]),-7)) - 127
+<a name="836"/>  v := if exp = -127 then 0.0
+<a name="837"/>  else {
+<a name="838"/>    mant := ior(16r80,iand(ord(s[2]),16r7f))
+<a name="839"/>    every i := 3 to 4 do
+<a name="840"/>    mant := mant * 256 + ord(s[i])
+<a name="841"/>    mant / dvsr * 2.0 ^ real(exp)
+<a name="842"/>  }
+<a name="843"/>  return if s[1] &gt;&gt;= "\x80" then -v else v
+<a name="844"/>end
+<a name="845"/>
+<a name="846"/>#
+<a name="847"/># "e"
+<a name="848"/>#
+<a name="849"/>procedure unpack_extended_float(s)
+<a name="850"/>  local exp,mant,v,i
+<a name="851"/>  static dvsr
+<a name="852"/>  initial dvsr := 2.0 ^ 63
+<a name="853"/>  if /s then
+<a name="854"/>      (s := move(10)) | fail
+<a name="855"/>  exp := ior(ishift(iand(ord(s[1]),16r7f),8),ord(s[2])) - 16383
+<a name="856"/>  v := if exp = -16383 then 0.0
+<a name="857"/>  else {
+<a name="858"/>    mant := ord(s[3])
+<a name="859"/>    every i := 4 to 10 do
+<a name="860"/>    mant := mant * 256 + ord(s[i])
+<a name="861"/>    mant / dvsr * 2.0 ^ real(exp)
+<a name="862"/>  }
+<a name="863"/>  return if s[1] &gt;&gt;= "\x80" then -v else v
+<a name="864"/>end
+<a name="865"/>
+<a name="866"/>#
+<a name="867"/># "E"
+<a name="868"/>#
+<a name="869"/>procedure unpack_extended96_float()
+<a name="870"/>  return unpack_extended_float(pack_x96tox80(move(12)))
+<a name="871"/>end
+<a name="872"/>
+<a name="873"/>
+<a name="874"/>procedure pack_x80tox96(s)
+<a name="875"/>  return s[1:3] || "\0\0" || s[3:0]
+<a name="876"/>end
+<a name="877"/>
+<a name="878"/>
+<a name="879"/>procedure pack_x96tox80(s)
+<a name="880"/>  return s[1:3] || s[5:0]
+<a name="881"/>end
+<a name="882"/>
+<a name="883"/>
+<a name="884"/>#
+<a name="885"/>#  Procedures for working with UNIX "uuencode" format.
+<a name="886"/>#
+<a name="887"/>
+<a name="888"/>global UUErrorText
+<a name="889"/>
+<a name="890"/>#
+<a name="891"/># Decode a uu-encoded string.
+<a name="892"/>#
+<a name="893"/>procedure UUDecodeString(s)
+<a name="894"/>  local len
+<a name="895"/>  s ? {
+<a name="896"/>    len := UUDecodeChar(move(1))
+<a name="897"/>    s := ""
+<a name="898"/>    while s ||:= UUDecodeQuad(move(4))
+<a name="899"/>    unless pos(0) then {
+<a name="900"/>      UUErrorText := "not multiple of 4 encoded characters"
+<a name="901"/>      fail
+<a name="902"/>    }
+<a name="903"/>    unless 0 &lt;= *s - len &lt; 3 then {
+<a name="904"/>      UUErrorText := "actual length, " || *s ||
+<a name="905"/>      " doesn't jive with length character, " || len
+<a name="906"/>      fail
+<a name="907"/>    }
+<a name="908"/>  }
+<a name="909"/>  return s[1+:len] | s
+<a name="910"/>end
+<a name="911"/>
+<a name="912"/>#
+<a name="913"/>#  Get a binary value from a uu-encoded character.
+<a name="914"/>#
+<a name="915"/>procedure UUDecodeChar(s)
+<a name="916"/>  static spaceVal
+<a name="917"/>  initial spaceVal := ord(" ")
+<a name="918"/>  return ord(s) - spaceVal
+<a name="919"/>end
+<a name="920"/>
+<a name="921"/>#
+<a name="922"/>#  Decode 4-byte encoded string to 3-bytes of binary data.
+<a name="923"/>#
+<a name="924"/>procedure UUDecodeQuad(s)
+<a name="925"/>  local v1,v2,v3,v4
+<a name="926"/>  *s = 4 | runerr("Input string not of length 4",s)
+<a name="927"/>  v1 := UUDecodeChar(s[1])
+<a name="928"/>  v2 := UUDecodeChar(s[2])
+<a name="929"/>  v3 := UUDecodeChar(s[3])
+<a name="930"/>  v4 := UUDecodeChar(s[4])
+<a name="931"/>  return (
+<a name="932"/>      char(ior(ishift(v1,2),ishift(v2,-4))) ||
+<a name="933"/>      char(ior(ishift(iand(v2,16rf),4),ishift(v3,-2))) ||
+<a name="934"/>      char(ior(ishift(iand(v3,16r3),6),v4))
+<a name="935"/>  )
+<a name="936"/>end
+<a name="937"/>
+<a name="938"/>#
+<a name="939"/># Convert "s" to uu-encoded format.
+<a name="940"/>#
+<a name="941"/>procedure UUEncodeString(s)
+<a name="942"/>  local outLine
+<a name="943"/>  s ? {
+<a name="944"/>    outLine := ""
+<a name="945"/>    until pos(0) do
+<a name="946"/>    outLine ||:= UUEncodeTriple(move(3) | tab(0))
+<a name="947"/>  }
+<a name="948"/>  return UUEncodeChar(*s) || outLine
+<a name="949"/>end
+<a name="950"/>
+<a name="951"/>#
+<a name="952"/># Get the ascii character for uu-encoding "i".
+<a name="953"/>#
+<a name="954"/>procedure UUEncodeChar(i)
+<a name="955"/>  static spaceVal
+<a name="956"/>  initial spaceVal := ord(" ")
+<a name="957"/>  return char(i + spaceVal)
+<a name="958"/>end
+<a name="959"/>
+<a name="960"/>#
+<a name="961"/>#  Encode to 3-bytes of binary data into 4-byte uu-encoded string.
+<a name="962"/>#
+<a name="963"/>procedure UUEncodeTriple(s)
+<a name="964"/>  local v1,v2,v3
+<a name="965"/>  v1 := ord(s[1])
+<a name="966"/>  v2 := ord(s[2]) | 0
+<a name="967"/>  v3 := ord(s[3]) | 0
+<a name="968"/>  return (
+<a name="969"/>      UUEncodeChar(ishift(v1,-2)) ||
+<a name="970"/>      UUEncodeChar(ior(ishift(iand(v1,16r3),4),ishift(v2,-4))) ||
+<a name="971"/>      UUEncodeChar(ior(ishift(iand(v2,16rf),2),ishift(v3,-6))) ||
+<a name="972"/>      UUEncodeChar(iand(v3,16r3f))
+<a name="973"/>  )
+<a name="974"/>end
+</pre></body></html>

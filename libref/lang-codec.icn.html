@@ -1,0 +1,712 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>codec.icn</title></head><body><pre>
+<a name="1"/>package lang
+<a name="2"/>
+<a name="3"/>import io, util, exception, ipl.scan, ipl.printf, ipl.pdco
+<a name="4"/>
+<a name="5"/># A class implements this interface to provide custom encoding/decoding.
+<a name="6"/>#
+<a name="7"/>abstract class ObjectCodec()
+<a name="8"/>   protected abstract object_encode(es)
+<a name="9"/>   protected abstract object_decode(ds)
+<a name="10"/>end
+<a name="11"/>
+<a name="12"/>#
+<a name="13"/># Parent class for a class which wishes to prohibit encoding.
+<a name="14"/>#
+<a name="15"/>class Unencodable(ObjectCodec)
+<a name="16"/>   protected final override object_encode()
+<a name="17"/>      throwf("Not encodable: %i", self)
+<a name="18"/>   end
+<a name="19"/>
+<a name="20"/>   protected final override object_decode()
+<a name="21"/>      throwf("Not decodable: %i", self)
+<a name="22"/>   end
+<a name="23"/>end
+<a name="24"/>
+<a name="25"/>class Codec()
+<a name="26"/>   public static const 
+<a name="27"/>      OBJECT_CODE,
+<a name="28"/>      CLASS_CODE,
+<a name="29"/>      METHP_CODE,
+<a name="30"/>      RECORD_CODE,
+<a name="31"/>      CONSTRUCTOR_CODE,
+<a name="32"/>      PROCEDURE_CODE,
+<a name="33"/>      NULL_CODE,
+<a name="34"/>      YES_CODE,
+<a name="35"/>      STRING_CODE,
+<a name="36"/>      CSET_CODE,
+<a name="37"/>      INTEGER_CODE,
+<a name="38"/>      REAL_CODE,
+<a name="39"/>      LIST_CODE,
+<a name="40"/>      SET_CODE,
+<a name="41"/>      TABLE_CODE,
+<a name="42"/>      REF_CODE,
+<a name="43"/>      UCS_CODE,
+<a name="44"/>      BIN_STRING_CODE,
+<a name="45"/>      BIN_UCS_CODE,
+<a name="46"/>      FAST_FLAG,
+<a name="47"/>      CODE_SEPARATOR,
+<a name="48"/>      PRINTABLE
+<a name="49"/>
+<a name="50"/>   private static init()
+<a name="51"/>      CODE_SEPARATOR := "|"
+<a name="52"/>      OBJECT_CODE := "C"
+<a name="53"/>      CLASS_CODE := "D"
+<a name="54"/>      METHP_CODE := "H"
+<a name="55"/>      RECORD_CODE := "R"
+<a name="56"/>      CONSTRUCTOR_CODE := "K"
+<a name="57"/>      PROCEDURE_CODE := "P"
+<a name="58"/>      NULL_CODE := "N"
+<a name="59"/>      YES_CODE := "G"
+<a name="60"/>      STRING_CODE := "S"
+<a name="61"/>      CSET_CODE := "A"
+<a name="62"/>      INTEGER_CODE := "I"
+<a name="63"/>      REAL_CODE := "B"
+<a name="64"/>      LIST_CODE := "L"
+<a name="65"/>      SET_CODE := "E"
+<a name="66"/>      TABLE_CODE := "T"
+<a name="67"/>      UCS_CODE := "U"
+<a name="68"/>      REF_CODE := "X"
+<a name="69"/>      BIN_STRING_CODE := "Y"
+<a name="70"/>      BIN_UCS_CODE := "Z"
+<a name="71"/>      FAST_FLAG := "F"
+<a name="72"/>      PRINTABLE := '\x20-\x7e' -- '\\|'
+<a name="73"/>   end
+<a name="74"/>end
+<a name="75"/>
+<a name="76"/>#
+<a name="77"/># Return a string, being the encoded representation of the given object.
+<a name="78"/># :Parameters :
+<a name="79"/># :  `o` - the object to encode
+<a name="80"/># :  `fast` - a flag - see `Encode.set_fast` below.
+<a name="81"/># :  `bin` - a flag - see `Encode.set_allow_binary` below.
+<a name="82"/>#
+<a name="83"/>procedure encode(o, fast, bin)
+<a name="84"/>   local e, f
+<a name="85"/>   return use {
+<a name="86"/>      f := RamStream(),
+<a name="87"/>      {
+<a name="88"/>         e := Encode(f).set_fast(fast).set_allow_binary(bin)
+<a name="89"/>         if e.begin(o) then
+<a name="90"/>            f.str()
+<a name="91"/>      }
+<a name="92"/>   }
+<a name="93"/>end
+<a name="94"/>
+<a name="95"/>#
+<a name="96"/># Like `encode`, but encodes directly to a file (rather than a string).
+<a name="97"/>#
+<a name="98"/>procedure encode_to_file(fn, o, fast, bin)
+<a name="99"/>   local f
+<a name="100"/>   succeed use {
+<a name="101"/>      f := open(fn, "w"),
+<a name="102"/>      Encode(f).set_fast(fast).set_allow_binary(bin).begin(o)
+<a name="103"/>   }
+<a name="104"/>end
+<a name="105"/>
+<a name="106"/>#
+<a name="107"/># Like `encode_to_file`, but encodes to a temporary file first, and
+<a name="108"/># then atomically renames that file to the destination.
+<a name="109"/>#
+<a name="110"/>procedure atomic_encode_to_file(fn, o, fast, bin)
+<a name="111"/>   local p, tmp
+<a name="112"/>   p := FilePath(fn).canonical()
+<a name="113"/>   if p.size() &lt; 2 then
+<a name="114"/>      return error("Destination path too short")
+<a name="115"/>   unless tmp := Files.make_temp_filename(p.get(-1), ".tmp", p.parent().str()) then
+<a name="116"/>      return whyf("Couldn't create temporary file: %w")
+<a name="117"/>   unless encode_to_file(tmp, o, fast, bin) then {
+<a name="118"/>      save_why{ Files.remove(tmp) }
+<a name="119"/>      return whyf("Couldn't encode to temporary file %s: %w", tmp)
+<a name="120"/>   }
+<a name="121"/>$if _MS_WIN32
+<a name="122"/>   Files.remove(fn)
+<a name="123"/>$endif
+<a name="124"/>   # Use rename not move to ensure it's atomic
+<a name="125"/>   Files.rename(tmp, fn) |
+<a name="126"/>      return whyf("Couldn't rename temporary file %s to %s: %w", tmp, fn)
+<a name="127"/>   return
+<a name="128"/>end
+<a name="129"/>
+<a name="130"/>#
+<a name="131"/># Recreate an object from the encoded string.
+<a name="132"/>#
+<a name="133"/>procedure decode(s)
+<a name="134"/>   local d
+<a name="135"/>   d := Decode()
+<a name="136"/>   return d.parse(s)
+<a name="137"/>end
+<a name="138"/>
+<a name="139"/>#
+<a name="140"/># Decode from the given file.
+<a name="141"/>#
+<a name="142"/>procedure decode_from_file(fn)
+<a name="143"/>   return decode(Files.file_to_string(fn))
+<a name="144"/>end
+<a name="145"/>
+<a name="146"/>class Encode(Stream, HasCloseUnderlying)
+<a name="147"/>   private
+<a name="148"/>      tag_count,
+<a name="149"/>      seen
+<a name="150"/>   private const
+<a name="151"/>      file
+<a name="152"/>   private readable
+<a name="153"/>      fast_flag,
+<a name="154"/>      allow_binary_flag
+<a name="155"/>
+<a name="156"/>   #
+<a name="157"/>   # Reset everything and output a new object.
+<a name="158"/>   #
+<a name="159"/>   public begin(o)
+<a name="160"/>      self.tag_count := 0
+<a name="161"/>      return use{
+<a name="162"/>         self.seen := table(),
+<a name="163"/>         try1{begin1(o)},
+<a name="164"/>         self.seen := &amp;null
+<a name="165"/>      }
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   private begin1(o)
+<a name="169"/>      if \fast_flag then
+<a name="170"/>         writes1(Codec.FAST_FLAG)
+<a name="171"/>      return encode(o)      
+<a name="172"/>   end
+<a name="173"/>
+<a name="174"/>   private note_seen(o)
+<a name="175"/>      seen[o] := (tag_count +:= 1)
+<a name="176"/>   end
+<a name="177"/>
+<a name="178"/>   public override out(s)
+<a name="179"/>      return file.out(s) | throw(&amp;why)
+<a name="180"/>   end
+<a name="181"/>
+<a name="182"/>   public override get_mode()
+<a name="183"/>      return WRITE
+<a name="184"/>   end
+<a name="185"/>
+<a name="186"/>   public override close()
+<a name="187"/>      if \close_underlying_flag then
+<a name="188"/>         file.close() | fail
+<a name="189"/>      link
+<a name="190"/>   end
+<a name="191"/>
+<a name="192"/>   private static encode_string(s)
+<a name="193"/>      local r
+<a name="194"/>      static l
+<a name="195"/>      initial {
+<a name="196"/>         l := List{ right(0 to 255, 3, "0") }
+<a name="197"/>      }
+<a name="198"/>      r := ""
+<a name="199"/>      s ? {
+<a name="200"/>         while r ||:= tab(upto(~Codec.PRINTABLE)) || "\\" || l[ord(move(1)) + 1]
+<a name="201"/>         return r || tab(0)
+<a name="202"/>      }
+<a name="203"/>   end
+<a name="204"/>
+<a name="205"/>   private encode_methp(mp)
+<a name="206"/>      writes1(Codec.METHP_CODE)
+<a name="207"/>      Proc.get_defining_class(mp) | throwf("Can't encode an optional, abstract, unresolved native or removed methp: %i", mp)
+<a name="208"/>      note_seen(mp)
+<a name="209"/>      line_out(Proc.get_name(mp))
+<a name="210"/>      encode(Class.get_methp_object(mp))
+<a name="211"/>   end
+<a name="212"/>
+<a name="213"/>   # Get a code for a procedure value; the first char is "F" for a
+<a name="214"/>   # builtin function like upto, "K" for a keyword function, "1","2"
+<a name="215"/>   # or "3" for a builtin operator like "+" or "||", "P" for a
+<a name="216"/>   # procedure and "M" for a (static) method.
+<a name="217"/>   #
+<a name="218"/>   private static get_proc_code(f)
+<a name="219"/>      local s, j
+<a name="220"/>      image(f) ? {
+<a name="221"/>         s := case tab(upto(' ')) of {
+<a name="222"/>            "function": {
+<a name="223"/>               (Prog.get_function(Proc.get_name(f)) === f) |  
+<a name="224"/>                  throwf("Can only encode a function which is a builtin function: %i", f)
+<a name="225"/>               "F"
+<a name="226"/>            }
+<a name="227"/>            "keyword": "K"
+<a name="228"/>            "operator": "O"
+<a name="229"/>            "procedure": "P"
+<a name="230"/>            "method": {
+<a name="231"/>               j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
+<a name="232"/>               iand(j, Class.Static + Class.Method + Class.Special) = Class.Static + Class.Method |
+<a name="233"/>                  throwf("Can only encode a static method: %i", f)
+<a name="234"/>               "M"
+<a name="235"/>            }
+<a name="236"/>            "unresolved": throw("Can't encode an unresolved native method")
+<a name="237"/>            "removed": throw("Can't encode a removed method")
+<a name="238"/>            "internal": throw("Can't encode an internal procedure")
+<a name="239"/>            default: syserr("Not a proc")
+<a name="240"/>         }
+<a name="241"/>         move(1)
+<a name="242"/>         return s || tab(0)
+<a name="243"/>      }
+<a name="244"/>   end
+<a name="245"/>
+<a name="246"/>   private static check_program(o, p)
+<a name="247"/>      (p === &amp;main) | throwf("Can't encode from another program: %i", o)
+<a name="248"/>   end
+<a name="249"/>
+<a name="250"/>   public encode(o)
+<a name="251"/>      local ty, i, n, l
+<a name="252"/>
+<a name="253"/>      if i := member(seen, o) then {
+<a name="254"/>         writes(Codec.REF_CODE, i)
+<a name="255"/>         link
+<a name="256"/>      }
+<a name="257"/>
+<a name="258"/>      ty := type(o)
+<a name="259"/>      case ty of {
+<a name="260"/>         "object" : {
+<a name="261"/>            check_program(o, Class.get_program(o))
+<a name="262"/>            writes1(Codec.OBJECT_CODE)
+<a name="263"/>            line_out(Class.get_name(o))
+<a name="264"/>            note_seen(o)
+<a name="265"/>            if is(o, ObjectCodec) then
+<a name="266"/>               o.object_encode(self)
+<a name="267"/>            else {
+<a name="268"/>               n := Class.get_n_instance_fields(o)
+<a name="269"/>               if \fast_flag then {
+<a name="270"/>                  writes1(n)
+<a name="271"/>                  every encode(Class.get(o, 1 to n))
+<a name="272"/>               } else {
+<a name="273"/>                  encode(n)
+<a name="274"/>                  every i := 1 to n do {
+<a name="275"/>                     encode(Class.get_field_name(o, i))
+<a name="276"/>                     encode(Class.get(o, i))
+<a name="277"/>                  }
+<a name="278"/>               }
+<a name="279"/>            }
+<a name="280"/>         }
+<a name="281"/>
+<a name="282"/>         "class": {
+<a name="283"/>            check_program(o, Class.get_program(o))
+<a name="284"/>            writes1(Codec.CLASS_CODE)
+<a name="285"/>            line_out(Class.get_name(o))
+<a name="286"/>         }
+<a name="287"/>
+<a name="288"/>         "procedure" : {
+<a name="289"/>            check_program(o, Proc.get_program(o))
+<a name="290"/>            writes1(Codec.PROCEDURE_CODE)
+<a name="291"/>            # Need to encode string since can have eg binary operator "||"
+<a name="292"/>            line_out(encode_string(get_proc_code(o)))
+<a name="293"/>         }
+<a name="294"/>
+<a name="295"/>         "constructor" : {
+<a name="296"/>            check_program(o, Constructor.get_program(o))
+<a name="297"/>            writes1(Codec.CONSTRUCTOR_CODE)
+<a name="298"/>            line_out(Constructor.get_name(o))
+<a name="299"/>         }
+<a name="300"/>
+<a name="301"/>         "null" :
+<a name="302"/>            writes1(Codec.NULL_CODE)
+<a name="303"/>
+<a name="304"/>         "yes" :
+<a name="305"/>            writes1(Codec.YES_CODE)
+<a name="306"/>
+<a name="307"/>         "string" : {
+<a name="308"/>            if \allow_binary_flag &amp; (*o &gt; 100 | upto(~Codec.PRINTABLE, o)) then
+<a name="309"/>               writes(Codec.BIN_STRING_CODE, *o, Codec.CODE_SEPARATOR, o)
+<a name="310"/>            else {
+<a name="311"/>               writes1(Codec.STRING_CODE)
+<a name="312"/>               line_out(encode_string(o))
+<a name="313"/>            }
+<a name="314"/>         }
+<a name="315"/>
+<a name="316"/>         "ucs": {
+<a name="317"/>            o := string(o)
+<a name="318"/>            if \allow_binary_flag &amp; (*o &gt; 100 | upto(~Codec.PRINTABLE, o)) then
+<a name="319"/>               writes(Codec.BIN_UCS_CODE, *o, Codec.CODE_SEPARATOR, o)
+<a name="320"/>            else {
+<a name="321"/>               writes1(Codec.UCS_CODE)
+<a name="322"/>               line_out(encode_string(o))
+<a name="323"/>            }
+<a name="324"/>         }
+<a name="325"/>
+<a name="326"/>         "cset" : {
+<a name="327"/>            writes1(Codec.CSET_CODE)
+<a name="328"/>            l := List{ Text.get_ord_range(o) }
+<a name="329"/>            writes1(*l)
+<a name="330"/>            every encode(!l)
+<a name="331"/>         }
+<a name="332"/>
+<a name="333"/>         "integer" : {
+<a name="334"/>            writes(Codec.INTEGER_CODE, o)
+<a name="335"/>         }
+<a name="336"/>
+<a name="337"/>         "real" : {
+<a name="338"/>            writes1(Codec.REAL_CODE)
+<a name="339"/>            line_out(o)
+<a name="340"/>         }
+<a name="341"/>
+<a name="342"/>         "record" : {
+<a name="343"/>            check_program(o, Constructor.get_program(o))
+<a name="344"/>            writes1(Codec.RECORD_CODE)
+<a name="345"/>            line_out(Constructor.get_name(o))
+<a name="346"/>            note_seen(o)
+<a name="347"/>            writes1(*o)
+<a name="348"/>            if \fast_flag then {
+<a name="349"/>               every encode(!o)
+<a name="350"/>            } else {
+<a name="351"/>               every i := 1 to *o do {
+<a name="352"/>                  encode(Constructor.get_field_name(o, i))
+<a name="353"/>                  encode(o[i])
+<a name="354"/>               }
+<a name="355"/>            }
+<a name="356"/>         }
+<a name="357"/>
+<a name="358"/>         "list" : {
+<a name="359"/>            writes(Codec.LIST_CODE, *o)
+<a name="360"/>            note_seen(o)
+<a name="361"/>            every encode(!o)
+<a name="362"/>         }
+<a name="363"/>
+<a name="364"/>         "set" : {
+<a name="365"/>            writes(Codec.SET_CODE, *o)
+<a name="366"/>            note_seen(o)
+<a name="367"/>            every encode(!o)
+<a name="368"/>         }
+<a name="369"/>
+<a name="370"/>         "table" : {
+<a name="371"/>            writes(Codec.TABLE_CODE, *o)
+<a name="372"/>            encode(o[[]])
+<a name="373"/>            note_seen(o)
+<a name="374"/>            every encode(keyval(o))
+<a name="375"/>         }
+<a name="376"/>
+<a name="377"/>         "methp" : {
+<a name="378"/>            check_program(o, Proc.get_program(o))
+<a name="379"/>            encode_methp(o)
+<a name="380"/>         }
+<a name="381"/>
+<a name="382"/>         default : 
+<a name="383"/>            throw("Type not encodable: " || ty)
+<a name="384"/>      }
+<a name="385"/>      link
+<a name="386"/>   end
+<a name="387"/>
+<a name="388"/>   private line_out(s)
+<a name="389"/>      return writes(s, Codec.CODE_SEPARATOR)
+<a name="390"/>   end
+<a name="391"/>
+<a name="392"/>   #
+<a name="393"/>   # Indicate whether the output should be in "fast" mode; that is
+<a name="394"/>   # indicate to any custom object encoders that there is no
+<a name="395"/>   # requirement to make the output robust against underlying
+<a name="396"/>   # structure changes to objects.
+<a name="397"/>   #
+<a name="398"/>   public set_fast(s)
+<a name="399"/>      self.fast_flag := need_flag(s)
+<a name="400"/>      link
+<a name="401"/>   end
+<a name="402"/>
+<a name="403"/>   #
+<a name="404"/>   # Indicate whether strings may be output as raw binary.  This will
+<a name="405"/>   # be faster for long strings such as jpeg images.  Default is no.
+<a name="406"/>   #
+<a name="407"/>   public set_allow_binary(s)
+<a name="408"/>      self.allow_binary_flag := need_flag(s)
+<a name="409"/>      link
+<a name="410"/>   end
+<a name="411"/>
+<a name="412"/>   public new(file)
+<a name="413"/>      /file := FileStream.stdout
+<a name="414"/>      self.file := file
+<a name="415"/>      file.can(Stream.WRITE) | runerr("Stream not writable", file)
+<a name="416"/>      return
+<a name="417"/>   end
+<a name="418"/>end
+<a name="419"/>
+<a name="420"/>#
+<a name="421"/># This class is used to decode a string created by the encode process, and
+<a name="422"/># reproduce the object.
+<a name="423"/>#
+<a name="424"/>class Decode()
+<a name="425"/>   private
+<a name="426"/>      tag_count,
+<a name="427"/>      seen
+<a name="428"/>   private readable
+<a name="429"/>      fast_flag
+<a name="430"/>
+<a name="431"/>   #
+<a name="432"/>   # Reset everything and parse a new object from s
+<a name="433"/>   #
+<a name="434"/>   public parse(s)
+<a name="435"/>      self.tag_count := 0
+<a name="436"/>      s ? {
+<a name="437"/>         self.fast_flag := Yes{ =Codec.FAST_FLAG }
+<a name="438"/>         return use {
+<a name="439"/>            self.seen := table(),
+<a name="440"/>            try1{decode()},
+<a name="441"/>            self.seen := &amp;null
+<a name="442"/>         }
+<a name="443"/>      }
+<a name="444"/>   end
+<a name="445"/>
+<a name="446"/>   package optional nothing()
+<a name="447"/>   private static native decode_methp_impl(obj, cl, fn, target)
+<a name="448"/>
+<a name="449"/>   private decode_methp()
+<a name="450"/>      local o, fn, cn, res, i, cl
+<a name="451"/>      # Create a result methp, albeit with the wrong fields.
+<a name="452"/>      res := nothing
+<a name="453"/>      note_seen(res)
+<a name="454"/>      fn := line_in()
+<a name="455"/>      (i := backto('.', fn)) | throw("Invalid method name: " || fn)
+<a name="456"/>      cn := fn[1:i-1]
+<a name="457"/>      cl := lookup_class(cn) | throw("No such class in methp: " || cn)
+<a name="458"/>      o := decode()
+<a name="459"/>      (type(o) == "object") | throw("Object expected in methp")
+<a name="460"/>      # Error check and place the correct fields in the result methp
+<a name="461"/>      decode_methp_impl(o, cl, fn[i:0], res) | throw("Unable to decode methp " || fn || ": " || &amp;why)
+<a name="462"/>      return res
+<a name="463"/>   end
+<a name="464"/>
+<a name="465"/>   private static decode_string(s)
+<a name="466"/>      local r
+<a name="467"/>      r := ""
+<a name="468"/>      s ? {
+<a name="469"/>         while r ||:= tab(upto('\\')) do {
+<a name="470"/>            move(1)
+<a name="471"/>            r ||:= char(integer(move(3))) | throw("Invalid string escape")
+<a name="472"/>         }
+<a name="473"/>         return r || tab(0)
+<a name="474"/>      }
+<a name="475"/>   end
+<a name="476"/>
+<a name="477"/>   private static decode_proc_code(fn)
+<a name="478"/>      local c, s, i, j, cl
+<a name="479"/>      fn ? {
+<a name="480"/>         c := move(1)
+<a name="481"/>         s := tab(0)
+<a name="482"/>         case c of {
+<a name="483"/>            "F": return Prog.get_function(s) | throw("No such function: " || s)
+<a name="484"/>            "K": return Prog.get_keyword(s) | throw("No such keyword: " || s)
+<a name="485"/>            "O": s ? {
+<a name="486"/>               i := if ="unary " then 1 
+<a name="487"/>               else if ="binary " then 2
+<a name="488"/>               else if ="ternary " then 3
+<a name="489"/>               else throw("Expected arity for operator")
+<a name="490"/>               s := tab(0)
+<a name="491"/>               return Prog.get_operator(s, i) | throw("No such function " || s || " arity " || i)
+<a name="492"/>            }
+<a name="493"/>            "P": {
+<a name="494"/>               return lookup_procedure(s) | throw("No such procedure " || s)
+<a name="495"/>            }
+<a name="496"/>            "M": {
+<a name="497"/>               (i := backto('.', s)) | throw("Invalid method name: " || s)
+<a name="498"/>               if cl := lookup_class(s[1:i-1]) &amp;
+<a name="499"/>                  j := Class.get_field_flags(cl, s[i:0]) &amp;
+<a name="500"/>                  iand(j, Class.Static + Class.Method + Class.Special) = Class.Static + Class.Method
+<a name="501"/>               then
+<a name="502"/>                  return Class.get(cl, s[i:0]) 
+<a name="503"/>               throw("No such static method: " || s)
+<a name="504"/>            }
+<a name="505"/>            default: throw("Unknown proc code")
+<a name="506"/>         }
+<a name="507"/>      }
+<a name="508"/>   end
+<a name="509"/>
+<a name="510"/>   private static line_in()
+<a name="511"/>      local s
+<a name="512"/>      if s := tab(upto(Codec.CODE_SEPARATOR)) then {
+<a name="513"/>         move(1)
+<a name="514"/>         return s
+<a name="515"/>      }
+<a name="516"/>      throw("Missing separator")
+<a name="517"/>   end
+<a name="518"/>
+<a name="519"/>   private static int_in()
+<a name="520"/>      return integer(tab(many(&amp;digits ++ '\-'))) | throw("Integer expected")
+<a name="521"/>   end
+<a name="522"/>
+<a name="523"/>   private static char_in()
+<a name="524"/>      return move(1) | throw("Char expected")
+<a name="525"/>   end
+<a name="526"/>
+<a name="527"/>   private note_seen(o)
+<a name="528"/>      seen[tag_count +:= 1] := o
+<a name="529"/>   end
+<a name="530"/>
+<a name="531"/>   private static lookup_global(s)
+<a name="532"/>      local i
+<a name="533"/>      if not(integer(s)) &amp;
+<a name="534"/>         i := Prog.get_global_index(s) &amp;
+<a name="535"/>         iand(Prog.get_global_flags(i), Prog.Const) ~= 0 then
+<a name="536"/>         return Prog.get_global_impl(i)
+<a name="537"/>   end
+<a name="538"/>
+<a name="539"/>   private static lookup_class(s)
+<a name="540"/>      local t
+<a name="541"/>      if t := lookup_global(s) &amp;
+<a name="542"/>         type(t) == "class" then
+<a name="543"/>         return t
+<a name="544"/>   end
+<a name="545"/>
+<a name="546"/>   private static lookup_constructor(s)
+<a name="547"/>      local t
+<a name="548"/>      if t := lookup_global(s) &amp;
+<a name="549"/>         type(t) == "constructor" then
+<a name="550"/>         return t
+<a name="551"/>   end
+<a name="552"/>
+<a name="553"/>   private static lookup_procedure(s)
+<a name="554"/>      local t
+<a name="555"/>      if t := lookup_global(s) &amp;
+<a name="556"/>         match("procedure ", image(t)) then
+<a name="557"/>         return t
+<a name="558"/>   end
+<a name="559"/>
+<a name="560"/>   public decode()
+<a name="561"/>      local i, n, rname, t, v, res, def, con, cl, cname, l
+<a name="562"/>
+<a name="563"/>      t := char_in()
+<a name="564"/>
+<a name="565"/>      case t of {
+<a name="566"/>         Codec.REF_CODE : {
+<a name="567"/>            i := int_in()
+<a name="568"/>            return member(seen, i) | throw("Invalid reference")
+<a name="569"/>         }
+<a name="570"/>
+<a name="571"/>         Codec.NULL_CODE :
+<a name="572"/>            return
+<a name="573"/>
+<a name="574"/>         Codec.YES_CODE :
+<a name="575"/>            return &amp;yes
+<a name="576"/>
+<a name="577"/>         Codec.CLASS_CODE : {
+<a name="578"/>            cname := line_in()
+<a name="579"/>            return lookup_class(cname) | throw("No such class: " || cname)
+<a name="580"/>         }
+<a name="581"/>
+<a name="582"/>         Codec.CONSTRUCTOR_CODE : {
+<a name="583"/>            rname := line_in()
+<a name="584"/>            return lookup_constructor(rname) | throw("No such constructor: " || rname)
+<a name="585"/>         }
+<a name="586"/>
+<a name="587"/>         Codec.PROCEDURE_CODE : {
+<a name="588"/>            t := decode_string(line_in())
+<a name="589"/>            return decode_proc_code(t)
+<a name="590"/>         }
+<a name="591"/>
+<a name="592"/>         Codec.OBJECT_CODE : {
+<a name="593"/>            cname := line_in()
+<a name="594"/>            #
+<a name="595"/>            # Create an instance
+<a name="596"/>            #
+<a name="597"/>            cl := lookup_class(cname) | throw("No such class: " || cname)
+<a name="598"/>            (iand(Class.get_class_flags(cl), Class.Abstract) = 0) | throw("Class is abstract: " || cname)
+<a name="599"/>            res := Class.create_raw_instance_of(cl)
+<a name="600"/>            note_seen(res)
+<a name="601"/>            if is(res, ObjectCodec) then
+<a name="602"/>               res.object_decode(self)
+<a name="603"/>            else {
+<a name="604"/>               if \fast_flag then {
+<a name="605"/>                  n := int_in()
+<a name="606"/>                  n = Class.get_n_instance_fields(res) | 
+<a name="607"/>                     throwf("Inconsistent number of fields in %i", res)
+<a name="608"/>                  every i := 1 to n do
+<a name="609"/>                     Class.get(res, i) := decode()
+<a name="610"/>               } else {
+<a name="611"/>                  n := integer(decode()) | throw("Integer expected")
+<a name="612"/>                  every 1 to n do {
+<a name="613"/>                     t := string(decode()) | throw("String expected")
+<a name="614"/>                     v := decode()
+<a name="615"/>                     Class.getq(res, t) := v
+<a name="616"/>                  }
+<a name="617"/>               }
+<a name="618"/>            }
+<a name="619"/>            return Class.complete_raw_instance(res)
+<a name="620"/>         }
+<a name="621"/>
+<a name="622"/>         Codec.STRING_CODE :
+<a name="623"/>            return decode_string(line_in())
+<a name="624"/>
+<a name="625"/>         Codec.BIN_STRING_CODE : {
+<a name="626"/>            i := integer(line_in()) | throw("Invalid bin string length")
+<a name="627"/>            return move(i) | throw("Invalid bin string")
+<a name="628"/>         }
+<a name="629"/>
+<a name="630"/>         Codec.INTEGER_CODE :
+<a name="631"/>            return int_in()
+<a name="632"/>
+<a name="633"/>         Codec.REAL_CODE :
+<a name="634"/>            return real(line_in()) | throw("Invalid real")
+<a name="635"/>
+<a name="636"/>         Codec.CSET_CODE : {
+<a name="637"/>             n := int_in()
+<a name="638"/>             l := []
+<a name="639"/>             every 1 to n do {
+<a name="640"/>                i := integer(decode()) | throw("Integer expected")
+<a name="641"/>                put(l, i)
+<a name="642"/>             }
+<a name="643"/>             return Text.create_cset(l) | throw("Invalid cset range")
+<a name="644"/>          }
+<a name="645"/>
+<a name="646"/>         Codec.UCS_CODE :
+<a name="647"/>            return ucs(decode_string(line_in())) | throw("Invalid ucs")
+<a name="648"/>
+<a name="649"/>         Codec.BIN_UCS_CODE : {
+<a name="650"/>            i := integer(line_in()) | throw("Invalid bin ucs string length")
+<a name="651"/>            return ucs(move(i)) | throw("Invalid bin ucs string")
+<a name="652"/>         }
+<a name="653"/>
+<a name="654"/>         Codec.RECORD_CODE : {
+<a name="655"/>            rname := line_in()
+<a name="656"/>            con := lookup_constructor(rname) | throw("No such constructor: " || rname)
+<a name="657"/>            res := con() 
+<a name="658"/>            note_seen(res)
+<a name="659"/>            n := int_in()
+<a name="660"/>            if \fast_flag then {
+<a name="661"/>               n = *res | throwf("Inconsistent number of fields in %i", res)
+<a name="662"/>               every i := 1 to n do
+<a name="663"/>                  res[i] := decode()
+<a name="664"/>            } else {
+<a name="665"/>               every 1 to n do {
+<a name="666"/>                  t := string(decode()) | throw("String expected")
+<a name="667"/>                  v := decode()
+<a name="668"/>                  res[t] := v
+<a name="669"/>               }
+<a name="670"/>            }
+<a name="671"/>            return res
+<a name="672"/>         }
+<a name="673"/>
+<a name="674"/>         Codec.LIST_CODE : {
+<a name="675"/>            n := int_in()
+<a name="676"/>            res := []
+<a name="677"/>            note_seen(res)
+<a name="678"/>            every 1 to n do 
+<a name="679"/>               put(res, decode())
+<a name="680"/>            return res
+<a name="681"/>         }
+<a name="682"/>
+<a name="683"/>         Codec.SET_CODE : {
+<a name="684"/>            n := int_in()
+<a name="685"/>            res := set()
+<a name="686"/>            note_seen(res)
+<a name="687"/>            every 1 to n do 
+<a name="688"/>               insert(res, decode())
+<a name="689"/>            return res
+<a name="690"/>         }
+<a name="691"/>
+<a name="692"/>         Codec.TABLE_CODE : {
+<a name="693"/>            n := int_in()
+<a name="694"/>            def := decode()
+<a name="695"/>            res := table(def)
+<a name="696"/>            note_seen(res)
+<a name="697"/>            every 1 to n do
+<a name="698"/>               insert(res, decode(), decode())
+<a name="699"/>            return res
+<a name="700"/>         }            
+<a name="701"/>
+<a name="702"/>         Codec.METHP_CODE :
+<a name="703"/>            return decode_methp()
+<a name="704"/>
+<a name="705"/>         default :
+<a name="706"/>            throwf("Unknown type code: %i", t)
+<a name="707"/>      }            
+<a name="708"/>   end
+<a name="709"/>end
+</pre></body></html>

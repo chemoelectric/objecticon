@@ -1,0 +1,439 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gedcom.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     gedcom.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for reading GEDCOM files
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     June 23, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	These procedures read and interpret GEDCOM files, a standard
+<a name="18"/>#	format for genealogy databases.
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>#
+<a name="22"/>#	gedload(f) loads GEDCOM data from file f and returns a gedcom
+<a name="23"/>#	record containing the following fields:
+<a name="24"/>#	    tree	root of tree of gednode records
+<a name="25"/>#	    id		table of labeled nodes, indexed by @ID@
+<a name="26"/>#	    fam		list of FAM nodes (marriages)
+<a name="27"/>#	    ind		list of INDI nodes (individuals)
+<a name="28"/>#
+<a name="29"/>#	The tree is composed of gednode records R containing these fields:
+<a name="30"/>#	    level	level
+<a name="31"/>#	    id		ID (label), including @...@ delimiters
+<a name="32"/>#	    tag		tag
+<a name="33"/>#	    data	data
+<a name="34"/>#	    lnum	line number
+<a name="35"/>#	    parent	parent node in tree
+<a name="36"/>#	    ref		referenced node, if any
+<a name="37"/>#	    sub		sub-entry list
+<a name="38"/>#	    hcode	unique hashcode, if INDI node
+<a name="39"/>#
+<a name="40"/>#	gedwalk(tree) generates the nodes of the tree in preorder.
+<a name="41"/>#
+<a name="42"/>#	Three procedures find descendants of a node based on a sequence
+<a name="43"/>#	of identifying tag strings:
+<a name="44"/>#	    gedsub(R, tag...) generates subnodes specified by tag sequence
+<a name="45"/>#	    gedval(R, tag...) generates data values of those subnodes
+<a name="46"/>#	    gedref(R, tag...) generates nodes referenced by those subnodes
+<a name="47"/>#
+<a name="48"/>#	Three procedures extract a person's name from an INDI record:
+<a name="49"/>#	    gedfnf(R)	produces "John Quincy Adams" form
+<a name="50"/>#	    gedlnf(R)	produces "Adams, John Quincy" form
+<a name="51"/>#	    gednmf(R,f)	produces an arbitrary format, substituting
+<a name="52"/>#			prefix, firstname, lastname, suffix for
+<a name="53"/>#			"P", "F", "L", "S" (respectively) in f
+<a name="54"/>#
+<a name="55"/>#	geddate(R) finds the DATE subnode of a node and returns a string
+<a name="56"/>#	of at least 12 characters in a standard form such as "11 Jul 1767"
+<a name="57"/>#	or "abt 1810".  It is assumed that the input is in English.
+<a name="58"/>#
+<a name="59"/>#	gedfind(g,s) generates the individuals under gedcom record g
+<a name="60"/>#	that are named by s, a string of whitespace-separated words.
+<a name="61"/>#	gedfind() generates each INDI node for which every word of s
+<a name="62"/>#	is matched by either a word of the individual's name or by
+<a name="63"/>#	the birth year.  Matching is case-insensitive.
+<a name="64"/>#
+<a name="65"/>############################################################################
+<a name="66"/>
+<a name="67"/>package ipl.gedcom
+<a name="68"/>
+<a name="69"/>import
+<a name="70"/>   io(ewrite, read)
+<a name="71"/>
+<a name="72"/>record gedcom(
+<a name="73"/>   tree,	# tree of data records
+<a name="74"/>   id,		# table of labeled nodes, indexed by @ID@
+<a name="75"/>   fam,		# list of FAM nodes
+<a name="76"/>   ind		# list of INDI nodes
+<a name="77"/>)
+<a name="78"/>
+<a name="79"/>record gednode(
+<a name="80"/>   level,	# level
+<a name="81"/>   id,		# ID (label), including @...@ delimiters
+<a name="82"/>   tag,		# tag
+<a name="83"/>   data,	# data
+<a name="84"/>   lnum,	# line number
+<a name="85"/>   parent,	# parent node in tree
+<a name="86"/>   ref,		# referenced node, if any
+<a name="87"/>   sub,		# sub-entry list
+<a name="88"/>   hcode	# hashcode, if INDI node
+<a name="89"/>)
+<a name="90"/>
+<a name="91"/>$define WHITESPACE ' \t\n\r'
+<a name="92"/>
+<a name="93"/>
+<a name="94"/>
+<a name="95"/>#  gedload(f) -- load GEDCOM data from file f, returning gedcom record.
+<a name="96"/>
+<a name="97"/># load GEDCOM data from file f
+<a name="98"/>procedure gedload(f)		
+<a name="99"/>   local line, lnum, r, curr
+<a name="100"/>   local root, id, fam, ind
+<a name="101"/>   local hset, h1, h2, c
+<a name="102"/>
+<a name="103"/>   lnum := 0
+<a name="104"/>   root := curr := gednode(-1, , "ROOT", "", lnum, , , [])
+<a name="105"/>   id := table()
+<a name="106"/>   fam := []
+<a name="107"/>   ind := []
+<a name="108"/>
+<a name="109"/>   while line := read(f) do {
+<a name="110"/>      lnum +:= 1
+<a name="111"/>      if *line = 0 then
+<a name="112"/>         next
+<a name="113"/>
+<a name="114"/>      unless r := gedscan(line) then {
+<a name="115"/>         ewrite("ERR, line ", lnum, ": ", line)
+<a name="116"/>         next
+<a name="117"/>      }
+<a name="118"/>      r.lnum := lnum
+<a name="119"/>      r.sub := []
+<a name="120"/>
+<a name="121"/>      if r.tag == "CONC" then {		# continuation line (no \n)
+<a name="122"/>         curr.data ||:= r.data
+<a name="123"/>         next
+<a name="124"/>         }
+<a name="125"/>      if r.tag == "CONT" then {		# continuation line (with \n)
+<a name="126"/>         curr.data ||:= "\n" || r.data
+<a name="127"/>         next
+<a name="128"/>         }
+<a name="129"/>
+<a name="130"/>      while curr.level &gt;= r.level do
+<a name="131"/>         curr := curr.parent
+<a name="132"/>      put(curr.sub, r)
+<a name="133"/>      r.parent := curr
+<a name="134"/>      curr := r
+<a name="135"/>
+<a name="136"/>      id[\r.id] := r
+<a name="137"/>      case r.tag of {
+<a name="138"/>         "FAM":  put(fam, r)
+<a name="139"/>         "INDI":  put(ind, r)
+<a name="140"/>      }
+<a name="141"/>   }
+<a name="142"/>
+<a name="143"/>   every r := gedwalk(root) do
+<a name="144"/>      r.ref := id[r.data]
+<a name="145"/>
+<a name="146"/>   hset := set()
+<a name="147"/>   every r := !ind do {
+<a name="148"/>      h1 := h2 := gedhi(r)
+<a name="149"/>      every c := !"123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" do
+<a name="150"/>         if member(hset, h2) then
+<a name="151"/>            h2 := h1 || c	# add disambiguating suffix if needed
+<a name="152"/>         else
+<a name="153"/>            break
+<a name="154"/>      insert(hset, r.hcode := h2)
+<a name="155"/>      }
+<a name="156"/>
+<a name="157"/>   return gedcom(root, id, fam, ind)
+<a name="158"/>end
+<a name="159"/>
+<a name="160"/>
+<a name="161"/>
+<a name="162"/>#  gedscan(f) -- scan one line of a GEDCOM record, returning gednode record
+<a name="163"/>
+<a name="164"/># (internal procedure)
+<a name="165"/>procedure gedscan(s)		
+<a name="166"/>   local level, id, tag, data
+<a name="167"/>   static alnum
+<a name="168"/>   initial alnum := &amp;letters ++ &amp;digits ++ '_'
+<a name="169"/>
+<a name="170"/>   s ? {
+<a name="171"/>      tab(many(WHITESPACE))
+<a name="172"/>      level := tab(many(&amp;digits)) | fail
+<a name="173"/>      tab(many(WHITESPACE))
+<a name="174"/>      if id := (="@" || tab(upto('@') + 1)) then
+<a name="175"/>         tab(many(WHITESPACE))
+<a name="176"/>      tag := tab(many(alnum)) | fail
+<a name="177"/>      tab(many(WHITESPACE))
+<a name="178"/>      data := tab(0)
+<a name="179"/>      return gednode(level, id, tag, data)
+<a name="180"/>      }
+<a name="181"/>end
+<a name="182"/>
+<a name="183"/>
+<a name="184"/>
+<a name="185"/>#  gedwalk(r) -- walk GEDCOM tree, generating nodes in preorder
+<a name="186"/>
+<a name="187"/># generate GEDCOM tree nodes in preorder
+<a name="188"/>procedure gedwalk(r)		
+<a name="189"/>   suspend r | gedwalk(!r.sub)
+<a name="190"/>   fail
+<a name="191"/>end
+<a name="192"/>
+<a name="193"/>
+<a name="194"/>
+<a name="195"/>#  gedsub(r, field...) -- generate subrecords with given tags
+<a name="196"/>#  gedval(r, field...) -- generate values of subrecords with given tags
+<a name="197"/>#  gedref(r, field...) -- generate nodes referenced by given tags
+<a name="198"/>
+<a name="199"/># find subrecords
+<a name="200"/>procedure gedsub(r, f[])	
+<a name="201"/>   local tag, x
+<a name="202"/>
+<a name="203"/>   tag := get(f) | fail
+<a name="204"/>   every x := !r.sub do {
+<a name="205"/>      if x.tag == tag then
+<a name="206"/>         if *f &gt; 0 then
+<a name="207"/>            suspend gedsub ! push(f, x)
+<a name="208"/>         else
+<a name="209"/>            suspend x
+<a name="210"/>   }
+<a name="211"/>end
+<a name="212"/>
+<a name="213"/># find subrecord values
+<a name="214"/>procedure gedval(a[])		
+<a name="215"/>   suspend (gedsub ! a).data
+<a name="216"/>end
+<a name="217"/>
+<a name="218"/># find referenced nodes
+<a name="219"/>procedure gedref(a[])		
+<a name="220"/>   suspend \(gedsub ! a).ref
+<a name="221"/>end
+<a name="222"/>
+<a name="223"/>
+<a name="224"/>
+<a name="225"/>#  gedfnf(r) -- get name from individual record, first name first
+<a name="226"/>
+<a name="227"/># get first name first
+<a name="228"/>procedure gedfnf(r)		
+<a name="229"/>   return gednmf(r, "P F L S")
+<a name="230"/>end
+<a name="231"/>
+<a name="232"/>
+<a name="233"/>
+<a name="234"/>#  gedlnf(r) -- get name from individual record, last name first
+<a name="235"/>
+<a name="236"/># get last name first
+<a name="237"/>procedure gedlnf(r)		
+<a name="238"/>   local s
+<a name="239"/>   s := gednmf(r, "L, P F S")
+<a name="240"/>   s ? {
+<a name="241"/>      =", "
+<a name="242"/>      return tab(0)
+<a name="243"/>      }
+<a name="244"/>end
+<a name="245"/>
+<a name="246"/>
+<a name="247"/>
+<a name="248"/>#  gednmf(r, f) -- general name formatter
+<a name="249"/>#
+<a name="250"/>#  substitutes the first name, last name, prefix, and suffix
+<a name="251"/>#  for the letters F, L, P, S respectively in string f.
+<a name="252"/>#  multiple spaces are suppressed.
+<a name="253"/>
+<a name="254"/># format name
+<a name="255"/>procedure gednmf(r, f)		
+<a name="256"/>   local c, s, prefix, first, last, suffix
+<a name="257"/>
+<a name="258"/>   prefix := gedval(r, "TITL" | "NPFX") | gedval(r, "NAME", "NPFX")
+<a name="259"/>   s := gedval(r, "NAME") | fail
+<a name="260"/>   s ? {
+<a name="261"/>      first := trim(tab(upto('/') | 0))
+<a name="262"/>      ="/"
+<a name="263"/>      last := trim(tab(upto('/') | 0))
+<a name="264"/>      ="/"
+<a name="265"/>      suffix := gedval(r, "NSFX") | ("" ~== tab(0))
+<a name="266"/>   }
+<a name="267"/>   s := ""
+<a name="268"/>   f ? {
+<a name="269"/>      while s ||:= tab(upto('PFLS ')) do {
+<a name="270"/>         while c := tab(any('PFLS ')) do {
+<a name="271"/>            s ||:= case c of {
+<a name="272"/>               "P": \prefix
+<a name="273"/>               "F": \first
+<a name="274"/>               "L": \last
+<a name="275"/>               "S": \suffix
+<a name="276"/>               " ": s[-1] ~== " "
+<a name="277"/>               }
+<a name="278"/>            }
+<a name="279"/>         }
+<a name="280"/>      s ||:= tab(0)
+<a name="281"/>      }
+<a name="282"/>   return trim(s)
+<a name="283"/>end
+<a name="284"/>
+<a name="285"/>
+<a name="286"/>
+<a name="287"/>#  geddate(r) -- get date from record in standard form
+<a name="288"/>
+<a name="289"/># get canonical date
+<a name="290"/>procedure geddate(r)		
+<a name="291"/>   local s, t, w
+<a name="292"/>   static ftab
+<a name="293"/>   initial {
+<a name="294"/>      ftab := table()
+<a name="295"/>      ftab["JAN"] := "Jan";  ftab["FEB"] := "Feb"; ftab["MAR"] := "Mar"
+<a name="296"/>      ftab["APR"] := "Apr";  ftab["MAY"] := "May"; ftab["JUN"] := "Jun"
+<a name="297"/>      ftab["JUL"] := "Jul";  ftab["AUG"] := "Aug"; ftab["SEP"] := "Sep"
+<a name="298"/>      ftab["OCT"] := "Oct";  ftab["NOV"] := "Nov"; ftab["DEC"] := "Dec"
+<a name="299"/>      ftab["ABT"] := "abt";  ftab["BEF"] := "bef"; ftab["AFT"] := "aft"
+<a name="300"/>      ftab["CAL"] := "cal";  ftab["EST"] := "est"
+<a name="301"/>      }
+<a name="302"/>
+<a name="303"/>   s := trim(gedval(r, "DATE"), WHITESPACE) | fail
+<a name="304"/>   t := ""
+<a name="305"/>
+<a name="306"/>   s ? until pos(0) do {
+<a name="307"/>      tab(many(WHITESPACE))
+<a name="308"/>      w := tab(upto(WHITESPACE) | 0)
+<a name="309"/>      t ||:= " " || (\ftab[w] | w)
+<a name="310"/>   }
+<a name="311"/>
+<a name="312"/>   if *t &gt; 13 then
+<a name="313"/>      return t[2:0]
+<a name="314"/>   else
+<a name="315"/>      return right(t, 12)
+<a name="316"/>end
+<a name="317"/>
+<a name="318"/>
+<a name="319"/>
+<a name="320"/>#  gedyear(r) -- get year from event record
+<a name="321"/>
+<a name="322"/># get year
+<a name="323"/>procedure gedyear(r)		
+<a name="324"/>   local d, y
+<a name="325"/>
+<a name="326"/>   d := gedval(r, "DATE") | fail
+<a name="327"/>   d ? while tab(upto(&amp;digits)) do
+<a name="328"/>      if (y := tab(many(&amp;digits)) \ 1) &gt;= 1000 then
+<a name="329"/>         return y
+<a name="330"/>end
+<a name="331"/>
+<a name="332"/>
+<a name="333"/>
+<a name="334"/>#  gedhi -- generate hashcode for individual record
+<a name="335"/>#
+<a name="336"/>#  The hashcode uses two initials, final digits of birth year,
+<a name="337"/>#  and a 3-letter hashing of the full name and birthdate fields.
+<a name="338"/>
+<a name="339"/># (internal procedure)
+<a name="340"/>procedure gedhi(r)		
+<a name="341"/>   local s, name, bdate, bd
+<a name="342"/>   static lc, uc
+<a name="343"/>   initial {
+<a name="344"/>      uc := string(&amp;ucase)
+<a name="345"/>      lc := string(&amp;lcase)
+<a name="346"/>      }
+<a name="347"/>
+<a name="348"/>   s := ""
+<a name="349"/>   name := gedval(r, "NAME") | ""
+<a name="350"/>   name ? {
+<a name="351"/>      # prefer initial of nickname; else skip unused firstname in parens
+<a name="352"/>      tab(upto('"') + 1) | (="(" &amp; tab(upto(')') + 1))
+<a name="353"/>      tab(any(' \t'))
+<a name="354"/>      s ||:= tab(any(&amp;letters)) | "X"		# first initial
+<a name="355"/>      tab(upto('/') + 1)
+<a name="356"/>      tab(any(' \t'))
+<a name="357"/>      s ||:= tab(any(&amp;letters)) | "X"		# second initial
+<a name="358"/>   }
+<a name="359"/>
+<a name="360"/>   bdate := geddate(gedsub(r, "BIRT")) | ""
+<a name="361"/>   bd := bdate[-2:0] | "00"
+<a name="362"/>   unless bd ? (tab(many(&amp;digits)) &amp; pos(0)) then
+<a name="363"/>      bd := "99" 
+<a name="364"/>   s ||:= bd || gedh3a(name || bdate)
+<a name="365"/>   return map(s, lc, uc)
+<a name="366"/>end
+<a name="367"/>
+<a name="368"/>
+<a name="369"/>
+<a name="370"/>#  gedh3a(s) -- hash arbitrary string into three alphabetic characters
+<a name="371"/>
+<a name="372"/># (internal procedure)
+<a name="373"/>procedure gedh3a(s)		
+<a name="374"/>   local n, d1, d2, d3, c
+<a name="375"/>
+<a name="376"/>   n := 0
+<a name="377"/>   every c := !map(s) do
+<a name="378"/>      unless upto(' \t\f\r\n', c) then
+<a name="379"/>         n := 37 * n + ord(c) - 32
+<a name="380"/>   d1 := 97 + (n / 676) % 26
+<a name="381"/>   d2 := 97 + (n / 26) % 26
+<a name="382"/>   d3 := 97 + n % 26
+<a name="383"/>   return char(d1) || char(d2) || char(d3)
+<a name="384"/>end
+<a name="385"/>
+<a name="386"/>
+<a name="387"/>
+<a name="388"/>#  gedfind(g, s) -- find records by name from gedcom record
+<a name="389"/>#
+<a name="390"/>#  g is a gedcom record; s is a string of whitespace-separated words.
+<a name="391"/>#  gedfind() generates each INDI node for which every word of s
+<a name="392"/>#  is matched by either a word of the individual's name or by
+<a name="393"/>#  the birth year.  Matching is case-insensitive.
+<a name="394"/>
+<a name="395"/># find individual by name
+<a name="396"/>procedure gedfind(g, s)		
+<a name="397"/>   local r
+<a name="398"/>   
+<a name="399"/>   every r := !g.ind do 
+<a name="400"/>      if gedmatch(r, s) then
+<a name="401"/>         suspend r
+<a name="402"/>end
+<a name="403"/>
+<a name="404"/>
+<a name="405"/>#  gedmatch(r, s) -- match record against name
+<a name="406"/>#
+<a name="407"/>#  s is a string of words to match name field and/or birth year.
+<a name="408"/>#  Matching is case sensitive.
+<a name="409"/>
+<a name="410"/># (internal procedure)
+<a name="411"/>procedure gedmatch(r, s)	
+<a name="412"/>   local w
+<a name="413"/>
+<a name="414"/>   every w := gedlcw(s) do
+<a name="415"/>      (w == (gedlcw(gedval(r, "NAME")) | gedyear(gedsub(r, "BIRT")))) | fail
+<a name="416"/>   return r
+<a name="417"/>end
+<a name="418"/>
+<a name="419"/>
+<a name="420"/>
+<a name="421"/>#  gedlcw(s, c) -- generate words from string s separated by chars from c
+<a name="422"/>#
+<a name="423"/>#  words are mapped to lower-case to allow case-insensitive comparisons
+<a name="424"/>
+<a name="425"/># (internal procedure)
+<a name="426"/>procedure gedlcw(s, c)		
+<a name="427"/>   /c := '/ \t\r\n\v\f'
+<a name="428"/>   map(s) ? {
+<a name="429"/>      tab(many(c))
+<a name="430"/>      until pos(0) do {
+<a name="431"/>         suspend tab(upto(c) | 0) \ 1
+<a name="432"/>         tab(many(c))
+<a name="433"/>         }
+<a name="434"/>      }
+<a name="435"/>   fail
+<a name="436"/>end
+</pre></body></html>

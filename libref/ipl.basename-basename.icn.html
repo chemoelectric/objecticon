@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>basename.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     basename.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce base name of file
+<a name="6"/>#
+<a name="7"/>#	Author:   Frank Lhota, Ralph Griswold, Charles Shartsis
+<a name="8"/>#
+<a name="9"/>#	Date:     July 19, 1999
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure is based on the UNIX basename(1) utility.  It strips off
+<a name="18"/>#  any path information and removes the specified suffix, if present.
+<a name="19"/>#
+<a name="20"/>#  It should work under UNIX, MS-DOS, and the Macintosh.
+<a name="21"/>#
+<a name="22"/>############################################################################
+<a name="23"/>
+<a name="24"/>package ipl.basename
+<a name="25"/>
+<a name="26"/># base name of file
+<a name="27"/>procedure basename(name, suffix)	
+<a name="28"/>   local i, base
+<a name="29"/>
+<a name="30"/>   name ? {
+<a name="31"/>      every i := upto('/\\:')
+<a name="32"/>      tab(integer(i) + 1)       	  # get rid of path, if any
+<a name="33"/>      if ( base := tab ( -*\suffix ) ) &amp; =suffix then return base
+<a name="34"/>      else return tab ( 0 )
+<a name="35"/>      }
+<a name="36"/>end
+</pre></body></html>

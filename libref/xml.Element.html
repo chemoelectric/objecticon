@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Element</title></head><body>
+<h1>Element</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="xml.Node.html" target="displayFrame">xml.Node</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="xml.XmlElement.html">xml.XmlElement</a><br>
+<a href="xml.HtmlElement.html">xml.HtmlElement</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+Represents an element in the document.
+<p/><a href="xml-element.icn.html#13" target="displayFrame">Source - element.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html">xml.Node</a>
+<a href="xml.Element.html">xml.Element</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from xml.Node</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html#add">add()</a>
+<a href="xml.Node.html#add_string">add_string()</a>
+<a href="xml.Node.html#find_string">find_string()</a>
+<a href="xml.Node.html#find_trimmed_string">find_trimmed_string()</a>
+<a href="xml.Node.html#get_children">get_children()</a>
+<a href="xml.Node.html#get_children_no_whitespace">get_children_no_whitespace()</a>
+<a href="xml.Node.html#get_compacted_children">get_compacted_children()</a>
+<a href="xml.Node.html#get_nth_string">get_nth_string()</a>
+<a href="xml.Node.html#get_nth_trimmed_string">get_nth_trimmed_string()</a>
+<a href="xml.Node.html#get_parent">get_parent()</a>
+<a href="xml.Node.html#get_string_content">get_string_content()</a>
+<a href="xml.Node.html#get_string_content_with_cdata">get_string_content_with_cdata()</a>
+<a href="xml.Node.html#get_trimmed_children">get_trimmed_children()</a>
+<a href="xml.Node.html#get_trimmed_string_content">get_trimmed_string_content()</a>
+<a href="xml.Node.html#get_trimmed_string_content_with_cdata">get_trimmed_string_content_with_cdata()</a>
+<a href="xml.Node.html#has_string">has_string()</a>
+<a href="xml.Node.html#has_trimmed_string">has_trimmed_string()</a>
+<a href="xml.Node.html#traverse_all_postorder">traverse_all_postorder()</a>
+<a href="xml.Node.html#traverse_all_preorder">traverse_all_preorder()</a>
+<a href="xml.Node.html#traverse_nodes_postorder">traverse_nodes_postorder()</a>
+<a href="xml.Node.html#traverse_nodes_preorder">traverse_nodes_preorder()</a>
+<a href="xml.Node.html#xml_trim">xml_trim()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from xml.Node</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html#children">children</a>
+<a href="xml.Node.html#parent">parent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_attribute">get_attribute()</a>
+<a href="#get_attributes">get_attributes()</a>
+<a href="#get_name">get_name()</a>
+<a href="#get_nth_element">get_nth_element()</a>
+<a href="#new">new()</a>
+<a href="#print_structure">print_structure()</a>
+<a href="#search_children">search_children()</a>
+<a href="#search_tree">search_tree()</a>
+<a href="#set_attribute">set_attribute()</a>
+<a href="#set_name">set_name()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#attributes">attributes</a>
+<a href="#name">name</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_attribute"/>
+<h3>get_attribute(key)</h3>
+public<p/>
+<dl>
+<dd>
+Return the attribute for this element, or fail if non is present
+<p/><a href="xml-element.icn.html#51" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="get_attributes"/>
+<h3>get_attributes()</h3>
+public<p/>
+<dl>
+<dd>
+Return the attributes map for this tag.
+<p/><a href="xml-element.icn.html#36" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="get_name"/>
+<h3>get_name(s)</h3>
+public<p/>
+<dl>
+<dd>
+Return the name of the element
+<p/><a href="xml-element.icn.html#29" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="get_nth_element"/>
+<h3>get_nth_element(n, s)</h3>
+public<p/>
+<dl>
+<dd>
+Return the nth sub-element matching the given tag; if the tag is
+omitted just return the nth sub-element.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - the index to look for; 1 being the first.
+</dd>
+<dd>
+<code>s</code> - the name of the sub-element.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if there is no such element.
+</dd>
+</dl>
+<p/><a href="xml-element.icn.html#86" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(n)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="xml.Node.html#new">new()</a> in <a href="xml.Node.html" target="displayFrame">xml.Node</a></dd>
+<dd>
+<p/><a href="xml-element.icn.html#132" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="print_structure"/>
+<h3>print_structure(f, indent, flags)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="xml.Node.html#print_structure">print_structure()</a> in <a href="xml.Node.html" target="displayFrame">xml.Node</a></dd>
+<dd>
+Print the structure to the given file
+<p/><a href="xml-element.icn.html#105" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="search_children"/>
+<h3>search_children(s)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the elements under this element, with the given name.  If name
+is omitted, generate all the elements.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the name of the sub-elements.
+</dd>
+</dl>
+<p/><a href="xml-element.icn.html#72" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="search_tree"/>
+<h3>search_tree(s)</h3>
+public<p/>
+<dl>
+<dd>
+Search for all the <code><a href="xml.Element.html" target="displayFrame">Element</a></code>s with the given tag name, recursively
+traversing the entire tree based at this node.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the name of the sub-elements.
+</dd>
+</dl>
+<p/><a href="xml-element.icn.html#58" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="set_attribute"/>
+<h3>set_attribute(key, value)</h3>
+public<p/>
+<dl>
+<dd>
+Set an attribute for this tag.
+<p/><a href="xml-element.icn.html#43" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="set_name"/>
+<h3>set_name(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the name of the tag
+<p/><a href="xml-element.icn.html#21" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="attributes"/>
+<h3>attributes</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-element.icn.html#19" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+<a name="name"/>
+<h3>name</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-element.icn.html#18" target="displayFrame">Source - element.icn </a>
+</dd>
+</dl><hr>
+</body></html>

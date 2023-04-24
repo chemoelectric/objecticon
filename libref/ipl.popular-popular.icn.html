@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>popular.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     popular.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to show "popularity" of colors in image string
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     September 17, 1998
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#  This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure shows the "popularity" of colors in an image string.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  Requires:  Version 9 graphics  
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>#
+<a name="25"/>#  Links:  imrutils, wopen
+<a name="26"/>#
+<a name="27"/>############################################################################
+<a name="28"/>
+<a name="29"/>package ipl.popular
+<a name="30"/>
+<a name="31"/>import
+<a name="32"/>   graphics(Window),
+<a name="33"/>   io(write),
+<a name="34"/>   ipl.imrutils(imstoimr)
+<a name="35"/>
+<a name="36"/># color popularity in image string
+<a name="37"/>procedure popularity(ims)	
+<a name="38"/>   local imr, color_tbl, color_list, color
+<a name="39"/>
+<a name="40"/>   imr := imstoimr(ims)
+<a name="41"/>
+<a name="42"/>   color_tbl := table(0)
+<a name="43"/>
+<a name="44"/>   every color_tbl[Window.palette_color(imr.palette, !imr.pixels)] +:= 1
+<a name="45"/>
+<a name="46"/>   color_list := sort(color_tbl, 4)
+<a name="47"/>
+<a name="48"/>   write("dimensions: ", imr.width, "x", imr.height)
+<a name="49"/>   write("pixels: ", *imr.pixels)
+<a name="50"/>   write("palette: ", imr.palette)
+<a name="51"/>   write("number of different colors: ", *color_tbl)
+<a name="52"/>   write()
+<a name="53"/>   write("color popularity:")
+<a name="54"/>   write()
+<a name="55"/>
+<a name="56"/>   while color := pull(color_list) do
+<a name="57"/>      write(left(pull(color_list), 20), right(color, 6))
+<a name="58"/>
+<a name="59"/>end
+</pre></body></html>

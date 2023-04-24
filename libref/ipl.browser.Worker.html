@@ -1,0 +1,363 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Worker</title></head><body>
+<h1>Worker</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-browser.icn.html#707" target="displayFrame">Source - browser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cancel">cancel()</a>
+<a href="#connected">connected()</a>
+<a href="#connecting">connecting()</a>
+<a href="#dwrite">dwrite()</a>
+<a href="#failed">failed()</a>
+<a href="#finally">finally()</a>
+<a href="#handle_cache_req">handle_cache_req()</a>
+<a href="#handle_data_req">handle_data_req()</a>
+<a href="#handle_func">handle_func()</a>
+<a href="#handle_launch_req">handle_launch_req()</a>
+<a href="#handle_req">handle_req()</a>
+<a href="#http_error">http_error()</a>
+<a href="#init">init()</a>
+<a href="#initially">initially()</a>
+<a href="#length">length()</a>
+<a href="#new">new()</a>
+<a href="#other">other()</a>
+<a href="#read">read()</a>
+<a href="#read_line">read_line()</a>
+<a href="#read_string">read_string()</a>
+<a href="#retrying">retrying()</a>
+<a href="#run">run()</a>
+<a href="#setup_httpc">setup_httpc()</a>
+<a href="#status">status()</a>
+<a href="#writing_line">writing_line()</a>
+<a href="#writing_string">writing_string()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cancelled">cancelled</a>
+<a href="#DOWNLOAD">DOWNLOAD</a>
+<a href="#httpc">httpc</a>
+<a href="#NAVIGATE">NAVIGATE</a>
+<a href="#NORMAL">NORMAL</a>
+<a href="#pool">pool</a>
+<a href="#REFRESH">REFRESH</a>
+<a href="#req">req</a>
+<a href="#sub_worker">sub_worker</a>
+<a href="#task">task</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="cancel"/>
+<h3>cancel()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#740" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="connected"/>
+<h3>connected(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#781" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="connecting"/>
+<h3>connecting(ev, src)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#777" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="dwrite"/>
+<h3>dwrite(a[])</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#756" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="failed"/>
+<h3>failed(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#785" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#730" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_cache_req"/>
+<h3>handle_cache_req()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#862" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_data_req"/>
+<h3>handle_data_req()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#888" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_func"/>
+<h3>handle_func(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#866" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_launch_req"/>
+<h3>handle_launch_req()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#844" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_req"/>
+<h3>handle_req()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#896" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="http_error"/>
+<h3>http_error(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#793" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#719" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#726" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="length"/>
+<h3>length()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#752" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(pool)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#933" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="other"/>
+<h3>other(ev, src, type)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#797" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="read"/>
+<h3>read()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#748" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="read_line"/>
+<h3>read_line(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#765" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="read_string"/>
+<h3>read_string(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#769" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="retrying"/>
+<h3>retrying(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#789" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="run"/>
+<h3>run()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#915" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_httpc"/>
+<h3>setup_httpc()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#805" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="status"/>
+<h3>status(ev, src, type)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#801" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="writing_line"/>
+<h3>writing_line(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#761" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="writing_string"/>
+<h3>writing_string(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#773" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="cancelled"/>
+<h3>cancelled</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#713" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="DOWNLOAD"/>
+<h3>DOWNLOAD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#717" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="httpc"/>
+<h3>httpc</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#712" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="NAVIGATE"/>
+<h3>NAVIGATE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#717" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="NORMAL"/>
+<h3>NORMAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#717" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="pool"/>
+<h3>pool</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#709" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="REFRESH"/>
+<h3>REFRESH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#717" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="req"/>
+<h3>req</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#714" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="sub_worker"/>
+<h3>sub_worker</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#715" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="task"/>
+<h3>task</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#710" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -37,7 +37,7 @@
 <h1 id="introduction">Introduction</h1>
 <p>This page gives an overview of the <code>io</code> package, which provides Object Icon’s object-oriented replacement to Icon’s builtin <code>File</code> type.</p>
 <h1 id="details">Details</h1>
-<p>The central class in the <code>io</code> package is <a href="http://objecticon.sourceforge.net/libref/index.html?io.Stream.html"><code>io.Stream</code></a>. This class models a file-like object which can have some or all of the following operations :-</p>
+<p>The central class in the <code>io</code> package is <a href="libref/index.html?io.Stream.html"><code>io.Stream</code></a>. This class models a file-like object which can have some or all of the following operations :-</p>
 <ul>
 <li>input</li>
 <li>output</li>
@@ -46,7 +46,7 @@
 </ul>
 <p>The <code>io</code> package also provides some procedures which emulate the old Icon builtin functions which the package replaces (<code>write</code>, <code>open</code>, etc).</p>
 <h1 id="file-io">File I/O</h1>
-<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?io.FileStream.html"><code>io.FileStream</code></a> provides conventional filesystem I/O. To open a new <code>FileStream</code>, use the constructor :-</p>
+<p>The class <a href="libref/index.html?io.FileStream.html"><code>io.FileStream</code></a> provides conventional filesystem I/O. To open a new <code>FileStream</code>, use the constructor :-</p>
 <pre><code>   f := FileStream(&quot;test.txt&quot;, ior(FileOpt.WRONLY, 
                                    FileOpt.TRUNC, 
                                    FileOpt.CREAT)) | stop(&amp;why)
@@ -58,7 +58,7 @@
 <pre><code>   f := open(&quot;test.txt&quot;, &quot;w&quot;) | stop(&amp;why)
    f.write(&quot;some text&quot;)
    f.close()</code></pre>
-<p><code>open</code> emulates the traditional Icon builtin function of the same name. It also returns a different type of <code>Stream</code> - rather than a <code>FileStream</code>, it returns a <a href="http://objecticon.sourceforge.net/libref/index.html?io.BufferStream.html"><code>io.BufferStream</code></a> wrapping a <code>FileStream</code>. This provides better performance than a raw <code>FileStream</code> because it tends to read or write data to the underlying filesystem in larger chunks.</p>
+<p><code>open</code> emulates the traditional Icon builtin function of the same name. It also returns a different type of <code>Stream</code> - rather than a <code>FileStream</code>, it returns a <a href="libref/index.html?io.BufferStream.html"><code>io.BufferStream</code></a> wrapping a <code>FileStream</code>. This provides better performance than a raw <code>FileStream</code> because it tends to read or write data to the underlying filesystem in larger chunks.</p>
 <h2 id="standard-input-and-output">Standard input and output</h2>
 <p>Standard input and output, and error output, are available via the following static constants.</p>
 <ul>
@@ -88,7 +88,7 @@ procedure main()
    write(&quot;n=&quot;, n)
 end</code></pre>
 <h1 id="socket-io">Socket I/O</h1>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?io.SocketStream.html"><code>io.SocketStream</code></a> class represents a stream based on an underlying socket. There are several static methods in that class to create sockets either for a client or a server. Both local and network sockets are supported.</p>
+<p>The <a href="libref/index.html?io.SocketStream.html"><code>io.SocketStream</code></a> class represents a stream based on an underlying socket. There are several static methods in that class to create sockets either for a client or a server. Both local and network sockets are supported.</p>
 <p>Here is a simple example to create a client to perform a HTTP HEAD request.</p>
 <pre><code>import io
 
@@ -109,7 +109,7 @@ end</code></pre>
 <pre><code>   f.flag(, FileOpt.NONBLOCK)</code></pre>
 <p>When set, calls to a stream’s <code>in</code> and <code>out</code> methods will fail, setting <code>&amp;why</code> to a message like “Resource temporarily unavailable (errno=11)”. The <code>errno</code> constant can be extracted from <code>&amp;why</code> with the <code>errno()</code> procedure; in this case it would return 11, which is equal to the constant <code>Errno.EAGAIN</code>. <code>errno</code> and <code>Errno</code> can be found in the <code>util</code> package and the <code>posix</code> package respectively (they aren’t in the <code>io</code> package because the errno feature applies more generally than just to i/o).</p>
 <h2 id="the-poll-method">The poll() method</h2>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?io.DescStream.html%23poll">poll()</a> is a static method in the <a href="http://objecticon.sourceforge.net/libref/index.html?io.DescStream.html"><code>io.DescStream</code></a> class (the common parent of <code>FileStream</code> and <code>SocketStream</code>). It provides an interface to the posix function of the same name, and is used to wait, with an optional timeout, for one or more files to become ready for i/o. To use it, pass a list of one or more argument pairs, followed by an optional timeout. Each pair consists of a stream followed by an integer flag, made up from the constants in <code>io.Poll</code>, which indicates what event(s) we are polling for. For example :-</p>
+<p><a href="libref/index.html?io.DescStream.html%23poll">poll()</a> is a static method in the <a href="libref/index.html?io.DescStream.html"><code>io.DescStream</code></a> class (the common parent of <code>FileStream</code> and <code>SocketStream</code>). It provides an interface to the posix function of the same name, and is used to wait, with an optional timeout, for one or more files to become ready for i/o. To use it, pass a list of one or more argument pairs, followed by an optional timeout. Each pair consists of a stream followed by an integer flag, made up from the constants in <code>io.Poll</code>, which indicates what event(s) we are polling for. For example :-</p>
 <pre><code>r := DescStream.poll([f1, Poll.OUT, f2, ior(Poll.IN,Poll.OUT)], 5000)</code></pre>
 <p>This will wait for up to 5 seconds, polling <code>f1</code> for input and <code>f2</code> for input or output. The return value is a list with an integer element for each pair indicating the flags which poll detected (or zero if no flags matched for that particular stream). The call fails on timeout or error and sets <code>&amp;why</code> appropriately.</p>
 <p>Here is a longer example showing how to do the HTTP HEAD request of the previous example using <code>poll</code> on a non-blocking socket.</p>
@@ -165,7 +165,7 @@ end
 </code></pre>
 <p>Note that this code uses the methods <code>in</code> and <code>out</code> to read and write data, rather than <code>read</code>, <code>reads</code>, <code>write</code> and <code>writes</code>. This is because those latter functions are implemented in terms of <code>in</code> and <code>out</code> and may call them several times in one invocation. This makes them unsuitable for use with a non-blocking file, because we need to call <code>poll</code> or select immediately before each i/o call to ensure that call has something to read or write. For similar reasons, it is not possible to use <code>BufferStream</code> to wrap a non-blocking stream.</p>
 <h1 id="in-memory-io">In-memory I/O</h1>
-<p>There are two types of stream which operate entirely on data in memory. The first is <a href="http://objecticon.sourceforge.net/libref/index.html?io.StringStream.html"><code>io.StringStream</code></a> which represents the stream’s data as an Icon string. The second is <a href="http://objecticon.sourceforge.net/libref/index.html?io.RamStream.html"><code>io.RamStream</code></a> which uses memory allocated independently from Icon’s allocation system. <code>StringStream</code> is useful when a constant string needs to be represented as a stream, but <code>RamStream</code> is much faster when the stream will be written to and changed.</p>
+<p>There are two types of stream which operate entirely on data in memory. The first is <a href="libref/index.html?io.StringStream.html"><code>io.StringStream</code></a> which represents the stream’s data as an Icon string. The second is <a href="libref/index.html?io.RamStream.html"><code>io.RamStream</code></a> which uses memory allocated independently from Icon’s allocation system. <code>StringStream</code> is useful when a constant string needs to be represented as a stream, but <code>RamStream</code> is much faster when the stream will be written to and changed.</p>
 <p><code>RamStream</code> can be used to efficiently concatenate long strings together. This is a potential problem in Icon if you are not careful, because of the way strings are allocated. For example, consider the following program.</p>
 <pre><code>import io
 
@@ -198,8 +198,8 @@ end</code></pre>
 <p>Note that it is most important to remember to close a <code>RamStream</code> in order to free its internal memory - Icon’s garbage collector won’t do it for us.</p>
 <h1 id="filterinputstream-and-filteroutputstream">FilterInputStream and FilterOutputStream</h1>
 <p>These two classes make use of non-blocking I/O to allow useful filter programs (such as <code>gzip</code>) to be utilized. Normally it is not possible to use filter programs with blocking I/O because of the risk of deadlock. With non-blocking I/O it becomes possible, but intricate, and these two classes provide an easy-to-use interface to the complexities involved.</p>
-<p>The idea behind <a href="http://objecticon.sourceforge.net/libref/index.html?io.FilterOutputStream.html"><code>io.FilterOutputStream</code></a> is that we specify the command to be run, and its parameters. A process is forked and the command begins to run. Then we write data to the stream, and this becomes the input of the command. But what of the output of the command? That is captured in another <code>Stream</code> (called the “sink” Stream), specified in the <code>FilterOutputStream</code> constructor. This is typically a <code>RamStream</code>, or a <code>StringStream</code> if the amount of data is small. After the <code>FilterOutputStream</code> is closed, we can examine the sink <code>Stream</code> and get the results.</p>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?io.FilterInputStream.html"><code>io.FilterInputStream</code></a> works just the same way, but the order of things is switched around. Instead of a sink <code>Stream</code> we provide a “source” <code>Stream</code>. This provides the input to the command. And we read the results of the command simply by calling <code>in()</code> or <code>reads()</code> or one of the other usual <code>Stream</code> methods.</p>
+<p>The idea behind <a href="libref/index.html?io.FilterOutputStream.html"><code>io.FilterOutputStream</code></a> is that we specify the command to be run, and its parameters. A process is forked and the command begins to run. Then we write data to the stream, and this becomes the input of the command. But what of the output of the command? That is captured in another <code>Stream</code> (called the “sink” Stream), specified in the <code>FilterOutputStream</code> constructor. This is typically a <code>RamStream</code>, or a <code>StringStream</code> if the amount of data is small. After the <code>FilterOutputStream</code> is closed, we can examine the sink <code>Stream</code> and get the results.</p>
+<p><a href="libref/index.html?io.FilterInputStream.html"><code>io.FilterInputStream</code></a> works just the same way, but the order of things is switched around. Instead of a sink <code>Stream</code> we provide a “source” <code>Stream</code>. This provides the input to the command. And we read the results of the command simply by calling <code>in()</code> or <code>reads()</code> or one of the other usual <code>Stream</code> methods.</p>
 <p>Of the two options, <code>FilterOutputStream</code> seems to be the most natural to use.</p>
 <p>Both classes allow standard error output to be captured too, and can test whether the command succeeded or not. The method <code>succeeded()</code> is particularly helpful for testing for success, and getting a helpful diagnostic message from the standard error output.</p>
 <p>To illustrate these classes, here is a program which uses <code>gzip</code> to compress some data, and then <code>gunzip</code> to uncompress it again.</p>

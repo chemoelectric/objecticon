@@ -1,0 +1,799 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>URL</title></head><body>
+<h1>URL</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="net-package.html" target="listFrame">net</a></dd>
+</dl><p/>
+This class encapsulates a URL
+<p/><a href="net-url.icn.html#19" target="displayFrame">Source - url.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="net.URL.html">net.URL</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#bracket_host">bracket_host()</a>
+<a href="#cgi_decode">cgi_decode()</a>
+<a href="#cgi_encode">cgi_encode()</a>
+<a href="#cl_eq">cl_eq()</a>
+<a href="#equiv">equiv()</a>
+<a href="#extract_cgi_parameters">extract_cgi_parameters()</a>
+<a href="#from_parts">from_parts()</a>
+<a href="#get_decoded_file">get_decoded_file()</a>
+<a href="#get_decoded_fragment">get_decoded_fragment()</a>
+<a href="#get_decoded_host">get_decoded_host()</a>
+<a href="#get_decoded_path">get_decoded_path()</a>
+<a href="#get_decoded_path_dir">get_decoded_path_dir()</a>
+<a href="#get_decoded_path_last">get_decoded_path_last()</a>
+<a href="#get_decoded_query">get_decoded_query()</a>
+<a href="#get_decoded_userinfo">get_decoded_userinfo()</a>
+<a href="#get_default_port">get_default_port()</a>
+<a href="#get_file">get_file()</a>
+<a href="#get_fragment">get_fragment()</a>
+<a href="#get_host">get_host()</a>
+<a href="#get_path">get_path()</a>
+<a href="#get_path_dir">get_path_dir()</a>
+<a href="#get_path_last">get_path_last()</a>
+<a href="#get_port">get_port()</a>
+<a href="#get_query">get_query()</a>
+<a href="#get_relative">get_relative()</a>
+<a href="#get_scheme">get_scheme()</a>
+<a href="#get_userinfo">get_userinfo()</a>
+<a href="#init">init()</a>
+<a href="#is_local_file">is_local_file()</a>
+<a href="#liberal_ucs">liberal_ucs()</a>
+<a href="#make_cgi_string">make_cgi_string()</a>
+<a href="#make_cgi_table">make_cgi_table()</a>
+<a href="#new">new()</a>
+<a href="#normal">normal()</a>
+<a href="#object_output">object_output()</a>
+<a href="#path_check">path_check()</a>
+<a href="#percent">percent()</a>
+<a href="#percent_decode">percent_decode()</a>
+<a href="#percent_encode">percent_encode()</a>
+<a href="#re_encode">re_encode()</a>
+<a href="#rmdir">rmdir()</a>
+<a href="#set_cgi_parameters">set_cgi_parameters()</a>
+<a href="#set_fragment">set_fragment()</a>
+<a href="#set_host">set_host()</a>
+<a href="#set_path">set_path()</a>
+<a href="#set_port">set_port()</a>
+<a href="#set_query">set_query()</a>
+<a href="#set_scheme">set_scheme()</a>
+<a href="#set_userinfo">set_userinfo()</a>
+<a href="#str">str()</a>
+<a href="#strip_dot_dirs">strip_dot_dirs()</a>
+<a href="#ucs">ucs()</a>
+<a href="#with_cgi_parameters">with_cgi_parameters()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#CGI_UNRESERVED">CGI_UNRESERVED</a>
+<a href="#fragment">fragment</a>
+<a href="#FRAGMENT_CHAR">FRAGMENT_CHAR</a>
+<a href="#host">host</a>
+<a href="#HOST_CHAR">HOST_CHAR</a>
+<a href="#path">path</a>
+<a href="#PATH_CHAR">PATH_CHAR</a>
+<a href="#port">port</a>
+<a href="#query">query</a>
+<a href="#QUERY_CHAR">QUERY_CHAR</a>
+<a href="#RESERVED">RESERVED</a>
+<a href="#scheme">scheme</a>
+<a href="#SCHEME_CHAR">SCHEME_CHAR</a>
+<a href="#SUB_DELIMS">SUB_DELIMS</a>
+<a href="#UNRESERVED">UNRESERVED</a>
+<a href="#userinfo">userinfo</a>
+<a href="#USERINFO_CHAR">USERINFO_CHAR</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="bracket_host"/>
+<h3>bracket_host(host)</h3>
+public static<p/>
+<dl>
+<dd>
+Helper function to put square brackets around a hostname, if it
+is an IPv6 literal (ie: contains a ":").
+<p/><a href="net-url.icn.html#58" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="cgi_decode"/>
+<h3>cgi_decode(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a CGI parameter string by extracting any encoded
+characters.  The result is always a string, never ucs.
+<p/><a href="net-url.icn.html#500" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="cgi_encode"/>
+<h3>cgi_encode(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a CGI parameter string by adding any encoding necessary.
+<p/><a href="net-url.icn.html#470" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="cl_eq"/>
+<h3>cl_eq(x, s)</h3>
+private static<p/>
+<dl>
+<dd>
+Helper to caseless compare x with string s
+<p/><a href="net-url.icn.html#234" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="equiv"/>
+<h3>equiv(x, y)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed iff two URLs represent the same URL, based on their
+<code><a href="net.URL.html#str">str()</a></code> values.
+<p/><a href="net-url.icn.html#636" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="extract_cgi_parameters"/>
+<h3>extract_cgi_parameters()</h3>
+public<p/>
+<dl>
+<dd>
+Extract the cgi parameters from the <code>file</code> field.  Fails if there
+is no query in the file part.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+A table, representing the keys and values of the fields.
+</dd>
+</dl>
+<p/><a href="net-url.icn.html#281" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="from_parts"/>
+<h3>from_parts(scheme, userinfo, host, port, path, query, fragment)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new URL from the given constituent parts.
+<p/><a href="net-url.icn.html#438" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_file"/>
+<h3>get_decoded_file()</h3>
+public<p/>
+<dl>
+<dd>
+Get the file, with percent encodings decoded.
+<p/><a href="net-url.icn.html#132" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_fragment"/>
+<h3>get_decoded_fragment()</h3>
+public<p/>
+<dl>
+<dd>
+Get the optional fragment field, with percent encodings decoded, failing if none is set.
+<p/><a href="net-url.icn.html#198" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_host"/>
+<h3>get_decoded_host()</h3>
+public<p/>
+<dl>
+<dd>
+Get the host field, with percent encodings decoded, or fail if this is not a hierarchical url.
+<p/><a href="net-url.icn.html#220" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_path"/>
+<h3>get_decoded_path()</h3>
+public<p/>
+<dl>
+<dd>
+Return the path, with percent encodings decoded.
+<p/><a href="net-url.icn.html#146" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_path_dir"/>
+<h3>get_decoded_path_dir()</h3>
+public<p/>
+<dl>
+<dd>
+Get the path dir, with percent encodings decoded.
+<p/><a href="net-url.icn.html#431" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_path_last"/>
+<h3>get_decoded_path_last()</h3>
+public<p/>
+<dl>
+<dd>
+Get the last portion of the path, with percent encodings decoded.
+<p/><a href="net-url.icn.html#413" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_query"/>
+<h3>get_decoded_query()</h3>
+public<p/>
+<dl>
+<dd>
+Return the query field, with percent encodings decoded, or fail if there is no query.
+<p/><a href="net-url.icn.html#168" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_decoded_userinfo"/>
+<h3>get_decoded_userinfo()</h3>
+public<p/>
+<dl>
+<dd>
+Get the userinfo field, with percent encodings decoded, or fail
+if it is not set.
+<p/><a href="net-url.icn.html#114" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_port"/>
+<h3>get_default_port(scheme)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the default port for the given scheme
+<p/><a href="net-url.icn.html#48" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_file"/>
+<h3>get_file()</h3>
+public<p/>
+<dl>
+<dd>
+Get the file, which is the path followed by the query (if any).
+<p/><a href="net-url.icn.html#122" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fragment"/>
+<h3>get_fragment()</h3>
+public<p/>
+<dl>
+<dd>
+Get the optional fragment field, failing if none is set.
+<p/><a href="net-url.icn.html#191" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_host"/>
+<h3>get_host()</h3>
+public<p/>
+<dl>
+<dd>
+Get the host field, or fail if this is not a hierarchical url.
+<p/><a href="net-url.icn.html#213" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path"/>
+<h3>get_path()</h3>
+public<p/>
+<dl>
+<dd>
+Return the path
+<p/><a href="net-url.icn.html#139" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path_dir"/>
+<h3>get_path_dir()</h3>
+public<p/>
+<dl>
+<dd>
+Get the portion of the file name upto and including the last "/".  The filename
+should always be at least a "/", so this should return at least that.
+<p/><a href="net-url.icn.html#420" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path_last"/>
+<h3>get_path_last()</h3>
+public<p/>
+<dl>
+<dd>
+Get the last portion of the path, ie that past the last "/".  May be
+the empty string (eg for "http://abc.com/").
+<p/><a href="net-url.icn.html#402" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_port"/>
+<h3>get_port()</h3>
+public<p/>
+<dl>
+<dd>
+Get the port field, or fail if it is not set.
+<p/><a href="net-url.icn.html#92" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_query"/>
+<h3>get_query()</h3>
+public<p/>
+<dl>
+<dd>
+Return the query field, or fail if there is no query.
+<p/><a href="net-url.icn.html#161" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_relative"/>
+<h3>get_relative(s)</h3>
+public<p/>
+<dl>
+<dd>
+Return a new URL relative to this URL, based on the given relative string s.
+<p/><a href="net-url.icn.html#362" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_scheme"/>
+<h3>get_scheme()</h3>
+public<p/>
+<dl>
+<dd>
+Get the scheme field.
+<p/><a href="net-url.icn.html#77" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="get_userinfo"/>
+<h3>get_userinfo()</h3>
+public<p/>
+<dl>
+<dd>
+Get the userinfo field, or fail if it is not set.
+<p/><a href="net-url.icn.html#107" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#35" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="is_local_file"/>
+<h3>is_local_file()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff this URL represents a local file.
+<p/><a href="net-url.icn.html#274" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="liberal_ucs"/>
+<h3>liberal_ucs()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to give Text.liberal_ucs(str()); will never fail.
+<p/><a href="net-url.icn.html#267" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="make_cgi_string"/>
+<h3>make_cgi_string(cgi)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a CGI parameter string from a table
+<p/><a href="net-url.icn.html#454" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="make_cgi_table"/>
+<h3>make_cgi_table(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Make a cgi param table from the given string.  Note that the keys and entries are
+always strings (never ucs).
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+A table, representing the keys and values of the fields.
+</dd>
+</dl>
+<p/><a href="net-url.icn.html#477" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(s)</h3>
+public<p/>
+<dl>
+<dd>
+Create a URL by parsing the given string.  Returns a new <code><a href="net.URL.html" target="displayFrame">URL</a></code> if okay,
+or sets &amp;why on failure.
+<p/><a href="net-url.icn.html#319" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="normal"/>
+<h3>normal()</h3>
+public<p/>
+<dl>
+<dd>
+Return a normalized version of this URL.  All percent encodings
+are normalized, (see <code><a href="net.URL.html#re_encode">re_encode</a></code> above).  Host case is lowered.
+Dotted dirs are compacted.  All parts are of string type.  See
+<a href="https://en.wikipedia.org/wiki/URL_normalization">https://en.wikipedia.org/wiki/URL_normalization</a>.
+<p/><a href="net-url.icn.html#613" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+Output object
+<p/><a href="net-url.icn.html#227" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="path_check"/>
+<h3>path_check(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#311" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="percent"/>
+<h3>percent(ch)</h3>
+public static<p/>
+<dl>
+<dd>
+Percent encode a single character, ch.
+<p/><a href="net-url.icn.html#540" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="percent_decode"/>
+<h3>percent_decode(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a string by decoding any %xx encoding characters.  The
+result is always a string, never ucs.
+<p/><a href="net-url.icn.html#509" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="percent_encode"/>
+<h3>percent_encode(s, c)</h3>
+public static<p/>
+<dl>
+<dd>
+Convert a string <code>s</code> by encoding any chars not in <code>c</code> to %xx
+format.  The result is always a string, never ucs.  <code>c</code> defaults
+to <code><a href="net.URL.html#UNRESERVED">UNRESERVED</a></code>.
+<p/><a href="net-url.icn.html#523" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="re_encode"/>
+<h3>re_encode(s, c1, c2)</h3>
+public static<p/>
+<dl>
+<dd>
+Modify the percent encoding in the given string <code>s</code>.
+<p/>
+For currently unencoded characters, those in <code>c1</code> are left as-is,
+others are percent-encoded.
+<p/>
+For currently encoded characters, those in <code>c2</code> are decoded, and
+others are left percent-encoded.
+<p/>
+<code>c1</code> defaults to <code><a href="net.URL.html#UNRESERVED">UNRESERVED</a></code>, and <code>c2</code> defaults to <code>c1</code>.
+<p/>
+To work properly, <code>c1</code> should not include <code>%</code>.  For consistency
+(meaning a further application would produce the same result),
+<code>c2</code> should be a subset of <code>c1</code>.
+<p/>
+Example :- turn a URL with utf-8 characters into a string for
+display, showing the utf-8 characters unescaped :-
+<pre>
+    URL.re_encode(url.str(), ~'%', ~&amp;ascii) 
+</pre>
+<p/><a href="net-url.icn.html#572" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="rmdir"/>
+<h3>rmdir(s, i)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#547" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cgi_parameters"/>
+<h3>set_cgi_parameters(cgi)</h3>
+public<p/>
+<dl>
+<dd>
+Amend the query field given a table of CGI parameters.  The old query
+portion (if any) is discarded.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>cgi</code> - The table of keys/values.
+</dd>
+</dl>
+<p/><a href="net-url.icn.html#300" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fragment"/>
+<h3>set_fragment(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the fragment field.
+<p/><a href="net-url.icn.html#183" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_host"/>
+<h3>set_host(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the host field.
+<p/><a href="net-url.icn.html#205" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_path"/>
+<h3>set_path(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the path field.
+<p/><a href="net-url.icn.html#153" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_port"/>
+<h3>set_port(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the port field.
+<p/><a href="net-url.icn.html#84" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_query"/>
+<h3>set_query(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the query field.
+<p/><a href="net-url.icn.html#175" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_scheme"/>
+<h3>set_scheme(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the scheme field.
+<p/><a href="net-url.icn.html#69" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="set_userinfo"/>
+<h3>set_userinfo(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the userinfo field.
+<p/><a href="net-url.icn.html#99" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to string representation.  The result is always a string, never ucs.
+<p/><a href="net-url.icn.html#241" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="strip_dot_dirs"/>
+<h3>strip_dot_dirs(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Remove the dotted dirs from a file path, eg "/a/b/c/../g"-&gt;"/a/b/g"
+<p/><a href="net-url.icn.html#552" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="ucs"/>
+<h3>ucs()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to give ucs(str()); may fail if str() is not convertible.
+<p/><a href="net-url.icn.html#260" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="with_cgi_parameters"/>
+<h3>with_cgi_parameters(cgi)</h3>
+public<p/>
+<dl>
+<dd>
+Return a new URL with the query part set using
+the table of CGI parameters.  The old query portion (if any) is
+discarded.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>cgi</code> - The table of keys/values.
+</dd>
+</dl>
+<p/><a href="net-url.icn.html#290" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="CGI_UNRESERVED"/>
+<h3>CGI_UNRESERVED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="fragment"/>
+<h3>fragment</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#29" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="FRAGMENT_CHAR"/>
+<h3>FRAGMENT_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="host"/>
+<h3>host</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#26" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="HOST_CHAR"/>
+<h3>HOST_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="path"/>
+<h3>path</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#27" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="PATH_CHAR"/>
+<h3>PATH_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="port"/>
+<h3>port</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#30" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="query"/>
+<h3>query</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#28" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="QUERY_CHAR"/>
+<h3>QUERY_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="RESERVED"/>
+<h3>RESERVED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="scheme"/>
+<h3>scheme</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#24" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="SCHEME_CHAR"/>
+<h3>SCHEME_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="SUB_DELIMS"/>
+<h3>SUB_DELIMS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="UNRESERVED"/>
+<h3>UNRESERVED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="userinfo"/>
+<h3>userinfo</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#25" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+<a name="USERINFO_CHAR"/>
+<h3>USERINFO_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-url.icn.html#33" target="displayFrame">Source - url.icn </a>
+</dd>
+</dl><hr>
+</body></html>

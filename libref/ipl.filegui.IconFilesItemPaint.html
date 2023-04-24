@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>IconFilesItemPaint</title></head><body>
+<h1>IconFilesItemPaint</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.ItemPaint.html" target="displayFrame">gui.ItemPaint</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.filegui.StringDirItemPaint.html">ipl.filegui.StringDirItemPaint</a><br>
+<a href="ipl.filegui.AnnotatedIconFilesItemPaint.html">ipl.filegui.AnnotatedIconFilesItemPaint</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.filegui-package.html" target="listFrame">ipl.filegui</a></dd>
+</dl><p/>
+An <code><a href="gui.ItemPaint.html" target="displayFrame">ItemPaint</a></code> which adds an appropriate icon to each lines displayed.  The data should be
+<code><a href="ipl.filegui.ListEntryWithIcon.html" target="displayFrame">ListEntryWithIcon</a></code> instances.
+<p/><a href="ipl.filegui-filegui.icn.html#166" target="displayFrame">Source - filegui.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ItemPaint.html">gui.ItemPaint</a>
+<a href="ipl.filegui.IconFilesItemPaint.html">ipl.filegui.IconFilesItemPaint</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.ItemPaint</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ItemPaint.html#draw_rect">draw_rect()</a>
+<a href="gui.ItemPaint.html#finally">finally()</a>
+<a href="gui.ItemPaint.html#get_constant_width">get_constant_width()</a>
+<a href="gui.ItemPaint.html#get_height">get_height()</a>
+<a href="gui.ItemPaint.html#initially">initially()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#draw">draw()</a>
+<a href="#get_constant_height">get_constant_height()</a>
+<a href="#get_icon">get_icon()</a>
+<a href="#get_size">get_size()</a>
+<a href="#get_string">get_string()</a>
+<a href="#get_width">get_width()</a>
+<a href="#get_xdg_for_file">get_xdg_for_file()</a>
+<a href="#init">init()</a>
+<a href="#resize">resize()</a>
+<a href="#try_xdg">try_xdg()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ICON_SIZE">ICON_SIZE</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="draw"/>
+<h3>draw(W, data, x, y, w, h)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ItemPaint.html#draw">draw()</a> in <a href="gui.ItemPaint.html" target="displayFrame">gui.ItemPaint</a></dd>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#272" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="get_constant_height"/>
+<h3>get_constant_height(W)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ItemPaint.html#get_constant_height">get_constant_height()</a> in <a href="gui.ItemPaint.html" target="displayFrame">gui.ItemPaint</a></dd>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#225" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="get_icon"/>
+<h3>get_icon(data)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#242" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="get_size"/>
+<h3>get_size(W, data)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ItemPaint.html#get_size">get_size()</a> in <a href="gui.ItemPaint.html" target="displayFrame">gui.ItemPaint</a></dd>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#229" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="get_string"/>
+<h3>get_string(data)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#233" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="get_width"/>
+<h3>get_width(W, data)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ItemPaint.html#get_width">get_width()</a> in <a href="gui.ItemPaint.html" target="displayFrame">gui.ItemPaint</a></dd>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#221" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="get_xdg_for_file"/>
+<h3>get_xdg_for_file(f)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#237" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#173" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="resize"/>
+<h3>resize(dest, src)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#209" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<a name="try_xdg"/>
+<h3>try_xdg(key, icon, alt)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#213" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ICON_SIZE"/>
+<h3>ICON_SIZE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.filegui-filegui.icn.html#171" target="displayFrame">Source - filegui.icn </a>
+</dd>
+</dl><hr>
+</body></html>

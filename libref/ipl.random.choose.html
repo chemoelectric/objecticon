@@ -1,0 +1,19 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>choose</title></head><body>
+<h1>choose(k, n)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.random-package.html" target="listFrame">ipl.random</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Note:  the following procedure is simpler, but does not produce
+as good a shuffle:
+<p/>
+procedure shuffle(x)
+x := string(x)
+every !x :=: ?x
+return x
+end
+Choose k numbers from the range 1..n in ascending order
+<p/><a href="ipl.random-random.icn.html#136" target="displayFrame">Source - random.icn </a>
+<p/>
+</body></html>

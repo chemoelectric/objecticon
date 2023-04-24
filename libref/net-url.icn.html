@@ -1,0 +1,661 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>url.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: url.icn 9169 2021-08-19 12:35:38Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package net
+<a name="10"/>
+<a name="11"/>import 
+<a name="12"/>   lang,
+<a name="13"/>   util,
+<a name="14"/>   ipl.scan,
+<a name="15"/>   ipl.strings,
+<a name="16"/>   ipl.tables,
+<a name="17"/>   ipl.printf
+<a name="18"/>
+<a name="19"/>#
+<a name="20"/># This class encapsulates a URL
+<a name="21"/>#
+<a name="22"/>class URL(ObjectOutput)
+<a name="23"/>   private readable 
+<a name="24"/>      scheme,
+<a name="25"/>      userinfo,
+<a name="26"/>      host,
+<a name="27"/>      path,
+<a name="28"/>      query,
+<a name="29"/>      fragment,
+<a name="30"/>      port
+<a name="31"/>
+<a name="32"/>   public static const
+<a name="33"/>      RESERVED, UNRESERVED, SUB_DELIMS, CGI_UNRESERVED, PATH_CHAR, USERINFO_CHAR, SCHEME_CHAR, HOST_CHAR, QUERY_CHAR, FRAGMENT_CHAR
+<a name="34"/>
+<a name="35"/>   private static init()
+<a name="36"/>      RESERVED := ':/?#[]@!$&amp;\'()*+,;='
+<a name="37"/>      UNRESERVED := &amp;letters ++ &amp;digits ++ '_.\-~'
+<a name="38"/>      SUB_DELIMS := '!$&amp;\'()*+,;='
+<a name="39"/>      CGI_UNRESERVED := &amp;letters ++ &amp;digits ++ '_.\- '
+<a name="40"/>      SCHEME_CHAR := &amp;letters ++ &amp;digits ++ '+\-.'
+<a name="41"/>      USERINFO_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':'
+<a name="42"/>      HOST_CHAR := UNRESERVED ++ SUB_DELIMS
+<a name="43"/>      PATH_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/'
+<a name="44"/>      QUERY_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/?'
+<a name="45"/>      FRAGMENT_CHAR := QUERY_CHAR
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   #
+<a name="49"/>   # Return the default port for the given scheme
+<a name="50"/>   #
+<a name="51"/>   public static get_default_port(scheme)
+<a name="52"/>      return case string(scheme) of {
+<a name="53"/>         "http": 80
+<a name="54"/>         "https": 443
+<a name="55"/>      }
+<a name="56"/>   end
+<a name="57"/>
+<a name="58"/>   #
+<a name="59"/>   # Helper function to put square brackets around a hostname, if it
+<a name="60"/>   # is an IPv6 literal (ie: contains a ":").
+<a name="61"/>   #
+<a name="62"/>   public static bracket_host(host)
+<a name="63"/>      return if upto(':', host) then
+<a name="64"/>         "[" || host || "]"
+<a name="65"/>      else
+<a name="66"/>         host
+<a name="67"/>   end
+<a name="68"/>
+<a name="69"/>   #
+<a name="70"/>   # Set the scheme field.
+<a name="71"/>   #
+<a name="72"/>   public set_scheme(x)
+<a name="73"/>      self.scheme := Text.lower(x)
+<a name="74"/>      link
+<a name="75"/>   end
+<a name="76"/>
+<a name="77"/>   #
+<a name="78"/>   # Get the scheme field.
+<a name="79"/>   #
+<a name="80"/>   public get_scheme()
+<a name="81"/>      return .self.scheme
+<a name="82"/>   end
+<a name="83"/>
+<a name="84"/>   #
+<a name="85"/>   # Set the port field.
+<a name="86"/>   #
+<a name="87"/>   public set_port(x)
+<a name="88"/>      self.port := /x | need_integer(x, 0)
+<a name="89"/>      link
+<a name="90"/>   end
+<a name="91"/>
+<a name="92"/>   #
+<a name="93"/>   # Get the port field, or fail if it is not set.
+<a name="94"/>   #
+<a name="95"/>   public get_port()
+<a name="96"/>      return .\self.port
+<a name="97"/>   end
+<a name="98"/>
+<a name="99"/>   #
+<a name="100"/>   # Set the userinfo field.
+<a name="101"/>   #
+<a name="102"/>   public set_userinfo(x)
+<a name="103"/>      self.userinfo := /x | need_text(x)
+<a name="104"/>      link
+<a name="105"/>   end
+<a name="106"/>
+<a name="107"/>   #
+<a name="108"/>   # Get the userinfo field, or fail if it is not set.
+<a name="109"/>   #
+<a name="110"/>   public get_userinfo()
+<a name="111"/>      return .\self.userinfo
+<a name="112"/>   end
+<a name="113"/>
+<a name="114"/>   #
+<a name="115"/>   # Get the userinfo field, with percent encodings decoded, or fail
+<a name="116"/>   # if it is not set.
+<a name="117"/>   #
+<a name="118"/>   public get_decoded_userinfo()
+<a name="119"/>      return percent_decode(\self.userinfo)
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   #
+<a name="123"/>   # Get the file, which is the path followed by the query (if any).
+<a name="124"/>   #
+<a name="125"/>   public get_file()
+<a name="126"/>      local s
+<a name="127"/>      s := path
+<a name="128"/>      s ||:= "?" || \query
+<a name="129"/>      return s
+<a name="130"/>   end
+<a name="131"/>
+<a name="132"/>   #
+<a name="133"/>   # Get the file, with percent encodings decoded.
+<a name="134"/>   #
+<a name="135"/>   public get_decoded_file()
+<a name="136"/>      return percent_decode(get_file())
+<a name="137"/>   end
+<a name="138"/>
+<a name="139"/>   #
+<a name="140"/>   # Return the path
+<a name="141"/>   #
+<a name="142"/>   public get_path()
+<a name="143"/>      return .path
+<a name="144"/>   end
+<a name="145"/>
+<a name="146"/>   #
+<a name="147"/>   # Return the path, with percent encodings decoded.
+<a name="148"/>   #
+<a name="149"/>   public get_decoded_path()
+<a name="150"/>      return percent_decode(path)
+<a name="151"/>   end
+<a name="152"/>
+<a name="153"/>   #
+<a name="154"/>   # Set the path field.
+<a name="155"/>   #
+<a name="156"/>   public set_path(x)
+<a name="157"/>      self.path := need_text(x)
+<a name="158"/>      link
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   #
+<a name="162"/>   # Return the query field, or fail if there is no query.
+<a name="163"/>   #
+<a name="164"/>   public get_query()
+<a name="165"/>      return .\query
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   #
+<a name="169"/>   # Return the query field, with percent encodings decoded, or fail if there is no query.
+<a name="170"/>   #
+<a name="171"/>   public get_decoded_query()
+<a name="172"/>      return percent_decode(\query)
+<a name="173"/>   end
+<a name="174"/>
+<a name="175"/>   #
+<a name="176"/>   # Set the query field.
+<a name="177"/>   #
+<a name="178"/>   public set_query(x)
+<a name="179"/>      self.query := /x | need_text(x)
+<a name="180"/>      link
+<a name="181"/>   end
+<a name="182"/>
+<a name="183"/>   #
+<a name="184"/>   # Set the fragment field.
+<a name="185"/>   #
+<a name="186"/>   public set_fragment(x)
+<a name="187"/>      self.fragment := /x | need_text(x)
+<a name="188"/>      link
+<a name="189"/>   end
+<a name="190"/>
+<a name="191"/>   #
+<a name="192"/>   # Get the optional fragment field, failing if none is set.
+<a name="193"/>   #
+<a name="194"/>   public get_fragment()
+<a name="195"/>      return .\self.fragment
+<a name="196"/>   end
+<a name="197"/>
+<a name="198"/>   #
+<a name="199"/>   # Get the optional fragment field, with percent encodings decoded, failing if none is set.
+<a name="200"/>   #
+<a name="201"/>   public get_decoded_fragment()
+<a name="202"/>      return percent_decode(\self.fragment)
+<a name="203"/>   end
+<a name="204"/>
+<a name="205"/>   #
+<a name="206"/>   # Set the host field.
+<a name="207"/>   #
+<a name="208"/>   public set_host(x)
+<a name="209"/>      self.host := /x | need_text(x)
+<a name="210"/>      link
+<a name="211"/>   end
+<a name="212"/>
+<a name="213"/>   #
+<a name="214"/>   # Get the host field, or fail if this is not a hierarchical url.
+<a name="215"/>   #
+<a name="216"/>   public get_host()
+<a name="217"/>      return .\self.host
+<a name="218"/>   end
+<a name="219"/>
+<a name="220"/>   #
+<a name="221"/>   # Get the host field, with percent encodings decoded, or fail if this is not a hierarchical url.
+<a name="222"/>   #
+<a name="223"/>   public get_decoded_host()
+<a name="224"/>      return percent_decode(\self.host)
+<a name="225"/>   end
+<a name="226"/>
+<a name="227"/>   #
+<a name="228"/>   # Output object
+<a name="229"/>   #
+<a name="230"/>   protected override object_output(oo)
+<a name="231"/>      oo.object_string(self, str())
+<a name="232"/>   end
+<a name="233"/>
+<a name="234"/>   #
+<a name="235"/>   # Helper to caseless compare x with string s
+<a name="236"/>   #
+<a name="237"/>   private static cl_eq(x, s)
+<a name="238"/>      succeed Text.caseless_compare(string(x), s) = 0
+<a name="239"/>   end
+<a name="240"/>
+<a name="241"/>   #
+<a name="242"/>   # Convert to string representation.  The result is always a string, never ucs.
+<a name="243"/>   #
+<a name="244"/>   public str()
+<a name="245"/>      local s
+<a name="246"/>      s := string(scheme) || ":"
+<a name="247"/>      if \host &amp; not(scheme == "file" &amp; cl_eq(host, "localhost")) then {
+<a name="248"/>         s ||:= "//"
+<a name="249"/>         s ||:= string(\userinfo) || "@"
+<a name="250"/>         s ||:= bracket_host(string(host))
+<a name="251"/>         if \port &amp; not(port = get_default_port(scheme)) then
+<a name="252"/>            s ||:= ":" || port
+<a name="253"/>      }
+<a name="254"/>      s ||:= string(path)
+<a name="255"/>      s ||:= "?" || string(\query)
+<a name="256"/>      s ||:= "#" || string(\fragment)
+<a name="257"/>      return s
+<a name="258"/>   end
+<a name="259"/>
+<a name="260"/>   #
+<a name="261"/>   # Convenient method to give ucs(str()); may fail if str() is not convertible.
+<a name="262"/>   #
+<a name="263"/>   public ucs()
+<a name="264"/>      return default.ucs(str())
+<a name="265"/>   end
+<a name="266"/>
+<a name="267"/>   #
+<a name="268"/>   # Convenient method to give Text.liberal_ucs(str()); will never fail.
+<a name="269"/>   #
+<a name="270"/>   public liberal_ucs()
+<a name="271"/>      return Text.liberal_ucs(str())
+<a name="272"/>   end
+<a name="273"/>
+<a name="274"/>   #
+<a name="275"/>   # Succeed iff this URL represents a local file.
+<a name="276"/>   #
+<a name="277"/>   public is_local_file()
+<a name="278"/>      succeed scheme == "file" &amp; cl_eq(host, "localhost" | &amp;host)
+<a name="279"/>   end
+<a name="280"/>
+<a name="281"/>   # Extract the cgi parameters from the `file` field.  Fails if there
+<a name="282"/>   # is no query in the file part.
+<a name="283"/>   # :Returns :
+<a name="284"/>   # :  A table, representing the keys and values of the fields.
+<a name="285"/>   #
+<a name="286"/>   public extract_cgi_parameters()
+<a name="287"/>      return make_cgi_table(\query)
+<a name="288"/>   end
+<a name="289"/>
+<a name="290"/>   # Return a new URL with the query part set using
+<a name="291"/>   # the table of CGI parameters.  The old query portion (if any) is
+<a name="292"/>   # discarded.
+<a name="293"/>   # :Parameters :
+<a name="294"/>   # :  `cgi` - The table of keys/values.
+<a name="295"/>   #
+<a name="296"/>   public with_cgi_parameters(cgi)
+<a name="297"/>      return from_parts(scheme, userinfo, host, port, path, make_cgi_string(cgi), fragment)
+<a name="298"/>   end
+<a name="299"/>
+<a name="300"/>   #
+<a name="301"/>   # Amend the query field given a table of CGI parameters.  The old query
+<a name="302"/>   # portion (if any) is discarded.
+<a name="303"/>   # :Parameters :
+<a name="304"/>   # :  `cgi` - The table of keys/values.
+<a name="305"/>   #
+<a name="306"/>   public set_cgi_parameters(cgi)
+<a name="307"/>      self.query := make_cgi_string(cgi)
+<a name="308"/>      link
+<a name="309"/>   end
+<a name="310"/>
+<a name="311"/>   private path_check(s)
+<a name="312"/>      if *path = 0 then
+<a name="313"/>         path := "/"
+<a name="314"/>      else
+<a name="315"/>         (path[1] == "/") | return error("Path should start with /")
+<a name="316"/>      return
+<a name="317"/>   end
+<a name="318"/>
+<a name="319"/>   #
+<a name="320"/>   # Create a URL by parsing the given string.  Returns a new `URL` if okay,
+<a name="321"/>   # or sets &amp;why on failure.
+<a name="322"/>   #
+<a name="323"/>   public new(s)
+<a name="324"/>      s ? {
+<a name="325"/>         scheme := 1(Text.lower(tab(many(SCHEME_CHAR))), =":") | return error("Scheme required")
+<a name="326"/>         if ="//" then {
+<a name="327"/>            userinfo := 1(tab(upto('@/?#')\1), ="@")
+<a name="328"/>            host := if ="[" then
+<a name="329"/>               1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
+<a name="330"/>            else
+<a name="331"/>               tab(upto(':/#?') | 0)
+<a name="332"/>            if *host = 0 then {
+<a name="333"/>               if scheme == "file" then
+<a name="334"/>                  host := "localhost"
+<a name="335"/>               else
+<a name="336"/>                  return error("No host")
+<a name="337"/>            }
+<a name="338"/>            if =":" then
+<a name="339"/>               # The port can be empty
+<a name="340"/>               port := integer(tab(many(&amp;digits)))
+<a name="341"/>            /port := get_default_port(scheme)
+<a name="342"/>            path := tab(upto('#?') | 0)
+<a name="343"/>            path_check() | fail
+<a name="344"/>         } else {
+<a name="345"/>            if scheme == ("http" | "https") then
+<a name="346"/>               return error("// expected")
+<a name="347"/>            path := tab(upto('#?') | 0)
+<a name="348"/>            # Allow file URLs with no authority (see rfc8089 appendix B).
+<a name="349"/>            if scheme == "file" then {
+<a name="350"/>               host := "localhost"
+<a name="351"/>               path_check() | fail
+<a name="352"/>            }
+<a name="353"/>         }
+<a name="354"/>         if ="?" then
+<a name="355"/>            query := tab(upto('#') | 0)
+<a name="356"/>         if ="#" then
+<a name="357"/>            fragment := tab(0)
+<a name="358"/>      }
+<a name="359"/>      return
+<a name="360"/>   end
+<a name="361"/>
+<a name="362"/>   #
+<a name="363"/>   # Return a new URL relative to this URL, based on the given relative string s.
+<a name="364"/>   #
+<a name="365"/>   public get_relative(s)
+<a name="366"/>      local new_path, new_query, new_fragment
+<a name="367"/>      if s[1:3] == "//" then
+<a name="368"/>         return URL(scheme || ":" || s)
+<a name="369"/>
+<a name="370"/>      if s[1] == "#" then
+<a name="371"/>         #
+<a name="372"/>         # Just reference, filename doesn't change.
+<a name="373"/>         # 
+<a name="374"/>         return from_parts(scheme, userinfo, host, port, path, query, s[2:0])
+<a name="375"/>
+<a name="376"/>      if *s = 0 then
+<a name="377"/>         #
+<a name="378"/>         # Empty string means copy the base, but drop the fragment.  see http://www.w3.org/TR/url/ s3.2.1
+<a name="379"/>         # and rfc3986 s5.2.2
+<a name="380"/>         # 
+<a name="381"/>         return from_parts(scheme, userinfo, host, port, path, query)
+<a name="382"/>
+<a name="383"/>      #
+<a name="384"/>      # File name and possibly reference.
+<a name="385"/>      #
+<a name="386"/>      if s[1] == "?" then
+<a name="387"/>         # eg http://a/b/c?d + ?e -&gt; http://a/b/c?e
+<a name="388"/>         s := path || s
+<a name="389"/>      else if s[1] ~== "/" then
+<a name="390"/>         # eg http://a/b/c?d + e -&gt; http://a/b/e
+<a name="391"/>         s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
+<a name="392"/>      s ? {
+<a name="393"/>         new_path := tab(upto('#?') | 0)
+<a name="394"/>         if ="?" then
+<a name="395"/>            new_query := tab(upto('#') | 0)
+<a name="396"/>         if ="#" then
+<a name="397"/>            new_fragment := tab(0)
+<a name="398"/>      }
+<a name="399"/>      return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
+<a name="400"/>   end
+<a name="401"/>
+<a name="402"/>   #
+<a name="403"/>   # Get the last portion of the path, ie that past the last "/".  May be
+<a name="404"/>   # the empty string (eg for "http://abc.com/").
+<a name="405"/>   #
+<a name="406"/>   public get_path_last()
+<a name="407"/>      path ? {
+<a name="408"/>         tab(backto('/',, 0))
+<a name="409"/>         return tab(0)
+<a name="410"/>      }
+<a name="411"/>   end
+<a name="412"/>
+<a name="413"/>   #
+<a name="414"/>   # Get the last portion of the path, with percent encodings decoded.
+<a name="415"/>   #
+<a name="416"/>   public get_decoded_path_last()
+<a name="417"/>      return percent_decode(get_path_last())
+<a name="418"/>   end
+<a name="419"/>
+<a name="420"/>   #
+<a name="421"/>   # Get the portion of the file name upto and including the last "/".  The filename
+<a name="422"/>   # should always be at least a "/", so this should return at least that.
+<a name="423"/>   #
+<a name="424"/>   public get_path_dir()
+<a name="425"/>      path ? {
+<a name="426"/>         tab(backto('/',, 0))
+<a name="427"/>         return tab(1)
+<a name="428"/>      }
+<a name="429"/>   end
+<a name="430"/>   
+<a name="431"/>   #
+<a name="432"/>   # Get the path dir, with percent encodings decoded.
+<a name="433"/>   #
+<a name="434"/>   public get_decoded_path_dir()
+<a name="435"/>      return percent_decode(get_path_dir())
+<a name="436"/>   end
+<a name="437"/>
+<a name="438"/>   #
+<a name="439"/>   # Create a new URL from the given constituent parts.
+<a name="440"/>   #
+<a name="441"/>   public static from_parts(scheme, userinfo, host, port, path, query, fragment)
+<a name="442"/>      local i
+<a name="443"/>      i := Class.create_instance()
+<a name="444"/>      i.scheme := Text.lower(scheme)
+<a name="445"/>      i.userinfo := need_text(\userinfo)
+<a name="446"/>      i.host := need_text(\host)
+<a name="447"/>      i.port := need_integer(\port, 0)
+<a name="448"/>      i.path := need_text(path)
+<a name="449"/>      i.query := need_text(\query)
+<a name="450"/>      i.fragment := need_text(\fragment)
+<a name="451"/>      return i
+<a name="452"/>   end
+<a name="453"/>
+<a name="454"/>   #
+<a name="455"/>   # Create a CGI parameter string from a table
+<a name="456"/>   #
+<a name="457"/>   public static make_cgi_string(cgi)
+<a name="458"/>      local l, s
+<a name="459"/>      s := ""
+<a name="460"/>      every l := !sort(cgi) do {
+<a name="461"/>         if string(l[2]) then
+<a name="462"/>            s ||:= cgi_encode(l[1]) || "=" || cgi_encode(l[2]) || "&amp;"
+<a name="463"/>         else
+<a name="464"/>            every s ||:= cgi_encode(l[1]) || "=" || cgi_encode(!l[2]) || "&amp;"
+<a name="465"/>      }
+<a name="466"/>      s[-1] := ""
+<a name="467"/>      return s
+<a name="468"/>   end
+<a name="469"/>
+<a name="470"/>   #
+<a name="471"/>   # Create a CGI parameter string by adding any encoding necessary.
+<a name="472"/>   #
+<a name="473"/>   public static cgi_encode(s)
+<a name="474"/>      return map(percent_encode(s, CGI_UNRESERVED), " ", "+")
+<a name="475"/>   end
+<a name="476"/>
+<a name="477"/>   #
+<a name="478"/>   # Make a cgi param table from the given string.  Note that the keys and entries are
+<a name="479"/>   # always strings (never ucs).
+<a name="480"/>   # :Returns :
+<a name="481"/>   # :  A table, representing the keys and values of the fields.
+<a name="482"/>   #
+<a name="483"/>   public static make_cgi_table(s)
+<a name="484"/>      local cgi, key, t
+<a name="485"/>      s := need_string(s)
+<a name="486"/>      cgi := table()
+<a name="487"/>      # Allow ; as a separator as well as &amp;.  See :-
+<a name="488"/>      #    https://www.w3.org/TR/1999/REC-html401-19991224/appendix/notes.html#h-B.2.2
+<a name="489"/>      #
+<a name="490"/>      every t := separate(s, '&amp;;') do
+<a name="491"/>         if *t &gt; 0 then
+<a name="492"/>            t ? {
+<a name="493"/>               key := 1(tab(upto('=')),move(1)) | tab(0)
+<a name="494"/>               inserts(cgi, cgi_decode(key), cgi_decode(tab(0)))
+<a name="495"/>            }
+<a name="496"/>      
+<a name="497"/>      return cgi
+<a name="498"/>   end
+<a name="499"/>
+<a name="500"/>   #
+<a name="501"/>   # Convert a CGI parameter string by extracting any encoded
+<a name="502"/>   # characters.  The result is always a string, never ucs.
+<a name="503"/>   #
+<a name="504"/>   public static cgi_decode(s)
+<a name="505"/>      s := need_string(s)
+<a name="506"/>      return percent_decode(map(s, "+", " "))
+<a name="507"/>   end
+<a name="508"/>
+<a name="509"/>   #
+<a name="510"/>   # Convert a string by decoding any %xx encoding characters.  The
+<a name="511"/>   # result is always a string, never ucs.
+<a name="512"/>   #
+<a name="513"/>   public static percent_decode(s)
+<a name="514"/>      local res
+<a name="515"/>      s := need_string(s)
+<a name="516"/>      res := ""
+<a name="517"/>      s ? {
+<a name="518"/>         while res ||:= tab(upto('%')) || (move(1), char(Format.string_to_int(move(2))))
+<a name="519"/>         return res || tab(0)
+<a name="520"/>      }
+<a name="521"/>   end
+<a name="522"/>
+<a name="523"/>   #
+<a name="524"/>   # Convert a string `s` by encoding any chars not in `c` to %xx
+<a name="525"/>   # format.  The result is always a string, never ucs.  `c` defaults
+<a name="526"/>   # to `UNRESERVED`.
+<a name="527"/>   #
+<a name="528"/>   public static percent_encode(s, c)
+<a name="529"/>      local res, ch
+<a name="530"/>      s := need_string(s)
+<a name="531"/>      /c := UNRESERVED
+<a name="532"/>      res := ""
+<a name="533"/>      s ? repeat {
+<a name="534"/>         res ||:= tab(many(c))
+<a name="535"/>         ch := move(1) | return res
+<a name="536"/>         res ||:= percent(ch)
+<a name="537"/>      }
+<a name="538"/>   end
+<a name="539"/>
+<a name="540"/>   #
+<a name="541"/>   # Percent encode a single character, ch.
+<a name="542"/>   #
+<a name="543"/>   public static percent(ch)
+<a name="544"/>      return "%" || Format.int_to_string(ord(ch),, 2)
+<a name="545"/>   end
+<a name="546"/>
+<a name="547"/>   private static rmdir(s, i)
+<a name="548"/>      # Never remove the root /
+<a name="549"/>      return 1 &lt; backto('/', s, i, 1)
+<a name="550"/>   end
+<a name="551"/>
+<a name="552"/>   #
+<a name="553"/>   # Remove the dotted dirs from a file path, eg "/a/b/c/../g"-&gt;"/a/b/g"
+<a name="554"/>   #
+<a name="555"/>   public static strip_dot_dirs(s)
+<a name="556"/>      local i
+<a name="557"/>      while i := find("/.", s) do {
+<a name="558"/>         if s[i+:4] == "/../" then
+<a name="559"/>            (s[rmdir(s, i):i + 4] := "") | break
+<a name="560"/>         else if s[i:0] == "/.." then
+<a name="561"/>            (s[rmdir(s, i):0] := "") | break
+<a name="562"/>         else if s[i+:3] == "/./" then
+<a name="563"/>            s[i+:3] := "/"
+<a name="564"/>         else if s[i:0] == "/." then
+<a name="565"/>            s[i:0] := "/"
+<a name="566"/>         else
+<a name="567"/>            break
+<a name="568"/>      }
+<a name="569"/>      return s
+<a name="570"/>   end
+<a name="571"/>
+<a name="572"/>   #
+<a name="573"/>   # Modify the percent encoding in the given string `s`.
+<a name="574"/>   #
+<a name="575"/>   # For currently unencoded characters, those in `c1` are left as-is,
+<a name="576"/>   # others are percent-encoded.
+<a name="577"/>   #
+<a name="578"/>   # For currently encoded characters, those in `c2` are decoded, and
+<a name="579"/>   # others are left percent-encoded.
+<a name="580"/>   #
+<a name="581"/>   # `c1` defaults to `UNRESERVED`, and `c2` defaults to `c1`.
+<a name="582"/>   #
+<a name="583"/>   # To work properly, `c1` should not include `%`.  For consistency
+<a name="584"/>   # (meaning a further application would produce the same result),
+<a name="585"/>   # `c2` should be a subset of `c1`.
+<a name="586"/>   #
+<a name="587"/>   # Example :- turn a URL with utf-8 characters into a string for
+<a name="588"/>   # display, showing the utf-8 characters unescaped :-
+<a name="589"/>   # ~
+<a name="590"/>   #     URL.re_encode(url.str(), ~'%', ~&amp;ascii) 
+<a name="591"/>   # ~
+<a name="592"/>   #
+<a name="593"/>   public static re_encode(s, c1, c2)
+<a name="594"/>      local res, ch
+<a name="595"/>      s := need_string(s)
+<a name="596"/>      /c1 := UNRESERVED
+<a name="597"/>      /c2 := c1
+<a name="598"/>      res := ""
+<a name="599"/>      s ? repeat {
+<a name="600"/>         res ||:= tab(many(c1))
+<a name="601"/>         if pos(0) then
+<a name="602"/>            return res
+<a name="603"/>         res ||:= if ="%" &amp; ch := char(Format.string_to_int(move(2))) then {
+<a name="604"/>            if any(c2, ch) then
+<a name="605"/>               ch
+<a name="606"/>            else
+<a name="607"/>               percent(ch)
+<a name="608"/>         } else
+<a name="609"/>            percent(move(1))
+<a name="610"/>      }
+<a name="611"/>   end
+<a name="612"/>
+<a name="613"/>   #
+<a name="614"/>   # Return a normalized version of this URL.  All percent encodings
+<a name="615"/>   # are normalized, (see `re_encode` above).  Host case is lowered.
+<a name="616"/>   # Dotted dirs are compacted.  All parts are of string type.  See
+<a name="617"/>   # &lt;https://en.wikipedia.org/wiki/URL_normalization&gt;.
+<a name="618"/>   #
+<a name="619"/>   public normal()
+<a name="620"/>      local s, u, h, p, q, f
+<a name="621"/>      s := string(Text.lower(scheme))
+<a name="622"/>      if \host then {
+<a name="623"/>         u := re_encode(\userinfo, USERINFO_CHAR)
+<a name="624"/>         h := if upto(':', host) then Text.lower(host) else re_encode(Text.lower(host), HOST_CHAR)
+<a name="625"/>         p := strip_dot_dirs(re_encode(path, PATH_CHAR))
+<a name="626"/>      } else
+<a name="627"/>         p := re_encode(path, PATH_CHAR)
+<a name="628"/>      q := if s == ("http" | "https") then
+<a name="629"/>         map(re_encode(\query, CGI_UNRESERVED ++ '=&amp;;+', CGI_UNRESERVED), " ", "+")
+<a name="630"/>      else
+<a name="631"/>         map(re_encode(\query, QUERY_CHAR ++ ' ', QUERY_CHAR ++ ' ' -- '=&amp;;+'), " ", "+")
+<a name="632"/>      f := re_encode(\fragment, FRAGMENT_CHAR)
+<a name="633"/>      return from_parts(s, u, h, port, p, q, f)
+<a name="634"/>   end
+<a name="635"/>
+<a name="636"/>   #
+<a name="637"/>   # Succeed iff two URLs represent the same URL, based on their
+<a name="638"/>   # `str()` values.
+<a name="639"/>   #
+<a name="640"/>   public static equiv(x, y)
+<a name="641"/>      succeed string(x.path) == string(y.path) &amp; x.str() == y.str()
+<a name="642"/>   end
+<a name="643"/>end
+<a name="644"/>
+<a name="645"/># Helper procedure to convert x to a `URL`, or raise a runerr.
+<a name="646"/>#
+<a name="647"/># :Parameters :
+<a name="648"/># :  `x` - something convertible to a `URL`.
+<a name="649"/>#
+<a name="650"/>procedure need_URL(x)
+<a name="651"/>   return if is(x,URL) then x else URL(x) | runerr("URL expected: " || &amp;why, x)
+<a name="652"/>end
+<a name="653"/>
+<a name="654"/># options() converter procedure for a URL command line option.
+<a name="655"/>#
+<a name="656"/>procedure url_opt(x)
+<a name="657"/>   return URL(x) | whyf("URL expected: %w")
+<a name="658"/>end
+</pre></body></html>

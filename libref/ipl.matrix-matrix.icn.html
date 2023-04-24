@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>matrix.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     matrix.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for matrix manipulation
+<a name="6"/>#
+<a name="7"/>#	Authors:  Stephen B. Wampler and Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     December 2, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This file contains procedures for matrix manipulation.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  Links: lu
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>
+<a name="25"/>package ipl.matrix
+<a name="26"/>
+<a name="27"/>import
+<a name="28"/>   io(write, writes),
+<a name="29"/>   ipl.lu(lu_back_sub, lu_decomp)
+<a name="30"/>
+<a name="31"/>procedure matrix_width(M)
+<a name="32"/>
+<a name="33"/>   return *M[1]
+<a name="34"/>
+<a name="35"/>end
+<a name="36"/>
+<a name="37"/>procedure matrix_height(M)
+<a name="38"/>
+<a name="39"/>   return *M
+<a name="40"/>
+<a name="41"/>end
+<a name="42"/>
+<a name="43"/>procedure write_matrix(file, M, x, s)
+<a name="44"/>   local r, c, row, col
+<a name="45"/>   /s := " "
+<a name="46"/>   r := matrix_height(M)
+<a name="47"/>   c := matrix_width(M)
+<a name="48"/>
+<a name="49"/>   if /x then {				# packed, no punctuation
+<a name="50"/>      every row := 1 to r do {
+<a name="51"/>         every col := 1 to c do {
+<a name="52"/>            writes(file, M[row][col], s)
+<a name="53"/>            }
+<a name="54"/>         write(file)
+<a name="55"/>         }
+<a name="56"/>      }
+<a name="57"/>   else {
+<a name="58"/>      every row := 1 to r do {
+<a name="59"/>         writes(file, "[")
+<a name="60"/>         every col := 1 to c do {
+<a name="61"/>            writes(file, M[row][col], ", ")
+<a name="62"/>            }
+<a name="63"/>         write(file, "]")
+<a name="64"/>         }
+<a name="65"/>      }
+<a name="66"/>
+<a name="67"/>end
+<a name="68"/>
+<a name="69"/>procedure copy_matrix(M)
+<a name="70"/>   local M1, n, i
+<a name="71"/>
+<a name="72"/>   n := *M
+<a name="73"/>
+<a name="74"/>   M1 := list(n)
+<a name="75"/>
+<a name="76"/>   every i := 1 to n do
+<a name="77"/>      M1[i] := copy(M[i])
+<a name="78"/>
+<a name="79"/>   return M1
+<a name="80"/>
+<a name="81"/>end
+<a name="82"/>
+<a name="83"/>procedure create_matrix(n, m, x)
+<a name="84"/>   local M
+<a name="85"/>
+<a name="86"/>   M := list(n)
+<a name="87"/>   every !M := list(m, x)
+<a name="88"/>
+<a name="89"/>   return M
+<a name="90"/>
+<a name="91"/>end
+<a name="92"/>
+<a name="93"/>procedure identity_matrix(n, m)
+<a name="94"/>   local r, c, M
+<a name="95"/>
+<a name="96"/>   M := create_matrix(n, m, 0)
+<a name="97"/>
+<a name="98"/>   every r := 1 to n do {
+<a name="99"/>      every c := 1 to m do {
+<a name="100"/>         if r = c then M[r][c] := 1
+<a name="101"/>         }
+<a name="102"/>      }
+<a name="103"/>
+<a name="104"/>   return M
+<a name="105"/>
+<a name="106"/>end
+<a name="107"/>
+<a name="108"/>procedure add_matrix(M1, M2)
+<a name="109"/>   local M3, r, c, n, m
+<a name="110"/>
+<a name="111"/>   if ((n := *M1) ~= *M2) | ((m := *M1[1]) ~= *M2[1]) then
+<a name="112"/>      runerr("*** incorrect matrix sizes")
+<a name="113"/>
+<a name="114"/>   M3 := create_matrix(n, m)
+<a name="115"/>
+<a name="116"/>   every r := 1 to n do
+<a name="117"/>      every c := 1 to m do
+<a name="118"/>         M3[r][c] := M1[r][c] + M2[r][c]
+<a name="119"/>
+<a name="120"/>   return M3
+<a name="121"/>
+<a name="122"/>end
+<a name="123"/>
+<a name="124"/>procedure mult_matrix(M1, M2)
+<a name="125"/>   local M3, r, c, n, k
+<a name="126"/>
+<a name="127"/>   if (n := *M1[1]) ~= *M2 then runerr("*** incorrect matrix sizes")
+<a name="128"/>
+<a name="129"/>   M3 := create_matrix(*M1,*M2[1])
+<a name="130"/>   every r := 1 to *M1 do {
+<a name="131"/>      every c := 1 to *M2[1] do {
+<a name="132"/>         M3[r][c] := 0
+<a name="133"/>         every k := 1 to n do {
+<a name="134"/>             M3[r][c] +:= M1[r][k] * M2[k][c]
+<a name="135"/>             }
+<a name="136"/>         }
+<a name="137"/>      }
+<a name="138"/>
+<a name="139"/>   return M3
+<a name="140"/>
+<a name="141"/>end
+<a name="142"/>
+<a name="143"/>procedure invert_matrix(M)
+<a name="144"/>   local M1, Y, I, d, i, n, B, j
+<a name="145"/>
+<a name="146"/>   n := *M
+<a name="147"/>   if n ~= *M[1] then runerr("*** matrix not square")
+<a name="148"/>
+<a name="149"/>   M1 := copy_matrix(M)
+<a name="150"/>   Y := identity_matrix(n, n)
+<a name="151"/>   I := list(n, 0)		# index vector
+<a name="152"/>
+<a name="153"/>#  First perform LH decomposition on M1 (which changes it and produces
+<a name="154"/>#  an index vector, I.
+<a name="155"/>
+<a name="156"/>   d := lu_decomp(M1, I) | runerr("*** singular matrix")
+<a name="157"/>
+<a name="158"/>   every j := 1 to n do {
+<a name="159"/>      B := list(n)		# work on columns
+<a name="160"/>      every i := 1 to n do
+<a name="161"/>         B[i] := Y[i][j]
+<a name="162"/>      lu_back_sub(M1, I, B)	# does  not change M1 or I
+<a name="163"/>      every i := 1 to n do	# put column in result
+<a name="164"/>         Y[i][j] := B[i]
+<a name="165"/>      }
+<a name="166"/>
+<a name="167"/>   return Y
+<a name="168"/>
+<a name="169"/>end
+<a name="170"/>
+<a name="171"/>procedure determinant(M)
+<a name="172"/>   local M1, I, result, i, n
+<a name="173"/>
+<a name="174"/>   n := *M
+<a name="175"/>   if n ~= *M[1] then runerr("*** matrix not square")
+<a name="176"/>
+<a name="177"/>   M1 := copy_matrix(M)
+<a name="178"/>   I := list(n, 0)		# not used but required by lu_decomp()
+<a name="179"/>
+<a name="180"/>   result := lu_decomp(M1, I) | runerr("*** singular matrix")
+<a name="181"/>
+<a name="182"/>   every i := 1 to n do		# determinant is produce of diagonal
+<a name="183"/>      result *:= M1[i][i]	# elements of the decomposed matrix
+<a name="184"/>
+<a name="185"/>   return result
+<a name="186"/>
+<a name="187"/>end
+</pre></body></html>

@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lambda</title></head><body>
+<h1>lambda(e)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Given a co-expression <code>e</code>, this returns a function whose results
+sequence is generated from a refreshed copy of <code>e</code>.  Arguments to
+the function are passed to <code>e</code> via a global variable <code><a href="ipl.functional._a.html" target="displayFrame">_a</a></code>.  For
+example:
+<p/>
+<pre>
+  f := lambda{ _a[1] + 100 }
+</pre>
+<p/>
+sets <code>f</code> to be a function returning its first argument plus 100.
+<p/>
+To simulate local variables, another global, <code><a href="ipl.functional._l.html" target="displayFrame">_l</a></code>, can be used.  It
+can be set to any value.
+<p/>
+Other examples:-
+<p/>
+<pre>
+  # Return the sum of the arguments, eg f(1,2,3) -&gt; 6
+  # - note that _l must be dereferenced, otherwise the caller sees the
+  #   value before the function is called.
+  f := lambda{{ _l := 0; every _l +:= !_a ; ._l }}
+</pre>
+<p/>
+An alternative to this procedure is <code><a href="ipl.functional.argf.html" target="displayFrame">argf</a></code>, which passes arguments
+by way of an activation.
+<p/><a href="ipl.functional-lambda.icn.html#133" target="displayFrame">Source - lambda.icn </a>
+<p/>
+</body></html>

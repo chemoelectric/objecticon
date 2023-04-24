@@ -1,0 +1,259 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Cpx</title></head><body>
+<h1>Cpx</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="numbers.Number.html" target="displayFrame">numbers.Number</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+</dl><p/>
+A class representing complex numbers.
+<p/>
+Instances are immutable and the real and imaginary parts are either
+<code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> or <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> instances.
+<p/><a href="numbers-numbers.icn.html#213" target="displayFrame">Source - numbers.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="numbers.Number.html">numbers.Number</a>
+<a href="numbers.Cpx.html">numbers.Cpx</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#init">init()</a>
+<a href="numbers.Number.html#object_output">object_output()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#REAL_DIGS">REAL_DIGS</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#div">div()</a>
+<a href="#mul">mul()</a>
+<a href="#neg">neg()</a>
+<a href="#new">new()</a>
+<a href="#real_number">real_number()</a>
+<a href="#reduce">reduce()</a>
+<a href="#str">str()</a>
+<a href="#sub">sub()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#i">i</a>
+<a href="#r">r</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#add">add()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Add this complex to another.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - a <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#238" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="div"/>
+<h3>div(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#div">div()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Divide this complex by another, using the specified rounding.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - a <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#273" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="mul"/>
+<h3>mul(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#mul">mul()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Multiply this complex by another.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - a <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#260" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="neg"/>
+<h3>neg()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#neg">neg()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Return this complex negated.
+<p/><a href="numbers-numbers.icn.html#287" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code> instance with real part <code>x</code> and imaginary part
+<code>y</code>.  Both parameters must be convertible to <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> or <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> or <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>
+</dd>
+<dd>
+<code>y</code> - something convertible to <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> or <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#304" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="real_number"/>
+<h3>real_number()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to a <code><a href="numbers.RealNumber.html" target="displayFrame">RealNumber</a></code>, returning the real part if and only if
+the imaginary part is zero.
+<p/><a href="numbers-numbers.icn.html#297" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="reduce"/>
+<h3>reduce()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#reduce">reduce()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+<p/><a href="numbers-numbers.icn.html#293" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str(f, dp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#str">str()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Convert to a string.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> -  A cset of flags, passed to the <code><a href="numbers.Cpx.html#str">str</a></code> method of the
+real and imaginary parts.
+</dd>
+<dd>
+<code>dp</code>   The number of decimal places to produce (if either
+part is a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>).
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#225" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sub"/>
+<h3>sub(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#sub">sub()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Subtract another complex from this one.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - a <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#250" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="i"/>
+<h3>i</h3>
+public const<p/>
+<dl>
+<dd>
+The imaginary part of this number
+<p/><a href="numbers-numbers.icn.html#222" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="r"/>
+<h3>r</h3>
+public const<p/>
+<dl>
+<dd>
+The real part of this number
+<p/><a href="numbers-numbers.icn.html#220" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,447 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Preprocessor</title></head><body>
+<h1>Preprocessor</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="parser-package.html" target="listFrame">parser</a></dd>
+</dl><p/>
+<p/><a href="parser-preprocessor.icn.html#5" target="displayFrame">Source - preprocessor.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="parser.Preprocessor.html">parser.Preprocessor</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+<a href="util.Connectable.html#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#at_end">at_end()</a>
+<a href="#done">done()</a>
+<a href="#err">err()</a>
+<a href="#expr1">expr1()</a>
+<a href="#expr2">expr2()</a>
+<a href="#expr3">expr3()</a>
+<a href="#get_encoding">get_encoding()</a>
+<a href="#init">init()</a>
+<a href="#multi_line_start">multi_line_start()</a>
+<a href="#pp_def_opt">pp_def_opt()</a>
+<a href="#preproc_new">preproc_new()</a>
+<a href="#preprocess">preprocess()</a>
+<a href="#preprocess_gen">preprocess_gen()</a>
+<a href="#read_line">read_line()</a>
+<a href="#scan_define_value">scan_define_value()</a>
+<a href="#scan_directive">scan_directive()</a>
+<a href="#scan_expr">scan_expr()</a>
+<a href="#scan_opt_space">scan_opt_space()</a>
+<a href="#scan_qword">scan_qword()</a>
+<a href="#scan_space">scan_space()</a>
+<a href="#scan_text">scan_text()</a>
+<a href="#scan_word">scan_word()</a>
+<a href="#skip_string">skip_string()</a>
+<a href="#sync_lines">sync_lines()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#DEFAULT_SYMBOLS">DEFAULT_SYMBOLS</a>
+<a href="#encoding">encoding</a>
+<a href="#file">file</a>
+<a href="#file_stack">file_stack</a>
+<a href="#filename">filename</a>
+<a href="#if_stack">if_stack</a>
+<a href="#if_state">if_state</a>
+<a href="#include_name">include_name</a>
+<a href="#include_set">include_set</a>
+<a href="#line">line</a>
+<a href="#nest_level">nest_level</a>
+<a href="#print_encoding">print_encoding</a>
+<a href="#print_filename">print_filename</a>
+<a href="#sym_table">sym_table</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="at_end"/>
+<h3>at_end()</h3>
+private static<p/>
+<dl>
+<dd>
+Tests for &amp;pos at the logical end of a preprocessor directive.
+<p/><a href="parser-preprocessor.icn.html#648" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="done"/>
+<h3>done()</h3>
+private<p/>
+<dl>
+<dd>
+Clears the values of certain space-consuming variables.
+<p/><a href="parser-preprocessor.icn.html#126" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="err"/>
+<h3>err(msg)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#731" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="expr1"/>
+<h3>expr1()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#669" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="expr2"/>
+<h3>expr2()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#681" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="expr3"/>
+<h3>expr3()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#693" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_encoding"/>
+<h3>get_encoding()</h3>
+private<p/>
+<dl>
+<dd>
+a_Scans an encoding identifier.
+<p/><a href="parser-preprocessor.icn.html#136" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#16" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="multi_line_start"/>
+<h3>multi_line_start()</h3>
+private static<p/>
+<dl>
+<dd>
+If this line ends on a multi-line literal, succeed and return the
+relevant opening quote char.
+Eg :-
+abc 'def' "xyz_
+would succeed and return "
+<p/><a href="parser-preprocessor.icn.html#505" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="pp_def_opt"/>
+<h3>pp_def_opt(s)</h3>
+public static<p/>
+<dl>
+<dd>
+options() converter function for a KEY[=VALUE] argument.  A
+<code><a href="datastruct.Entry.html" target="displayFrame">datastruct.Entry</a></code> record is returned.
+<p/><a href="parser-preprocessor.icn.html#736" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="preproc_new"/>
+<h3>preproc_new(fname, predefined_syms)</h3>
+private<p/>
+<dl>
+<dd>
+a_Initializes the preprocessor "object".
+<p/><a href="parser-preprocessor.icn.html#96" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="preprocess"/>
+<h3>preprocess(fname, predefined_syms)</h3>
+public<p/>
+<dl>
+<dd>
+Preprocess a file to a string.
+<p/><a href="parser-preprocessor.icn.html#51" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="preprocess_gen"/>
+<h3>preprocess_gen(fname, predefined_syms)</h3>
+public<p/>
+<dl>
+<dd>
+Preprocesses a file, generating output lines.
+<p/><a href="parser-preprocessor.icn.html#65" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="read_line"/>
+<h3>read_line()</h3>
+private<p/>
+<dl>
+<dd>
+Reads an input line.  Manages end-of-file and reverting to including
+file if appropriate, failing at end-of-input.
+<p/><a href="parser-preprocessor.icn.html#545" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_define_value"/>
+<h3>scan_define_value()</h3>
+private static<p/>
+<dl>
+<dd>
+Scans the value of a $define.
+<p/><a href="parser-preprocessor.icn.html#598" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_directive"/>
+<h3>scan_directive(no_err)</h3>
+private<p/>
+<dl>
+<dd>
+a_Scans a preprocessor directive.  This method fails or returns
+either a blank line or a #line directive.
+<p/><a href="parser-preprocessor.icn.html#143" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_expr"/>
+<h3>scan_expr()</h3>
+private<p/>
+<dl>
+<dd>
+Scan a boolean expression in a $if or $elsif line.  Returns the
+resulting flag value, or fails on an error, having output an
+appropriate message.
+<p/><a href="parser-preprocessor.icn.html#656" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_opt_space"/>
+<h3>scan_opt_space()</h3>
+private static<p/>
+<dl>
+<dd>
+Scans optional white space.
+<p/><a href="parser-preprocessor.icn.html#641" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_qword"/>
+<h3>scan_qword()</h3>
+private static<p/>
+<dl>
+<dd>
+Scans a possibly-quoted word (e.g. a file name).
+<p/><a href="parser-preprocessor.icn.html#588" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_space"/>
+<h3>scan_space()</h3>
+private static<p/>
+<dl>
+<dd>
+Scans white space.
+<p/><a href="parser-preprocessor.icn.html#634" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_text"/>
+<h3>scan_text(done_set)</h3>
+private<p/>
+<dl>
+<dd>
+Scans and make substitutions in a text line.
+<p/><a href="parser-preprocessor.icn.html#410" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_word"/>
+<h3>scan_word()</h3>
+private static<p/>
+<dl>
+<dd>
+Scans an identifier.
+<p/><a href="parser-preprocessor.icn.html#581" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="skip_string"/>
+<h3>skip_string(q)</h3>
+private static<p/>
+<dl>
+<dd>
+Skip a string/cset literal. q is " or ', and &amp;pos should be just
+after the opening quote.  Succeeds and leaves &amp;pos just after the
+closing quote, or at end of line if not closing quote was found.
+Fails iff the literal is a multi-line.
+<p/>
+Examples (q=") :-
+one"blah -&gt; succeeds leaving &amp;pos after the "
+noquote -&gt; succeeds leaving &amp;pos at the end
+noend_ -&gt; fails, also leaving &amp;pos at the end
+<p/><a href="parser-preprocessor.icn.html#519" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="sync_lines"/>
+<h3>sync_lines()</h3>
+private<p/>
+<dl>
+<dd>
+Determines if a "#lines" is called for and generates one if so.
+<p/><a href="parser-preprocessor.icn.html#717" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="DEFAULT_SYMBOLS"/>
+<h3>DEFAULT_SYMBOLS</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#13" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="encoding"/>
+<h3>encoding</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#11" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="file"/>
+<h3>file</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#8" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="file_stack"/>
+<h3>file_stack</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#7" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="filename"/>
+<h3>filename</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#8" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="if_stack"/>
+<h3>if_stack</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#7" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="if_state"/>
+<h3>if_state</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#7" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="include_name"/>
+<h3>include_name</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#9" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="include_set"/>
+<h3>include_set</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#10" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="line"/>
+<h3>line</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#8" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="nest_level"/>
+<h3>nest_level</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#9" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="print_encoding"/>
+<h3>print_encoding</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#11" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="print_filename"/>
+<h3>print_filename</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#10" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+<a name="sym_table"/>
+<h3>sym_table</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-preprocessor.icn.html#7" target="displayFrame">Source - preprocessor.icn </a>
+</dd>
+</dl><hr>
+</body></html>

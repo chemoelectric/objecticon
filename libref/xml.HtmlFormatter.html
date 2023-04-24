@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>HtmlFormatter</title></head><body>
+<h1>HtmlFormatter</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+A formatter for outputting HTML documents
+<p/><a href="xml-htmlformatter.icn.html#11" target="displayFrame">Source - htmlformatter.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="xml.Formatter.html">xml.Formatter</a>
+<a href="xml.HtmlFormatter.html">xml.HtmlFormatter</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#in">in()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from xml.Formatter</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Formatter.html#close">close()</a>
+<a href="xml.Formatter.html#format">format()</a>
+<a href="xml.Formatter.html#format_node">format_node()</a>
+<a href="xml.Formatter.html#get_mode">get_mode()</a>
+<a href="xml.Formatter.html#new">new()</a>
+<a href="xml.Formatter.html#out">out()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from xml.Formatter</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Formatter.html#file">file</a>
+<a href="xml.Formatter.html#level">level</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#format_cdata">format_cdata()</a>
+<a href="#format_comment">format_comment()</a>
+<a href="#format_content">format_content()</a>
+<a href="#format_doctype">format_doctype()</a>
+<a href="#format_document">format_document()</a>
+<a href="#format_element">format_element()</a>
+<a href="#format_pi">format_pi()</a>
+<a href="#format_xmldecl">format_xmldecl()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="format_cdata"/>
+<h3>format_cdata(n)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_cdata">format_cdata()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#76" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_comment"/>
+<h3>format_comment(n)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_comment">format_comment()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#45" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_content"/>
+<h3>format_content(s)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_content">format_content()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#23" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_doctype"/>
+<h3>format_doctype(n)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_doctype">format_doctype()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#27" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_document"/>
+<h3>format_document(n)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_document">format_document()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#15" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_element"/>
+<h3>format_element(n)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_element">format_element()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#49" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_pi"/>
+<h3>format_pi(n)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_pi">format_pi()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#75" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_xmldecl"/>
+<h3>format_xmldecl(n)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="xml.Formatter.html#format_xmldecl">format_xmldecl()</a> in <a href="xml.Formatter.html" target="displayFrame">xml.Formatter</a></dd>
+<dd>
+<p/><a href="xml-htmlformatter.icn.html#77" target="displayFrame">Source - htmlformatter.icn </a>
+</dd>
+</dl><hr>
+</body></html>

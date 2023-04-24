@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>printcol.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     printcol.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to format columnar data
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#  
+<a name="17"/>#     This procedure deals with with the problem of printing tabular
+<a name="18"/>#  data where the total width of items to be printed is wider than
+<a name="19"/>#  the page.  Simply allowing the data to wrap to additional lines
+<a name="20"/>#  often produces marginally readable output.  This procedure facil-
+<a name="21"/>#  itates printing such groups of data as vertical columns down the
+<a name="22"/>#  page length, instead of as horizontal rows across the page.  That
+<a name="23"/>#  way many, many fields can be printed neatly.  The programming of
+<a name="24"/>#  such a transformation can be a nuisance.  This procedure does
+<a name="25"/>#  much of the work for you, like deciding how many items can fit
+<a name="26"/>#  across the page width and ensuring that entire items will be
+<a name="27"/>#  printed on the same page without page breaks (if that service is
+<a name="28"/>#  requested).
+<a name="29"/>#
+<a name="30"/>############################################################################
+<a name="31"/>#  
+<a name="32"/>#     For example, suppose we have a list of records we would like
+<a name="33"/>#  to print.  The record is defined as:
+<a name="34"/>#  
+<a name="35"/>#          record rec(item1,item2,item3,...)
+<a name="36"/>#  
+<a name="37"/>#  Also suppose that lines such as
+<a name="38"/>#  
+<a name="39"/>#          Field 1   Field 2   Field 3     ...
+<a name="40"/>#          -------   -------   -------     ---
+<a name="41"/>#          Record 1    item1     item2     item3      ...
+<a name="42"/>#          Record 2    item1     item2     item3      ...
+<a name="43"/>#  
+<a name="44"/>#  are too long to print across the page.  This procedure will print
+<a name="45"/>#  them as:
+<a name="46"/>#  
+<a name="47"/>#          TITLE
+<a name="48"/>#          =====
+<a name="49"/>#          Record 1   Record 2     ...
+<a name="50"/>#          --------   --------     ---
+<a name="51"/>#          Field 1   item1      item1       ...
+<a name="52"/>#          Field 2   item2      item2       ...
+<a name="53"/>#          Field 3   item3      item3       ...
+<a name="54"/>#  
+<a name="55"/>#  The arguments are:
+<a name="56"/>#  
+<a name="57"/>#       items:       a co-expression that produces a sequence of
+<a name="58"/>#                    items (usually structured data objects, but not
+<a name="59"/>#                    necessarily) for which data is to be printed.
+<a name="60"/>#  
+<a name="61"/>#       fields:      a list of procedures to produce the field's
+<a name="62"/>#                    data.  Each procedure takes two arguments.  The
+<a name="63"/>#                    procedure's action depends upon what is passed
+<a name="64"/>#                    in the first argument:
+<a name="65"/>#  
+<a name="66"/>#            header      Produces the row heading string to be used
+<a name="67"/>#                        for that field (the field name).
+<a name="68"/>#  
+<a name="69"/>#            width       Produces the maximum field width that can
+<a name="70"/>#                        be produced (including the column header).
+<a name="71"/>#  
+<a name="72"/>#            Other      Produces the field value string for the
+<a name="73"/>#                        item passed as the argument.
+<a name="74"/>#  
+<a name="75"/>#          The second argument is arbitrary data from the procedures
+<a name="76"/>#       with each invocation.  The data returned by the first func-
+<a name="77"/>#       tion on the list is used as a column heading string (the
+<a name="78"/>#       item name).
+<a name="79"/>#  
+<a name="80"/>#       title:       optional.
+<a name="81"/>#  
+<a name="82"/>#  
+<a name="83"/>#       pagelength:  if null (omitted) page breaks are ignored.
+<a name="84"/>#  
+<a name="85"/>#       linelength:  default 80.
+<a name="86"/>#  
+<a name="87"/>#       auxdata:     auxiliary arbitrary data to be passed to the field
+<a name="88"/>#                    procedures -- see `fields', above.
+<a name="89"/>#  
+<a name="90"/>############################################################################
+<a name="91"/>
+<a name="92"/>package ipl.printcol
+<a name="93"/>
+<a name="94"/>import
+<a name="95"/>   io(write, writes)
+<a name="96"/>
+<a name="97"/>procedure printcol(items,fields,title,pagelength,linelength,auxdata)
+<a name="98"/>  local maxwidth,maxhead,groups,columns,itemlist,cont,f,p,underline,
+<a name="99"/>	hfield
+<a name="100"/>  /linelength := 80
+<a name="101"/>  /pagelength := 30000
+<a name="102"/>  /title := ""
+<a name="103"/>#
+<a name="104"/>#  Compute the maximum field width (so we know the column spacing) and
+<a name="105"/>#  the maximum header width (so we know how much space to leave on the
+<a name="106"/>#  left for headings.
+<a name="107"/>#
+<a name="108"/>  maxwidth := maxhead := -1 
+<a name="109"/>  cont := ""
+<a name="110"/>  every maxwidth &lt;:= (!fields)("width",auxdata)
+<a name="111"/>  hfield := get(fields)
+<a name="112"/>  every maxhead &lt;:= *(!fields)("header",auxdata)
+<a name="113"/>  columns := (linelength - maxhead) / (maxwidth + 1)
+<a name="114"/>  groups := pagelength / (6 + *fields)
+<a name="115"/>#
+<a name="116"/>#  Loop to print groups of data.
+<a name="117"/>#
+<a name="118"/>  repeat {
+<a name="119"/>    if pagelength &lt; 30000 then writes("\f")
+<a name="120"/>#
+<a name="121"/>#  Loop to print data of a group (a page's worth).
+<a name="122"/>#
+<a name="123"/>    every 1 to groups do {
+<a name="124"/>#
+<a name="125"/>#  Collect the items to be output in this group.  A group is the number
+<a name="126"/>#  of columns that can fit across the page.
+<a name="127"/>#
+<a name="128"/>      itemlist := []
+<a name="129"/>      every 1 to columns do put(itemlist,@items) | break
+<a name="130"/>      if *itemlist = 0 then break break
+<a name="131"/>#
+<a name="132"/>#  Print a title and the column headings.
+<a name="133"/>#
+<a name="134"/>      write(repl("=",*write("\n",title || cont)))
+<a name="135"/>      cont := " (continued)"
+<a name="136"/>      writes(underline := left("",maxhead))
+<a name="137"/>      every f := hfield(!itemlist,auxdata) do {
+<a name="138"/>	p := if *f &lt; maxwidth then center else left
+<a name="139"/>	writes(" ",p(f,maxwidth))
+<a name="140"/>	underline ||:= " " || p(repl("-",*f),maxwidth)
+<a name="141"/>      }
+<a name="142"/>      write("\n",underline)
+<a name="143"/>#
+<a name="144"/>#  Print the fields.
+<a name="145"/>#
+<a name="146"/>      every f := !fields do {
+<a name="147"/>	writes(right(f("header",auxdata),maxhead))
+<a name="148"/>	every writes(" ",center(f(!itemlist,auxdata),maxwidth))
+<a name="149"/>	write()
+<a name="150"/>      }
+<a name="151"/>    }	# End of loop to print groups.
+<a name="152"/>  }	# End of loop to print all items.
+<a name="153"/>  return
+<a name="154"/>end
+</pre></body></html>

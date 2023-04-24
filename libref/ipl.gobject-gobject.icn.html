@@ -1,0 +1,32 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gobject.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     gobject.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Declarations for geometrical objects
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     July 22, 1997
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  These declarations are provided for representing geometrical objects
+<a name="18"/>#  as records.
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>
+<a name="22"/>package ipl.gobject
+<a name="23"/>
+<a name="24"/>record Circle(center, radius)			# point, length
+<a name="25"/>record Line(p1, p2)				# point, point
+<a name="26"/>record Point(x, y, z)				# x and y coordinates
+<a name="27"/>record Point_Polar(r, a)			# radius, angle
+<a name="28"/>record Polygon(points)				# list of points
+<a name="29"/>record Rectangle(upper_left, lower_right)	# point, point
+</pre></body></html>

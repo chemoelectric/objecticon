@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lambda.icn</title></head><body><pre>
+<a name="1"/>package ipl.functional
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   lang(callable),
+<a name="5"/>   util(State, save_state, need_coexpression)
+<a name="6"/>
+<a name="7"/>global _a, _l
+<a name="8"/>
+<a name="9"/>#
+<a name="10"/># Implementation class which stores a co-expression.
+<a name="11"/>#
+<a name="12"/>package class Coexpr()
+<a name="13"/>   private const e
+<a name="14"/>
+<a name="15"/>   public act()
+<a name="16"/>      return @e
+<a name="17"/>   end
+<a name="18"/>
+<a name="19"/>   public gen()
+<a name="20"/>      suspend !e
+<a name="21"/>   end
+<a name="22"/>
+<a name="23"/>   public argf(a[])
+<a name="24"/>      suspend argf1(a)
+<a name="25"/>   end
+<a name="26"/>
+<a name="27"/>   public argf1(a)
+<a name="28"/>      local t
+<a name="29"/>      t := ^e
+<a name="30"/>      @t
+<a name="31"/>      suspend a@t | |@t
+<a name="32"/>   end
+<a name="33"/>
+<a name="34"/>   public lambda(a[])
+<a name="35"/>      suspend lambda1(a)
+<a name="36"/>   end
+<a name="37"/>
+<a name="38"/>   public lambda1(a)
+<a name="39"/>      suspend save_state(^e, LambdaState(a))
+<a name="40"/>   end
+<a name="41"/>
+<a name="42"/>   public new(e)
+<a name="43"/>      self.e := need_coexpression(e)
+<a name="44"/>      return
+<a name="45"/>   end
+<a name="46"/>end
+<a name="47"/>
+<a name="48"/>#
+<a name="49"/># Given a co-expression `e`, this returns a function which produces `@e`
+<a name="50"/># on each evaluation.  Arguments to the function are discarded.
+<a name="51"/>#
+<a name="52"/>procedure coexf(e)
+<a name="53"/>   return Coexpr(e).act
+<a name="54"/>end
+<a name="55"/>
+<a name="56"/>#
+<a name="57"/># Given a co-expression `e`, this returns a function which generates `!e`
+<a name="58"/># on each evaluation.  Arguments to the function are discarded.
+<a name="59"/>#
+<a name="60"/>procedure exprf(e)
+<a name="61"/>   return Coexpr(e).gen
+<a name="62"/>end
+<a name="63"/>
+<a name="64"/>#
+<a name="65"/># This is like `util.need_callable()`, but accepts a co-expression as
+<a name="66"/># an alternative value; in this case `exprf` is used to convert the
+<a name="67"/># co-expression to a callable.
+<a name="68"/>#
+<a name="69"/>procedure need_callable_alt_exprf(x, n)
+<a name="70"/>   return if type(x) == "co-expression" then
+<a name="71"/>      exprf(x)
+<a name="72"/>   else
+<a name="73"/>      callable(x, n) | runerr("Callable or co-expression expected", x)
+<a name="74"/>end
+<a name="75"/>
+<a name="76"/>#
+<a name="77"/># Given a co-expression `e`, this returns a function which, when
+<a name="78"/># invoked, passes its arguments (as a list) to a refreshed copy of `e`
+<a name="79"/># by way of an activation.  The subsequent results of the co-expresson
+<a name="80"/># form the results sequence of the function.
+<a name="81"/>#
+<a name="82"/># For example :-
+<a name="83"/># ~
+<a name="84"/>#   local f, a
+<a name="85"/>#   ...
+<a name="86"/>#   f := argf {{
+<a name="87"/>#       a := coact()       # Get the args
+<a name="88"/>#       (a[1] to a[2])^2   # The results
+<a name="89"/>#   }}
+<a name="90"/>#   ...
+<a name="91"/>#   f(3, 5)       # Generates 9, 16, 25
+<a name="92"/># ~
+<a name="93"/>#
+<a name="94"/># Another example is a recursive factorial function.  Note how `a`
+<a name="95"/># must be de-referenced to get its value before the recursive call
+<a name="96"/># changes it (the local `a` is shared by all the invocations).
+<a name="97"/>#
+<a name="98"/># ~
+<a name="99"/>#   local g, a
+<a name="100"/>#   ...
+<a name="101"/>#   g := argf {{
+<a name="102"/>#      a := coact()[1]     # The first arg
+<a name="103"/>#      if a = 0 then 1 else .a * g(a - 1)
+<a name="104"/>#   }}
+<a name="105"/>#   ...
+<a name="106"/>#   g(5)          # Returns 120
+<a name="107"/># ~
+<a name="108"/>#
+<a name="109"/># An alternative to this procedure is `lambda`, which passes arguments
+<a name="110"/># by way of a global variable.
+<a name="111"/>#
+<a name="112"/>procedure argf(e)
+<a name="113"/>   return Coexpr(e).argf
+<a name="114"/>end
+<a name="115"/>
+<a name="116"/>#
+<a name="117"/># This is just like `argf`, but the first argument only is
+<a name="118"/># transmitted, and other arguments are discarded.  This makes
+<a name="119"/># functions which take a single argument slightly more compact.  So the
+<a name="120"/># second example given above in `argf` would instead be :-
+<a name="121"/>#
+<a name="122"/># ~
+<a name="123"/>#   g := argf1 {{
+<a name="124"/>#      a := coact()
+<a name="125"/>#      if a = 0 then 1 else .a * g(a - 1)
+<a name="126"/>#   }}
+<a name="127"/># ~
+<a name="128"/>#
+<a name="129"/>procedure argf1(e)
+<a name="130"/>   return Coexpr(e).argf1
+<a name="131"/>end
+<a name="132"/>
+<a name="133"/>#
+<a name="134"/># Given a co-expression `e`, this returns a function whose results
+<a name="135"/># sequence is generated from a refreshed copy of `e`.  Arguments to
+<a name="136"/># the function are passed to `e` via a global variable `_a`.  For
+<a name="137"/># example:
+<a name="138"/>#
+<a name="139"/># ~
+<a name="140"/>#   f := lambda{ _a[1] + 100 }
+<a name="141"/># ~
+<a name="142"/>#
+<a name="143"/># sets `f' to be a function returning its first argument plus 100.
+<a name="144"/>#
+<a name="145"/># To simulate local variables, another global, `_l`, can be used.  It
+<a name="146"/># can be set to any value.
+<a name="147"/># 
+<a name="148"/># Other examples:-
+<a name="149"/>#
+<a name="150"/># ~
+<a name="151"/>#   # Return the sum of the arguments, eg f(1,2,3) -&gt; 6
+<a name="152"/>#   # - note that _l must be dereferenced, otherwise the caller sees the
+<a name="153"/>#   #   value before the function is called.
+<a name="154"/>#   f := lambda{{ _l := 0; every _l +:= !_a ; ._l }}
+<a name="155"/># ~
+<a name="156"/>#
+<a name="157"/># An alternative to this procedure is `argf`, which passes arguments
+<a name="158"/># by way of an activation.
+<a name="159"/>#
+<a name="160"/>procedure lambda(e)
+<a name="161"/>   return Coexpr(e).lambda
+<a name="162"/>end
+<a name="163"/>
+<a name="164"/>#
+<a name="165"/># This is just like `lambda`, but the global variable `_a` is assigned
+<a name="166"/># to the first argument, and other arguments are discarded.  This
+<a name="167"/># makes functions which take a single argument rather more
+<a name="168"/># compact.  For example :-
+<a name="169"/>#
+<a name="170"/># ~
+<a name="171"/>#   # A factorial function 
+<a name="172"/>#   g := lambda1{ if _a = 0 then 1 else _a * g(_a - 1) }
+<a name="173"/># ~
+<a name="174"/>#
+<a name="175"/>procedure lambda1(e)
+<a name="176"/>   return Coexpr(e).lambda1
+<a name="177"/>end
+<a name="178"/>
+<a name="179"/># Evaluates coexpression `e`, saving the value of `_a` and `_l`.  This
+<a name="180"/># can be necessary if a lambda calls another lambda which exits via an
+<a name="181"/># exception or a runtime error.
+<a name="182"/>#
+<a name="183"/># Example :-
+<a name="184"/># ~
+<a name="185"/>#     f := lambda{
+<a name="186"/>#        throw("Some problem")
+<a name="187"/>#     }
+<a name="188"/>#
+<a name="189"/>#     g := lambda{{
+<a name="190"/>#        write("a[1]=",_a[1])
+<a name="191"/>#        save_lambda{try{ f(102) }}
+<a name="192"/>#        # Without save_lambda, _a[1] would now still be 102 (ie the arg given to f)
+<a name="193"/>#        write("a[1]=",_a[1])
+<a name="194"/>#     }}
+<a name="195"/># ~
+<a name="196"/>procedure save_lambda(e)
+<a name="197"/>   suspend save_state(e, LambdaState())
+<a name="198"/>end
+<a name="199"/>
+<a name="200"/># A `State` class for saving the two global state variables.  An
+<a name="201"/># initial value for `_a` may be optionally specified.
+<a name="202"/>#
+<a name="203"/>class LambdaState(State)
+<a name="204"/>   private ta, tl
+<a name="205"/>
+<a name="206"/>   public override swap()
+<a name="207"/>      _a :=: ta
+<a name="208"/>      _l :=: tl
+<a name="209"/>   end
+<a name="210"/>
+<a name="211"/>   public new(i)
+<a name="212"/>      self.ta := i
+<a name="213"/>      return
+<a name="214"/>   end
+<a name="215"/>end
+</pre></body></html>

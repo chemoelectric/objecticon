@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ftype.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     ftype.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce type for file
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     March 10, 1998
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure returns the file identification produced by file(1).
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  Requires:  UNIX
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>
+<a name="25"/>package ipl.ftype
+<a name="26"/>
+<a name="27"/>import
+<a name="28"/>   ipl.io(run_prog)
+<a name="29"/>
+<a name="30"/>procedure ftype(file)
+<a name="31"/>   return run_prog("file", ["-b", file])
+<a name="32"/>end
+</pre></body></html>

@@ -1,0 +1,733 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Grid</title></head><body>
+<h1>Grid</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+<p/><a href="gui-grid.icn.html#53" target="displayFrame">Source - grid.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#allocate_space">allocate_space()</a>
+<a href="#cell_height_sort">cell_height_sort()</a>
+<a href="#cell_width_sort">cell_width_sort()</a>
+<a href="#compute_actual_col_positions">compute_actual_col_positions()</a>
+<a href="#compute_actual_col_widths">compute_actual_col_widths()</a>
+<a href="#compute_actual_row_heights">compute_actual_row_heights()</a>
+<a href="#compute_actual_row_positions">compute_actual_row_positions()</a>
+<a href="#compute_col_weights">compute_col_weights()</a>
+<a href="#compute_preferred_col_widths">compute_preferred_col_widths()</a>
+<a href="#compute_preferred_row_heights">compute_preferred_row_heights()</a>
+<a href="#compute_row_weights">compute_row_weights()</a>
+<a href="#create_cell">create_cell()</a>
+<a href="#dimension">dimension()</a>
+<a href="#dist_by_weight">dist_by_weight()</a>
+<a href="#dist_equally">dist_equally()</a>
+<a href="#get_preferred_height">get_preferred_height()</a>
+<a href="#get_preferred_width">get_preferred_width()</a>
+<a href="#init">init()</a>
+<a href="#is_constraint">is_constraint()</a>
+<a href="#new">new()</a>
+<a href="#print_layout">print_layout()</a>
+<a href="#set_dii">set_dii()</a>
+<a href="#set_doi">set_doi()</a>
+<a href="#set_extra">set_extra()</a>
+<a href="#slice">slice()</a>
+<a href="#total">total()</a>
+<a href="#validate_flag">validate_flag()</a>
+<a href="#validate_int">validate_int()</a>
+<a href="#validate_real">validate_real()</a>
+<a href="#validate_x_align">validate_x_align()</a>
+<a href="#validate_y_align">validate_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#a_col_w">a_col_w</a>
+<a href="#a_col_x">a_col_x</a>
+<a href="#a_row_h">a_row_h</a>
+<a href="#a_row_y">a_row_y</a>
+<a href="#add_row_h">add_row_h</a>
+<a href="#add_x">add_x</a>
+<a href="#add_y">add_y</a>
+<a href="#B_INSET">B_INSET</a>
+<a href="#col_weights">col_weights</a>
+<a href="#CONSTRAINT_SET">CONSTRAINT_SET</a>
+<a href="#dii">dii</a>
+<a href="#doi">doi</a>
+<a href="#EOL">EOL</a>
+<a href="#extra">extra</a>
+<a href="#EXTRA_BORDERS">EXTRA_BORDERS</a>
+<a href="#EXTRA_CELLS">EXTRA_CELLS</a>
+<a href="#EXTRA_IGNORE">EXTRA_IGNORE</a>
+<a href="#gh">gh</a>
+<a href="#gw">gw</a>
+<a href="#H">H</a>
+<a href="#id_seq">id_seq</a>
+<a href="#info">info</a>
+<a href="#info_by_cell_height">info_by_cell_height</a>
+<a href="#info_by_cell_width">info_by_cell_width</a>
+<a href="#L_INSET">L_INSET</a>
+<a href="#p_col_w">p_col_w</a>
+<a href="#p_row_h">p_row_h</a>
+<a href="#pad_h">pad_h</a>
+<a href="#pad_w">pad_w</a>
+<a href="#R_INSET">R_INSET</a>
+<a href="#row_weights">row_weights</a>
+<a href="#T_INSET">T_INSET</a>
+<a href="#W">W</a>
+<a href="#X">X</a>
+<a href="#X_ALIGN">X_ALIGN</a>
+<a href="#X_FILL">X_FILL</a>
+<a href="#X_TAB">X_TAB</a>
+<a href="#X_WEIGHT">X_WEIGHT</a>
+<a href="#Y">Y</a>
+<a href="#Y_ALIGN">Y_ALIGN</a>
+<a href="#Y_FILL">Y_FILL</a>
+<a href="#Y_TAB">Y_TAB</a>
+<a href="#Y_WEIGHT">Y_WEIGHT</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="allocate_space"/>
+<h3>allocate_space(start, span, extra, l, weights)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#241" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="cell_height_sort"/>
+<h3>cell_height_sort(i)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#294" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="cell_width_sort"/>
+<h3>cell_width_sort(i)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#290" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_col_positions"/>
+<h3>compute_actual_col_positions(x1)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#380" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_col_widths"/>
+<h3>compute_actual_col_widths(w1)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#348" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_row_heights"/>
+<h3>compute_actual_row_heights(h1)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#400" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_row_positions"/>
+<h3>compute_actual_row_positions(y1)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#430" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_col_weights"/>
+<h3>compute_col_weights()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#250" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_preferred_col_widths"/>
+<h3>compute_preferred_col_widths()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#260" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_preferred_row_heights"/>
+<h3>compute_preferred_row_heights()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#280" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_row_weights"/>
+<h3>compute_row_weights()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#270" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="create_cell"/>
+<h3>create_cell(t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#145" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="dimension"/>
+<h3>dimension()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#181" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="dist_by_weight"/>
+<h3>dist_by_weight(start, span, extra, l, weights, tw)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#214" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="dist_equally"/>
+<h3>dist_equally(start, span, extra, l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#228" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_height"/>
+<h3>get_preferred_height()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#344" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_width"/>
+<h3>get_preferred_width()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#340" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#477" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="is_constraint"/>
+<h3>is_constraint(s)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#502" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#506" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="print_layout"/>
+<h3>print_layout()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#298" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dii"/>
+<h3>set_dii(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the default inner inset
+<p/><a href="gui-grid.icn.html#450" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="set_doi"/>
+<h3>set_doi(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the default outer inset
+<p/><a href="gui-grid.icn.html#458" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="set_extra"/>
+<h3>set_extra(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure where to allocate any extra space.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - one of <code><a href="gui.Grid.html#EXTRA_CELLS">EXTRA_CELLS</a></code>, <code><a href="gui.Grid.html#EXTRA_BORDERS">EXTRA_BORDERS</a></code>, <code><a href="gui.Grid.html#EXTRA_IGNORE">EXTRA_IGNORE</a></code>
+</dd>
+</dl>
+<p/><a href="gui-grid.icn.html#466" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="slice"/>
+<h3>slice(start, span, l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#206" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="total"/>
+<h3>total(l)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#210" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_flag"/>
+<h3>validate_flag(t, key)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#117" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_int"/>
+<h3>validate_int(t, key, def)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#101" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_real"/>
+<h3>validate_real(t, key, def)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#109" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_x_align"/>
+<h3>validate_x_align(t, key)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#125" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_y_align"/>
+<h3>validate_y_align(t, key)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#135" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="a_col_w"/>
+<h3>a_col_w</h3>
+public<p/>
+<dl>
+<dd>
+Actual column widths/row heights after extra
+<p/><a href="gui-grid.icn.html#82" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="a_col_x"/>
+<h3>a_col_x</h3>
+public<p/>
+<dl>
+<dd>
+Actual row x and y values
+<p/><a href="gui-grid.icn.html#84" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="a_row_h"/>
+<h3>a_row_h</h3>
+public<p/>
+<dl>
+<dd>
+space has been allocated
+<p/><a href="gui-grid.icn.html#83" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="a_row_y"/>
+<h3>a_row_y</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#85" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="add_row_h"/>
+<h3>add_row_h</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#99" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="add_x"/>
+<h3>add_x</h3>
+public<p/>
+<dl>
+<dd>
+For auto-computing cell position and sizes.
+<p/><a href="gui-grid.icn.html#97" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="add_y"/>
+<h3>add_y</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#98" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="B_INSET"/>
+<h3>B_INSET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#69" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="col_weights"/>
+<h3>col_weights</h3>
+public<p/>
+<dl>
+<dd>
+Column/row weights.
+<p/><a href="gui-grid.icn.html#86" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="CONSTRAINT_SET"/>
+<h3>CONSTRAINT_SET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#55" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="dii"/>
+<h3>dii</h3>
+public<p/>
+<dl>
+<dd>
+Default inner padding, ie not at edge of grid
+<p/><a href="gui-grid.icn.html#91" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="doi"/>
+<h3>doi</h3>
+public<p/>
+<dl>
+<dd>
+Default outer padding
+<p/><a href="gui-grid.icn.html#92" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="EOL"/>
+<h3>EOL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#61" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="extra"/>
+<h3>extra</h3>
+public<p/>
+<dl>
+<dd>
+Flag indicating how to allocate extra space
+<p/><a href="gui-grid.icn.html#93" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="EXTRA_BORDERS"/>
+<h3>EXTRA_BORDERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#57" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="EXTRA_CELLS"/>
+<h3>EXTRA_CELLS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#56" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="EXTRA_IGNORE"/>
+<h3>EXTRA_IGNORE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#58" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="gh"/>
+<h3>gh</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#79" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="gw"/>
+<h3>gw</h3>
+public<p/>
+<dl>
+<dd>
+Grid width, height in cells
+<p/><a href="gui-grid.icn.html#78" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="H"/>
+<h3>H</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#65" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="id_seq"/>
+<h3>id_seq</h3>
+public<p/>
+<dl>
+<dd>
+For generating CellInfo string ids for debug
+<p/><a href="gui-grid.icn.html#96" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="info"/>
+<h3>info</h3>
+public<p/>
+<dl>
+<dd>
+List of CellInfo for each component being laid out
+<p/><a href="gui-grid.icn.html#88" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="info_by_cell_height"/>
+<h3>info_by_cell_height</h3>
+public<p/>
+<dl>
+<dd>
+info sorted by cell height
+<p/><a href="gui-grid.icn.html#89" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="info_by_cell_width"/>
+<h3>info_by_cell_width</h3>
+public<p/>
+<dl>
+<dd>
+and width
+<p/><a href="gui-grid.icn.html#90" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="L_INSET"/>
+<h3>L_INSET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#66" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="p_col_w"/>
+<h3>p_col_w</h3>
+public<p/>
+<dl>
+<dd>
+Preferred column widths/row heights
+<p/><a href="gui-grid.icn.html#80" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="p_row_h"/>
+<h3>p_row_h</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#81" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="pad_h"/>
+<h3>pad_h</h3>
+public<p/>
+<dl>
+<dd>
+Padding above the grid
+<p/><a href="gui-grid.icn.html#95" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="pad_w"/>
+<h3>pad_w</h3>
+public<p/>
+<dl>
+<dd>
+Padding to the left of the grid
+<p/><a href="gui-grid.icn.html#94" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="R_INSET"/>
+<h3>R_INSET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#67" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="row_weights"/>
+<h3>row_weights</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#87" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="T_INSET"/>
+<h3>T_INSET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#68" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="W"/>
+<h3>W</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#64" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="X"/>
+<h3>X</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#62" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="X_ALIGN"/>
+<h3>X_ALIGN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#72" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="X_FILL"/>
+<h3>X_FILL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#70" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="X_TAB"/>
+<h3>X_TAB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#59" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="X_WEIGHT"/>
+<h3>X_WEIGHT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#74" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="Y"/>
+<h3>Y</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#63" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="Y_ALIGN"/>
+<h3>Y_ALIGN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#73" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="Y_FILL"/>
+<h3>Y_FILL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#71" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="Y_TAB"/>
+<h3>Y_TAB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#60" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+<a name="Y_WEIGHT"/>
+<h3>Y_WEIGHT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-grid.icn.html#75" target="displayFrame">Source - grid.icn </a>
+</dd>
+</dl><hr>
+</body></html>

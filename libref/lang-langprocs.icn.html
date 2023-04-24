@@ -1,0 +1,889 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>langprocs.icn</title></head><body><pre>
+<a name="1"/>package lang
+<a name="2"/>
+<a name="3"/>import io, util, ipl.tables, ipl.scan, exception
+<a name="4"/>
+<a name="5"/>#
+<a name="6"/># Convert the object to string, descending structures to the given depth.  See
+<a name="7"/># also `ObjectOutputStream`.
+<a name="8"/>#
+<a name="9"/># :Parameters :
+<a name="10"/># :  `o` - The object to be converted.
+<a name="11"/>#
+<a name="12"/>procedure to_string(o, indent, always_structure, depth, ignore_object_output)
+<a name="13"/>   local rs
+<a name="14"/>   return use {
+<a name="15"/>      rs := RamStream(),
+<a name="16"/>      ObjectOutputStream(rs).
+<a name="17"/>         set_indent(indent).
+<a name="18"/>         set_always_structure(always_structure).
+<a name="19"/>         set_depth(depth).
+<a name="20"/>         set_ignore_object_output(ignore_object_output).
+<a name="21"/>         show(o) &amp; rs.str()
+<a name="22"/>   }
+<a name="23"/>end
+<a name="24"/>
+<a name="25"/>#
+<a name="26"/># Like `to_string`, but send the output direct to `FileStream.stdout`.  See
+<a name="27"/># also `ObjectOutputStream`.
+<a name="28"/>#
+<a name="29"/># :Parameters :
+<a name="30"/># :  `o` - The object to be output.
+<a name="31"/>#
+<a name="32"/>procedure to_stdout(o, indent, always_structure, depth, ignore_object_output)
+<a name="33"/>   return ObjectOutputStream(FileStream.stdout).
+<a name="34"/>      set_indent(indent).
+<a name="35"/>      set_always_structure(always_structure).
+<a name="36"/>      set_depth(depth).
+<a name="37"/>      set_ignore_object_output(ignore_object_output).
+<a name="38"/>      show(o)
+<a name="39"/>end
+<a name="40"/>
+<a name="41"/>#
+<a name="42"/># Like `to_string`, but send the output direct to `FileStream.stderr`.  See
+<a name="43"/># also `ObjectOutputStream`.
+<a name="44"/>#
+<a name="45"/># :Parameters :
+<a name="46"/># :  `o` - The object to be output.
+<a name="47"/>#
+<a name="48"/>procedure to_stderr(o, indent, always_structure, depth, ignore_object_output)
+<a name="49"/>   return ObjectOutputStream(FileStream.stderr).
+<a name="50"/>      set_indent(indent).
+<a name="51"/>      set_always_structure(always_structure).
+<a name="52"/>      set_depth(depth).
+<a name="53"/>      set_ignore_object_output(ignore_object_output).
+<a name="54"/>      show(o)
+<a name="55"/>end
+<a name="56"/>
+<a name="57"/># A class implements this interface in order to provide custom output
+<a name="58"/># for an ObjectOutputStream
+<a name="59"/>#
+<a name="60"/>abstract class ObjectOutput()
+<a name="61"/>   protected abstract object_output(oos)
+<a name="62"/>end
+<a name="63"/>
+<a name="64"/># A class implements this interface to provide a custom implementation
+<a name="65"/># for the `clone` procedure.
+<a name="66"/>#
+<a name="67"/>abstract class ObjectClone()
+<a name="68"/>   protected abstract object_clone(seen)
+<a name="69"/>end
+<a name="70"/>
+<a name="71"/># A class implements this interface to provide a custom implementation
+<a name="72"/># for the `hash` procedure.
+<a name="73"/>#
+<a name="74"/>abstract class ObjectHash()
+<a name="75"/>   protected abstract object_hash(depth)
+<a name="76"/>end
+<a name="77"/>
+<a name="78"/># A class implements this interface to provide a custom implementation
+<a name="79"/># for the `equals` procedure.
+<a name="80"/>#
+<a name="81"/># It is advisable when implementing this interface to also implement
+<a name="82"/># `ObjectHash`, so that the following relationship holds :-
+<a name="83"/># ~
+<a name="84"/>#        equals(x, y)   =&gt;    hash(x) = hash(y)
+<a name="85"/># ~
+<a name="86"/># This ensures that classes such as `datastruct.EqTable` work
+<a name="87"/># correctly.
+<a name="88"/>#
+<a name="89"/>abstract class ObjectEquals()
+<a name="90"/>   protected abstract object_equals(other, seen)
+<a name="91"/>end
+<a name="92"/>
+<a name="93"/>#
+<a name="94"/># This class can be used to output a human-readable image of an
+<a name="95"/># arbitrary icon object.
+<a name="96"/>#
+<a name="97"/># Example :-
+<a name="98"/># ~
+<a name="99"/>#    oo := ObjectOutputStream(FileStream.stdout)
+<a name="100"/>#    oo.show(my_object)
+<a name="101"/>#    oo.show(another_object)
+<a name="102"/># ~
+<a name="103"/>#
+<a name="104"/># Note that most of the public methods in this class are intended for
+<a name="105"/># use by other classes which implement custom output (by having an
+<a name="106"/># `object_output` method).  Only the setter and `show` methods should
+<a name="107"/># be used by a client.
+<a name="108"/>#
+<a name="109"/># For simpler procedure interfaces to this class, see `to_string`,
+<a name="110"/># `to_stdout` and `to_stderr`.
+<a name="111"/>#
+<a name="112"/>class ObjectOutputStream(Stream, HasCloseUnderlying)
+<a name="113"/>   private readable
+<a name="114"/>      depth,
+<a name="115"/>      indent,
+<a name="116"/>      level,
+<a name="117"/>      ilevel
+<a name="118"/>   private const
+<a name="119"/>      file
+<a name="120"/>   private
+<a name="121"/>      stuff,
+<a name="122"/>      seen, 
+<a name="123"/>      ignore_object_output_flag,
+<a name="124"/>      always_structure_flag
+<a name="125"/>
+<a name="126"/>   #
+<a name="127"/>   # Reset everything and output a new object.
+<a name="128"/>   #
+<a name="129"/>   public show(o)
+<a name="130"/>      self.level := 0
+<a name="131"/>      self.ilevel := 0
+<a name="132"/>      self.stuff := &amp;null
+<a name="133"/>      return use {
+<a name="134"/>         self.seen := table(),
+<a name="135"/>         try1{traverse(o)},
+<a name="136"/>         self.seen := &amp;null
+<a name="137"/>      }
+<a name="138"/>   end
+<a name="139"/>
+<a name="140"/>   public override out(s)
+<a name="141"/>      stuff := &amp;yes
+<a name="142"/>      return file.out(s) | throw(&amp;why)
+<a name="143"/>   end
+<a name="144"/>
+<a name="145"/>   public override get_mode()
+<a name="146"/>      return WRITE
+<a name="147"/>   end
+<a name="148"/>
+<a name="149"/>   public nl()
+<a name="150"/>      if \stuff then {
+<a name="151"/>         write()
+<a name="152"/>         writes(repl(" ", indent * ilevel))
+<a name="153"/>         stuff := &amp;null
+<a name="154"/>      }
+<a name="155"/>      link
+<a name="156"/>   end
+<a name="157"/>
+<a name="158"/>   public iplus()
+<a name="159"/>      ilevel +:= 1
+<a name="160"/>      link
+<a name="161"/>   end
+<a name="162"/>
+<a name="163"/>   public iminus()
+<a name="164"/>      ilevel -:= 1
+<a name="165"/>      link
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   public traverse(o)
+<a name="169"/>      local ty, s, i, e, sep, desc, def
+<a name="170"/>
+<a name="171"/>      if s := member(seen, o) then
+<a name="172"/>         return writes("ref ", s)
+<a name="173"/>
+<a name="174"/>      ty := type(o)
+<a name="175"/>      level +:= 1
+<a name="176"/>      if /depth | (level &lt;= depth) then
+<a name="177"/>         desc := &amp;yes
+<a name="178"/>
+<a name="179"/>      case ty of {
+<a name="180"/>         "record" : {
+<a name="181"/>            s := ty || " " || Constructor.get_name(o) || "#" || serial(o)
+<a name="182"/>            insert(seen, o, s)
+<a name="183"/>            if /desc then 
+<a name="184"/>               writes1(s)
+<a name="185"/>            else if simple{!o} then {
+<a name="186"/>               writes(s, "(")
+<a name="187"/>               i := 1
+<a name="188"/>               every s := Constructor.get_field_names(o) do {
+<a name="189"/>                  if i &gt; 1 then
+<a name="190"/>                     writes1(";")
+<a name="191"/>                  writes(s, "=")
+<a name="192"/>                  traverse(o[i])
+<a name="193"/>                  i +:= 1
+<a name="194"/>               }
+<a name="195"/>               writes1(")")
+<a name="196"/>            } else {
+<a name="197"/>               nl()
+<a name="198"/>               writes(s, "(")
+<a name="199"/>               iplus()
+<a name="200"/>               i := 1
+<a name="201"/>               every s := Constructor.get_field_names(o) do {
+<a name="202"/>                  nl()
+<a name="203"/>                  iplus()
+<a name="204"/>                  writes(s, "=")
+<a name="205"/>                  traverse(o[i])
+<a name="206"/>                  iminus()
+<a name="207"/>                  i +:= 1
+<a name="208"/>               }
+<a name="209"/>               iminus()
+<a name="210"/>               nl()
+<a name="211"/>               writes1(")")
+<a name="212"/>            }
+<a name="213"/>         }
+<a name="214"/>
+<a name="215"/>         "object" : {
+<a name="216"/>            s := type(o) || " " || Class.get_name(o) || "#" || serial(o)
+<a name="217"/>            insert(seen, o, s)
+<a name="218"/>            if /desc then
+<a name="219"/>               writes1(s)
+<a name="220"/>            else if /ignore_object_output_flag &amp; Class.is_by_name(o, ObjectOutput) then
+<a name="221"/>               o.object_output(self)
+<a name="222"/>            else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
+<a name="223"/>               writes(s, "(")
+<a name="224"/>               every i := 1 to Class.get_n_instance_fields(o) do {
+<a name="225"/>                  if i &gt; 1 then
+<a name="226"/>                     writes1(";")
+<a name="227"/>                  writes(Class.get_field_name(o, i), "=")
+<a name="228"/>                  traverse(Class.getf(o, i))
+<a name="229"/>                  i +:= 1
+<a name="230"/>               }
+<a name="231"/>               writes1(")")
+<a name="232"/>            } else {
+<a name="233"/>               nl()
+<a name="234"/>               writes(s, "(")
+<a name="235"/>               iplus()
+<a name="236"/>               every i := 1 to Class.get_n_instance_fields(o) do {
+<a name="237"/>                  nl()
+<a name="238"/>                  writes(Class.get_field_name(o, i), "=")
+<a name="239"/>                  iplus()
+<a name="240"/>                  traverse(Class.getf(o, i))
+<a name="241"/>                  iminus()
+<a name="242"/>                  i +:= 1
+<a name="243"/>               }
+<a name="244"/>               iminus()
+<a name="245"/>               nl()
+<a name="246"/>               writes1(")")
+<a name="247"/>            }
+<a name="248"/>         }
+<a name="249"/>
+<a name="250"/>         "set" : {
+<a name="251"/>            s := ty || "#" || serial(o)
+<a name="252"/>            insert(seen, o, s)
+<a name="253"/>            if /desc then
+<a name="254"/>               writes1(s)
+<a name="255"/>            else if simple{!o} then {
+<a name="256"/>               writes(s, "{")
+<a name="257"/>               every e := !sort(o) do {
+<a name="258"/>                  if \sep then
+<a name="259"/>                     writes1(",")
+<a name="260"/>                  traverse(e)
+<a name="261"/>                  sep := &amp;yes
+<a name="262"/>               }
+<a name="263"/>               writes1("}")
+<a name="264"/>            } else {
+<a name="265"/>               nl()
+<a name="266"/>               writes(s, "{")
+<a name="267"/>               iplus()
+<a name="268"/>               every e := !sort(o) do {
+<a name="269"/>                  if \sep then
+<a name="270"/>                     writes1(",")
+<a name="271"/>                  nl()
+<a name="272"/>                  traverse(e)
+<a name="273"/>                  sep := &amp;yes
+<a name="274"/>               }
+<a name="275"/>               iminus()
+<a name="276"/>               nl()
+<a name="277"/>               writes1("}")
+<a name="278"/>            }
+<a name="279"/>         }
+<a name="280"/>
+<a name="281"/>         "list" : {
+<a name="282"/>            s := ty || "#" || serial(o)
+<a name="283"/>            insert(seen, o, s)
+<a name="284"/>            if /desc then
+<a name="285"/>               writes1(s)
+<a name="286"/>            else if simple{!o} then {
+<a name="287"/>               writes(s, "[")
+<a name="288"/>               every e := !o do {
+<a name="289"/>                  if \sep then
+<a name="290"/>                     writes1(",")
+<a name="291"/>                  traverse(e)
+<a name="292"/>                  sep := &amp;yes
+<a name="293"/>               }
+<a name="294"/>               writes1("]")
+<a name="295"/>            } else {
+<a name="296"/>               nl()
+<a name="297"/>               writes(s, "[")
+<a name="298"/>               iplus()
+<a name="299"/>               every e := !o do {
+<a name="300"/>                  if \sep then
+<a name="301"/>                     writes1(",")
+<a name="302"/>                  nl()
+<a name="303"/>                  traverse(e)
+<a name="304"/>                  sep := &amp;yes
+<a name="305"/>               }
+<a name="306"/>               iminus()
+<a name="307"/>               nl()
+<a name="308"/>               writes1("]")
+<a name="309"/>            }
+<a name="310"/>         }
+<a name="311"/>
+<a name="312"/>         "table" : {
+<a name="313"/>            s := ty || "#" || serial(o)
+<a name="314"/>            insert(seen, o, s)
+<a name="315"/>            if /desc then
+<a name="316"/>               writes1(s)
+<a name="317"/>            else {
+<a name="318"/>               def := o[[]]
+<a name="319"/>               if simple{\def} then {
+<a name="320"/>                  writes1(s)
+<a name="321"/>                  if \def then {
+<a name="322"/>                     writes(";def=")
+<a name="323"/>                     traverse(def)
+<a name="324"/>                  }
+<a name="325"/>               } else {
+<a name="326"/>                  nl()
+<a name="327"/>                  writes1(s)
+<a name="328"/>                  if \def then {
+<a name="329"/>                     writes1(";def=")
+<a name="330"/>                     iplus()
+<a name="331"/>                     traverse(def)
+<a name="332"/>                     iminus()
+<a name="333"/>                  }
+<a name="334"/>               }
+<a name="335"/>
+<a name="336"/>               if simple{keyval(o)} then {
+<a name="337"/>                  writes1("{")
+<a name="338"/>                  every e := !sort(o) do {
+<a name="339"/>                     if \sep then
+<a name="340"/>                        writes1(";")
+<a name="341"/>                     traverse(e[1])
+<a name="342"/>                     writes1("-&gt;")
+<a name="343"/>                     traverse(e[2])
+<a name="344"/>                     sep := &amp;yes
+<a name="345"/>                  }
+<a name="346"/>                  writes1("}")
+<a name="347"/>               } else {
+<a name="348"/>                  writes1("{")
+<a name="349"/>                  iplus()
+<a name="350"/>                  every e := !sort(o) do {
+<a name="351"/>                     nl()
+<a name="352"/>                     traverse(e[1])
+<a name="353"/>                     writes1("-&gt;")
+<a name="354"/>                     iplus()
+<a name="355"/>                     traverse(e[2])
+<a name="356"/>                     iminus()
+<a name="357"/>                  }
+<a name="358"/>                  iminus()
+<a name="359"/>                  nl()
+<a name="360"/>                  writes1("}")
+<a name="361"/>               }
+<a name="362"/>            }
+<a name="363"/>         }
+<a name="364"/>
+<a name="365"/>         "methp" : {
+<a name="366"/>            s := ty || "#" || serial(o)
+<a name="367"/>            insert(seen, o, s)
+<a name="368"/>            if /desc then 
+<a name="369"/>               writes1(s)
+<a name="370"/>            else if simple{Class.get_methp_object(o)} then {
+<a name="371"/>               writes(s, "(")
+<a name="372"/>               traverse(Class.get_methp_object(o))
+<a name="373"/>               writes(",", image(Class.get_methp_proc(o)), ")")
+<a name="374"/>            } else {
+<a name="375"/>               nl()
+<a name="376"/>               writes(s, "(")
+<a name="377"/>               iplus()
+<a name="378"/>               nl()
+<a name="379"/>               traverse(Class.get_methp_object(o))
+<a name="380"/>               writes1(",")
+<a name="381"/>               nl()
+<a name="382"/>               writes1(image(Class.get_methp_proc(o)))
+<a name="383"/>               iminus()
+<a name="384"/>               nl()
+<a name="385"/>               writes1(")")
+<a name="386"/>            }
+<a name="387"/>         }
+<a name="388"/>
+<a name="389"/>         "weakref" : {
+<a name="390"/>            s := ty || "#" || serial(o)
+<a name="391"/>            insert(seen, o, s)
+<a name="392"/>            if /desc then
+<a name="393"/>               writes1(s)
+<a name="394"/>            else if e := weakrefval(o) then {
+<a name="395"/>               if simple{e} then {
+<a name="396"/>                  writes(s, "(")
+<a name="397"/>                  traverse(e)
+<a name="398"/>                  writes1(")")
+<a name="399"/>               } else {
+<a name="400"/>                  nl()
+<a name="401"/>                  writes(s, "(")
+<a name="402"/>                  iplus()
+<a name="403"/>                  nl()
+<a name="404"/>                  traverse(e)
+<a name="405"/>                  iminus()
+<a name="406"/>                  nl()
+<a name="407"/>                  writes1(")")
+<a name="408"/>               }
+<a name="409"/>            } else
+<a name="410"/>               writes(s, "()")
+<a name="411"/>         }
+<a name="412"/>
+<a name="413"/>         default : 
+<a name="414"/>            writes1(image(o))
+<a name="415"/>      }
+<a name="416"/>
+<a name="417"/>      level -:= 1
+<a name="418"/>      link
+<a name="419"/>   end
+<a name="420"/>   
+<a name="421"/>   public object_start(o)
+<a name="422"/>      return writes(type(o), " ", Class.get_name(o), "#", serial(o), "(")
+<a name="423"/>   end
+<a name="424"/>
+<a name="425"/>   public object_end(o)
+<a name="426"/>      return writes1(")")
+<a name="427"/>   end
+<a name="428"/>
+<a name="429"/>   public object_string(o, s)
+<a name="430"/>      object_start(o)
+<a name="431"/>      writes1(\s)
+<a name="432"/>      object_end(o)
+<a name="433"/>      link
+<a name="434"/>   end
+<a name="435"/>
+<a name="436"/>   public object_selected(o, fields[])
+<a name="437"/>      local s, sep
+<a name="438"/>      if simple{Class.getf(o, !fields)} then {
+<a name="439"/>         object_start(o)
+<a name="440"/>         every s := !fields do {
+<a name="441"/>            if \sep then
+<a name="442"/>               writes1(";")
+<a name="443"/>            writes(s, "=")
+<a name="444"/>            traverse(Class.getf(o, s))
+<a name="445"/>            sep := &amp;yes
+<a name="446"/>         }
+<a name="447"/>         object_end(o)
+<a name="448"/>      } else {
+<a name="449"/>         nl()
+<a name="450"/>         object_start(o)
+<a name="451"/>         iplus()
+<a name="452"/>         every s := !fields do {
+<a name="453"/>            nl()
+<a name="454"/>            writes(s, "=")
+<a name="455"/>            iplus()
+<a name="456"/>            traverse(Class.getf(o, s))
+<a name="457"/>            iminus()
+<a name="458"/>         }
+<a name="459"/>         iminus()
+<a name="460"/>         nl()
+<a name="461"/>         object_end(o)
+<a name="462"/>      }
+<a name="463"/>      link
+<a name="464"/>   end
+<a name="465"/>
+<a name="466"/>   public simple(x)
+<a name="467"/>      local e
+<a name="468"/>      static s
+<a name="469"/>      initial s := set("null", "yes", "string", "ucs", "cset", "integer", "class",
+<a name="470"/>                       "real", "co-expression", "constructor", "procedure")
+<a name="471"/>      if /indent then
+<a name="472"/>         return
+<a name="473"/>      # If always structure, then only an empty sequence is simple.
+<a name="474"/>      if \always_structure_flag then
+<a name="475"/>         return not(@x)
+<a name="476"/>      if level = \depth then
+<a name="477"/>         return
+<a name="478"/>      while e := @x do
+<a name="479"/>         member(seen, e) | member(s, type(e)) | fail
+<a name="480"/>      return 
+<a name="481"/>   end
+<a name="482"/>
+<a name="483"/>   # When set to an integer, output is structured over many lines,
+<a name="484"/>   # with the given value as an indent to show structure.  When null,
+<a name="485"/>   # all output is on one line.
+<a name="486"/>   #
+<a name="487"/>   public set_indent(i)
+<a name="488"/>      self.indent := i
+<a name="489"/>      link
+<a name="490"/>   end
+<a name="491"/>
+<a name="492"/>   # The maximum depth into which strucutures are recursed; if null
+<a name="493"/>   # then no limit.
+<a name="494"/>   #
+<a name="495"/>   public set_depth(i)
+<a name="496"/>      self.depth := i
+<a name="497"/>      link
+<a name="498"/>   end
+<a name="499"/>
+<a name="500"/>   # If set, then any custom `object_output` methods in objects are
+<a name="501"/>   # ignored, and the default object output format is used instead.
+<a name="502"/>   #
+<a name="503"/>   public set_ignore_object_output(s)
+<a name="504"/>      self.ignore_object_output_flag := need_flag(s)
+<a name="505"/>      link
+<a name="506"/>   end
+<a name="507"/>
+<a name="508"/>   # When indent is set (ie output is over many lines and indented to
+<a name="509"/>   # show structure), certain objects will still be written on one
+<a name="510"/>   # line if they just contain simple elements like integers and
+<a name="511"/>   # strings.  This flag forces even these objects to be written over
+<a name="512"/>   # many lines.
+<a name="513"/>   #
+<a name="514"/>   public set_always_structure(s)
+<a name="515"/>      self.always_structure_flag := need_flag(s)
+<a name="516"/>      link
+<a name="517"/>   end
+<a name="518"/>
+<a name="519"/>   public override close()
+<a name="520"/>      if \close_underlying_flag then
+<a name="521"/>         file.close() | fail
+<a name="522"/>      link
+<a name="523"/>   end
+<a name="524"/>
+<a name="525"/>   public new(file)
+<a name="526"/>      /file := FileStream.stdout
+<a name="527"/>      self.file := file
+<a name="528"/>      file.can(Stream.WRITE) | runerr("Stream not writable", file)
+<a name="529"/>      return
+<a name="530"/>   end
+<a name="531"/>end
+<a name="532"/>
+<a name="533"/>package class CloneMethp()
+<a name="534"/>   package optional nothing()
+<a name="535"/>end
+<a name="536"/>
+<a name="537"/>#
+<a name="538"/># Clone the given object
+<a name="539"/>#
+<a name="540"/>procedure clone(o, seen)
+<a name="541"/>   local e, ty, res, i
+<a name="542"/>
+<a name="543"/>   /seen := table()
+<a name="544"/>
+<a name="545"/>   if res := member(seen, o) then
+<a name="546"/>      return res
+<a name="547"/>
+<a name="548"/>   ty := type(o)
+<a name="549"/>
+<a name="550"/>   case ty of {
+<a name="551"/>      "object" : {
+<a name="552"/>         if Class.is_by_name(o, ObjectClone) then {
+<a name="553"/>            res := o.object_clone(seen)
+<a name="554"/>            (classof(res) === classof(o)) | runerr("Invalid cloned object", res)
+<a name="555"/>            insert(seen, o, res)
+<a name="556"/>         } else {
+<a name="557"/>            #
+<a name="558"/>            # Create an instance
+<a name="559"/>            #
+<a name="560"/>            res := Class.create_raw_instance_of(classof(o))
+<a name="561"/>            # The members of res may reference it...
+<a name="562"/>            insert(seen, o, res)
+<a name="563"/>            every i := 1 to Class.get_n_instance_fields(res) do
+<a name="564"/>               Class.get(res, i) := clone(Class.get(o, i), seen)
+<a name="565"/>            Class.complete_raw_instance(res)
+<a name="566"/>         }
+<a name="567"/>         return res
+<a name="568"/>      }
+<a name="569"/>
+<a name="570"/>      "record" : {
+<a name="571"/>         res := classof(o)()
+<a name="572"/>         insert(seen, o, res)
+<a name="573"/>         every i := 1 to *o do
+<a name="574"/>            res[i] := clone(o[i], seen)
+<a name="575"/>         return res
+<a name="576"/>      }
+<a name="577"/>
+<a name="578"/>      "set" : {
+<a name="579"/>         res := set()
+<a name="580"/>         insert(seen, o, res)
+<a name="581"/>         every insert(res, clone(!o, seen))
+<a name="582"/>         return res
+<a name="583"/>      }
+<a name="584"/>
+<a name="585"/>      "list" : {
+<a name="586"/>         res := []
+<a name="587"/>         insert(seen, o, res)
+<a name="588"/>         every put(res, clone(!o, seen))
+<a name="589"/>         return res
+<a name="590"/>      }
+<a name="591"/>
+<a name="592"/>      "table" : {
+<a name="593"/>         res := table(clone(o[[]], seen))
+<a name="594"/>         insert(seen, o, res)
+<a name="595"/>         every e := entries(o) do
+<a name="596"/>            insert(res, clone(e.key, seen), clone(e.val, seen))
+<a name="597"/>         return res
+<a name="598"/>      }
+<a name="599"/>
+<a name="600"/>      "methp" : {
+<a name="601"/>         res := CloneMethp().nothing
+<a name="602"/>         insert(seen, o, res)
+<a name="603"/>         return Class.set_methp(res, clone(Class.get_methp_object(o), seen), Class.get_methp_proc(o))
+<a name="604"/>      }
+<a name="605"/>
+<a name="606"/>      default : 
+<a name="607"/>         return o
+<a name="608"/>   }
+<a name="609"/>end
+<a name="610"/>
+<a name="611"/>#
+<a name="612"/># Return a hash code for this object.  For any two objects for which `equals` indicates
+<a name="613"/># equality, the returned hash code should be the same.
+<a name="614"/>#
+<a name="615"/>procedure hash(x, depth)
+<a name="616"/>   local n, i, l
+<a name="617"/>
+<a name="618"/>   /depth := 2
+<a name="619"/>   if depth = 0 then
+<a name="620"/>      return 0
+<a name="621"/>   
+<a name="622"/>   case type(x) of {
+<a name="623"/>      "object" : {
+<a name="624"/>         if Class.is_by_name(x, ObjectHash) then
+<a name="625"/>            n := x.object_hash(depth)
+<a name="626"/>         else {
+<a name="627"/>            l := n := Class.get_n_instance_fields(x)
+<a name="628"/>            if depth &gt; 1 then {
+<a name="629"/>               every i := hash(Class.get(x, 1 to l) \ 10, depth - 1) do
+<a name="630"/>                  n := 37 * iand(n, 16rffffff)  + i
+<a name="631"/>            }
+<a name="632"/>         }
+<a name="633"/>      }
+<a name="634"/>
+<a name="635"/>      "record" | "list" : {
+<a name="636"/>         n := *x
+<a name="637"/>         if depth &gt; 1 then {
+<a name="638"/>            every i := hash(!x \ 10, depth - 1) do
+<a name="639"/>               n := 37 * iand(n, 16rffffff)  + i
+<a name="640"/>         }
+<a name="641"/>      }
+<a name="642"/>
+<a name="643"/>      "set" : {
+<a name="644"/>         n := *x
+<a name="645"/>         if depth &gt; 1 then
+<a name="646"/>            every n +:= hash(!x, depth - 1)
+<a name="647"/>      }
+<a name="648"/>
+<a name="649"/>      "table" : {
+<a name="650"/>         n := *x
+<a name="651"/>         if depth &gt; 1 then {
+<a name="652"/>            n +:= hash(x[[]], depth - 1)
+<a name="653"/>            every n +:= hash(key(x), depth - 1)
+<a name="654"/>         }
+<a name="655"/>      }
+<a name="656"/>
+<a name="657"/>      "methp" :
+<a name="658"/>         n := hash(Class.get_methp_object(x), depth - 1) +
+<a name="659"/>                   hash(Class.get_methp_proc(x), depth - 1)
+<a name="660"/>
+<a name="661"/>      default :
+<a name="662"/>         n := Internal.hash(x)
+<a name="663"/>   }
+<a name="664"/>   return iand(n, 16r7fffffff)
+<a name="665"/>end
+<a name="666"/>
+<a name="667"/>#
+<a name="668"/># Compare this object with another by recursively comparing all
+<a name="669"/># members of the object.
+<a name="670"/>#
+<a name="671"/>procedure equals(x, y, seen)
+<a name="672"/>   local t
+<a name="673"/>   if x === y then
+<a name="674"/>      return
+<a name="675"/>   type(x) == type(y) | fail
+<a name="676"/>   /seen := table()
+<a name="677"/>   if member(member(seen, x), y) | member(member(seen, y), x) then
+<a name="678"/>      return
+<a name="679"/>   (t := member(seen, x)) | insert(seen, x, t := set())
+<a name="680"/>   insert(t, y)
+<a name="681"/>   if equals_impl(x, y, seen) then
+<a name="682"/>      return
+<a name="683"/>   delete(t, y)
+<a name="684"/>end
+<a name="685"/>
+<a name="686"/>package procedure equals_impl(x, y, seen)
+<a name="687"/>   local i, mp
+<a name="688"/>   case type(x) of {
+<a name="689"/>      "object" : {
+<a name="690"/>         if Class.is_by_name(x, ObjectEquals) then {
+<a name="691"/>            # x has an object_equals method, so y must inherit the
+<a name="692"/>            # same object_equals method as x.
+<a name="693"/>            mp := x.object_equals
+<a name="694"/>            succeed (Proc.get_defining_class(mp) === Class.get_field_defining_class(y, "object_equals")) &amp;
+<a name="695"/>               mp(y, seen)
+<a name="696"/>         }
+<a name="697"/>         classof(x) === classof(y) | fail
+<a name="698"/>         every i := 1 to Class.get_n_instance_fields(x) do 
+<a name="699"/>            equals(Class.get(x, i), Class.get(y, i), seen) | fail
+<a name="700"/>         return
+<a name="701"/>      }
+<a name="702"/>
+<a name="703"/>      "record" : {
+<a name="704"/>         *x = *y | fail
+<a name="705"/>         classof(x) === classof(y) | fail
+<a name="706"/>         every i := 1 to *x do
+<a name="707"/>            equals(x[i], y[i], seen) | fail
+<a name="708"/>         return
+<a name="709"/>      }
+<a name="710"/>
+<a name="711"/>      "list" : {
+<a name="712"/>         *x = *y | fail
+<a name="713"/>         every i := 1 to *x do
+<a name="714"/>            equals(x[i], y[i], seen) | fail
+<a name="715"/>         return
+<a name="716"/>      }
+<a name="717"/>
+<a name="718"/>      "set" : {
+<a name="719"/>         *x = *y | fail
+<a name="720"/>         return hash_and_check(x, y, seen)
+<a name="721"/>      }
+<a name="722"/>
+<a name="723"/>      "table" : {
+<a name="724"/>         *x = *y | fail
+<a name="725"/>         equals(x[[]], y[[]], seen) | fail
+<a name="726"/>         return hash_and_check(entrylist(x), entrylist(y), seen)
+<a name="727"/>      }
+<a name="728"/>
+<a name="729"/>      "methp": {
+<a name="730"/>         Class.get_methp_proc(x) === Class.get_methp_proc(y) | fail
+<a name="731"/>         equals(Class.get_methp_object(x),
+<a name="732"/>                Class.get_methp_object(y), seen) | fail
+<a name="733"/>         return
+<a name="734"/>      }
+<a name="735"/>
+<a name="736"/>      default : {
+<a name="737"/>         # Since x ~=== y, we just fail for all other types.
+<a name="738"/>         fail
+<a name="739"/>      }
+<a name="740"/>   }
+<a name="741"/>end
+<a name="742"/>
+<a name="743"/>#
+<a name="744"/># Check that all elements of s2 are in s1, by using a table indexed on
+<a name="745"/># hash-codes.
+<a name="746"/>#
+<a name="747"/>procedure hash_and_check(s1, s2, seen)
+<a name="748"/>   local t, e, i
+<a name="749"/>   t := table()
+<a name="750"/>   every e := !s1 do {
+<a name="751"/>      i := hash(e)
+<a name="752"/>      inserts(t, i, e)
+<a name="753"/>   }
+<a name="754"/>   every e := !s2 do
+<a name="755"/>      in_bucket(e, member(t, hash(e)), seen) | fail
+<a name="756"/>   return
+<a name="757"/>end
+<a name="758"/>
+<a name="759"/>#
+<a name="760"/># Search for element e in hash bucket l.  If found, the bucket element is
+<a name="761"/># removed, so that it is matched only once.
+<a name="762"/>#
+<a name="763"/>package procedure in_bucket(e, l, seen)
+<a name="764"/>   local i
+<a name="765"/>   every i := 1 to *l do {
+<a name="766"/>      if equals(e, l[i], seen) then {
+<a name="767"/>         delete(l, i)
+<a name="768"/>         return
+<a name="769"/>      }
+<a name="770"/>   }
+<a name="771"/>end
+<a name="772"/>
+<a name="773"/>#
+<a name="774"/># This class has some static methods that give access to some useful internal
+<a name="775"/># interpreter functions.
+<a name="776"/>#
+<a name="777"/>final abstract class Internal()
+<a name="778"/>   #
+<a name="779"/>   # This method gives access to the internal ordering method used by
+<a name="780"/>   # the interpreter, for example in the builtin `sort` function.  The
+<a name="781"/>   # two values are compared and either `-1`, `0`, or `+1` is returned
+<a name="782"/>   # depending on whether `x` is less than, equal to, or greater than
+<a name="783"/>   # `y`, respectively.
+<a name="784"/>   #
+<a name="785"/>   public static native compare(x, y)
+<a name="786"/>
+<a name="787"/>   #
+<a name="788"/>   # This method gives access to the internal hash method used
+<a name="789"/>   # by the interpreter, for example in implementing tables and sets.
+<a name="790"/>   # It is distinct from the `lang.hash()` procedure.
+<a name="791"/>   #
+<a name="792"/>   public static native hash(x)
+<a name="793"/>
+<a name="794"/>   #
+<a name="795"/>   # Return the collating order number for `x`, which is a small integer
+<a name="796"/>   # dependent on the type.
+<a name="797"/>   #
+<a name="798"/>   public static native order(x)
+<a name="799"/>end
+<a name="800"/>
+<a name="801"/>#
+<a name="802"/># Parent class for a class which returns self on clone (useful for
+<a name="803"/># immutable classes).
+<a name="804"/>#
+<a name="805"/>class SelfClone(ObjectClone)
+<a name="806"/>   protected final override object_clone()
+<a name="807"/>      link
+<a name="808"/>   end
+<a name="809"/>end
+<a name="810"/>
+<a name="811"/>#
+<a name="812"/># Parent class for a class which wishes to prevent copying of itself,
+<a name="813"/># either by clone or encode/decode.
+<a name="814"/>#
+<a name="815"/>class NoCopy(SelfClone, Unencodable)
+<a name="816"/>end
+<a name="817"/>
+<a name="818"/>#
+<a name="819"/># An implementation of object_output that avoids printing the
+<a name="820"/># internals of an object, and just produces the bare minimum output,
+<a name="821"/># such as "object mypackage.MyObject#3()"
+<a name="822"/>#
+<a name="823"/>class MinimalObjectOutput(ObjectOutput)
+<a name="824"/>   protected override object_output(oo)
+<a name="825"/>      oo.object_string(self)
+<a name="826"/>   end
+<a name="827"/>end
+<a name="828"/>
+<a name="829"/>#
+<a name="830"/># Given an global name, return the package element, or fail if there is none.
+<a name="831"/>#
+<a name="832"/>procedure extract_package(s)
+<a name="833"/>   s ? if tab(backto('.',, 0) - 1) then
+<a name="834"/>      return tab(1)
+<a name="835"/>end
+<a name="836"/>
+<a name="837"/># This class just provides a simple constructor which initializes the
+<a name="838"/># instance fields in the order they were defined in the class, from
+<a name="839"/># the given parameters.  In other words, rather like a record
+<a name="840"/># constructor.
+<a name="841"/>#
+<a name="842"/># Example :-
+<a name="843"/># ~
+<a name="844"/>#    class Abc(New) public const a, b, c end
+<a name="845"/>#    ...
+<a name="846"/>#    x := Abc(1,2,3)  # Sets a,b,c to 1,2,3 respectively
+<a name="847"/># ~
+<a name="848"/>class New()
+<a name="849"/>   public new(a[])
+<a name="850"/>      local i, v
+<a name="851"/>      every i := 1 to Class.get_n_instance_fields(self) do {
+<a name="852"/>         v := pop(a) | break
+<a name="853"/>         Class.get(self, i) := v
+<a name="854"/>      }
+<a name="855"/>      return
+<a name="856"/>   end
+<a name="857"/>end
+<a name="858"/>
+<a name="859"/>#
+<a name="860"/># Try to convert `x` to something which can be invoked.  This follows
+<a name="861"/># similar logic to that used in converting an expression for
+<a name="862"/># invocation (see the function general_call in invoke.r).
+<a name="863"/>#
+<a name="864"/># :Parameters :
+<a name="865"/># :  `x` - the thing to convert
+<a name="866"/># :  `n` - the optional number of args for an operator.  If null, then
+<a name="867"/>#          a valid operator name will be returned as a string; if 0 then
+<a name="868"/>#          no operator names are recognized; if 1, 2 or 3 then only
+<a name="869"/>#          an operator with that number of parameters will be recognized.
+<a name="870"/>#
+<a name="871"/>procedure callable(x, n)
+<a name="872"/>   if type(x) == ("procedure" | "class" | "constructor" | "methp") then
+<a name="873"/>      return x
+<a name="874"/>   if x := integer(x) then
+<a name="875"/>      return x
+<a name="876"/>   if x := string(x) then {
+<a name="877"/>      if x := Prog.get_named_global(x) | Prog.get_function(x) | Prog.get_keyword(x) then
+<a name="878"/>         return x
+<a name="879"/>      return if /n then
+<a name="880"/>         # Null means any operator and return the name
+<a name="881"/>         Prog.get_operator(x, 1 to 3) &amp; x
+<a name="882"/>      else
+<a name="883"/>         # Otherwise match the number, or reject if n=0.
+<a name="884"/>         Prog.get_operator(x, 0 &lt; n)
+<a name="885"/>   }
+<a name="886"/>end
+</pre></body></html>

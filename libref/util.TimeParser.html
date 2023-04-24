@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TimeParser</title></head><body>
+<h1>TimeParser</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+</dl><p/>
+This class is used to create <code><a href="util.Time.html" target="displayFrame">Time</a></code> objects from format strings.
+<p/><a href="util-time.icn.html#1040" target="displayFrame">Source - time.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#parse">parse()</a>
+<a href="#parse_12h">parse_12h()</a>
+<a href="#parse_am_pm">parse_am_pm()</a>
+<a href="#parse_impl">parse_impl()</a>
+<a href="#parse_int">parse_int()</a>
+<a href="#parse_month">parse_month()</a>
+<a href="#parse_rfc3339_timezone">parse_rfc3339_timezone()</a>
+<a href="#parse_timezone">parse_timezone()</a>
+<a href="#parse_weekday">parse_weekday()</a>
+<a href="#parse_year">parse_year()</a>
+<a href="#tab_ws">tab_ws()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ss">ss</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="parse"/>
+<h3>parse(s, p)</h3>
+public<p/>
+<dl>
+<dd>
+<p/>
+Parse the instance using the given pattern string.  The pattern
+consists of pattern chars and other chars.  Succeeds if the 
+string could be parsed; fails and sets &amp;why otherwise.
+<p/>
+The "width" of a field is the number of successive equal pattern
+chars.  For example in the pattern
+<p/>
+yyyy/MMM/dd
+<p/>
+the widths are 4, 3 and 2 respectively.
+<p/>
+Except for the month and year (see below), the only use of the
+width is to separate adjacent numeric fields.  For example, with
+the format "HHmmss", because the field following the "HH" is
+numeric, the width of the hours field is limited to two digits,
+and in the input "123211" consumes only "12" (rather than the
+whole sequence of digits).
+<p/>
+The possible pattern chars are :-
+<p/>
+E - The weekday (eg Mon) - Match a full or abbreviated week-
+day name, ignoring case.
+<p/>
+F - Like E, but using the local weekday names.
+<p/>
+y - The year.  If the width is 4, then the year must be
+explicitly 4 digits.  Otherwise, if the year is less than 70 it
+is taken to be 20xx; if it is less than 100 it is taken to be
+19xx, otherwise it is as given.
+<p/>
+d - The day of the month
+<p/>
+H - The hour in the day in the 24 hour format
+<p/>
+h - The hour in the day in the 12 hour clock format 
+<p/>
+M - The month of the year.  If the width is less than 3 then the
+numeric value is expected, otherwise a match of either full
+or abbreviated month name is expected, ignoring case.
+<p/>
+N - Like M, but using the local month names.
+<p/>
+m - The minute in the hour
+<p/>
+s - The second in the minute
+<p/>
+a/A - am or pm.  Case is ignored.  If pm, then the hour is
+adjusted accordingly in the result.  Should only be used with "h".
+<p/>
+b/B - Like a/A, but using the local am/pm names.
+<p/>
+z - The timezone (eg UTC or +0400).
+<p/>
+T - The timezone in RFC3339 format (eg Z or +04:00).
+<p/>
+x - Matches the remaining input, and can be used to skip extraneous
+trailing input, which would otherwise cause an error.
+<p/>
+space - Matches zero or more whitespace (space and tab).
+<p/>
+Initial and trailing whitespace is always skipped.
+<p/>
+A literal string may be matched by enclosing it in single quotes.
+For example ',' matches exactly one comma.
+<p/>
+Any other character matches zero or more instances of that
+character.  For example the comma in "E, d" would match an
+optional comma between the weekday and the month day.
+<p/><a href="util-time.icn.html#1169" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_12h"/>
+<h3>parse_12h(w)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed hour in the 12-hour clock
+<p/>
+<p/><a href="util-time.icn.html#1155" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_am_pm"/>
+<h3>parse_am_pm(hh, l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed am/pm
+<p/><a href="util-time.icn.html#1095" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_impl"/>
+<h3>parse_impl()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#1244" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_int"/>
+<h3>parse_int(w, lo, hi)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed int
+<p/><a href="util-time.icn.html#1047" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_month"/>
+<h3>parse_month(w, l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed month
+<p/>
+<p/><a href="util-time.icn.html#1111" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_rfc3339_timezone"/>
+<h3>parse_rfc3339_timezone()</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed rfc3339 timezone
+<p/><a href="util-time.icn.html#1078" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_timezone"/>
+<h3>parse_timezone()</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed timezone
+<p/><a href="util-time.icn.html#1069" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_weekday"/>
+<h3>parse_weekday(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed weekday
+<p/>
+<p/><a href="util-time.icn.html#1126" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_year"/>
+<h3>parse_year(w)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Get the next parsed month
+<p/>
+<p/><a href="util-time.icn.html#1139" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="tab_ws"/>
+<h3>tab_ws()</h3>
+private<p/>
+<dl>
+<dd>
+Tab over any whitespace
+<p/><a href="util-time.icn.html#1162" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ss"/>
+<h3>ss</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#1044" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>DesktopEntry</title></head><body>
+<h1>DesktopEntry</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Package :</dt><dd><a href="xdg-package.html" target="listFrame">xdg</a></dd>
+</dl><p/>
+Represents info from a ".desktop" file
+<p/><a href="xdg-xdg.icn.html#212" target="displayFrame">Source - xdg.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#expand_code">expand_code()</a>
+<a href="#find_term_cmd">find_term_cmd()</a>
+<a href="#gen_args">gen_args()</a>
+<a href="#init">init()</a>
+<a href="#launch_prog">launch_prog()</a>
+<a href="#new">new()</a>
+<a href="#subst_file_args">subst_file_args()</a>
+<a href="#subst_file_list">subst_file_list()</a>
+<a href="#subst_file_shell">subst_file_shell()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#exec">exec</a>
+<a href="#exec_line">exec_line</a>
+<a href="#icon">icon</a>
+<a href="#initial_preference">initial_preference</a>
+<a href="#name">name</a>
+<a href="#path">path</a>
+<a href="#source">source</a>
+<a href="#TERM_CMD">TERM_CMD</a>
+<a href="#terminal">terminal</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="expand_code"/>
+<h3>expand_code(s, subst)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#293" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_term_cmd"/>
+<h3>find_term_cmd()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#234" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_args"/>
+<h3>gen_args(s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#271" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#243" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="launch_prog"/>
+<h3>launch_prog(subst)</h3>
+public<p/>
+<dl>
+<dd>
+Helpful method to launch an application using this <code><a href="xdg.DesktopEntry.html" target="displayFrame">DesktopEntry</a></code>
+with the given <code><a href="xdg.Subst.html" target="displayFrame">Subst</a></code> values applied to its Exec entry.
+<p/><a href="xdg-xdg.icn.html#247" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(name, icon, source, exec, exec_line, path, terminal, initial_preference)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#351" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="subst_file_args"/>
+<h3>subst_file_args(subst)</h3>
+public<p/>
+<dl>
+<dd>
+Substitute from the given <code><a href="xdg.Subst.html" target="displayFrame">Subst</a></code>, into the Exec (or ExecLine)
+command, generating a sequence of resulting arguments.
+<p/><a href="xdg-xdg.icn.html#321" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="subst_file_list"/>
+<h3>subst_file_list(subst)</h3>
+public<p/>
+<dl>
+<dd>
+Helpful method to return the results of <code><a href="xdg.DesktopEntry.html#subst_file_args">subst_file_args()</a></code>
+as a list.
+<p/><a href="xdg-xdg.icn.html#335" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="subst_file_shell"/>
+<h3>subst_file_shell(subst)</h3>
+public<p/>
+<dl>
+<dd>
+This takes the results of <code><a href="xdg.DesktopEntry.html#subst_file_args">subst_file_args()</a></code> and produces a
+single string suitable for execution by the shell.
+<p/><a href="xdg-xdg.icn.html#343" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="exec"/>
+<h3>exec</h3>
+public const<p/>
+<dl>
+<dd>
+Exec entry (ucs, mandatory)
+<p/><a href="xdg-xdg.icn.html#220" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="exec_line"/>
+<h3>exec_line</h3>
+public const<p/>
+<dl>
+<dd>
+optional ExecLine entry (ucs)
+<p/><a href="xdg-xdg.icn.html#221" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="icon"/>
+<h3>icon</h3>
+public const<p/>
+<dl>
+<dd>
+Icon name (string)
+<p/><a href="xdg-xdg.icn.html#218" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="initial_preference"/>
+<h3>initial_preference</h3>
+public const<p/>
+<dl>
+<dd>
+InitialPreference entry (default 0)
+<p/><a href="xdg-xdg.icn.html#224" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="name"/>
+<h3>name</h3>
+public const<p/>
+<dl>
+<dd>
+Descriptive name (ucs, mandatory)
+<p/><a href="xdg-xdg.icn.html#217" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="path"/>
+<h3>path</h3>
+public const<p/>
+<dl>
+<dd>
+Path entry (ucs)
+<p/><a href="xdg-xdg.icn.html#222" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="source"/>
+<h3>source</h3>
+public const<p/>
+<dl>
+<dd>
+Source file (string)
+<p/><a href="xdg-xdg.icn.html#219" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="TERM_CMD"/>
+<h3>TERM_CMD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#226" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="terminal"/>
+<h3>terminal</h3>
+public const<p/>
+<dl>
+<dd>
+Terminal entry (flag)
+<p/><a href="xdg-xdg.icn.html#223" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+</body></html>

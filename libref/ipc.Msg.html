@@ -1,0 +1,261 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Msg</title></head><body>
+<h1>Msg</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipc-package.html" target="listFrame">ipc</a></dd>
+</dl><p/>
+This class provides an inter process messaging facility.  The
+implementation requires the accompanying native library to be on the
+library path.
+<p/>
+Instances of this class should not be created directly, but rather
+using the static methods <code><a href="ipc.Msg.html#open_public">open_public</a></code>, <code><a href="ipc.Msg.html#create_public">create_public</a></code> and
+<code><a href="ipc.Msg.html#create_private">create_private</a></code>
+<p/><a href="ipc-msg.icn.html#13" target="displayFrame">Source - msg.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="ipc.Msg.html">ipc.Msg</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#attempt">attempt()</a>
+<a href="#attempt_impl">attempt_impl()</a>
+<a href="#close">close()</a>
+<a href="#create_private">create_private()</a>
+<a href="#create_private_impl">create_private_impl()</a>
+<a href="#create_public">create_public()</a>
+<a href="#create_public_impl">create_public_impl()</a>
+<a href="#get_id">get_id()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#open_public">open_public()</a>
+<a href="#open_public_impl">open_public_impl()</a>
+<a href="#poll">poll()</a>
+<a href="#receive">receive()</a>
+<a href="#receive_impl">receive_impl()</a>
+<a href="#send">send()</a>
+<a href="#send_impl">send_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#id">id</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="attempt"/>
+<h3>attempt()</h3>
+public<p/>
+<dl>
+<dd>
+Attempt to get an object from the queue, failing if one is not
+ready immediately.
+<p/><a href="ipc-msg.icn.html#46" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="attempt_impl"/>
+<h3>attempt_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#54" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Clean up the resources used by the queue.  This should be called by
+the parent process after the queue is no longer needed.
+<p/><a href="ipc-msg.icn.html#76" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="create_private"/>
+<h3>create_private()</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new private queue
+<p/><a href="ipc-msg.icn.html#119" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="create_private_impl"/>
+<h3>create_private_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#91" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="create_public"/>
+<h3>create_public(key)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a new public queue with the given key
+<p/><a href="ipc-msg.icn.html#111" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="create_public_impl"/>
+<h3>create_public_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#90" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="get_id"/>
+<h3>get_id()</h3>
+public<p/>
+<dl>
+<dd>
+Return the underlying id of the queue, failing if it's closed.
+<p/><a href="ipc-msg.icn.html#82" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#93" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(id)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#97" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="open_public"/>
+<h3>open_public(key)</h3>
+public static<p/>
+<dl>
+<dd>
+Get an existing public queue with the given key, or fail
+if no such queue exists.
+<p/><a href="ipc-msg.icn.html#102" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="open_public_impl"/>
+<h3>open_public_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#89" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="poll"/>
+<h3>poll(t)</h3>
+public<p/>
+<dl>
+<dd>
+Poll the queue for an object for t milliseconds.  If an object is
+not received within that time, fail, otherwise return it.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - the timeout
+</dd>
+</dl>
+<p/><a href="ipc-msg.icn.html#56" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="receive"/>
+<h3>receive()</h3>
+public<p/>
+<dl>
+<dd>
+Receive an object from the queue, waiting if necessary.
+<p/><a href="ipc-msg.icn.html#37" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="receive_impl"/>
+<h3>receive_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#44" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="send"/>
+<h3>send(o)</h3>
+public<p/>
+<dl>
+<dd>
+Send the given object.  The object may be an arbitrary Icon
+structure, and will be encoded into a string by the <code><a href="lang.encode.html" target="displayFrame">encode()</a></code>
+procedure.
+<p/><a href="ipc-msg.icn.html#26" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<a name="send_impl"/>
+<h3>send_impl(s)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#35" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="id"/>
+<h3>id</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipc-msg.icn.html#23" target="displayFrame">Source - msg.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>argf1</title></head><body>
+<h1>argf1(e)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This is just like <code><a href="ipl.functional.argf.html" target="displayFrame">argf</a></code>, but the first argument only is
+transmitted, and other arguments are discarded.  This makes
+functions which take a single argument slightly more compact.  So the
+second example given above in <code><a href="ipl.functional.argf.html" target="displayFrame">argf</a></code> would instead be :-
+<p/>
+<pre>
+  g := argf1 {{
+     a := coact()
+     if a = 0 then 1 else .a * g(a - 1)
+  }}
+</pre>
+<p/><a href="ipl.functional-lambda.icn.html#116" target="displayFrame">Source - lambda.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>RandomWithModulus</title></head><body>
+<h1>RandomWithModulus</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="ipl.random.Random.html" target="displayFrame">ipl.random.Random</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.random.LCG.html">ipl.random.LCG</a><br>
+<a href="ipl.random.PCG32.html">ipl.random.PCG32</a><br>
+<a href="ipl.random.BuiltinLCG.html">ipl.random.BuiltinLCG</a><br>
+<a href="ipl.random.CombinedRandom.html">ipl.random.CombinedRandom</a><br>
+<a href="ipl.random.RandomFromStream.html">ipl.random.RandomFromStream</a><br>
+<a href="ipl.random.MersenneTwister64.html">ipl.random.MersenneTwister64</a><br>
+<a href="ipl.random.MersenneTwister32.html">ipl.random.MersenneTwister32</a><br>
+<a href="ipl.random.RandomFromGenerator.html">ipl.random.RandomFromGenerator</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.random-package.html" target="listFrame">ipl.random</a></dd>
+</dl><p/>
+An abstract class for random generators which generate integers in
+the range of an arbitrary fixed modulus (usually a power of 2).
+<p/>
+The modulus <code><a href="ipl.random.RandomWithModulus.html#m">m</a></code> is supplied in the constructor, and a single method,
+<code><a href="ipl.random.RandomWithModulus.html#get">get()</a></code> is implemented which generates numbers in the range [0, m).
+<p/><a href="ipl.random-random.icn.html#198" target="displayFrame">Source - random.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="ipl.random.Random.html">ipl.random.Random</a>
+<a href="ipl.random.RandomWithModulus.html">ipl.random.RandomWithModulus</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasClose</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html#close">close()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from ipl.random.Random</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.random.Random.html#choose">choose()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#gen">gen()</a>
+<a href="#get">get()</a>
+<a href="#get_n">get_n()</a>
+<a href="#init">init()</a>
+<a href="#mod32">mod32()</a>
+<a href="#mod64">mod64()</a>
+<a href="#new">new()</a>
+<a href="#range">range()</a>
+<a href="#real">real()</a>
+<a href="#set_real_range">set_real_range()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#a1">a1</a>
+<a href="#m">m</a>
+<a href="#MAX_REAL_RANGE">MAX_REAL_RANGE</a>
+<a href="#n1">n1</a>
+<a href="#p1">p1</a>
+<a href="#rf">rf</a>
+<a href="#rr">rr</a>
+<a href="#s1">s1</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="gen"/>
+<h3>gen()</h3>
+public<p/>
+<dl>
+<dd>
+A convenient method to generate a sequence of results by
+repeatedly calling <code><a href="ipl.random.RandomWithModulus.html#get">get()</a></code>.
+<p/><a href="ipl.random-random.icn.html#245" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="get"/>
+<h3>get()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return a random number in the range [0, m)
+<p/><a href="ipl.random-random.icn.html#218" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n"/>
+<h3>get_n(p)</h3>
+public<p/>
+<dl>
+<dd>
+This method combines <code>p</code> random numbers from <code><a href="ipl.random.RandomWithModulus.html#get">get()</a></code> to give a
+result in the range [0, m^p).  For example, if m=2^5, <code><a href="ipl.random.RandomWithModulus.html#get_n">get_n(2)</a></code>
+would return a number in the range [0, m^2) = [0, 2^10).
+<p/><a href="ipl.random-random.icn.html#252" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.random-random.icn.html#214" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="mod32"/>
+<h3>mod32(n)</h3>
+public static<p/>
+<dl>
+<dd>
+Returns <code>iand(n, 2^32 - 1)</code>
+<p/><a href="ipl.random-random.icn.html#312" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="mod64"/>
+<h3>mod64(n)</h3>
+public static<p/>
+<dl>
+<dd>
+Returns <code>iand(n, 2^64 - 1)</code>
+<p/><a href="ipl.random-random.icn.html#306" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(m)</h3>
+public<p/>
+<dl>
+<dd>
+The constructor takes the modulus, an integer <code>m &gt;= 2</code>.
+<p/><a href="ipl.random-random.icn.html#318" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="range"/>
+<h3>range(n)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.random.Random.html#range">range()</a> in <a href="ipl.random.Random.html" target="displayFrame">ipl.random.Random</a></dd>
+<dd>
+<p/><a href="ipl.random-random.icn.html#267" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="real"/>
+<h3>real()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.random.Random.html#real">real()</a> in <a href="ipl.random.Random.html" target="displayFrame">ipl.random.Random</a></dd>
+<dd>
+<p/><a href="ipl.random-random.icn.html#235" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="set_real_range"/>
+<h3>set_real_range(rr)</h3>
+public<p/>
+<dl>
+<dd>
+Set the range of values to use in calculating the result of
+<code><a href="ipl.random.RandomWithModulus.html#real">real()</a></code>.  The default is <code><a href="ipl.random.RandomWithModulus.html#MAX_REAL_RANGE">MAX_REAL_RANGE</a></code>, which gives the
+maximum possible range of values, but may involve more calls to
+<code><a href="ipl.random.RandomWithModulus.html#get">get()</a></code> for each real, if it is greater than the modulus.
+<p/><a href="ipl.random-random.icn.html#223" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="a1"/>
+<h3>a1</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.random-random.icn.html#210" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="m"/>
+<h3>m</h3>
+public const<p/>
+<dl>
+<dd>
+The modulus
+<p/><a href="ipl.random-random.icn.html#206" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="MAX_REAL_RANGE"/>
+<h3>MAX_REAL_RANGE</h3>
+public static const<p/>
+<dl>
+<dd>
+Max range for calculating a <code><a href="ipl.random.RandomWithModulus.html#real">real</a></code>
+<p/><a href="ipl.random-random.icn.html#212" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="n1"/>
+<h3>n1</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.random-random.icn.html#210" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="p1"/>
+<h3>p1</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.random-random.icn.html#210" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="rf"/>
+<h3>rf</h3>
+private readable<p/>
+<dl>
+<dd>
+For calculating reals
+<p/><a href="ipl.random-random.icn.html#208" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="rr"/>
+<h3>rr</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.random-random.icn.html#208" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="s1"/>
+<h3>s1</h3>
+private<p/>
+<dl>
+<dd>
+Some cached values
+<p/><a href="ipl.random-random.icn.html#210" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+</body></html>

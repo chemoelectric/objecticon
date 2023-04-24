@@ -52,7 +52,7 @@ end</code></pre>
 <p>Finally, both the translator and the runtime must be re-compiled. The easiest way to do this is to go into the <code>base</code> directory and run</p>
 <pre><code>make clean all</code></pre>
 <h2 id="native-methods-resolved-at-runtime">Native methods resolved at runtime</h2>
-<p>This involves writing a dynamic library (a “.so” file) of RTL/C code. The contents are loaded and the functions in the library are matched to the corresponding native methods by the <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23load_library"><code>lang.Class.load_library()</code></a> method. This is explained in more detail <a href="DynamicLoadC.html">here</a>.</p>
+<p>This involves writing a dynamic library (a “.so” file) of RTL/C code. The contents are loaded and the functions in the library are matched to the corresponding native methods by the <a href="libref/index.html?lang.Class.html%23load_library"><code>lang.Class.load_library()</code></a> method. This is explained in more detail <a href="DynamicLoadC.html">here</a>.</p>
 <p>For working examples, see the source files <code>lib/main/mysql.icn</code> and <code>lib/main/cairo.icn</code> and their corresponding RTL source files in <code>lib/native</code>.</p>
 <a href="index.html">Contents</a>
 </body>

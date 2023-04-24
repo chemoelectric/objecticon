@@ -1,0 +1,533 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TreeNode</title></head><body>
+<h1>TreeNode</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.TreeTableNode.html">gui.TreeTableNode</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This class represents a node in a <code><a href="gui.Tree.html" target="displayFrame">Tree</a></code> object.
+<p/><a href="gui-treenode.icn.html#13" target="displayFrame">Source - treenode.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#add_list">add_list()</a>
+<a href="#clear_children">clear_children()</a>
+<a href="#expand">expand()</a>
+<a href="#expand_to_root">expand_to_root()</a>
+<a href="#get_children">get_children()</a>
+<a href="#get_index">get_index()</a>
+<a href="#get_label">get_label()</a>
+<a href="#get_parent">get_parent()</a>
+<a href="#is_expanded">is_expanded()</a>
+<a href="#move_all">move_all()</a>
+<a href="#new">new()</a>
+<a href="#remove">remove()</a>
+<a href="#remove_all">remove_all()</a>
+<a href="#remove_index">remove_index()</a>
+<a href="#remove_list">remove_list()</a>
+<a href="#reposition">reposition()</a>
+<a href="#reposition_index">reposition_index()</a>
+<a href="#set_always_expandable">set_always_expandable()</a>
+<a href="#set_expanded">set_expanded()</a>
+<a href="#set_icon_paint">set_icon_paint()</a>
+<a href="#set_label">set_label()</a>
+<a href="#toggle_expanded">toggle_expanded()</a>
+<a href="#traverse_all_postorder">traverse_all_postorder()</a>
+<a href="#traverse_all_preorder">traverse_all_preorder()</a>
+<a href="#traverse_open_postorder">traverse_open_postorder()</a>
+<a href="#traverse_open_preorder">traverse_open_preorder()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#always_expandable_flag">always_expandable_flag</a>
+<a href="#children">children</a>
+<a href="#depth">depth</a>
+<a href="#draw_line">draw_line</a>
+<a href="#icon_paint">icon_paint</a>
+<a href="#is_expanded_flag">is_expanded_flag</a>
+<a href="#label">label</a>
+<a href="#parent">parent</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(n, i)</h3>
+public<p/>
+<dl>
+<dd>
+Add the given <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> to this <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>'s list of children.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - The <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> to add.
+</dd>
+<dd>
+<code>i</code> - The index to add at; if omitted then the new node
+is appended to the end.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#120" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="add_list"/>
+<h3>add_list(l, i)</h3>
+public<p/>
+<dl>
+<dd>
+Add all the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>s contained in list <code>l</code> at index <code>i</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - The list to add
+</dd>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#215" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_children"/>
+<h3>clear_children()</h3>
+public<p/>
+<dl>
+<dd>
+Clear all the children
+<p/><a href="gui-treenode.icn.html#291" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="expand"/>
+<h3>expand(force)</h3>
+public<p/>
+<dl>
+<dd>
+Expand all the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>s below this node.  Nodes with no children
+are not expanded unless the force flag is set to &amp;yes.
+<p/><a href="gui-treenode.icn.html#65" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="expand_to_root"/>
+<h3>expand_to_root()</h3>
+public<p/>
+<dl>
+<dd>
+This method expands the path from this node to the root,
+thereby ensuring it is visible.  This node itself is not
+expanded, only its parents.
+<p/><a href="gui-treenode.icn.html#77" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="get_children"/>
+<h3>get_children()</h3>
+public<p/>
+<dl>
+<dd>
+Get the child nodes
+<p/><a href="gui-treenode.icn.html#250" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="get_index"/>
+<h3>get_index(n)</h3>
+public<p/>
+<dl>
+<dd>
+Get the index of the given child node
+<p/><a href="gui-treenode.icn.html#136" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label"/>
+<h3>get_label()</h3>
+public<p/>
+<dl>
+<dd>
+Return the label
+<p/><a href="gui-treenode.icn.html#98" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parent"/>
+<h3>get_parent()</h3>
+public<p/>
+<dl>
+<dd>
+Get the parent node, or fail if there is none.
+<p/><a href="gui-treenode.icn.html#243" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="is_expanded"/>
+<h3>is_expanded()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the node is opened
+<p/><a href="gui-treenode.icn.html#284" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="move_all"/>
+<h3>move_all(other, i)</h3>
+public<p/>
+<dl>
+<dd>
+Move all the children of <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> <code>other</code>, to this
+<code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>, adding them at index <code>i</code>.  <code>other</code> will be left empty.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>other</code> - The source <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>.
+</dd>
+<dd>
+<code>i</code> - The index to add at; if omitted then the new components
+are appended to the end.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#229" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#300" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="remove"/>
+<h3>remove(n)</h3>
+public<p/>
+<dl>
+<dd>
+Delete the given <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> from the children.
+<dl>
+<dt>
+Fails :
+</dt>
+<dd>
+If n is not a child of this instance.
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#143" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_all"/>
+<h3>remove_all()</h3>
+public<p/>
+<dl>
+<dd>
+Remove all the children.
+<p/><a href="gui-treenode.icn.html#167" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_index"/>
+<h3>remove_index(i)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> at the given index from the list of children.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#152" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_list"/>
+<h3>remove_list(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the children in the range <code>i:j</code>, returning the
+removed children in a list.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The start slice index, default 1
+</dd>
+<dd>
+<code>j</code> - The end slice index, default 0
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If the range is invalid.
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#199" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition"/>
+<h3>reposition(c, j)</h3>
+public<p/>
+<dl>
+<dd>
+Move the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> to the given index position.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> to move.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If c is not a child of this instance, 
+or j is out of range.
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#174" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition_index"/>
+<h3>reposition_index(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Move the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> at position <code>i</code> to <code>j</code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The old position.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If either index is out of range.
+</dd>
+</dl>
+<p/><a href="gui-treenode.icn.html#187" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="set_always_expandable"/>
+<h3>set_always_expandable(s)</h3>
+public<p/>
+<dl>
+<dd>
+This configures the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> so that it is always treated as though it has children
+for display purposes, event though it may in fact have no children.
+<p/><a href="gui-treenode.icn.html#257" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="set_expanded"/>
+<h3>set_expanded(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the expanded flag.  Note that this will not update the GUI, to do that
+call tree.tree_structure_changed() on the tree in which the node resides.
+<p/><a href="gui-treenode.icn.html#266" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="set_icon_paint"/>
+<h3>set_icon_paint(i1, i2, i3)</h3>
+public<p/>
+<dl>
+<dd>
+Set the icons for this node, as three <code><a href="gui.Paint.html" target="displayFrame">Paint</a></code> instances.  The
+first is displayed if the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> is open and has children,
+the second is displayed if the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code> is closed and has
+children, and the third is displayed if the node has no children.
+<p/>
+Note that these instances are neither initialized or finalized by
+this class (nor by <code><a href="gui.Tree.html" target="displayFrame">Tree</a></code>) - that must be done externally by the
+owner.  (This does mean many nodes can share the same instance
+however).
+<p/><a href="gui-treenode.icn.html#105" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="set_label"/>
+<h3>set_label(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the label for this node.
+<p/><a href="gui-treenode.icn.html#90" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="toggle_expanded"/>
+<h3>toggle_expanded()</h3>
+public<p/>
+<dl>
+<dd>
+Toggle the opened status of the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>. Note that this will not update the GUI, to do that
+call tree.tree_structure_changed() on the tree in which the node resides.
+<p/><a href="gui-treenode.icn.html#275" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_all_postorder"/>
+<h3>traverse_all_postorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>s in this subtree, including this
+<code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>, in postorder ordering.
+<p/><a href="gui-treenode.icn.html#36" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_all_preorder"/>
+<h3>traverse_all_preorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>s in this subtree, including this
+<code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>, in preorder ordering.
+<p/><a href="gui-treenode.icn.html#27" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_open_postorder"/>
+<h3>traverse_open_postorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all open <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>s in this subtree, including this
+<code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>, in postorder ordering.
+<p/><a href="gui-treenode.icn.html#55" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_open_preorder"/>
+<h3>traverse_open_preorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the open <code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>s in this subtree, including this
+<code><a href="gui.TreeNode.html" target="displayFrame">TreeNode</a></code>, in preorder ordering.
+<p/><a href="gui-treenode.icn.html#45" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="always_expandable_flag"/>
+<h3>always_expandable_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#20" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="children"/>
+<h3>children</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#23" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="depth"/>
+<h3>depth</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#21" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_line"/>
+<h3>draw_line</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#24" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="icon_paint"/>
+<h3>icon_paint</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#19" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="is_expanded_flag"/>
+<h3>is_expanded_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#22" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="label"/>
+<h3>label</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#18" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+<a name="parent"/>
+<h3>parent</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-treenode.icn.html#25" target="displayFrame">Source - treenode.icn </a>
+</dd>
+</dl><hr>
+</body></html>

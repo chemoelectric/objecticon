@@ -71,8 +71,8 @@
 <p>Sometimes it is desirable to override this default behaviour because occasionally a global symbol or method may still be used, even if it is not explicitly referenced anywhere in a program. For example :-</p>
 <ul>
 <li>a program might be written in order to be loaded by another program, which would then use its procedures and classes. But these may not be referenced by the program itself.</li>
-<li>a program may use functions like <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Prog.html%23get_global"><code>lang.Prog.get_global()</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23get"><code>lang.Class.get()</code></a> to look up global symbols or methods by string name. These won’t be detected as references.</li>
-<li>a program may use <a href="http://objecticon.sourceforge.net/libref/index.html?lang.decode.html"><code>lang.decode</code></a> to decode a string previously encoded with <a href="http://objecticon.sourceforge.net/libref/index.html?lang.encode.html"><code>lang.encode</code></a>, but a symbol in the encoded string is not otherwise referenced in the program.</li>
+<li>a program may use functions like <a href="libref/index.html?lang.Prog.html%23get_global"><code>lang.Prog.get_global()</code></a> and <a href="libref/index.html?lang.Class.html%23get"><code>lang.Class.get()</code></a> to look up global symbols or methods by string name. These won’t be detected as references.</li>
+<li>a program may use <a href="libref/index.html?lang.decode.html"><code>lang.decode</code></a> to decode a string previously encoded with <a href="libref/index.html?lang.encode.html"><code>lang.encode</code></a>, but a symbol in the encoded string is not otherwise referenced in the program.</li>
 </ul>
 <p>To deal with these sort of situations the <code>invocable</code> declaration can be used to change the default behaviour just described.</p>
 <ul>

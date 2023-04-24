@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>RealNumber</title></head><body>
+<h1>RealNumber</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="numbers.Number.html" target="displayFrame">numbers.Number</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="numbers.Dec.html">numbers.Dec</a><br>
+<a href="numbers.Rat.html">numbers.Rat</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+</dl><p/>
+This class just lists operations common to its two subclasses, <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> and <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>.
+<p/><a href="numbers-numbers.icn.html#318" target="displayFrame">Source - numbers.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="numbers.Number.html">numbers.Number</a>
+<a href="numbers.RealNumber.html">numbers.RealNumber</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#add">add()</a>
+<a href="numbers.Number.html#div">div()</a>
+<a href="numbers.Number.html#init">init()</a>
+<a href="numbers.Number.html#mul">mul()</a>
+<a href="numbers.Number.html#neg">neg()</a>
+<a href="numbers.Number.html#object_output">object_output()</a>
+<a href="numbers.Number.html#reduce">reduce()</a>
+<a href="numbers.Number.html#str">str()</a>
+<a href="numbers.Number.html#sub">sub()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#REAL_DIGS">REAL_DIGS</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#abs">abs()</a>
+<a href="#cmp">cmp()</a>
+<a href="#decimal">decimal()</a>
+<a href="#integer">integer()</a>
+<a href="#rational">rational()</a>
+<a href="#real">real()</a>
+<a href="#sign">sign()</a>
+<a href="#sub_sign">sub_sign()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="abs"/>
+<h3>abs()</h3>
+public<p/>
+<dl>
+<dd>
+Return the absolute value of this number.
+<p/><a href="numbers-numbers.icn.html#332" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="cmp"/>
+<h3>cmp(f, x)</h3>
+public<p/>
+<dl>
+<dd>
+Compare this instance to another of the same type using the
+relational operator <code>f</code>.  For example,
+<pre>
+  x.cmp("&lt;", y)
+</pre>
+succeeds iff <code>x &lt; y</code>.
+<p/><a href="numbers-numbers.icn.html#321" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="decimal"/>
+<h3>decimal(rnd)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Convert to <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>, or fail if no rounding is specified and an
+exact conversion is not possible.
+<p/><a href="numbers-numbers.icn.html#348" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="integer"/>
+<h3>integer()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Convert to integer
+<p/><a href="numbers-numbers.icn.html#357" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="rational"/>
+<h3>rational()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Convert to <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>
+<p/><a href="numbers-numbers.icn.html#353" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="real"/>
+<h3>real()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Convert to real, or fail if that is not possible.
+<p/><a href="numbers-numbers.icn.html#361" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sign"/>
+<h3>sign()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return the sign of this number (-1, 0 or 1, depending on whether
+it is less than, equal to, or greater than zero).
+<p/><a href="numbers-numbers.icn.html#337" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sub_sign"/>
+<h3>sub_sign(x)</h3>
+public<p/>
+<dl>
+<dd>
+Subtract x from this instance and return the sign of the result.
+This is useful for sorting; see <code><a href="numbers.number_comparator.html" target="displayFrame">number_comparator()</a></code> below.
+<p/><a href="numbers-numbers.icn.html#341" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+</body></html>

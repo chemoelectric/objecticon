@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>typecode.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     typecode.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to produce letter code for Icon type
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     April 6, 1993
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  typecode(x) produces a one-letter string identifying the type of
+<a name="18"/>#  its argument. In most cases, the code is the first (lowercase)
+<a name="19"/>#  letter of the type, as "i" for the integer type. Structure types
+<a name="20"/>#  are in uppercase, as "L" for the list type. All records have the
+<a name="21"/>#  code "R".  The code "C" is used for the co-expression type to avoid
+<a name="22"/>#  conflict for the "c" for the cset type.
+<a name="23"/>#
+<a name="24"/>############################################################################
+<a name="25"/>
+<a name="26"/>package ipl.typecode
+<a name="27"/>
+<a name="28"/>procedure typecode(x)
+<a name="29"/>   local code
+<a name="30"/>
+<a name="31"/>   code := type(x)
+<a name="32"/>   return case code of {
+<a name="33"/>      "constructor" : "p"
+<a name="34"/>      "cast" : "a"
+<a name="35"/>      "class" : "q"
+<a name="36"/>      "object" | "record" | "list" | "set" | "table" | "co-expression": map(code[1],&amp;lcase,&amp;ucase)
+<a name="37"/>      default: code[1]
+<a name="38"/>   }
+<a name="39"/>end
+</pre></body></html>

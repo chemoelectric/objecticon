@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Random</title></head><body>
+<h1>Random</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.random.BuiltinRandom.html">ipl.random.BuiltinRandom</a><br>
+<a href="ipl.random.RandomFromReal.html">ipl.random.RandomFromReal</a><br>
+<a href="ipl.random.RandomWithModulus.html">ipl.random.RandomWithModulus</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.random-package.html" target="listFrame">ipl.random</a></dd>
+</dl><p/>
+An abstract class for random number generators.
+<p/><a href="ipl.random-random.icn.html#158" target="displayFrame">Source - random.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="ipl.random.Random.html">ipl.random.Random</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasClose</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html#close">close()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#choose">choose()</a>
+<a href="#range">range()</a>
+<a href="#real">real()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="choose"/>
+<h3>choose(i)</h3>
+public<p/>
+<dl>
+<dd>
+Select an element from structure or string type.
+<p/><a href="ipl.random-random.icn.html#170" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="range"/>
+<h3>range(n)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return an integer in the range [1, n].
+<p/><a href="ipl.random-random.icn.html#166" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="real"/>
+<h3>real()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return a real number in the range [0, 1).
+<p/><a href="ipl.random-random.icn.html#162" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+</body></html>

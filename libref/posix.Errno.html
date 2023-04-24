@@ -1,0 +1,1200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Errno</title></head><body>
+<h1>Errno</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="posix-package.html" target="listFrame">posix</a></dd>
+</dl><p/>
+<p/><a href="posix-posixconsts.icn.html#7" target="displayFrame">Source - posixconsts.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#init">init()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#E2BIG">E2BIG</a>
+<a href="#EACCES">EACCES</a>
+<a href="#EADDRINUSE">EADDRINUSE</a>
+<a href="#EADDRNOTAVAIL">EADDRNOTAVAIL</a>
+<a href="#EADV">EADV</a>
+<a href="#EAFNOSUPPORT">EAFNOSUPPORT</a>
+<a href="#EAGAIN">EAGAIN</a>
+<a href="#EALREADY">EALREADY</a>
+<a href="#EBADE">EBADE</a>
+<a href="#EBADF">EBADF</a>
+<a href="#EBADFD">EBADFD</a>
+<a href="#EBADMSG">EBADMSG</a>
+<a href="#EBADR">EBADR</a>
+<a href="#EBADRQC">EBADRQC</a>
+<a href="#EBADSLT">EBADSLT</a>
+<a href="#EBUSY">EBUSY</a>
+<a href="#ECANCELED">ECANCELED</a>
+<a href="#ECHILD">ECHILD</a>
+<a href="#ECHRNG">ECHRNG</a>
+<a href="#ECOMM">ECOMM</a>
+<a href="#ECONNABORTED">ECONNABORTED</a>
+<a href="#ECONNREFUSED">ECONNREFUSED</a>
+<a href="#ECONNRESET">ECONNRESET</a>
+<a href="#EDEADLK">EDEADLK</a>
+<a href="#EDEADLOCK">EDEADLOCK</a>
+<a href="#EDESTADDRREQ">EDESTADDRREQ</a>
+<a href="#EDOM">EDOM</a>
+<a href="#EDOTDOT">EDOTDOT</a>
+<a href="#EDQUOT">EDQUOT</a>
+<a href="#EEXIST">EEXIST</a>
+<a href="#EFAULT">EFAULT</a>
+<a href="#EFBIG">EFBIG</a>
+<a href="#EHOSTDOWN">EHOSTDOWN</a>
+<a href="#EHOSTUNREACH">EHOSTUNREACH</a>
+<a href="#EIDRM">EIDRM</a>
+<a href="#EILSEQ">EILSEQ</a>
+<a href="#EINPROGRESS">EINPROGRESS</a>
+<a href="#EINTR">EINTR</a>
+<a href="#EINVAL">EINVAL</a>
+<a href="#EIO">EIO</a>
+<a href="#EISCONN">EISCONN</a>
+<a href="#EISDIR">EISDIR</a>
+<a href="#EISNAM">EISNAM</a>
+<a href="#EKEYEXPIRED">EKEYEXPIRED</a>
+<a href="#EKEYREJECTED">EKEYREJECTED</a>
+<a href="#EKEYREVOKED">EKEYREVOKED</a>
+<a href="#EL2HLT">EL2HLT</a>
+<a href="#EL2NSYNC">EL2NSYNC</a>
+<a href="#EL3HLT">EL3HLT</a>
+<a href="#EL3RST">EL3RST</a>
+<a href="#ELIBACC">ELIBACC</a>
+<a href="#ELIBBAD">ELIBBAD</a>
+<a href="#ELIBEXEC">ELIBEXEC</a>
+<a href="#ELIBMAX">ELIBMAX</a>
+<a href="#ELIBSCN">ELIBSCN</a>
+<a href="#ELNRNG">ELNRNG</a>
+<a href="#ELOOP">ELOOP</a>
+<a href="#EMEDIUMTYPE">EMEDIUMTYPE</a>
+<a href="#EMFILE">EMFILE</a>
+<a href="#EMLINK">EMLINK</a>
+<a href="#EMSGSIZE">EMSGSIZE</a>
+<a href="#EMULTIHOP">EMULTIHOP</a>
+<a href="#ENAMETOOLONG">ENAMETOOLONG</a>
+<a href="#ENAVAIL">ENAVAIL</a>
+<a href="#ENETDOWN">ENETDOWN</a>
+<a href="#ENETRESET">ENETRESET</a>
+<a href="#ENETUNREACH">ENETUNREACH</a>
+<a href="#ENFILE">ENFILE</a>
+<a href="#ENOANO">ENOANO</a>
+<a href="#ENOBUFS">ENOBUFS</a>
+<a href="#ENOCSI">ENOCSI</a>
+<a href="#ENODATA">ENODATA</a>
+<a href="#ENODEV">ENODEV</a>
+<a href="#ENOENT">ENOENT</a>
+<a href="#ENOEXEC">ENOEXEC</a>
+<a href="#ENOKEY">ENOKEY</a>
+<a href="#ENOLCK">ENOLCK</a>
+<a href="#ENOLINK">ENOLINK</a>
+<a href="#ENOMEDIUM">ENOMEDIUM</a>
+<a href="#ENOMEM">ENOMEM</a>
+<a href="#ENOMSG">ENOMSG</a>
+<a href="#ENONET">ENONET</a>
+<a href="#ENOPKG">ENOPKG</a>
+<a href="#ENOPROTOOPT">ENOPROTOOPT</a>
+<a href="#ENOSPC">ENOSPC</a>
+<a href="#ENOSR">ENOSR</a>
+<a href="#ENOSTR">ENOSTR</a>
+<a href="#ENOSYS">ENOSYS</a>
+<a href="#ENOTBLK">ENOTBLK</a>
+<a href="#ENOTCONN">ENOTCONN</a>
+<a href="#ENOTDIR">ENOTDIR</a>
+<a href="#ENOTEMPTY">ENOTEMPTY</a>
+<a href="#ENOTNAM">ENOTNAM</a>
+<a href="#ENOTSOCK">ENOTSOCK</a>
+<a href="#ENOTTY">ENOTTY</a>
+<a href="#ENOTUNIQ">ENOTUNIQ</a>
+<a href="#ENXIO">ENXIO</a>
+<a href="#EOPNOTSUPP">EOPNOTSUPP</a>
+<a href="#EOVERFLOW">EOVERFLOW</a>
+<a href="#EPERM">EPERM</a>
+<a href="#EPFNOSUPPORT">EPFNOSUPPORT</a>
+<a href="#EPIPE">EPIPE</a>
+<a href="#EPROTO">EPROTO</a>
+<a href="#EPROTONOSUPPORT">EPROTONOSUPPORT</a>
+<a href="#EPROTOTYPE">EPROTOTYPE</a>
+<a href="#ERANGE">ERANGE</a>
+<a href="#EREMCHG">EREMCHG</a>
+<a href="#EREMOTE">EREMOTE</a>
+<a href="#EREMOTEIO">EREMOTEIO</a>
+<a href="#ERESTART">ERESTART</a>
+<a href="#EROFS">EROFS</a>
+<a href="#ESHUTDOWN">ESHUTDOWN</a>
+<a href="#ESOCKTNOSUPPORT">ESOCKTNOSUPPORT</a>
+<a href="#ESPIPE">ESPIPE</a>
+<a href="#ESRCH">ESRCH</a>
+<a href="#ESRMNT">ESRMNT</a>
+<a href="#ESTALE">ESTALE</a>
+<a href="#ESTRPIPE">ESTRPIPE</a>
+<a href="#ETIME">ETIME</a>
+<a href="#ETIMEDOUT">ETIMEDOUT</a>
+<a href="#ETOOMANYREFS">ETOOMANYREFS</a>
+<a href="#ETXTBSY">ETXTBSY</a>
+<a href="#EUCLEAN">EUCLEAN</a>
+<a href="#EUNATCH">EUNATCH</a>
+<a href="#EUSERS">EUSERS</a>
+<a href="#EWOULDBLOCK">EWOULDBLOCK</a>
+<a href="#EXDEV">EXDEV</a>
+<a href="#EXFULL">EXFULL</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#138" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="E2BIG"/>
+<h3>E2BIG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#15" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EACCES"/>
+<h3>EACCES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#21" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EADDRINUSE"/>
+<h3>EADDRINUSE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#105" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EADDRNOTAVAIL"/>
+<h3>EADDRNOTAVAIL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#106" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EADV"/>
+<h3>EADV</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#75" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EAFNOSUPPORT"/>
+<h3>EAFNOSUPPORT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#104" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EAGAIN"/>
+<h3>EAGAIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#19" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EALREADY"/>
+<h3>EALREADY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#121" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBADE"/>
+<h3>EBADE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#59" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBADF"/>
+<h3>EBADF</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#17" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBADFD"/>
+<h3>EBADFD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#84" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBADMSG"/>
+<h3>EBADMSG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#81" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBADR"/>
+<h3>EBADR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#60" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBADRQC"/>
+<h3>EBADRQC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#63" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBADSLT"/>
+<h3>EBADSLT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#64" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EBUSY"/>
+<h3>EBUSY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#24" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ECANCELED"/>
+<h3>ECANCELED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#132" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ECHILD"/>
+<h3>ECHILD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#18" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ECHRNG"/>
+<h3>ECHRNG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#51" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ECOMM"/>
+<h3>ECOMM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#77" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ECONNABORTED"/>
+<h3>ECONNABORTED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#110" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ECONNREFUSED"/>
+<h3>ECONNREFUSED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#118" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ECONNRESET"/>
+<h3>ECONNRESET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#111" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EDEADLK"/>
+<h3>EDEADLK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#66" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EDEADLOCK"/>
+<h3>EDEADLOCK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#65" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EDESTADDRREQ"/>
+<h3>EDESTADDRREQ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#96" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EDOM"/>
+<h3>EDOM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#41" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EDOTDOT"/>
+<h3>EDOTDOT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#80" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EDQUOT"/>
+<h3>EDQUOT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#129" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EEXIST"/>
+<h3>EEXIST</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#25" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EFAULT"/>
+<h3>EFAULT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#22" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EFBIG"/>
+<h3>EFBIG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#35" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EHOSTDOWN"/>
+<h3>EHOSTDOWN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#119" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EHOSTUNREACH"/>
+<h3>EHOSTUNREACH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#120" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EIDRM"/>
+<h3>EIDRM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#50" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EILSEQ"/>
+<h3>EILSEQ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#91" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EINPROGRESS"/>
+<h3>EINPROGRESS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#122" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EINTR"/>
+<h3>EINTR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#12" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EINVAL"/>
+<h3>EINVAL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#30" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EIO"/>
+<h3>EIO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#13" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EISCONN"/>
+<h3>EISCONN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#113" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EISDIR"/>
+<h3>EISDIR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#29" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EISNAM"/>
+<h3>EISNAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#127" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EKEYEXPIRED"/>
+<h3>EKEYEXPIRED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#134" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EKEYREJECTED"/>
+<h3>EKEYREJECTED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#136" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EKEYREVOKED"/>
+<h3>EKEYREVOKED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#135" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EL2HLT"/>
+<h3>EL2HLT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#58" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EL2NSYNC"/>
+<h3>EL2NSYNC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#52" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EL3HLT"/>
+<h3>EL3HLT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#53" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EL3RST"/>
+<h3>EL3RST</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#54" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ELIBACC"/>
+<h3>ELIBACC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#86" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ELIBBAD"/>
+<h3>ELIBBAD</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#87" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ELIBEXEC"/>
+<h3>ELIBEXEC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#90" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ELIBMAX"/>
+<h3>ELIBMAX</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#89" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ELIBSCN"/>
+<h3>ELIBSCN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#88" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ELNRNG"/>
+<h3>ELNRNG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#55" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ELOOP"/>
+<h3>ELOOP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#47" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EMEDIUMTYPE"/>
+<h3>EMEDIUMTYPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#131" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EMFILE"/>
+<h3>EMFILE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#32" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EMLINK"/>
+<h3>EMLINK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#39" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EMSGSIZE"/>
+<h3>EMSGSIZE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#97" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EMULTIHOP"/>
+<h3>EMULTIHOP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#79" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENAMETOOLONG"/>
+<h3>ENAMETOOLONG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#43" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENAVAIL"/>
+<h3>ENAVAIL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#126" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENETDOWN"/>
+<h3>ENETDOWN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#107" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENETRESET"/>
+<h3>ENETRESET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#109" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENETUNREACH"/>
+<h3>ENETUNREACH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#108" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENFILE"/>
+<h3>ENFILE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#31" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOANO"/>
+<h3>ENOANO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#62" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOBUFS"/>
+<h3>ENOBUFS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#112" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOCSI"/>
+<h3>ENOCSI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#57" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENODATA"/>
+<h3>ENODATA</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#68" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENODEV"/>
+<h3>ENODEV</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#27" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOENT"/>
+<h3>ENOENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#10" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOEXEC"/>
+<h3>ENOEXEC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#16" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOKEY"/>
+<h3>ENOKEY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#133" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOLCK"/>
+<h3>ENOLCK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#44" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOLINK"/>
+<h3>ENOLINK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#74" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOMEDIUM"/>
+<h3>ENOMEDIUM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#130" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOMEM"/>
+<h3>ENOMEM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#20" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOMSG"/>
+<h3>ENOMSG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#49" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENONET"/>
+<h3>ENONET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#71" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOPKG"/>
+<h3>ENOPKG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#72" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOPROTOOPT"/>
+<h3>ENOPROTOOPT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#99" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOSPC"/>
+<h3>ENOSPC</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#36" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOSR"/>
+<h3>ENOSR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#70" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOSTR"/>
+<h3>ENOSTR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#67" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOSYS"/>
+<h3>ENOSYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#45" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTBLK"/>
+<h3>ENOTBLK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#23" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTCONN"/>
+<h3>ENOTCONN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#114" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTDIR"/>
+<h3>ENOTDIR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#28" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTEMPTY"/>
+<h3>ENOTEMPTY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#46" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTNAM"/>
+<h3>ENOTNAM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#125" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTSOCK"/>
+<h3>ENOTSOCK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#95" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTTY"/>
+<h3>ENOTTY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#33" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENOTUNIQ"/>
+<h3>ENOTUNIQ</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#83" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ENXIO"/>
+<h3>ENXIO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#14" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EOPNOTSUPP"/>
+<h3>EOPNOTSUPP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#102" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EOVERFLOW"/>
+<h3>EOVERFLOW</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#82" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EPERM"/>
+<h3>EPERM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#9" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EPFNOSUPPORT"/>
+<h3>EPFNOSUPPORT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#103" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EPIPE"/>
+<h3>EPIPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#40" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EPROTO"/>
+<h3>EPROTO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#78" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EPROTONOSUPPORT"/>
+<h3>EPROTONOSUPPORT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#100" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EPROTOTYPE"/>
+<h3>EPROTOTYPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#98" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ERANGE"/>
+<h3>ERANGE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#42" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EREMCHG"/>
+<h3>EREMCHG</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#85" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EREMOTE"/>
+<h3>EREMOTE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#73" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EREMOTEIO"/>
+<h3>EREMOTEIO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#128" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ERESTART"/>
+<h3>ERESTART</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#92" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EROFS"/>
+<h3>EROFS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#38" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ESHUTDOWN"/>
+<h3>ESHUTDOWN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#115" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ESOCKTNOSUPPORT"/>
+<h3>ESOCKTNOSUPPORT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#101" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ESPIPE"/>
+<h3>ESPIPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#37" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ESRCH"/>
+<h3>ESRCH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#11" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ESRMNT"/>
+<h3>ESRMNT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#76" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ESTALE"/>
+<h3>ESTALE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#123" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ESTRPIPE"/>
+<h3>ESTRPIPE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#93" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ETIME"/>
+<h3>ETIME</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#69" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ETIMEDOUT"/>
+<h3>ETIMEDOUT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#117" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ETOOMANYREFS"/>
+<h3>ETOOMANYREFS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#116" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="ETXTBSY"/>
+<h3>ETXTBSY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#34" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EUCLEAN"/>
+<h3>EUCLEAN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#124" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EUNATCH"/>
+<h3>EUNATCH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#56" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EUSERS"/>
+<h3>EUSERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#94" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EWOULDBLOCK"/>
+<h3>EWOULDBLOCK</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#48" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EXDEV"/>
+<h3>EXDEV</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#26" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EXFULL"/>
+<h3>EXFULL</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="posix-posixconsts.icn.html#61" target="displayFrame">Source - posixconsts.icn </a>
+</dd>
+</dl><hr>
+</body></html>

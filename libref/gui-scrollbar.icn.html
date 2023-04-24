@@ -1,0 +1,726 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>scrollbar.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: scrollbar.icn 9114 2021-05-22 10:19:57Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import lang, graphics, util
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># Component representing the bar area
+<a name="15"/>#
+<a name="16"/>class BarArea(Component)
+<a name="17"/>   public  
+<a name="18"/>      bar_x,                   #             
+<a name="19"/>      bar_y,                   #             
+<a name="20"/>      bar_w,                   #             
+<a name="21"/>      bar_h
+<a name="22"/>
+<a name="23"/>   public override display()
+<a name="24"/>      Gui.style.draw_raised_rectangle(self.cbwin, self.bar_x, self.bar_y, 
+<a name="25"/>                                      self.bar_w, self.bar_h, 
+<a name="26"/>                                      Gui.BORDER_WIDTH)
+<a name="27"/>   end
+<a name="28"/>end
+<a name="29"/>
+<a name="30"/>
+<a name="31"/>#
+<a name="32"/># This class provides horizontal and vertical scroll bars.
+<a name="33"/>#
+<a name="34"/># There are two ways to use a scroll bar.  The first way is to
+<a name="35"/># set a total_size (represented by the whole bar), a page_size
+<a name="36"/># (represented by the draggable button) and an increment_size
+<a name="37"/># (being the amount added/subtracted when the top/bottom
+<a name="38"/># button is pressed).  The value will then range from zero to
+<a name="39"/># (total_size - page_size) inclusive.  An initial value must
+<a name="40"/># be set with the `set_value()` method.  For example :-
+<a name="41"/># ~
+<a name="42"/>#   vb := ScrollBar()
+<a name="43"/>#   vb.set_pos("85%", "25%")      
+<a name="44"/>#   vb.set_size(20, "40%")
+<a name="45"/>#   vb.set_total_size(130)
+<a name="46"/>#   vb.set_page_size(30)
+<a name="47"/>#   vb.set_increment_size(1)
+<a name="48"/>#   vb.set_value(0)
+<a name="49"/>#   self.add(vb)
+<a name="50"/># ~
+<a name="51"/>#
+<a name="52"/># Alternatively, a scroll bar can be used as a slider which
+<a name="53"/># ranges over a given range of values.  In this case, the
+<a name="54"/># range is set with `set_range()`.  It is still necessary to set
+<a name="55"/># the increment size and the initial value, as above, but
+<a name="56"/># page_size and total_size should not be set.
+<a name="57"/>#
+<a name="58"/># Real numbers as opposed to integers can be used for the
+<a name="59"/># range settings if desired.
+<a name="60"/>#
+<a name="61"/># For example :-
+<a name="62"/># ~
+<a name="63"/>#   vb := ScrollBar()
+<a name="64"/>#   vb.set_pos("85%", "25%")      
+<a name="65"/>#   vb.set_size(20, "40%")
+<a name="66"/>#   vb.set_range(2, 25)
+<a name="67"/>#   vb.set_value(10)
+<a name="68"/>#   vb.set_increment_size(1)
+<a name="69"/>#   self.add(vb)
+<a name="70"/># ~
+<a name="71"/># An `Event.VALUE_CHANGED` event is fired whenever the value changes.
+<a name="72"/>#
+<a name="73"/>class ScrollBar(Component, HasOrientation, HasUseWheel)
+<a name="74"/>   public 
+<a name="75"/>      value,                   #             
+<a name="76"/>      old_value,
+<a name="77"/>      page_size,               #                 
+<a name="78"/>      increment_size,          #                      
+<a name="79"/>      wheel_factor,
+<a name="80"/>      margin_factor,
+<a name="81"/>      total_size,              #                  
+<a name="82"/>      hi,                      #          
+<a name="83"/>      lo,                      #          
+<a name="84"/>      bar_down,                #                
+<a name="85"/>      is_paging,               #
+<a name="86"/>      bar_down_offset,         #                       
+<a name="87"/>      bar_area,                #
+<a name="88"/>      b1,                      #          
+<a name="89"/>      b2,                      #          
+<a name="90"/>      bar_pos,                 #  Orientation independent bar pos
+<a name="91"/>      bar_size,                #                
+<a name="92"/>      bar_area_pos,            #  Orientation independent bararea pos
+<a name="93"/>      bar_area_size,           #                     
+<a name="94"/>      old_bar_area_pos,
+<a name="95"/>      old_bar_area_size,
+<a name="96"/>      is_range_flag,           
+<a name="97"/>      shade_buttons_flag,
+<a name="98"/>      repeat_ticker,
+<a name="99"/>      repeat_delay
+<a name="100"/>
+<a name="101"/>   public static const
+<a name="102"/>      DEFAULT_INNER_SIZE, BAR_INDENT, DEFAULT_WHEEL_FACTOR,
+<a name="103"/>      DEFAULT_MARGIN_FACTOR, MIN_BAR_SIZE, RANGE_BAR_SIZE,
+<a name="104"/>      DEFAULT_SHADE_BUTTONS
+<a name="105"/>
+<a name="106"/>   private static init()
+<a name="107"/>      DEFAULT_INNER_SIZE := env_scale("OI_SCROLLBAR_DEFAULT_INNER_SIZE") | scale(16)
+<a name="108"/>      BAR_INDENT := env_scale_even("OI_SCROLLBAR_BAR_INDENT") | Gui.FINE_WIDTH
+<a name="109"/>      DEFAULT_WHEEL_FACTOR := env_int("OI_SCROLLBAR_DEFAULT_WHEEL_FACTOR", 1) | 4
+<a name="110"/>      DEFAULT_MARGIN_FACTOR := env_int("OI_SCROLLBAR_DEFAULT_MARGIN_FACTOR", 0) | 3
+<a name="111"/>      DEFAULT_SHADE_BUTTONS := env_flag("OI_SCROLLBAR_DEFAULT_SHADE_BUTTONS")
+<a name="112"/>      MIN_BAR_SIZE := env_scale("OI_SCROLLBAR_MIN_BAR_SIZE") | scale(8)
+<a name="113"/>      RANGE_BAR_SIZE := env_scale("OI_SCROLLBAR_RANGE_BAR_SIZE") | scale(24)
+<a name="114"/>   end
+<a name="115"/>
+<a name="116"/>   #
+<a name="117"/>   # Set the total size which the scroll bar area represents.
+<a name="118"/>   # :Parameters :
+<a name="119"/>   # :  `x` - The total size
+<a name="120"/>   #
+<a name="121"/>   public set_total_size(x)
+<a name="122"/>      x := need_numeric(x)
+<a name="123"/>      # See notes as to why this is a good idea.
+<a name="124"/>      if total_size ~===:= x then
+<a name="125"/>         reconfigure()
+<a name="126"/>      link
+<a name="127"/>   end
+<a name="128"/>
+<a name="129"/>   #
+<a name="130"/>   # Return the total size.
+<a name="131"/>   #
+<a name="132"/>   public get_total_size()
+<a name="133"/>      return self.total_size
+<a name="134"/>   end
+<a name="135"/>
+<a name="136"/>   #
+<a name="137"/>   # Set the size which the bar in the scroll bar area represents.
+<a name="138"/>   # :Parameters :
+<a name="139"/>   # :  `x` - The size.
+<a name="140"/>   #
+<a name="141"/>   public set_page_size(x)
+<a name="142"/>      x := need_numeric(x)
+<a name="143"/>      if page_size ~=== x then {
+<a name="144"/>         if x &lt;= 0 then
+<a name="145"/>            runerr("Invalid page size", x)
+<a name="146"/>         page_size := x
+<a name="147"/>         reconfigure()
+<a name="148"/>      }
+<a name="149"/>      link
+<a name="150"/>   end
+<a name="151"/>
+<a name="152"/>   #
+<a name="153"/>   # Get the page size.
+<a name="154"/>   #
+<a name="155"/>   public get_page_size()
+<a name="156"/>      return self.page_size
+<a name="157"/>   end
+<a name="158"/>
+<a name="159"/>   #
+<a name="160"/>   # Get the value.
+<a name="161"/>   # :Returns :
+<a name="162"/>   # :  The value
+<a name="163"/>   #
+<a name="164"/>   public get_value()
+<a name="165"/>      return self.value
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   #
+<a name="169"/>   # Set the value representing the top of the bar in the scroll
+<a name="170"/>   # bar.  The value is forced into range if it is not in range already.
+<a name="171"/>   # :Parameters :
+<a name="172"/>   # :  `x` - The value.
+<a name="173"/>   #
+<a name="174"/>   public set_value(x)
+<a name="175"/>      x := need_numeric(x)
+<a name="176"/>      if value ~=== x then {
+<a name="177"/>         if is_live() then {
+<a name="178"/>            move_value(x)
+<a name="179"/>            set_pos_from_value()
+<a name="180"/>         } else
+<a name="181"/>            value := x
+<a name="182"/>      }
+<a name="183"/>      link
+<a name="184"/>   end
+<a name="185"/>
+<a name="186"/>   #
+<a name="187"/>   # Set the amount to increase the value by when one of the
+<a name="188"/>   # buttons is pressed.
+<a name="189"/>   # :Parameters :
+<a name="190"/>   # :  `x` - The increment size.
+<a name="191"/>   #
+<a name="192"/>   public set_increment_size(x)
+<a name="193"/>      self.increment_size := need_numeric(x)
+<a name="194"/>      link
+<a name="195"/>   end
+<a name="196"/>
+<a name="197"/>   #
+<a name="198"/>   # Set the range of the scroll bar.  The values may
+<a name="199"/>   # be integer or real.
+<a name="200"/>   # :Parameters :
+<a name="201"/>   # :  `lo` - The lower bound
+<a name="202"/>   # :  `hi` - The upper bound
+<a name="203"/>   #
+<a name="204"/>   public set_range(lo, hi)
+<a name="205"/>      lo := need_numeric(lo)
+<a name="206"/>      hi := need_numeric(hi)
+<a name="207"/>      if self.lo ~=== lo | self.hi ~=== hi then {
+<a name="208"/>         if lo &gt;= hi then
+<a name="209"/>            runerr("Invalid range")
+<a name="210"/>         self.is_range_flag := &amp;yes
+<a name="211"/>         self.lo := lo
+<a name="212"/>         self.hi := hi
+<a name="213"/>         reconfigure()
+<a name="214"/>      }
+<a name="215"/>      link
+<a name="216"/>   end
+<a name="217"/>
+<a name="218"/>   #
+<a name="219"/>   # Configure whether to shade the up/down buttons when the bar is at
+<a name="220"/>   # one or other end of its area; by default it is
+<a name="221"/>   # `DEFAULT_SHADE_BUTTONS`.
+<a name="222"/>   #
+<a name="223"/>   public set_shade_buttons(s)
+<a name="224"/>      if shade_buttons_flag ~===:= need_flag(s) then
+<a name="225"/>         reconfigure()
+<a name="226"/>      link
+<a name="227"/>   end
+<a name="228"/>
+<a name="229"/>   #
+<a name="230"/>   # Set the wheel factor, being the number of increments to
+<a name="231"/>   # move on a wheel press; by default it is `DEFAULT_WHEEL_FACTOR`
+<a name="232"/>   #
+<a name="233"/>   public set_wheel_factor(n)
+<a name="234"/>      self.wheel_factor := need_integer(n, 1)
+<a name="235"/>      link
+<a name="236"/>   end
+<a name="237"/>
+<a name="238"/>   #
+<a name="239"/>   # Get the wheel factor
+<a name="240"/>   #
+<a name="241"/>   public get_wheel_factor()
+<a name="242"/>      return self.wheel_factor
+<a name="243"/>   end
+<a name="244"/>
+<a name="245"/>   #
+<a name="246"/>   # Set the margin factor.  This is an integer giving the number of
+<a name="247"/>   # increments (see `set_increment_size()`) by which to reduce a page
+<a name="248"/>   # movement (a click in the bar area outside the bar); by default it
+<a name="249"/>   # is `DEFAULT_MARGIN_FACTOR`.
+<a name="250"/>   #
+<a name="251"/>   # This is ignored for a range based scrollbar.
+<a name="252"/>   #
+<a name="253"/>   public set_margin_factor(n)
+<a name="254"/>      self.margin_factor := need_integer(n, 0)
+<a name="255"/>      link
+<a name="256"/>   end
+<a name="257"/>
+<a name="258"/>   #
+<a name="259"/>   # Get the margin factor
+<a name="260"/>   #
+<a name="261"/>   public get_margin_factor()
+<a name="262"/>      return self.margin_factor
+<a name="263"/>   end
+<a name="264"/>
+<a name="265"/>   private update_grey()
+<a name="266"/>      if \shade_buttons_flag then
+<a name="267"/>         # This is invoke_later since we may be called whilst the button
+<a name="268"/>         # is held down, and hence from a background task.  Changing the
+<a name="269"/>         # shaded state calls stop() on that task (via Button.
+<a name="270"/>         # on_interrupted()), which is illegal from within it.
+<a name="271"/>         parent_dialog.invoke_later{{
+<a name="272"/>            b1.set_is_shaded(Yes{bar_pos = bar_area_pos})
+<a name="273"/>            b2.set_is_shaded(Yes{bar_pos = bar_area_pos + bar_area_size - bar_size})
+<a name="274"/>         }}
+<a name="275"/>   end
+<a name="276"/>
+<a name="277"/>   private move_bar_pos(x)
+<a name="278"/>      x &lt;:= self.bar_area_pos
+<a name="279"/>      x &gt;:= self.bar_area_pos + self.bar_area_size - self.bar_size
+<a name="280"/>      if self.bar_pos ~===:= x then {
+<a name="281"/>         if /self.is_horizontal_flag then
+<a name="282"/>            self.bar_area.bar_y := self.bar_pos
+<a name="283"/>         else
+<a name="284"/>            self.bar_area.bar_x := self.bar_pos        
+<a name="285"/>         update_grey()
+<a name="286"/>         self.bar_area.invalidate()
+<a name="287"/>      }
+<a name="288"/>   end
+<a name="289"/>
+<a name="290"/>   private move_value(x)
+<a name="291"/>      self.value := restrict(x, self.lo, self.hi)
+<a name="292"/>   end
+<a name="293"/>
+<a name="294"/>   private set_pos_from_value()
+<a name="295"/>      if self.hi ~= self.lo then
+<a name="296"/>         self.move_bar_pos(self.bar_area_pos + integer(((self.value - self.lo) * 
+<a name="297"/>                                                        (self.bar_area_size - self.bar_size)) / (self.hi - self.lo)))
+<a name="298"/>      else
+<a name="299"/>         self.move_bar_pos(self.bar_area_pos)
+<a name="300"/>   end
+<a name="301"/>
+<a name="302"/>   private set_value_from_pos()
+<a name="303"/>      if self.bar_area_size ~= self.bar_size then
+<a name="304"/>         move_value(self.lo + ((self.hi - self.lo) * (self.bar_pos - self.bar_area_pos)) / 
+<a name="305"/>                    (self.bar_area_size - self.bar_size))
+<a name="306"/>      else
+<a name="307"/>         move_value(self.lo)
+<a name="308"/>   end
+<a name="309"/>
+<a name="310"/>   public override get_default_height()
+<a name="311"/>      if \self.is_horizontal_flag then
+<a name="312"/>         return DEFAULT_INNER_SIZE + border.get_total_height()
+<a name="313"/>   end
+<a name="314"/>
+<a name="315"/>   public override get_default_width()
+<a name="316"/>      if /self.is_horizontal_flag then
+<a name="317"/>         return DEFAULT_INNER_SIZE + border.get_total_width()
+<a name="318"/>   end
+<a name="319"/>
+<a name="320"/>   public handle_press(e)
+<a name="321"/>      local k
+<a name="322"/>      start_handle(e)
+<a name="323"/>      if (self.bar_area.bar_x &lt;= e.x &lt; self.bar_area.bar_x + self.bar_area.bar_w) &amp; 
+<a name="324"/>         (self.bar_area.bar_y  &lt;= e.y &lt; self.bar_area.bar_y + self.bar_area.bar_h) then {
+<a name="325"/>         #
+<a name="326"/>         # Click on bar; set flag and save offset between top of bar and pointer position
+<a name="327"/>         #
+<a name="328"/>         self.bar_down := &amp;yes
+<a name="329"/>         if /self.is_horizontal_flag then
+<a name="330"/>            self.bar_down_offset := e.y - self.bar_area.bar_y
+<a name="331"/>         else
+<a name="332"/>            self.bar_down_offset := e.x - self.bar_area.bar_x
+<a name="333"/>      } else if (if /is_horizontal_flag then bar_area.y  &lt;= e.y &lt; bar_area.bar_y
+<a name="334"/>                 else bar_area.x  &lt;= e.x &lt; bar_area.bar_x) then {
+<a name="335"/>         if \e.shift | e.code === Mouse.MIDDLE_PRESS then {
+<a name="336"/>            self.bar_down := &amp;yes
+<a name="337"/>            self.bar_down_offset := bar_size / 2
+<a name="338"/>            move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
+<a name="339"/>            set_value_from_pos()
+<a name="340"/>         } else {
+<a name="341"/>            k := if e.code === Mouse.RIGHT_PRESS then 1 else -1
+<a name="342"/>            move_value(page_jump(k))
+<a name="343"/>            set_pos_from_value()
+<a name="344"/>            start_paging(k)
+<a name="345"/>         }
+<a name="346"/>      } else if (if /is_horizontal_flag then bar_area.bar_y + bar_area.bar_h  &lt;= e.y &lt;  bar_area.y + bar_area.h
+<a name="347"/>                 else bar_area.bar_x + bar_area.bar_w  &lt;= e.x &lt;  bar_area.x + bar_area.w) then {
+<a name="348"/>         if \e.shift | e.code === Mouse.MIDDLE_PRESS then {
+<a name="349"/>            self.bar_down := &amp;yes
+<a name="350"/>            self.bar_down_offset := bar_size / 2
+<a name="351"/>            move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
+<a name="352"/>            set_value_from_pos()
+<a name="353"/>         } else {
+<a name="354"/>            k := if e.code === Mouse.RIGHT_PRESS then -1 else 1
+<a name="355"/>            move_value(page_jump(k))
+<a name="356"/>            set_pos_from_value()
+<a name="357"/>            start_paging(k)
+<a name="358"/>         }
+<a name="359"/>      }
+<a name="360"/>      end_handle(e)
+<a name="361"/>   end
+<a name="362"/>
+<a name="363"/>   #
+<a name="364"/>   # Return a new value based on a move of of `n` pages (`n` will be
+<a name="365"/>   # +/- 1), ie when the user clicks in the bar area outside the
+<a name="366"/>   # bar itself.
+<a name="367"/>   # 
+<a name="368"/>   # This may be overridden to provide custom behaviour, for example
+<a name="369"/>   # to make scroll bar moves match up with keyboard page up and down.
+<a name="370"/>   # The default implementation moves value by `n * (page_size -
+<a name="371"/>   # margin_factor * increment_size)` for a non-range scrollbar, or
+<a name="372"/>   # just `n * page_size` for a range.
+<a name="373"/>   #
+<a name="374"/>   public page_jump(n)
+<a name="375"/>      return value +
+<a name="376"/>         if /is_range_flag then
+<a name="377"/>            n * (0 &lt; page_size - (margin_factor to 0 by -1) * increment_size)
+<a name="378"/>         else
+<a name="379"/>            n * page_size
+<a name="380"/>   end
+<a name="381"/>
+<a name="382"/>   #
+<a name="383"/>   # Return a new value based on a move of of `n` units.  This is used
+<a name="384"/>   # when the user clicks on the buttons (`n` is +/- 1), or uses the
+<a name="385"/>   # scroll wheel (`n` is +/- `wheel_factor`).
+<a name="386"/>   #
+<a name="387"/>   # Like `page_jump`, this may be overridden to provide custom
+<a name="388"/>   # behaviour.  The default implementation just moves value by `n *
+<a name="389"/>   # increment_size`.
+<a name="390"/>   #
+<a name="391"/>   public small_jump(n)
+<a name="392"/>      return value + n * increment_size
+<a name="393"/>   end
+<a name="394"/>
+<a name="395"/>   public handle_release(e)
+<a name="396"/>      start_handle(e)
+<a name="397"/>      self.bar_down := &amp;null
+<a name="398"/>      stop_paging()
+<a name="399"/>      end_handle(e)
+<a name="400"/>   end
+<a name="401"/>
+<a name="402"/>   private repeat_tick()
+<a name="403"/>      repeat {
+<a name="404"/>         if Prog.get_runtime_millis() &gt; self.repeat_delay then {
+<a name="405"/>            start_handle()
+<a name="406"/>            move_value(page_jump(is_paging))
+<a name="407"/>            set_pos_from_value()
+<a name="408"/>            end_handle()
+<a name="409"/>         }
+<a name="410"/>         repeat_ticker.sleep(Gui.REPEAT_RATE)
+<a name="411"/>      }
+<a name="412"/>   end
+<a name="413"/>
+<a name="414"/>   public start_paging(n)
+<a name="415"/>      self.is_paging := n
+<a name="416"/>      self.repeat_delay := Prog.get_runtime_millis() + Gui.REPEAT_DELAY
+<a name="417"/>      repeat_ticker.start()
+<a name="418"/>   end
+<a name="419"/>
+<a name="420"/>   public stop_paging()
+<a name="421"/>      self.is_paging := &amp;null
+<a name="422"/>      repeat_ticker.stop()
+<a name="423"/>   end
+<a name="424"/>
+<a name="425"/>   public start_handle(e)
+<a name="426"/>      old_value := value
+<a name="427"/>   end
+<a name="428"/>
+<a name="429"/>   public end_handle(e)
+<a name="430"/>      if old_value ~=== value then
+<a name="431"/>         fire(Event.VALUE_CHANGED, e)
+<a name="432"/>   end
+<a name="433"/>
+<a name="434"/>   public override handle_wheel_up(e)
+<a name="435"/>      /self.bar_down | fail
+<a name="436"/>      start_handle(e)
+<a name="437"/>      move_value(small_jump(-wheel_factor))
+<a name="438"/>      set_pos_from_value()
+<a name="439"/>      end_handle(e)
+<a name="440"/>   end
+<a name="441"/>
+<a name="442"/>   public override handle_wheel_down(e)
+<a name="443"/>      /self.bar_down | fail
+<a name="444"/>      start_handle(e)
+<a name="445"/>      move_value(small_jump(wheel_factor))
+<a name="446"/>      set_pos_from_value()
+<a name="447"/>      end_handle(e)
+<a name="448"/>   end
+<a name="449"/>
+<a name="450"/>   public handle_button_up(e)
+<a name="451"/>      start_handle(e)
+<a name="452"/>      move_value(if \e.shift | e.code === Mouse.MIDDLE_PRESS then
+<a name="453"/>                    lo
+<a name="454"/>                 else if e.code === Mouse.RIGHT_PRESS then
+<a name="455"/>                    small_jump(1)
+<a name="456"/>                 else
+<a name="457"/>                    small_jump(-1))
+<a name="458"/>      set_pos_from_value()
+<a name="459"/>      end_handle(e)
+<a name="460"/>   end
+<a name="461"/>
+<a name="462"/>   public handle_button_down(e)
+<a name="463"/>      start_handle(e)
+<a name="464"/>      move_value(if \e.shift | e.code === Mouse.MIDDLE_PRESS then
+<a name="465"/>                    hi
+<a name="466"/>                 else if e.code === Mouse.RIGHT_PRESS then
+<a name="467"/>                    small_jump(-1)
+<a name="468"/>                 else
+<a name="469"/>                    small_jump(1))
+<a name="470"/>      set_pos_from_value()
+<a name="471"/>      end_handle(e)
+<a name="472"/>   end
+<a name="473"/>
+<a name="474"/>   public handle_drag(e)
+<a name="475"/>      \self.bar_down | fail
+<a name="476"/>
+<a name="477"/>      start_handle(e)
+<a name="478"/>      #
+<a name="479"/>      # Bar dragged; compute new position
+<a name="480"/>      #
+<a name="481"/>      if /self.is_horizontal_flag then
+<a name="482"/>         move_bar_pos(e.y - self.bar_down_offset)
+<a name="483"/>      else
+<a name="484"/>         move_bar_pos(e.x - self.bar_down_offset)
+<a name="485"/>      set_value_from_pos()
+<a name="486"/>      end_handle(e)
+<a name="487"/>   end
+<a name="488"/>
+<a name="489"/>   public handle_interrupted()
+<a name="490"/>      if bar_area.is_held(Mouse.LEFT_PRESS) then
+<a name="491"/>         handle_release()
+<a name="492"/>   end
+<a name="493"/>
+<a name="494"/>   public override display()
+<a name="495"/>      border.draw_rect(self.cbwin, self)
+<a name="496"/>      display_children()
+<a name="497"/>   end
+<a name="498"/>
+<a name="499"/>   private reconfigure()
+<a name="500"/>      # Don't do anything if we haven't been positioned yet.
+<a name="501"/>      is_live() | fail
+<a name="502"/>      check_vals()
+<a name="503"/>      calc_bar_size()
+<a name="504"/>      set_pos_from_value()
+<a name="505"/>      update_grey()
+<a name="506"/>      bar_area.invalidate()
+<a name="507"/>   end
+<a name="508"/>
+<a name="509"/>   # Check sensible values and set lo/hi for a non-range.
+<a name="510"/>   private check_vals()
+<a name="511"/>      if /self.is_range_flag then {
+<a name="512"/>         #
+<a name="513"/>         # Not a range; compute lo, hi
+<a name="514"/>         #
+<a name="515"/>         self.lo := 0
+<a name="516"/>         self.hi := if self.total_size &gt; self.page_size then
+<a name="517"/>            self.total_size - self.page_size
+<a name="518"/>         else
+<a name="519"/>            0
+<a name="520"/>      }
+<a name="521"/>      # Ensure value in lo..hi range.
+<a name="522"/>      move_value(self.value)
+<a name="523"/>   end
+<a name="524"/>
+<a name="525"/>   private calc_bar_size()
+<a name="526"/>      if /self.is_range_flag then {
+<a name="527"/>         #
+<a name="528"/>         # If total &lt;= page then we produce an immovable full size bar
+<a name="529"/>         # with lo = hi = 0, set above in check_vals.
+<a name="530"/>         #
+<a name="531"/>         self.bar_size := if self.total_size &gt; self.page_size then
+<a name="532"/>            integer((self.bar_area_size * self.page_size) / self.total_size)
+<a name="533"/>         else
+<a name="534"/>            self.bar_area_size 
+<a name="535"/>      } else {
+<a name="536"/>         #
+<a name="537"/>         # Range; set bar size to constant, but leave room if bar_area_size is small.
+<a name="538"/>         #
+<a name="539"/>         self.bar_size := RANGE_BAR_SIZE
+<a name="540"/>         self.bar_size &gt;:= self.bar_area_size - scale(8)
+<a name="541"/>      }
+<a name="542"/>      #
+<a name="543"/>      # Ensure bar size in range not less than MIN_BAR_SIZE, but must be within
+<a name="544"/>      # bar_area_size.
+<a name="545"/>      #
+<a name="546"/>      self.bar_size &lt;:= MIN_BAR_SIZE
+<a name="547"/>      self.bar_size &gt;:= self.bar_area_size
+<a name="548"/>
+<a name="549"/>      if \self.is_range_flag then {
+<a name="550"/>         #
+<a name="551"/>         # For a slider, we still need the page size for clicks in the bar.
+<a name="552"/>         #
+<a name="553"/>         self.page_size := ((self.hi - self.lo) * self.bar_size) / (0 ~= self.bar_area_size) | 0
+<a name="554"/>      }
+<a name="555"/>
+<a name="556"/>      #
+<a name="557"/>      # Set bar height/width according to orientation
+<a name="558"/>      #
+<a name="559"/>      if /self.is_horizontal_flag then
+<a name="560"/>         self.bar_area.bar_h := self.bar_size
+<a name="561"/>      else
+<a name="562"/>         self.bar_area.bar_w := self.bar_size
+<a name="563"/>   end
+<a name="564"/>
+<a name="565"/>   public override initially()
+<a name="566"/>      if /self.is_range_flag then {
+<a name="567"/>         \self.total_size | runerr("Total size not set")
+<a name="568"/>         \self.page_size | runerr("Page size not set")
+<a name="569"/>      }
+<a name="570"/>      # May not need increment_size if small_jump is overridden.
+<a name="571"/>      if Class.get_field_defining_class(self, "small_jump") === ScrollBar &amp; /self.increment_size then
+<a name="572"/>         runerr("Increment size not set")
+<a name="573"/>      \self.value | runerr("Value not set")
+<a name="574"/>      check_vals()
+<a name="575"/>      if /self.is_horizontal_flag then {
+<a name="576"/>         b1.set_paint(ImagePaint().set_cache("gui.ARROW_UP"))
+<a name="577"/>         b2.set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
+<a name="578"/>      } else {
+<a name="579"/>         b1.set_paint(ImagePaint().set_cache("gui.ARROW_LEFT"))
+<a name="580"/>         b2.set_paint(ImagePaint().set_cache("gui.ARROW_RIGHT"))
+<a name="581"/>      }
+<a name="582"/>      Component.initially()
+<a name="583"/>   end
+<a name="584"/>
+<a name="585"/>   public override layout()
+<a name="586"/>      if /self.is_horizontal_flag then {
+<a name="587"/>         #
+<a name="588"/>         # Set button positions
+<a name="589"/>         #
+<a name="590"/>         b1.x := self.x + border.get_l_inset()
+<a name="591"/>         b1.y := self.y + border.get_t_inset()
+<a name="592"/>         b1.w := self.w - border.get_total_width()
+<a name="593"/>         b1.h := max(DEFAULT_INNER_SIZE, b1.get_preferred_height(b1.w))
+<a name="594"/>         b2.x := b1.x 
+<a name="595"/>         b2.h := max(DEFAULT_INNER_SIZE, b2.get_preferred_height(b1.w))
+<a name="596"/>         b2.y := self.y + self.h - b2.h - border.get_b_inset()
+<a name="597"/>         b2.w := b1.w
+<a name="598"/>
+<a name="599"/>         #
+<a name="600"/>         # Compute bar area dimensions
+<a name="601"/>         #
+<a name="602"/>         bar_area.x := b1.x + BAR_INDENT
+<a name="603"/>         bar_area.y := b1.y + b1.h
+<a name="604"/>         bar_area.w := b1.w - 2 * BAR_INDENT
+<a name="605"/>         bar_area.h := b2.y - (b1.y + b1.h)
+<a name="606"/>
+<a name="607"/>         self.bar_area.bar_x := self.bar_area.x
+<a name="608"/>         self.bar_area_pos := self.bar_area.y
+<a name="609"/>         self.bar_area.bar_w := self.bar_area.w
+<a name="610"/>         self.bar_area_size := self.bar_area.h
+<a name="611"/>      } else {
+<a name="612"/>         b1.x := self.x + border.get_l_inset()
+<a name="613"/>         b1.y := self.y + border.get_t_inset()
+<a name="614"/>         b1.w := max(DEFAULT_INNER_SIZE, b1.get_preferred_width())
+<a name="615"/>         b1.h := self.h - border.get_total_height()
+<a name="616"/>         b2.w := max(DEFAULT_INNER_SIZE, b2.get_preferred_width())
+<a name="617"/>         b2.x := self.x + self.w - b2.w - border.get_r_inset()
+<a name="618"/>         b2.y := b1.y
+<a name="619"/>         b2.h := b1.h
+<a name="620"/>
+<a name="621"/>         bar_area.x := b1.x + b1.w
+<a name="622"/>         bar_area.y := b1.y + BAR_INDENT
+<a name="623"/>         bar_area.w := b2.x - (b1.x + b1.w)
+<a name="624"/>         bar_area.h := b1.h - 2 * BAR_INDENT
+<a name="625"/>
+<a name="626"/>         self.bar_area_pos := self.bar_area.x
+<a name="627"/>         self.bar_area.bar_y := self.bar_area.y
+<a name="628"/>         self.bar_area_size := self.bar_area.w
+<a name="629"/>         self.bar_area.bar_h := self.bar_area.h
+<a name="630"/>      }
+<a name="631"/>
+<a name="632"/>      b1.layout()      
+<a name="633"/>      b2.layout()      
+<a name="634"/>
+<a name="635"/>      # This test avoids a cosmetic problem whereby the bar would move
+<a name="636"/>      # slightly as its position is recalculated from the value.
+<a name="637"/>      # There is no need for this calculation unless the bar area
+<a name="638"/>      # has changed size/pos.
+<a name="639"/>      #
+<a name="640"/>      if old_bar_area_pos ~=== bar_area_pos |
+<a name="641"/>         old_bar_area_size ~=== bar_area_size then
+<a name="642"/>      {
+<a name="643"/>         calc_bar_size()
+<a name="644"/>         set_pos_from_value()
+<a name="645"/>         old_bar_area_pos := bar_area_pos
+<a name="646"/>         old_bar_area_size := bar_area_size
+<a name="647"/>      }
+<a name="648"/>   end
+<a name="649"/>
+<a name="650"/>   public override shift(dx, dy)
+<a name="651"/>      Component.shift(dx, dy)
+<a name="652"/>      if /self.is_horizontal_flag then {
+<a name="653"/>         self.bar_pos +:= dy
+<a name="654"/>         self.bar_area_pos +:= dy
+<a name="655"/>         self.old_bar_area_pos +:= dy
+<a name="656"/>      } else {
+<a name="657"/>         self.bar_pos +:= dx
+<a name="658"/>         self.bar_area_pos +:= dx
+<a name="659"/>         self.old_bar_area_pos +:= dx
+<a name="660"/>      }
+<a name="661"/>      self.bar_area.bar_x +:= dx
+<a name="662"/>      self.bar_area.bar_y +:= dy
+<a name="663"/>   end
+<a name="664"/>
+<a name="665"/>   #
+<a name="666"/>   # Succeed if the bar is at its topmost (or leftmost) position.
+<a name="667"/>   #
+<a name="668"/>   public at_top()
+<a name="669"/>      succeed bar_pos = bar_area_pos
+<a name="670"/>   end
+<a name="671"/>
+<a name="672"/>   #
+<a name="673"/>   # Succeed if the bar is at its bottommost (or rightmost) position.
+<a name="674"/>   #
+<a name="675"/>   public at_bottom()
+<a name="676"/>      succeed bar_pos + bar_size = bar_area_pos + bar_area_size
+<a name="677"/>   end
+<a name="678"/>
+<a name="679"/>   public override finally()
+<a name="680"/>      repeat_ticker.stop()
+<a name="681"/>      old_bar_area_pos := old_bar_area_size := &amp;null
+<a name="682"/>      Component.finally()
+<a name="683"/>   end
+<a name="684"/>
+<a name="685"/>   public override new()
+<a name="686"/>      Component.new()
+<a name="687"/>      repeat_ticker := Dispatcher.new_task{repeat_tick()}
+<a name="688"/>      self.b1 := IconButton().
+<a name="689"/>         set_border(NullBorder()).
+<a name="690"/>         connect(self.handle_button_up, Event.BUTTON_PRESS).
+<a name="691"/>         connect(self.handle_button_up, Event.BUTTON_HELD).
+<a name="692"/>         set_use_middle(&amp;yes).
+<a name="693"/>         set_use_right(&amp;yes).
+<a name="694"/>         set_accepts_focus(&amp;no)
+<a name="695"/>      add(self.b1)
+<a name="696"/>      self.b2 := IconButton().
+<a name="697"/>         set_border(NullBorder()).
+<a name="698"/>         connect(self.handle_button_down, Event.BUTTON_PRESS).
+<a name="699"/>         connect(self.handle_button_down, Event.BUTTON_HELD).
+<a name="700"/>         set_use_middle(&amp;yes).
+<a name="701"/>         set_use_right(&amp;yes).
+<a name="702"/>         set_accepts_focus(&amp;no)
+<a name="703"/>      add(self.b2)
+<a name="704"/>      self.bar_area := BarArea().
+<a name="705"/>         connect(self.handle_press, Event.MOUSE_LEFT_PRESS).
+<a name="706"/>         connect(self.handle_drag, Event.MOUSE_LEFT_DRAG).
+<a name="707"/>         connect(self.handle_release, Event.MOUSE_LEFT_RELEASE).
+<a name="708"/>         connect(self.handle_press, Event.MOUSE_RIGHT_PRESS).
+<a name="709"/>         connect(self.handle_drag, Event.MOUSE_RIGHT_DRAG).
+<a name="710"/>         connect(self.handle_release, Event.MOUSE_RIGHT_RELEASE).
+<a name="711"/>         connect(self.handle_press, Event.MOUSE_MIDDLE_PRESS).
+<a name="712"/>         connect(self.handle_drag, Event.MOUSE_MIDDLE_DRAG).
+<a name="713"/>         connect(self.handle_release, Event.MOUSE_MIDDLE_RELEASE)
+<a name="714"/>      connect(handle_interrupted, Event.INTERRUPTED)
+<a name="715"/>      add(self.bar_area)
+<a name="716"/>      self.wheel_factor := DEFAULT_WHEEL_FACTOR
+<a name="717"/>      self.margin_factor := DEFAULT_MARGIN_FACTOR
+<a name="718"/>      self.shade_buttons_flag := DEFAULT_SHADE_BUTTONS
+<a name="719"/>      set_use_wheel(&amp;yes)
+<a name="720"/>      set_border(RaisedBorder())
+<a name="721"/>      return
+<a name="722"/>   end
+<a name="723"/>end
+</pre></body></html>

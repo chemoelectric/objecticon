@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>jsonparser.icn</title></head><body><pre>
+<a name="1"/>package json
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   lang,
+<a name="5"/>   util,
+<a name="6"/>   exception
+<a name="7"/>
+<a name="8"/>class JSONParser()
+<a name="9"/>   public static const 
+<a name="10"/>      WS_CHAR,
+<a name="11"/>      UNESCAPED_CHAR
+<a name="12"/>
+<a name="13"/>   private
+<a name="14"/>      utf8_flag,
+<a name="15"/>      true,
+<a name="16"/>      false,
+<a name="17"/>      null
+<a name="18"/>
+<a name="19"/>   private static init()
+<a name="20"/>      WS_CHAR := ' \t\n\r'
+<a name="21"/>      UNESCAPED_CHAR := '\x20-\x21\x23-\x5B\x5D-\U10FFFF'
+<a name="22"/>   end
+<a name="23"/>
+<a name="24"/>   #
+<a name="25"/>   # Set a value to represent json "true"; by default `&amp;yes`.
+<a name="26"/>   #
+<a name="27"/>   public set_true(x)
+<a name="28"/>      self.true := x
+<a name="29"/>      link
+<a name="30"/>   end
+<a name="31"/>
+<a name="32"/>   #
+<a name="33"/>   # Set a value to represent json "false"; by default `&amp;no`.
+<a name="34"/>   #
+<a name="35"/>   public set_false(x)
+<a name="36"/>      self.false := x
+<a name="37"/>      link
+<a name="38"/>   end
+<a name="39"/>
+<a name="40"/>   #
+<a name="41"/>   # Set a value to represent json "null"; by default `&amp;null`.
+<a name="42"/>   #
+<a name="43"/>   public set_null(x)
+<a name="44"/>      self.null := x
+<a name="45"/>      link
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   private parse_number()
+<a name="49"/>      local s
+<a name="50"/>      s := (="-" | "") || 
+<a name="51"/>         (="0" | (tab(any('123456789')) || (tab(many(&amp;digits)) | ""))) ||
+<a name="52"/>         ((="." || tab(many(&amp;digits))) | "") ||
+<a name="53"/>         ((=(u"e" | u"E") || (tab(any('+\-')) | "") || tab(many(&amp;digits))) | "") | err("Invalid number")
+<a name="54"/>      return numeric(s) | err("Number out of range")
+<a name="55"/>   end
+<a name="56"/>
+<a name="57"/>   private parse_string()
+<a name="58"/>      local s, ch, i
+<a name="59"/>      ="\"" | err("\" expected")
+<a name="60"/>      s := ""
+<a name="61"/>      repeat {
+<a name="62"/>         s ||:= string(tab(many(UNESCAPED_CHAR)))
+<a name="63"/>         if pos(0) then
+<a name="64"/>            err("Unclosed quote")
+<a name="65"/>         if ="\"" then
+<a name="66"/>            break
+<a name="67"/>         if ="\\" then {
+<a name="68"/>            ch := move(1) | err("Unclosed quote")
+<a name="69"/>            s ||:= case string(ch) of {
+<a name="70"/>               "\"": "\""
+<a name="71"/>               "\\": "\\"
+<a name="72"/>               "/": "/"
+<a name="73"/>               "b": "\b"
+<a name="74"/>               "f": "\f"
+<a name="75"/>               "n": "\n"
+<a name="76"/>               "r": "\r"
+<a name="77"/>               "t": "\t"
+<a name="78"/>               "u": {
+<a name="79"/>                  i := (0 &lt;= Format.string_to_int(move(4))) | err("Invalid \\u escape")
+<a name="80"/>                  if \utf8_flag then
+<a name="81"/>                     Text.utf8_seq(i | 63)
+<a name="82"/>                  else
+<a name="83"/>                     char(i | 63)
+<a name="84"/>               }
+<a name="85"/>               default: err("Invalid escape char in string: " || image(ch))
+<a name="86"/>            }
+<a name="87"/>         } else
+<a name="88"/>            err("Invalid char in string: " || image(&amp;subject[&amp;pos]))
+<a name="89"/>      }
+<a name="90"/>      return if \utf8_flag then ucs(s) else s
+<a name="91"/>   end
+<a name="92"/>
+<a name="93"/>   private parse_value()
+<a name="94"/>      return if ="false" then
+<a name="95"/>         false
+<a name="96"/>      else if ="true" then
+<a name="97"/>         true
+<a name="98"/>      else if ="null" then
+<a name="99"/>         null
+<a name="100"/>      else if any('[') then
+<a name="101"/>         parse_array()
+<a name="102"/>      else if any('{') then
+<a name="103"/>         parse_object()
+<a name="104"/>      else if any('-' ++ &amp;digits) then
+<a name="105"/>         parse_number()
+<a name="106"/>      else if any('\"') then
+<a name="107"/>         parse_string()
+<a name="108"/>      else
+<a name="109"/>         err("Unexpected char: " || image(&amp;subject[&amp;pos]))
+<a name="110"/>   end
+<a name="111"/>
+<a name="112"/>   private next_token()
+<a name="113"/>      tab(many(WS_CHAR))
+<a name="114"/>   end
+<a name="115"/>
+<a name="116"/>   private parse_array()
+<a name="117"/>      local res
+<a name="118"/>      res := []
+<a name="119"/>      ="["
+<a name="120"/>      next_token()
+<a name="121"/>      if ="]" then
+<a name="122"/>         return res
+<a name="123"/>      repeat {
+<a name="124"/>         put(res, parse_value())
+<a name="125"/>         next_token()
+<a name="126"/>         if ="]" then
+<a name="127"/>            return res
+<a name="128"/>         ="," | err("',' expected")
+<a name="129"/>         next_token()
+<a name="130"/>      }
+<a name="131"/>      return res
+<a name="132"/>   end
+<a name="133"/>
+<a name="134"/>   private parse_object()
+<a name="135"/>      local res, m, v
+<a name="136"/>      res := table()
+<a name="137"/>      ="{"
+<a name="138"/>      next_token()
+<a name="139"/>      if ="}" then
+<a name="140"/>         return res
+<a name="141"/>      repeat {
+<a name="142"/>         m := parse_string()
+<a name="143"/>         next_token()
+<a name="144"/>         =":" | err("':' expected")
+<a name="145"/>         next_token()
+<a name="146"/>         v := parse_value()
+<a name="147"/>         next_token()
+<a name="148"/>         insert(res, m, v)
+<a name="149"/>         if ="}" then
+<a name="150"/>            return res
+<a name="151"/>         ="," | err("',' expected")
+<a name="152"/>         next_token()
+<a name="153"/>      }
+<a name="154"/>      return res
+<a name="155"/>   end
+<a name="156"/>
+<a name="157"/>   private end_check(o)
+<a name="158"/>      next_token()
+<a name="159"/>      pos(0) | err("Extraneous input: " || image(&amp;subject[&amp;pos]))
+<a name="160"/>      return o
+<a name="161"/>   end
+<a name="162"/>
+<a name="163"/>   private parse_impl()
+<a name="164"/>      next_token()
+<a name="165"/>      return if any('[') then
+<a name="166"/>         parse_array()
+<a name="167"/>      else if any('{') then
+<a name="168"/>         parse_object()
+<a name="169"/>      else
+<a name="170"/>         err("'[' or '{' expected")
+<a name="171"/>   end
+<a name="172"/>
+<a name="173"/>   private err(s)
+<a name="174"/>      s ||:= " (char " || &amp;pos || ")"
+<a name="175"/>      throw(s)
+<a name="176"/>   end
+<a name="177"/>
+<a name="178"/>   public parse(s)
+<a name="179"/>      s := need_text(s)
+<a name="180"/>      utf8_flag := Yes{ type(s) == "ucs" }
+<a name="181"/>      return s ? clean{try1{ end_check(parse_impl()) }}
+<a name="182"/>   end
+<a name="183"/>
+<a name="184"/>   public new()
+<a name="185"/>      true := &amp;yes
+<a name="186"/>      false := &amp;no
+<a name="187"/>      return
+<a name="188"/>   end
+<a name="189"/>end
+<a name="190"/>
+<a name="191"/>#
+<a name="192"/># A helpful function for descending through a structure (`v`) of lists
+<a name="193"/># and tables returned by json parsing.  The list `a` gives the item to
+<a name="194"/># select at each level.  Lists must match integer indices and tables
+<a name="195"/># must have the exact key.  For example :-
+<a name="196"/>#
+<a name="197"/># ~
+<a name="198"/>#    # Typical parse output
+<a name="199"/>#    v := [9,120,8984,24, table(,"x",2,"y",4)]
+<a name="200"/>#    walk(v, 5,"x")        # Gives 2
+<a name="201"/># ~
+<a name="202"/>#
+<a name="203"/># If the list of selectors doesn't lead to an element, then the
+<a name="204"/># procedure fails, setting `&amp;why` to indicate where the search ended.
+<a name="205"/>#
+<a name="206"/>procedure walk(v, a[])
+<a name="207"/>   local k
+<a name="208"/>   every k := !a do {
+<a name="209"/>      case type(v) of {
+<a name="210"/>         "table":
+<a name="211"/>            v := member(v, k) | return error("Missed table key: " || k)
+<a name="212"/>         "list":
+<a name="213"/>            (type(k) == "integer" &amp; v := v[k]) | return error("Missed list index: " || k)
+<a name="214"/>         default: return error("End of structure reached")
+<a name="215"/>      }
+<a name="216"/>   }
+<a name="217"/>   return v
+<a name="218"/>end
+</pre></body></html>

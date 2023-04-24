@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>begin_rev_analysis</title></head><body>
+<h1>begin_rev_analysis(s, i, j)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.scan-package.html" target="listFrame">ipl.scan</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This procedure is similar to <code><a href="ipl.scan.begin_analysis.html" target="displayFrame">begin_analysis</a></code>, but provides
+different defaults, more suited to procedures that search backwards,
+as follows :-
+<p/>
+<ul>
+<li>
+<code>s</code> - <code>&amp;subject</code>
+</li>
+<li>
+<code>i</code> - <code>&amp;pos</code> if <code>s</code> is defaulted, otherwise <code>0</code>
+</li>
+<li>
+<code>j</code> - <code>1</code> 
+<p/>
+</li>
+</ul>
+Note that the returned values in a <code><a href="ipl.scan.StringAnalysis.html" target="displayFrame">StringAnalysis</a></code> record
+will still be adjusted so that <code>i &lt;= j</code>.
+<p/><a href="ipl.scan-scan.icn.html#814" target="displayFrame">Source - scan.icn </a>
+<p/>
+</body></html>

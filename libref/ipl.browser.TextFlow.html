@@ -1,0 +1,1330 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TextFlow</title></head><body>
+<h1>TextFlow</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Component.html" target="displayFrame">gui.Component</a><br>
+<a href="ipl.browser.HasLastHighlight.html" target="displayFrame">ipl.browser.HasLastHighlight</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-textflow.icn.html#204" target="displayFrame">Source - textflow.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.HasLastHighlight.html">ipl.browser.HasLastHighlight</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="ipl.browser.TextFlow.html">ipl.browser.TextFlow</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#add">add()</a>
+<a href="gui.Component.html#add_list">add_list()</a>
+<a href="gui.Component.html#build_point_chain">build_point_chain()</a>
+<a href="gui.Component.html#can_drag">can_drag()</a>
+<a href="gui.Component.html#can_drop">can_drop()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#drag_event">drag_event()</a>
+<a href="gui.Component.html#drag_reset">drag_reset()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#finally">finally()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#focus_changed">focus_changed()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_index">get_index()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip">get_tooltip()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#handle_accel">handle_accel()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#initially">initially()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#keeps">keeps()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#match_accel">match_accel()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove">remove()</a>
+<a href="gui.Component.html#remove_all">remove_all()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_index">remove_index()</a>
+<a href="gui.Component.html#remove_list">remove_list()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reposition">reposition()</a>
+<a href="gui.Component.html#reposition_index">reposition_index()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_geometry">set_geometry()</a>
+<a href="gui.Component.html#set_height">set_height()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_pos">set_pos()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_size">set_size()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_width">set_width()</a>
+<a href="gui.Component.html#set_x">set_x()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y">set_y()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#shift">shift()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#calculate_banded">calculate_banded()</a>
+<a href="#calculate_link_text">calculate_link_text()</a>
+<a href="#comp_out">comp_out()</a>
+<a href="#compute">compute()</a>
+<a href="#compute1">compute1()</a>
+<a href="#compute_component">compute_component()</a>
+<a href="#compute_nowrap_txt">compute_nowrap_txt()</a>
+<a href="#compute_pre_txt">compute_pre_txt()</a>
+<a href="#compute_txt">compute_txt()</a>
+<a href="#display">display()</a>
+<a href="#do_deferred">do_deferred()</a>
+<a href="#fits_in_row">fits_in_row()</a>
+<a href="#fits_in_row_lr">fits_in_row_lr()</a>
+<a href="#get_ascent">get_ascent()</a>
+<a href="#get_default_height">get_default_height()</a>
+<a href="#get_default_width">get_default_width()</a>
+<a href="#get_first_row_ascent">get_first_row_ascent()</a>
+<a href="#get_max_width">get_max_width()</a>
+<a href="#get_pad">get_pad()</a>
+<a href="#get_selected_text">get_selected_text()</a>
+<a href="#handle_exit">handle_exit()</a>
+<a href="#handle_in_chain">handle_in_chain()</a>
+<a href="#handle_interrupted">handle_interrupted()</a>
+<a href="#handle_lmdrag">handle_lmdrag()</a>
+<a href="#handle_lpress">handle_lpress()</a>
+<a href="#handle_lrelease">handle_lrelease()</a>
+<a href="#handle_mpress">handle_mpress()</a>
+<a href="#handle_mrelease">handle_mrelease()</a>
+<a href="#handle_rpress">handle_rpress()</a>
+<a href="#have_max">have_max()</a>
+<a href="#init">init()</a>
+<a href="#invalidate_url">invalidate_url()</a>
+<a href="#is_top_level">is_top_level()</a>
+<a href="#layout">layout()</a>
+<a href="#left_comp_out">left_comp_out()</a>
+<a href="#lookup_named_anchor">lookup_named_anchor()</a>
+<a href="#make_pad">make_pad()</a>
+<a href="#new">new()</a>
+<a href="#new_row">new_row()</a>
+<a href="#on_popup_closed">on_popup_closed()</a>
+<a href="#reset_layout">reset_layout()</a>
+<a href="#restore_last_highlight">restore_last_highlight()</a>
+<a href="#right_comp_out">right_comp_out()</a>
+<a href="#rows_in_range">rows_in_range()</a>
+<a href="#save_last_highlight">save_last_highlight()</a>
+<a href="#search">search()</a>
+<a href="#search_ahead">search_ahead()</a>
+<a href="#set_dominant_width">set_dominant_width()</a>
+<a href="#set_highlight">set_highlight()</a>
+<a href="#set_last_highlight">set_last_highlight()</a>
+<a href="#set_over">set_over()</a>
+<a href="#set_trim">set_trim()</a>
+<a href="#set_v_align">set_v_align()</a>
+<a href="#text_bg">text_bg()</a>
+<a href="#text_dash">text_dash()</a>
+<a href="#text_line">text_line()</a>
+<a href="#txt_out">txt_out()</a>
+<a href="#wants_lpress">wants_lpress()</a>
+<a href="#wants_rpress">wants_rpress()</a>
+<a href="#which_text_out">which_text_out()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ascent_adj">ascent_adj</a>
+<a href="#at_new_para">at_new_para</a>
+<a href="#baseline_off">baseline_off</a>
+<a href="#blob_start">blob_start</a>
+<a href="#browser">browser</a>
+<a href="#calculated">calculated</a>
+<a href="#calculating">calculating</a>
+<a href="#compute_w">compute_w</a>
+<a href="#computed_named_anchors">computed_named_anchors</a>
+<a href="#computed_output_rows">computed_output_rows</a>
+<a href="#def_width">def_width</a>
+<a href="#deferred">deferred</a>
+<a href="#dominant_width">dominant_width</a>
+<a href="#first_row_ascent">first_row_ascent</a>
+<a href="#held">held</a>
+<a href="#highlight">highlight</a>
+<a href="#input">input</a>
+<a href="#last_highlight">last_highlight</a>
+<a href="#left_comps">left_comps</a>
+<a href="#MARKED_COLOR">MARKED_COLOR</a>
+<a href="#max_ll">max_ll</a>
+<a href="#MAX_WIDTH">MAX_WIDTH</a>
+<a href="#max_width">max_width</a>
+<a href="#max_word_w">max_word_w</a>
+<a href="#named_anchors">named_anchors</a>
+<a href="#need_spc">need_spc</a>
+<a href="#output_comps">output_comps</a>
+<a href="#output_rows">output_rows</a>
+<a href="#over">over</a>
+<a href="#PREFERRED_WIDTH">PREFERRED_WIDTH</a>
+<a href="#right_comps">right_comps</a>
+<a href="#right_margin">right_margin</a>
+<a href="#row">row</a>
+<a href="#row_abs_bottom_height">row_abs_bottom_height</a>
+<a href="#row_abs_middle_height">row_abs_middle_height</a>
+<a href="#row_abs_top_height">row_abs_top_height</a>
+<a href="#row_ascent">row_ascent</a>
+<a href="#row_blob">row_blob</a>
+<a href="#row_bottom">row_bottom</a>
+<a href="#row_descent">row_descent</a>
+<a href="#row_width">row_width</a>
+<a href="#row_x">row_x</a>
+<a href="#row_y">row_y</a>
+<a href="#SEARCHED_CURR_COLOR">SEARCHED_CURR_COLOR</a>
+<a href="#SEARCHED_OTHER_COLOR">SEARCHED_OTHER_COLOR</a>
+<a href="#trim_flag">trim_flag</a>
+<a href="#v_align">v_align</a>
+<a href="#WHITESPACE">WHITESPACE</a>
+<a href="#WHITESPACE_NB">WHITESPACE_NB</a>
+<a href="#y_off">y_off</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="calculate_banded"/>
+<h3>calculate_banded(br, bs)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#592" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_link_text"/>
+<h3>calculate_link_text(t)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#820" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="comp_out"/>
+<h3>comp_out(cmd, co)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1092" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="compute"/>
+<h3>compute(width)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#277" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="compute1"/>
+<h3>compute1()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#381" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_component"/>
+<h3>compute_component(W, cmd)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1016" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_nowrap_txt"/>
+<h3>compute_nowrap_txt(W, cmd)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1266" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_pre_txt"/>
+<h3>compute_pre_txt(W, cmd)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1316" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_txt"/>
+<h3>compute_txt(W, cmd)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1181" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="display"/>
+<h3>display()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#display">display()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#488" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="do_deferred"/>
+<h3>do_deferred(co)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#972" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="fits_in_row"/>
+<h3>fits_in_row(w)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#968" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="fits_in_row_lr"/>
+<h3>fits_in_row_lr(w)</h3>
+private<p/>
+<dl>
+<dd>
+A special version of fits_in_row, used for determining if a
+left/right aligned component will fit in the row.  The problem
+arises in a case like :-
+<p/>
+FIRST&lt;img src="j3.jpeg" align="right"/&gt;SECOND
+<p/>
+FIRST and SECOND form a blob, but row_width only includes
+FIRST after it has been output.  Therefore fits_in_row may
+wrongly indicate that the img would fit in the row, rather than
+be deferred.  The solution is to set row_blob to the end of the
+blob when FIRST is output, and use row_blob to see if the img
+would fit.
+<p/><a href="ipl.browser-textflow.icn.html#951" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="get_ascent"/>
+<h3>get_ascent(dw)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#371" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_height"/>
+<h3>get_default_height(dw)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#get_default_height">get_default_height()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#361" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_width"/>
+<h3>get_default_width()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#get_default_width">get_default_width()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#345" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="get_first_row_ascent"/>
+<h3>get_first_row_ascent(dw)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#375" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="get_max_width"/>
+<h3>get_max_width()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#353" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="get_pad"/>
+<h3>get_pad()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1177" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="get_selected_text"/>
+<h3>get_selected_text(br, sorted)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#779" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_exit"/>
+<h3>handle_exit(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1478" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_in_chain"/>
+<h3>handle_in_chain(e)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1447" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_interrupted"/>
+<h3>handle_interrupted(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1483" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lmdrag"/>
+<h3>handle_lmdrag(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1468" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lpress"/>
+<h3>handle_lpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1395" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lrelease"/>
+<h3>handle_lrelease(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1377" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_mpress"/>
+<h3>handle_mpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1413" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_mrelease"/>
+<h3>handle_mrelease(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1386" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_rpress"/>
+<h3>handle_rpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1431" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="have_max"/>
+<h3>have_max()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1166" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#267" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="invalidate_url"/>
+<h3>invalidate_url(u)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#807" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="is_top_level"/>
+<h3>is_top_level()</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1012" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="layout"/>
+<h3>layout()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#layout">layout()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#835" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="left_comp_out"/>
+<h3>left_comp_out(co)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#990" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="lookup_named_anchor"/>
+<h3>lookup_named_anchor(name)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#445" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="make_pad"/>
+<h3>make_pad(W, attr)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1170" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(browser)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#new">new()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1557" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="new_row"/>
+<h3>new_row(gap)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#860" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="on_popup_closed"/>
+<h3>on_popup_closed()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1443" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_layout"/>
+<h3>reset_layout()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#reset_layout">reset_layout()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#334" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="restore_last_highlight"/>
+<h3>restore_last_highlight(n, url)</h3>
+package override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.HasLastHighlight.html#restore_last_highlight">restore_last_highlight()</a> in <a href="ipl.browser.HasLastHighlight.html" target="displayFrame">ipl.browser.HasLastHighlight</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1522" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="right_comp_out"/>
+<h3>right_comp_out(co)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1003" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="rows_in_range"/>
+<h3>rows_in_range(ry, rh)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#451" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="save_last_highlight"/>
+<h3>save_last_highlight(he)</h3>
+package override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.HasLastHighlight.html#save_last_highlight">save_last_highlight()</a> in <a href="ipl.browser.HasLastHighlight.html" target="displayFrame">ipl.browser.HasLastHighlight</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1505" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="search"/>
+<h3>search(sl, searched, sorted)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#648" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="search_ahead"/>
+<h3>search_ahead(or, o, i, j, k, sl)</h3>
+private<p/>
+<dl>
+<dd>
+Search forward from the given position, (OutputRow or, TextOut o,
+and position k in o.s).  The indices i, j are given such that :-
+i = keyof(computed_output_rows, or)
+j = keyof(or.l, o)
+<p/><a href="ipl.browser-textflow.icn.html#706" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dominant_width"/>
+<h3>set_dominant_width(x)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#340" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="set_highlight"/>
+<h3>set_highlight(u)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1547" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="set_last_highlight"/>
+<h3>set_last_highlight(u)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.HasLastHighlight.html#set_last_highlight">set_last_highlight()</a> in <a href="ipl.browser.HasLastHighlight.html" target="displayFrame">ipl.browser.HasLastHighlight</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1538" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="set_over"/>
+<h3>set_over(u)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1489" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="set_trim"/>
+<h3>set_trim(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#324" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="set_v_align"/>
+<h3>set_v_align(v)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#329" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="text_bg"/>
+<h3>text_bg(W, c, x, y, w, h)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#556" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="text_dash"/>
+<h3>text_dash(W, s, x, y)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#567" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="text_line"/>
+<h3>text_line(W, s, x, y)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#578" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="txt_out"/>
+<h3>txt_out(W, attr, s, rb)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1146" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="wants_lpress"/>
+<h3>wants_lpress(e)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1427" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="wants_rpress"/>
+<h3>wants_rpress(e)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1421" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="which_text_out"/>
+<h3>which_text_out(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#1364" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ascent_adj"/>
+<h3>ascent_adj</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#208" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="at_new_para"/>
+<h3>at_new_para</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#244" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="baseline_off"/>
+<h3>baseline_off</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#232" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="blob_start"/>
+<h3>blob_start</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#255" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="browser"/>
+<h3>browser</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#215" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="calculated"/>
+<h3>calculated</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#239" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="calculating"/>
+<h3>calculating</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#238" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_w"/>
+<h3>compute_w</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#242" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="computed_named_anchors"/>
+<h3>computed_named_anchors</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#253" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="computed_output_rows"/>
+<h3>computed_output_rows</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#223" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="def_width"/>
+<h3>def_width</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#246" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="deferred"/>
+<h3>deferred</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#243" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="dominant_width"/>
+<h3>dominant_width</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#252" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="first_row_ascent"/>
+<h3>first_row_ascent</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#230" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="held"/>
+<h3>held</h3>
+private<p/>
+<dl>
+<dd>
+URL held during mouse press
+<p/><a href="ipl.browser-textflow.icn.html#248" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="highlight"/>
+<h3>highlight</h3>
+private<p/>
+<dl>
+<dd>
+URL highlighted with alink colour.
+<p/><a href="ipl.browser-textflow.icn.html#250" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="input"/>
+<h3>input</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#205" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="last_highlight"/>
+<h3>last_highlight</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#251" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="left_comps"/>
+<h3>left_comps</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#219" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="MARKED_COLOR"/>
+<h3>MARKED_COLOR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#265" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="max_ll"/>
+<h3>max_ll</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#237" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="MAX_WIDTH"/>
+<h3>MAX_WIDTH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#262" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="max_width"/>
+<h3>max_width</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#247" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="max_word_w"/>
+<h3>max_word_w</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#236" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="named_anchors"/>
+<h3>named_anchors</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#254" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="need_spc"/>
+<h3>need_spc</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#240" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="output_comps"/>
+<h3>output_comps</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#221" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="output_rows"/>
+<h3>output_rows</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#222" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="over"/>
+<h3>over</h3>
+private<p/>
+<dl>
+<dd>
+URL the mouse is over; also written to the browser's msg area
+<p/><a href="ipl.browser-textflow.icn.html#249" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="PREFERRED_WIDTH"/>
+<h3>PREFERRED_WIDTH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#261" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="right_comps"/>
+<h3>right_comps</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#220" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="right_margin"/>
+<h3>right_margin</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#241" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row"/>
+<h3>row</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#224" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_abs_bottom_height"/>
+<h3>row_abs_bottom_height</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#235" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_abs_middle_height"/>
+<h3>row_abs_middle_height</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#233" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_abs_top_height"/>
+<h3>row_abs_top_height</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#234" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_ascent"/>
+<h3>row_ascent</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#229" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_blob"/>
+<h3>row_blob</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#256" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_bottom"/>
+<h3>row_bottom</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#227" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_descent"/>
+<h3>row_descent</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#231" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_width"/>
+<h3>row_width</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#228" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_x"/>
+<h3>row_x</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#225" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="row_y"/>
+<h3>row_y</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#226" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="SEARCHED_CURR_COLOR"/>
+<h3>SEARCHED_CURR_COLOR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#263" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="SEARCHED_OTHER_COLOR"/>
+<h3>SEARCHED_OTHER_COLOR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#264" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="trim_flag"/>
+<h3>trim_flag</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#245" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="v_align"/>
+<h3>v_align</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#212" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="WHITESPACE"/>
+<h3>WHITESPACE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#259" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="WHITESPACE_NB"/>
+<h3>WHITESPACE_NB</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#260" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="y_off"/>
+<h3>y_off</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#213" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+</body></html>

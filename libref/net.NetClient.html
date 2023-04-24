@@ -1,0 +1,783 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>NetClient</title></head><body>
+<h1>NetClient</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+<a href="io.HasTask.html" target="displayFrame">io.HasTask</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="mail.SmtpClient.html">mail.SmtpClient</a><br>
+<a href="http.HttpClient.html">http.HttpClient</a><br>
+<a href="mail.PopClient.html">mail.PopClient</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="net-package.html" target="listFrame">net</a></dd>
+</dl><p/>
+Common base class for a client class which holds a connection to a
+server and communicates using CRLF-terminated lines.
+<p/><a href="net-netclient.icn.html#22" target="displayFrame">Source - netclient.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="net.NetClient.html">net.NetClient</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#avoid_addr">avoid_addr()</a>
+<a href="#choose_addr">choose_addr()</a>
+<a href="#close">close()</a>
+<a href="#close_connection">close_connection()</a>
+<a href="#dns_background_query">dns_background_query()</a>
+<a href="#dns_query">dns_query()</a>
+<a href="#dns_query_impl">dns_query_impl()</a>
+<a href="#do_poll">do_poll()</a>
+<a href="#error_dont_retry">error_dont_retry()</a>
+<a href="#establish_http_proxy_connection">establish_http_proxy_connection()</a>
+<a href="#establish_proxy_connection">establish_proxy_connection()</a>
+<a href="#establish_socks5_proxy_connection">establish_socks5_proxy_connection()</a>
+<a href="#exact_str">exact_str()</a>
+<a href="#expect_line">expect_line()</a>
+<a href="#expect_str">expect_str()</a>
+<a href="#improve_why">improve_why()</a>
+<a href="#init">init()</a>
+<a href="#ip_to_addr">ip_to_addr()</a>
+<a href="#is_connected">is_connected()</a>
+<a href="#new">new()</a>
+<a href="#open_connection">open_connection()</a>
+<a href="#quietly_close_connection">quietly_close_connection()</a>
+<a href="#read_line">read_line()</a>
+<a href="#read_str">read_str()</a>
+<a href="#recv">recv()</a>
+<a href="#reset_dont_retry">reset_dont_retry()</a>
+<a href="#send">send()</a>
+<a href="#set_ip_version">set_ip_version()</a>
+<a href="#set_path">set_path()</a>
+<a href="#set_port">set_port()</a>
+<a href="#set_proxy">set_proxy()</a>
+<a href="#set_proxy_auth">set_proxy_auth()</a>
+<a href="#set_proxy_type">set_proxy_type()</a>
+<a href="#set_server">set_server()</a>
+<a href="#set_ssl">set_ssl()</a>
+<a href="#set_ssl_verify">set_ssl_verify()</a>
+<a href="#set_timeout">set_timeout()</a>
+<a href="#socks5_string">socks5_string()</a>
+<a href="#ssl_maybe_poll">ssl_maybe_poll()</a>
+<a href="#valid_port">valid_port()</a>
+<a href="#validate_settings">validate_settings()</a>
+<a href="#whyf_dont_retry">whyf_dont_retry()</a>
+<a href="#write_line">write_line()</a>
+<a href="#write_lines">write_lines()</a>
+<a href="#write_str">write_str()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#avoid">avoid</a>
+<a href="#AVOID_TIMEOUT">AVOID_TIMEOUT</a>
+<a href="#CLOSED_EVENT">CLOSED_EVENT</a>
+<a href="#CONNECTED_EVENT">CONNECTED_EVENT</a>
+<a href="#CONNECTING_EVENT">CONNECTING_EVENT</a>
+<a href="#connection">connection</a>
+<a href="#dont_retry_flag">dont_retry_flag</a>
+<a href="#FOREGROUND_DNS">FOREGROUND_DNS</a>
+<a href="#ip_version">ip_version</a>
+<a href="#path">path</a>
+<a href="#port">port</a>
+<a href="#proxy">proxy</a>
+<a href="#proxy_auth">proxy_auth</a>
+<a href="#proxy_type">proxy_type</a>
+<a href="#READ_LINE_EVENT">READ_LINE_EVENT</a>
+<a href="#READ_STRING_EVENT">READ_STRING_EVENT</a>
+<a href="#sbuff">sbuff</a>
+<a href="#server">server</a>
+<a href="#ssl_connection">ssl_connection</a>
+<a href="#ssl_flag">ssl_flag</a>
+<a href="#ssl_verify_flag">ssl_verify_flag</a>
+<a href="#ssl_want_shutdown">ssl_want_shutdown</a>
+<a href="#timeout">timeout</a>
+<a href="#WRITING_LINE_EVENT">WRITING_LINE_EVENT</a>
+<a href="#WRITING_STRING_EVENT">WRITING_STRING_EVENT</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="avoid_addr"/>
+<h3>avoid_addr(addr)</h3>
+public static<p/>
+<dl>
+<dd>
+Note an address to avoid for the next <code><a href="net.NetClient.html#AVOID_TIMEOUT">AVOID_TIMEOUT</a></code>
+milliseconds.
+<p/><a href="net-netclient.icn.html#78" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="choose_addr"/>
+<h3>choose_addr(l)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a list of addresses, choose the first which we are not
+currently avoiding, or the best alternative otherwise.
+<p/><a href="net-netclient.icn.html#86" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Close this client and any associated connection.
+<p/><a href="net-netclient.icn.html#545" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="close_connection"/>
+<h3>close_connection()</h3>
+protected<p/>
+<dl>
+<dd>
+Close the connection
+<p/><a href="net-netclient.icn.html#524" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="dns_background_query"/>
+<h3>dns_background_query(p, server)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#241" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="dns_query"/>
+<h3>dns_query(server)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#249" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="dns_query_impl"/>
+<h3>dns_query_impl(server)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#237" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="do_poll"/>
+<h3>do_poll(for)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#123" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="error_dont_retry"/>
+<h3>error_dont_retry(s)</h3>
+protected<p/>
+<dl>
+<dd>
+Set the <code><a href="net.NetClient.html#dont_retry_flag">dont_retry_flag</a></code>, indicating an error has occurred that
+couldn't be overcome by retrying.  Then <code>&amp;why</code> is set to <code>s</code>.
+<p/><a href="net-netclient.icn.html#799" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="establish_http_proxy_connection"/>
+<h3>establish_http_proxy_connection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#492" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="establish_proxy_connection"/>
+<h3>establish_proxy_connection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#424" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="establish_socks5_proxy_connection"/>
+<h3>establish_socks5_proxy_connection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#437" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="exact_str"/>
+<h3>exact_str(len)</h3>
+protected<p/>
+<dl>
+<dd>
+This calls <code><a href="net.NetClient.html#expect_str">expect_str</a></code> several times in order to read exactly <code>len</code>
+characters from the connection.
+<p/><a href="net-netclient.icn.html#758" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="expect_line"/>
+<h3>expect_line(fl)</h3>
+protected<p/>
+<dl>
+<dd>
+This method is the same as <code><a href="net.NetClient.html#read_line">read_line</a></code>, except that on end of
+file it fails, setting <code>&amp;why</code>, rather than returning <code>&amp;null</code>.
+<p/><a href="net-netclient.icn.html#715" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="expect_str"/>
+<h3>expect_str(len)</h3>
+protected<p/>
+<dl>
+<dd>
+This method is the same as <code><a href="net.NetClient.html#read_str">read_str</a></code>, except that on end of file
+it fails, setting <code>&amp;why</code>, rather than returning <code>&amp;null</code>.
+<p/><a href="net-netclient.icn.html#748" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="improve_why"/>
+<h3>improve_why()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#127" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#46" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ip_to_addr"/>
+<h3>ip_to_addr(ip, port)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#268" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="is_connected"/>
+<h3>is_connected()</h3>
+protected<p/>
+<dl>
+<dd>
+Succeed iff the connection is currently open.
+<p/><a href="net-netclient.icn.html#774" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.Connectable.html#new">new()</a> in <a href="util.Connectable.html" target="displayFrame">util.Connectable</a></dd>
+<dd>
+<p/><a href="net-netclient.icn.html#824" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="open_connection"/>
+<h3>open_connection()</h3>
+protected<p/>
+<dl>
+<dd>
+Open the connection.
+<p/><a href="net-netclient.icn.html#275" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="quietly_close_connection"/>
+<h3>quietly_close_connection()</h3>
+protected<p/>
+<dl>
+<dd>
+Call <code><a href="net.NetClient.html#close_connection">close_connection</a></code>, saving &amp;why.
+<p/><a href="net-netclient.icn.html#517" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_line"/>
+<h3>read_line(fl)</h3>
+protected<p/>
+<dl>
+<dd>
+Read a single line from the connection, and return it.  Returns
+<code>&amp;null</code> on end of file.  <code>fl</code> is a flag; if set then characters
+are read one at a time from the connection.  This avoids the
+usual buffering taking place (although any existing buffered
+characters are still consumed).
+<p/><a href="net-netclient.icn.html#680" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_str"/>
+<h3>read_str(len)</h3>
+protected<p/>
+<dl>
+<dd>
+Read up to len bytes on the connection, returning <code>&amp;null</code> on
+end of file.
+<p/><a href="net-netclient.icn.html#725" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="recv"/>
+<h3>recv(len)</h3>
+private<p/>
+<dl>
+<dd>
+Low-level read on the connection. 
+<p/><a href="net-netclient.icn.html#630" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_dont_retry"/>
+<h3>reset_dont_retry()</h3>
+protected<p/>
+<dl>
+<dd>
+Clear the <code><a href="net.NetClient.html#dont_retry_flag">dont_retry_flag</a></code>.
+<p/><a href="net-netclient.icn.html#816" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="send"/>
+<h3>send(s)</h3>
+private<p/>
+<dl>
+<dd>
+Low-level write on the connection. 
+<p/><a href="net-netclient.icn.html#602" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ip_version"/>
+<h3>set_ip_version(ver)</h3>
+public<p/>
+<dl>
+<dd>
+Set the ip version option to pass during dns lookup; see
+<code><a href="io.SocketStream.html#dns_query">SocketStream.dns_query()</a></code>.  By default, this is <code>&amp;null</code>.
+<p/><a href="net-netclient.icn.html#107" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_path"/>
+<h3>set_path(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the path to use (implies using PF_UNIX socket domain)
+<p/><a href="net-netclient.icn.html#552" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_port"/>
+<h3>set_port(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the port
+<p/><a href="net-netclient.icn.html#568" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_proxy"/>
+<h3>set_proxy(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the proxy server to use, as a <code><a href="net.HostPort.html" target="displayFrame">HostPort</a></code> instance.
+<p/><a href="net-netclient.icn.html#576" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_proxy_auth"/>
+<h3>set_proxy_auth(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the proxy authentication, as an <code><a href="net.Authentication.html" target="displayFrame">Authentication</a></code> instance.
+<p/><a href="net-netclient.icn.html#584" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_proxy_type"/>
+<h3>set_proxy_type(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the type of proxy server to use.  Possible values are "http"
+for HTTP with the CONNECT method (the default), or "socks5" for a
+SOCKS5 server.
+<p/><a href="net-netclient.icn.html#592" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_server"/>
+<h3>set_server(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the server to use (implies using PF_INET socket domain)
+<p/><a href="net-netclient.icn.html#560" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ssl"/>
+<h3>set_ssl(s)</h3>
+public<p/>
+<dl>
+<dd>
+A flag value.  When set, indicate that the connection should be wrapped in
+an SslStream.
+<p/><a href="net-netclient.icn.html#781" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ssl_verify"/>
+<h3>set_ssl_verify(s)</h3>
+public<p/>
+<dl>
+<dd>
+A flag value.  When set, indicate that the remote host's identity should be
+verified.  By default, this flag is on.
+<p/><a href="net-netclient.icn.html#790" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_timeout"/>
+<h3>set_timeout(timeout)</h3>
+public<p/>
+<dl>
+<dd>
+Set the timeout in ms to use.  If <code>&amp;null</code>, then no timeout will
+be used.
+<p/><a href="net-netclient.icn.html#115" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="socks5_string"/>
+<h3>socks5_string(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#432" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ssl_maybe_poll"/>
+<h3>ssl_maybe_poll()</h3>
+private<p/>
+<dl>
+<dd>
+After an error to an ssl function, check if it is because the
+ssl layer needs to read/write from the underlying connection.
+If so, poll the connection and return (so the ssl call can be
+retried); otherwise fail.
+<p/><a href="net-netclient.icn.html#372" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="valid_port"/>
+<h3>valid_port(i)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#405" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_settings"/>
+<h3>validate_settings()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#409" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="whyf_dont_retry"/>
+<h3>whyf_dont_retry(a[])</h3>
+protected<p/>
+<dl>
+<dd>
+Like <code><a href="net.NetClient.html#error_dont_retry">error_dont_retry</a></code>, but take a format arguments for <code><a href="ipl.printf.whyf.html" target="displayFrame">whyf</a></code>.
+<p/><a href="net-netclient.icn.html#808" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="write_line"/>
+<h3>write_line(s)</h3>
+protected<p/>
+<dl>
+<dd>
+Write a single line to the connection, appending CRLF to the output stream.
+<p/>
+<p/><a href="net-netclient.icn.html#660" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="write_lines"/>
+<h3>write_lines(l)</h3>
+protected<p/>
+<dl>
+<dd>
+Write several lines in one go, but firing separate events for each line.
+<p/><a href="net-netclient.icn.html#669" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="write_str"/>
+<h3>write_str(s)</h3>
+protected<p/>
+<dl>
+<dd>
+Write the given string to the connection.
+<p/><a href="net-netclient.icn.html#652" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="avoid"/>
+<h3>avoid</h3>
+public static const<p/>
+<dl>
+<dd>
+A table of addresses (string) to expiry time.
+<p/><a href="net-netclient.icn.html#43" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="AVOID_TIMEOUT"/>
+<h3>AVOID_TIMEOUT</h3>
+public static const<p/>
+<dl>
+<dd>
+The timeout (in ms) for IP addresses noted to avoid; by
+default one minute.  Configure with environment variable
+OI_NETCLIENT_AVOID_TIMEOUT.
+<p/><a href="net-netclient.icn.html#35" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="CLOSED_EVENT"/>
+<h3>CLOSED_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#30" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="CONNECTED_EVENT"/>
+<h3>CONNECTED_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#29" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="CONNECTING_EVENT"/>
+<h3>CONNECTING_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#28" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="connection"/>
+<h3>connection</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#73" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="dont_retry_flag"/>
+<h3>dont_retry_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#66" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="FOREGROUND_DNS"/>
+<h3>FOREGROUND_DNS</h3>
+public static const<p/>
+<dl>
+<dd>
+A flag, indicating that dns requests should always be in the
+foreground; configure with environment variable
+OI_NETCLIENT_FOREGROUND_DNS.
+<p/><a href="net-netclient.icn.html#39" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ip_version"/>
+<h3>ip_version</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#67" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="path"/>
+<h3>path</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#60" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="port"/>
+<h3>port</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#62" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="proxy"/>
+<h3>proxy</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#68" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="proxy_auth"/>
+<h3>proxy_auth</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#69" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="proxy_type"/>
+<h3>proxy_type</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#70" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="READ_LINE_EVENT"/>
+<h3>READ_LINE_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#33" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="READ_STRING_EVENT"/>
+<h3>READ_STRING_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#34" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="sbuff"/>
+<h3>sbuff</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#76" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="server"/>
+<h3>server</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#61" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ssl_connection"/>
+<h3>ssl_connection</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#74" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ssl_flag"/>
+<h3>ssl_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#64" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ssl_verify_flag"/>
+<h3>ssl_verify_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#65" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ssl_want_shutdown"/>
+<h3>ssl_want_shutdown</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#75" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="timeout"/>
+<h3>timeout</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#63" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="WRITING_LINE_EVENT"/>
+<h3>WRITING_LINE_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#32" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+<a name="WRITING_STRING_EVENT"/>
+<h3>WRITING_STRING_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="net-netclient.icn.html#31" target="displayFrame">Source - netclient.icn </a>
+</dd>
+</dl><hr>
+</body></html>

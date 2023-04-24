@@ -1,0 +1,662 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>tablelayout.icn</title></head><body><pre>
+<a name="1"/>package ipl.browser
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   util, 
+<a name="5"/>   lang,
+<a name="6"/>   ipl.sort,
+<a name="7"/>   ipl.pdco,
+<a name="8"/>   io,
+<a name="9"/>   gui,
+<a name="10"/>   ipl.graphics,
+<a name="11"/>   ipl.numbers
+<a name="12"/>
+<a name="13"/>class TableCellInfo(Insets, ObjectOutput)
+<a name="14"/>   public 
+<a name="15"/>      obj,            # A TextFlow
+<a name="16"/>      ax,             # Actual computed pixel location and size,
+<a name="17"/>      ay,             # within insets, ie where to draw the thing
+<a name="18"/>      aw,             # inside the cell.
+<a name="19"/>      ah,
+<a name="20"/>      s,              # Identifying string for print_layout
+<a name="21"/>      x,              # Location, size in grid units.
+<a name="22"/>      y, 
+<a name="23"/>      w, 
+<a name="24"/>      h, 
+<a name="25"/>      pct_w,
+<a name="26"/>      fix_w,
+<a name="27"/>      fix_h,
+<a name="28"/>      max_w,
+<a name="29"/>      pw,             # Preferred cell width excluding insets
+<a name="30"/>      ph,
+<a name="31"/>      ph_calc_w,      # Width used to calc ph
+<a name="32"/>      ascent          # Ascent of TextFlow
+<a name="33"/>
+<a name="34"/>   #
+<a name="35"/>   # Output object
+<a name="36"/>   #
+<a name="37"/>   protected override object_output(oo)
+<a name="38"/>      local t
+<a name="39"/>      /s := "?"
+<a name="40"/>      t := s || ": "
+<a name="41"/>      t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
+<a name="42"/>         " component pref width=" || pw ||" max width=" || max_w
+<a name="43"/>      if \ph then {
+<a name="44"/>         t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
+<a name="45"/>         t ||:= "\n\tcell desired size=" || pw + l_inset + r_inset || "," || 
+<a name="46"/>            ph + t_inset + b_inset
+<a name="47"/>      }
+<a name="48"/>      t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
+<a name="49"/>      t ||:= " pct_w=" || \pct_w
+<a name="50"/>      oo.object_string(self, t)
+<a name="51"/>   end
+<a name="52"/>end
+<a name="53"/>
+<a name="54"/>class TableGrid()
+<a name="55"/>   public 
+<a name="56"/>      gw,           # Grid width, height in cells
+<a name="57"/>      gh, 
+<a name="58"/>      p_col_max_w,   # Max column widths
+<a name="59"/>      p_col_w,      # Preferred column widths/row heights
+<a name="60"/>      p_row_h,
+<a name="61"/>      pct_col_w,
+<a name="62"/>      a_col_w,      # Actual column widths/row heights after extra
+<a name="63"/>      a_row_h,      # space has been allocated
+<a name="64"/>      a_col_x,      # Actual row x and y values.  Unlike GridLayout, these
+<a name="65"/>      a_row_y,      # are zero (offset) based, rather than absolute positions, to avoid
+<a name="66"/>                    # recomputing them on a shift(), since they are used for 
+<a name="67"/>                    # row searching by Tbl and for rule drawing.
+<a name="68"/>      info,         # List of CellInfo for each component being laid out
+<a name="69"/>      dii,          # Default inner padding, ie not at edge of grid
+<a name="70"/>      doi,          # Default outer padding
+<a name="71"/>      id_seq,       # For generating CellInfo string ids for debug
+<a name="72"/>      add_x,        # For auto-computing cell position and sizes.
+<a name="73"/>      add_y,
+<a name="74"/>      add_row_h,
+<a name="75"/>      total_p_col_w,  # Useful sum totals of p_col_w etc
+<a name="76"/>      total_p_col_max_w,
+<a name="77"/>      total_p_row_h,
+<a name="78"/>      fix_col1_flag,
+<a name="79"/>      in_row        # Lists of CellInfos in each row
+<a name="80"/>
+<a name="81"/>   public create_cell(t)
+<a name="82"/>      local ci
+<a name="83"/>      ci := TableCellInfo()
+<a name="84"/>      ci.s := @id_seq
+<a name="85"/>      self.add_x +:= Grid.validate_int(t, "x_tab")
+<a name="86"/>      if self.add_y +:= Grid.validate_int(t, "y_tab") then
+<a name="87"/>         add_row_h := 0
+<a name="88"/>      ci.x := Grid.validate_int(t, "x", add_x)
+<a name="89"/>      ci.y := Grid.validate_int(t, "y", add_y)
+<a name="90"/>      ci.w := Grid.validate_int(t, "w", 1)
+<a name="91"/>      ci.h := Grid.validate_int(t, "h", 1)
+<a name="92"/>      add_row_h &lt;:= ci.h
+<a name="93"/>      if /Grid.validate_flag(t, "eol") then {
+<a name="94"/>         add_x := ci.x + ci.w
+<a name="95"/>         add_y := ci.y
+<a name="96"/>      } else {
+<a name="97"/>         add_x := 1
+<a name="98"/>         add_y +:= add_row_h
+<a name="99"/>         add_row_h := 0
+<a name="100"/>      }
+<a name="101"/>      ci.pct_w := Grid.validate_int(t, "pct_w", 0)
+<a name="102"/>      ci.fix_w := Grid.validate_int(t, "fix_w")
+<a name="103"/>      ci.fix_h := Grid.validate_int(t, "fix_h")
+<a name="104"/>      put(info, ci)
+<a name="105"/>
+<a name="106"/>      return ci
+<a name="107"/>   end
+<a name="108"/>
+<a name="109"/>   public dimension()
+<a name="110"/>      local ci
+<a name="111"/>
+<a name="112"/>      # Work out grid width/height
+<a name="113"/>      gw := gh := 0
+<a name="114"/>      every ci := !info do {
+<a name="115"/>         gw &lt;:= ci.x + ci.w - 1
+<a name="116"/>         gh &lt;:= ci.y + ci.h - 1
+<a name="117"/>      }
+<a name="118"/>
+<a name="119"/>      # Fill in final defaults now we have the grid dimensions.
+<a name="120"/>      every ci := !info do {
+<a name="121"/>         ci.l_inset := if ci.x = 1 then self.doi else self.dii
+<a name="122"/>         ci.t_inset := if ci.y = 1 then self.doi else self.dii
+<a name="123"/>         ci.r_inset := if ci.x + ci.w = gw + 1 then self.doi else self.dii
+<a name="124"/>         ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
+<a name="125"/>      }
+<a name="126"/>   end
+<a name="127"/>
+<a name="128"/>   public static dist_equally(start, span, extra, l, flag)
+<a name="129"/>      local left, i, a
+<a name="130"/>      if (extra | span) = 0 then
+<a name="131"/>         fail
+<a name="132"/>      if \flag &amp; start = 1 &amp; span &gt; 1 then {
+<a name="133"/>         start := 2
+<a name="134"/>         span -:= 1
+<a name="135"/>         #write(start,",",span,",",extra)
+<a name="136"/>      }
+<a name="137"/>      a := extra / span
+<a name="138"/>      left := extra
+<a name="139"/>      every i := start to start + span - 1 do {
+<a name="140"/>         l[i] +:= a
+<a name="141"/>         left -:= a
+<a name="142"/>      }
+<a name="143"/>      l[i] +:= left
+<a name="144"/>   end
+<a name="145"/>
+<a name="146"/>   public compute_preferred_col_widths()
+<a name="147"/>      local i, need, l
+<a name="148"/>      p_col_w := list(gw, 0)
+<a name="149"/>      p_col_max_w := list(gw, 0)
+<a name="150"/>      pct_col_w := list(gw, 0)
+<a name="151"/>      l := isort(info, cell_width_sort)
+<a name="152"/>
+<a name="153"/>      # Compute sizes
+<a name="154"/>      every i := !l do {
+<a name="155"/>         need := i.pw + i.l_inset + i.r_inset - Grid.slice(i.x, i.w, p_col_w)
+<a name="156"/>         if need &gt; 0 then
+<a name="157"/>            dist_equally(i.x, i.w, need, p_col_w, fix_col1_flag)
+<a name="158"/>
+<a name="159"/>         need := i.max_w + i.l_inset + i.r_inset - Grid.slice(i.x, i.w, p_col_max_w)
+<a name="160"/>         if need &gt; 0 then
+<a name="161"/>            dist_equally(i.x, i.w, need, p_col_max_w, fix_col1_flag)
+<a name="162"/>
+<a name="163"/>         need := i.pct_w - Grid.slice(i.x, i.w, pct_col_w)
+<a name="164"/>         if need &gt; 0 then
+<a name="165"/>            dist_equally(i.x, i.w, need, pct_col_w, fix_col1_flag)
+<a name="166"/>      }
+<a name="167"/>
+<a name="168"/>      compute_pct_widths()
+<a name="169"/>
+<a name="170"/>      total_p_col_w := Grid.total(p_col_w)
+<a name="171"/>      total_p_col_max_w := Grid.total(p_col_max_w)
+<a name="172"/>   end
+<a name="173"/>
+<a name="174"/>   # Adjust the p_col_max_w based on any column % widths; preferred
+<a name="175"/>   # widths are not affected.
+<a name="176"/>   private compute_pct_widths()
+<a name="177"/>      local i, ppp, tot, sum_p, sum_r, p, d, n_r
+<a name="178"/>      p := Grid.total(pct_col_w)
+<a name="179"/>      if p = 0 then
+<a name="180"/>         fail
+<a name="181"/>      if p &gt; 100 then {
+<a name="182"/>         pct_col_w := list(gw, 0)
+<a name="183"/>         fail
+<a name="184"/>      }
+<a name="185"/>      # Stage 1 - adjust the columns with a pct so their p_col_max_w
+<a name="186"/>      # are in the correct proportions.
+<a name="187"/>
+<a name="188"/>      # Calculate the maximum pixels-per-percentage value for those
+<a name="189"/>      # columns with a pct.
+<a name="190"/>      ppp := 0
+<a name="191"/>      every i := 1 to gw do
+<a name="192"/>         ppp &lt;:= real(p_col_max_w[i]) / (0 &lt; pct_col_w[i])
+<a name="193"/>
+<a name="194"/>      # Adjust those columns with a pct so they are the correct width
+<a name="195"/>      # in relation to one another.
+<a name="196"/>      every i := 1 to gw do
+<a name="197"/>         p_col_max_w[i] &lt;:= integer(ppp * pct_col_w[i])
+<a name="198"/>
+<a name="199"/>      # Nothing more to do if the %'s total to 100%
+<a name="200"/>      if p = 100 then
+<a name="201"/>         return
+<a name="202"/>
+<a name="203"/>      # Stage 2 - add a sum to either (a) columns with a pct or (b)
+<a name="204"/>      # columns without a pct in order to make the total widths of
+<a name="205"/>      # those with a pct correct in relation to the table as a whole
+<a name="206"/>      # (they should amount to p% in total).
+<a name="207"/>
+<a name="208"/>      # Calculate the total numbers and widths in each group.
+<a name="209"/>      n_r := sum_p := sum_r := 0
+<a name="210"/>      every i := 1 to gw do {
+<a name="211"/>         if pct_col_w[i] &gt; 0 then
+<a name="212"/>            sum_p +:= p_col_max_w[i]
+<a name="213"/>         else {
+<a name="214"/>            sum_r +:= p_col_max_w[i]
+<a name="215"/>            n_r +:= 1
+<a name="216"/>         }
+<a name="217"/>      }
+<a name="218"/>      tot := sum_p + sum_r
+<a name="219"/>      
+<a name="220"/>      # Decide whether to add to one group or the other.  We want to establish (p/100) * tot = sum_p
+<a name="221"/>      if p * tot &gt; 100 * sum_p then {
+<a name="222"/>         # Add to those with a pct.  We will add d in total, so that
+<a name="223"/>         # (p/100) * (tot + d) = (sum_p + d)
+<a name="224"/>         d := (p * tot - 100 * sum_p) / (100 - p)
+<a name="225"/>         # Add in proportion to the % widths
+<a name="226"/>         every i := 1 to gw do {
+<a name="227"/>            if pct_col_w[i] &gt; 0 then
+<a name="228"/>               p_col_max_w[i] +:= (d * pct_col_w[i] / p)
+<a name="229"/>         }
+<a name="230"/>      } else {
+<a name="231"/>         # Add to those without a pct.  We will add d, so that
+<a name="232"/>         # sum_p = (p/100) * (tot + d)
+<a name="233"/>         d := (100 * sum_p / p) - tot
+<a name="234"/>         # Just add an equal amount to each column.
+<a name="235"/>         every i := 1 to gw do {
+<a name="236"/>            if pct_col_w[i] &lt;= 0 then
+<a name="237"/>               p_col_max_w[i] +:= d / n_r
+<a name="238"/>         }
+<a name="239"/>      }
+<a name="240"/>   end
+<a name="241"/>
+<a name="242"/>   public compute_preferred_row_heights()
+<a name="243"/>      local i, need, l
+<a name="244"/>      p_row_h := list(gh, 0)
+<a name="245"/>      l := isort(info, cell_height_sort)
+<a name="246"/>
+<a name="247"/>      # Compute sizes
+<a name="248"/>      every i := !l do {
+<a name="249"/>         need := i.ph + i.obj.ascent_adj + i.t_inset + i.b_inset - Grid.slice(i.y, i.h, p_row_h)
+<a name="250"/>         if need &gt; 0 then 
+<a name="251"/>            dist_equally(i.y, i.h, need, p_row_h)
+<a name="252"/>      }
+<a name="253"/>
+<a name="254"/>      total_p_row_h := Grid.total(p_row_h)
+<a name="255"/>   end
+<a name="256"/>
+<a name="257"/>   private static cell_width_sort(i)
+<a name="258"/>      return i.w
+<a name="259"/>   end
+<a name="260"/>
+<a name="261"/>   private static cell_height_sort(i)
+<a name="262"/>      return i.h
+<a name="263"/>   end
+<a name="264"/>
+<a name="265"/>   public print_layout()
+<a name="266"/>      local x, y, t, i, s, l, u
+<a name="267"/>
+<a name="268"/>      write("Grid dimensions:", gw, ",",gh)
+<a name="269"/>      l := *info[-1].s
+<a name="270"/>      t := table()
+<a name="271"/>      u := repl(" ", l)
+<a name="272"/>      every t[(1 to gw)||","||(1 to gh)] := u
+<a name="273"/>
+<a name="274"/>      every i := !info do
+<a name="275"/>         every t[(i.x to i.x + i.w - 1)||","||(i.y to i.y + i.h - 1)] := right(i.s, l)
+<a name="276"/>
+<a name="277"/>      u := "+" || repl("-", l)
+<a name="278"/>      write(s := repl(u, gw) || "+")
+<a name="279"/>      every y := 1 to gh do {
+<a name="280"/>         every x := 1 to gw do
+<a name="281"/>            writes("|", t[x||","||y])
+<a name="282"/>         write("|\n",s)
+<a name="283"/>      }
+<a name="284"/>
+<a name="285"/>      write("----- Items ------")
+<a name="286"/>      every write(to_string(!info))
+<a name="287"/>
+<a name="288"/>      write("----- Data -------")
+<a name="289"/>      write("p_col_w=", to_string(p_col_w))
+<a name="290"/>      write("p_col_max_w=", to_string(p_col_max_w))
+<a name="291"/>      if \self.a_col_w then {
+<a name="292"/>         write("a_col_w=", to_string(a_col_w))
+<a name="293"/>         write("\textra width in a_col_w:", Grid.total(a_col_w)-Grid.total(p_col_w))
+<a name="294"/>      }
+<a name="295"/>      write("p_row_h=", to_string(p_row_h))
+<a name="296"/>      if \self.a_row_h then {
+<a name="297"/>         write("a_row_h=", to_string(a_row_h))
+<a name="298"/>         write("\textra height in a_row_h:", Grid.total(a_row_h)-Grid.total(p_row_h))
+<a name="299"/>      }
+<a name="300"/>
+<a name="301"/>      write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
+<a name="302"/>   end
+<a name="303"/>
+<a name="304"/>   public cells_in_range(ry, rh)
+<a name="305"/>      local ci, i, fl
+<a name="306"/>      every i := rows_in_range(ry, rh) do {
+<a name="307"/>         every ci := !in_row[i] do {
+<a name="308"/>            # We have encountered the cell for the first time if
+<a name="309"/>            # either this is the first row examined (/fl) or it is the
+<a name="310"/>            # first row of the cell (ci.y=i).
+<a name="311"/>            if /fl | (ci.y = i) then
+<a name="312"/>               suspend ci
+<a name="313"/>         }
+<a name="314"/>         fl := 1
+<a name="315"/>      }
+<a name="316"/>   end
+<a name="317"/>
+<a name="318"/>   public rows_in_range(ry, rh)
+<a name="319"/>      local i, j, m, rowh, rowy
+<a name="320"/>      i := 1
+<a name="321"/>      j := *a_row_y
+<a name="322"/>      while i &lt;= j do {
+<a name="323"/>         m := (i + j) / 2
+<a name="324"/>         rowy := a_row_y[m]
+<a name="325"/>         rowh := a_row_h[m]
+<a name="326"/>         if rowy + rowh &lt;= ry then
+<a name="327"/>            i := m + 1
+<a name="328"/>         else if rowy &gt;= ry + rh then
+<a name="329"/>            j := m - 1
+<a name="330"/>         else
+<a name="331"/>            break
+<a name="332"/>      }
+<a name="333"/>      if i &gt; j then
+<a name="334"/>         fail
+<a name="335"/>
+<a name="336"/>      # Now row m is in the sought range; but rows before may be too,
+<a name="337"/>      # so tab back as far as needed.
+<a name="338"/>      while rowy := a_row_y[m - 1] &amp; rowh := a_row_h[m - 1] &amp;
+<a name="339"/>         rowy + rowh &gt; ry  &amp;  rowy &lt; ry + rh do
+<a name="340"/>         m -:= 1
+<a name="341"/>
+<a name="342"/>      # Now suspend all the rows in range from row m forwards.
+<a name="343"/>      while  rowy := a_row_y[m] &amp; rowh := a_row_h[m] &amp;
+<a name="344"/>         rowy + rowh &gt; ry  &amp;  rowy &lt; ry + rh do
+<a name="345"/>      {
+<a name="346"/>         suspend m
+<a name="347"/>         m +:= 1
+<a name="348"/>      }
+<a name="349"/>   end
+<a name="350"/>
+<a name="351"/>   public set_fix_col1(s)
+<a name="352"/>      self.fix_col1_flag := need_flag(s)
+<a name="353"/>      link
+<a name="354"/>   end
+<a name="355"/>
+<a name="356"/>   public get_preferred_width()
+<a name="357"/>      return total_p_col_w
+<a name="358"/>   end
+<a name="359"/>
+<a name="360"/>   public get_max_width()
+<a name="361"/>      return total_p_col_max_w
+<a name="362"/>   end
+<a name="363"/>
+<a name="364"/>   public get_preferred_height()
+<a name="365"/>      return total_p_row_h
+<a name="366"/>   end
+<a name="367"/>
+<a name="368"/>   private choose(total_a_col_w)
+<a name="369"/>      local i, r1, r2, best1, best2, t
+<a name="370"/>      if gw = 0 then
+<a name="371"/>         fail
+<a name="372"/>      # Set r1 to the most needy % col; r2 to the most needy non-% col.
+<a name="373"/>      every i := 1 to gw do {
+<a name="374"/>         t := ((total_a_col_w * p_col_max_w[i] / (0 &lt; total_p_col_max_w)) | 0)  - a_col_w[i]
+<a name="375"/>         if pct_col_w[i] &gt; 0 then {
+<a name="376"/>            if /r1 | (t &gt; best1) then {
+<a name="377"/>               r1 := i
+<a name="378"/>               best1 := t
+<a name="379"/>            }
+<a name="380"/>         } else {
+<a name="381"/>            if /r2 | (t &gt; best2) then {
+<a name="382"/>               r2 := i
+<a name="383"/>               best2 := t
+<a name="384"/>            }
+<a name="385"/>         }
+<a name="386"/>      }
+<a name="387"/>      if /r2 | (\best1 &gt; 0) then
+<a name="388"/>         return r1
+<a name="389"/>      return r2
+<a name="390"/>   end
+<a name="391"/>
+<a name="392"/>   public compute_actual_col_widths(w1)
+<a name="393"/>      local total_a_col_w, i
+<a name="394"/>
+<a name="395"/>      # Start with allocation set to either min or max col width
+<a name="396"/>      if w1 &gt;= total_p_col_max_w then {
+<a name="397"/>         a_col_w := copy(p_col_max_w)
+<a name="398"/>         w1 -:= total_p_col_max_w
+<a name="399"/>      } else {
+<a name="400"/>         a_col_w := copy(p_col_w)
+<a name="401"/>         w1 -:= total_p_col_w
+<a name="402"/>      }
+<a name="403"/>
+<a name="404"/>      # Allocate remaining width pixel by pixel
+<a name="405"/>      total_a_col_w := Grid.total(a_col_w)
+<a name="406"/>      every 1 to w1 do {
+<a name="407"/>         a_col_w[choose(total_a_col_w)] +:= 1
+<a name="408"/>         total_a_col_w +:= 1
+<a name="409"/>      }
+<a name="410"/>
+<a name="411"/>      # Set cell width values
+<a name="412"/>      every i := !info do
+<a name="413"/>         i.aw := Grid.slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+<a name="414"/>   end
+<a name="415"/>
+<a name="416"/>   public compute_actual_col_positions()
+<a name="417"/>      local i, x, w
+<a name="418"/>
+<a name="419"/>      a_col_x := []
+<a name="420"/>      x := 0
+<a name="421"/>      every w := !a_col_w do {
+<a name="422"/>         put(a_col_x, x)
+<a name="423"/>         x +:= w
+<a name="424"/>      }
+<a name="425"/>
+<a name="426"/>      every i := !info do
+<a name="427"/>         i.ax := a_col_x[i.x] + i.l_inset
+<a name="428"/>   end
+<a name="429"/>
+<a name="430"/>   public compute_actual_row_heights(h1)
+<a name="431"/>      local i, eh
+<a name="432"/>
+<a name="433"/>      a_row_h := copy(p_row_h)
+<a name="434"/>
+<a name="435"/>      # Extra height.
+<a name="436"/>      eh := h1 - total_p_row_h
+<a name="437"/>      dist_equally(1, gh, eh, a_row_h)
+<a name="438"/>
+<a name="439"/>      every i := !info do
+<a name="440"/>         i.ah := Grid.slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
+<a name="441"/>   end
+<a name="442"/>
+<a name="443"/>   public compute_actual_row_positions()
+<a name="444"/>      local i, y, h
+<a name="445"/>
+<a name="446"/>      a_row_y := []
+<a name="447"/>      y := 0
+<a name="448"/>      every h := !a_row_h do {
+<a name="449"/>         put(a_row_y, y)
+<a name="450"/>         y +:= h
+<a name="451"/>      }
+<a name="452"/>
+<a name="453"/>      every i := !info do
+<a name="454"/>         i.ay := a_row_y[i.y] + i.t_inset
+<a name="455"/>   end
+<a name="456"/>
+<a name="457"/>   public compute_in_row()
+<a name="458"/>      local ci
+<a name="459"/>      in_row := []
+<a name="460"/>      every 1 to gh do
+<a name="461"/>         put(in_row, [])
+<a name="462"/>      every ci := !info do
+<a name="463"/>         every put(in_row[ci.y to ci.y + ci.h - 1], ci)
+<a name="464"/>   end
+<a name="465"/>
+<a name="466"/>   #
+<a name="467"/>   # Set the default inner inset
+<a name="468"/>   #
+<a name="469"/>   public set_dii(n)
+<a name="470"/>      self.dii := need_integer(n, 0)
+<a name="471"/>      link
+<a name="472"/>   end
+<a name="473"/>
+<a name="474"/>   #
+<a name="475"/>   # Set the default outer inset
+<a name="476"/>   #
+<a name="477"/>   public set_doi(n)
+<a name="478"/>      self.doi := need_integer(n, 0)
+<a name="479"/>      link
+<a name="480"/>   end
+<a name="481"/>
+<a name="482"/>   public new()
+<a name="483"/>      self.dii := self.doi := 0
+<a name="484"/>      self.id_seq := create alphaseq(seq())
+<a name="485"/>      self.add_y := self.add_x := 1
+<a name="486"/>      self.add_row_h := 0
+<a name="487"/>      self.info := []
+<a name="488"/>      return
+<a name="489"/>   end
+<a name="490"/>end
+<a name="491"/>
+<a name="492"/>class TableLayout(Layout)
+<a name="493"/>   public 
+<a name="494"/>      g,
+<a name="495"/>      computed_g,
+<a name="496"/>      dii,          # Default inner padding, ie not at edge of grid
+<a name="497"/>      doi,          # Default outer padding
+<a name="498"/>      fix_col1_flag,
+<a name="499"/>      debug
+<a name="500"/>
+<a name="501"/>   public override reset()
+<a name="502"/>      g := &amp;null
+<a name="503"/>   end
+<a name="504"/>
+<a name="505"/>   public ensure_grid()
+<a name="506"/>      local c, ci
+<a name="507"/>
+<a name="508"/>      if \g then
+<a name="509"/>         return
+<a name="510"/>
+<a name="511"/>      g := TableGrid().
+<a name="512"/>         set_dii(dii).
+<a name="513"/>         set_doi(doi).
+<a name="514"/>         set_fix_col1(fix_col1_flag)
+<a name="515"/>
+<a name="516"/>      every c := !parent.children do {
+<a name="517"/>         if /c.x_spec then {
+<a name="518"/>            ci := g.create_cell(c.constraints)
+<a name="519"/>            ci.pw := c.get_preferred_width()
+<a name="520"/>            ci.max_w := c.get_max_width()
+<a name="521"/>            if \ci.fix_w then
+<a name="522"/>               ci.pw := ci.max_w := max(ci.fix_w, ci.pw)
+<a name="523"/>            ci.obj := c
+<a name="524"/>         }
+<a name="525"/>      }
+<a name="526"/>      g.dimension()
+<a name="527"/>      g.compute_preferred_col_widths()
+<a name="528"/>      g.compute_in_row()
+<a name="529"/>   end
+<a name="530"/>
+<a name="531"/>   public override get_preferred_width()
+<a name="532"/>      ensure_grid()
+<a name="533"/>      return g.get_preferred_width()
+<a name="534"/>   end
+<a name="535"/>
+<a name="536"/>   public get_max_width()
+<a name="537"/>      ensure_grid()
+<a name="538"/>      return g.get_max_width()
+<a name="539"/>   end
+<a name="540"/>
+<a name="541"/>   public adjust_preferred_heights()
+<a name="542"/>     local i, adj
+<a name="543"/>     every i := !g.info do {
+<a name="544"/>        if i.ph_calc_w ~=== i.aw then {
+<a name="545"/>           i.ph_calc_w := i.aw
+<a name="546"/>           i.ph := i.obj.get_preferred_height(i.ph_calc_w)
+<a name="547"/>           i.ph &lt;:= \i.fix_h
+<a name="548"/>           i.ascent := i.obj.get_ascent(i.ph_calc_w)
+<a name="549"/>           adj := &amp;yes
+<a name="550"/>        }
+<a name="551"/>     }
+<a name="552"/>     if \adj | /i then {
+<a name="553"/>        align_baselines()
+<a name="554"/>        g.compute_preferred_row_heights()
+<a name="555"/>     }
+<a name="556"/>   end
+<a name="557"/>
+<a name="558"/>   private align_baselines()
+<a name="559"/>      local i, c, ma
+<a name="560"/>      every i := 1 to g.gh do {
+<a name="561"/>         if should_align_baselines(i) then {
+<a name="562"/>            ma := MaxNN{ cells_at(i).ascent }
+<a name="563"/>            every c := cells_at(i) do
+<a name="564"/>               c.obj.ascent_adj := ma - c.ascent
+<a name="565"/>         }
+<a name="566"/>      }
+<a name="567"/>   end
+<a name="568"/>
+<a name="569"/>   private cells_at(i)
+<a name="570"/>      local c
+<a name="571"/>      every c := !g.in_row[i] do
+<a name="572"/>         if c.y = i then
+<a name="573"/>            suspend c
+<a name="574"/>   end
+<a name="575"/>
+<a name="576"/>   private should_align_baselines(i)
+<a name="577"/>      local c
+<a name="578"/>      every c := cells_at(i) do
+<a name="579"/>         (c.obj.v_align == "baseline") | fail
+<a name="580"/>      return
+<a name="581"/>   end
+<a name="582"/>
+<a name="583"/>   public override get_preferred_height(pw)
+<a name="584"/>      ensure_grid()
+<a name="585"/>      g.compute_actual_col_widths(pw)
+<a name="586"/>      adjust_preferred_heights()
+<a name="587"/>      return g.get_preferred_height()
+<a name="588"/>   end
+<a name="589"/>
+<a name="590"/>   public set_fix_col1(s)
+<a name="591"/>      self.fix_col1_flag := need_flag(s)
+<a name="592"/>      link
+<a name="593"/>   end
+<a name="594"/>
+<a name="595"/>   public override display()
+<a name="596"/>      local i, cw
+<a name="597"/>      ensure_grid()
+<a name="598"/>      use {
+<a name="599"/>         cw := GetShadowClone(self.parent.cbwin).set_masked_pattern("gray"),
+<a name="600"/>         {
+<a name="601"/>            cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
+<a name="602"/>            every i := !g.info do {
+<a name="603"/>               cw.draw_rectangle(g.a_col_x[i.x],
+<a name="604"/>                                 g.a_row_y[i.y],
+<a name="605"/>                                 Grid.slice(i.x, i.w, g.a_col_w),
+<a name="606"/>                                 Grid.slice(i.y, i.h, g.a_row_h))
+<a name="607"/>            }
+<a name="608"/>         }
+<a name="609"/>      }
+<a name="610"/>   end
+<a name="611"/>
+<a name="612"/>   public override layout()
+<a name="613"/>      local c, i
+<a name="614"/>      every c := !parent.children do {
+<a name="615"/>         if \c.x_spec then
+<a name="616"/>            c.compute_absolutes()
+<a name="617"/>      }
+<a name="618"/>
+<a name="619"/>      ensure_grid()
+<a name="620"/>
+<a name="621"/>      g.compute_actual_col_widths(parent.w)
+<a name="622"/>      adjust_preferred_heights()
+<a name="623"/>      g.compute_actual_row_heights(parent.h)
+<a name="624"/>      g.compute_actual_col_positions()
+<a name="625"/>      g.compute_actual_row_positions()
+<a name="626"/>
+<a name="627"/>      every i := !g.info do {
+<a name="628"/>         i.obj.x := i.ax + parent.x
+<a name="629"/>         i.obj.y := i.ay + parent.y
+<a name="630"/>         i.obj.w := i.aw
+<a name="631"/>         i.obj.h := i.ah
+<a name="632"/>      }
+<a name="633"/>
+<a name="634"/>      if \debug then
+<a name="635"/>         g.print_layout()
+<a name="636"/>      
+<a name="637"/>      computed_g := g
+<a name="638"/>   end
+<a name="639"/>
+<a name="640"/>   public set_debug(s)
+<a name="641"/>      self.debug := need_flag(s)
+<a name="642"/>      link
+<a name="643"/>   end
+<a name="644"/>
+<a name="645"/>   public set_dii(n)
+<a name="646"/>      self.dii := need_integer(n, 0)
+<a name="647"/>      link
+<a name="648"/>   end
+<a name="649"/>
+<a name="650"/>   public set_doi(n)
+<a name="651"/>      self.doi := need_integer(n, 0)
+<a name="652"/>      link
+<a name="653"/>   end
+<a name="654"/>
+<a name="655"/>   public new()
+<a name="656"/>      self.dii := self.doi := 0
+<a name="657"/>      return
+<a name="658"/>   end
+<a name="659"/>end
+</pre></body></html>

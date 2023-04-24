@@ -1,0 +1,810 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>glib.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#       File:     glib.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for graphics
+<a name="6"/>#
+<a name="7"/>#	Author:   Stephen B. Wampler
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Version:  1.0
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#
+<a name="22"/>#   Comments: This package is the collection of routines
+<a name="23"/>#      developed to facilitate traditional 2D graphics.
+<a name="24"/>#      It is incomplete, but still provides
+<a name="25"/>#      a reasonable amount of support.  There is some
+<a name="26"/>#      support for 3D graphics here, but that is not so
+<a name="27"/>#      well developed.  People are encouraged to improve
+<a name="28"/>#      these routines and add new routines.
+<a name="29"/>#
+<a name="30"/>#      All routines use list-based subscripting.  This allows
+<a name="31"/>#      programs to describe points as lists OR records.
+<a name="32"/>#
+<a name="33"/>#      In the turtle graphics code, the use gives angles in
+<a name="34"/>#      degrees.
+<a name="35"/>#
+<a name="36"/>############################################################################
+<a name="37"/>#
+<a name="38"/>#	Requires:  Version 9 graphics, co-expressions
+<a name="39"/>#
+<a name="40"/>############################################################################
+<a name="41"/>
+<a name="42"/>package ipl.glib
+<a name="43"/>
+<a name="44"/>import
+<a name="45"/>   io(write, writes),
+<a name="46"/>   util(Math)
+<a name="47"/>
+<a name="48"/>record point(x,y)
+<a name="49"/>
+<a name="50"/>############################################################################
+<a name="51"/># Clipping algorithms...
+<a name="52"/>#
+<a name="53"/>global DO_CLIPPING
+<a name="54"/>
+<a name="55"/>
+<a name="56"/>#  Set the state of clipping: "on" or "off"
+<a name="57"/>#
+<a name="58"/>procedure set_clip(state)
+<a name="59"/>   if map(state) == "on" then
+<a name="60"/>      DO_CLIPPING := "yes"
+<a name="61"/>   else
+<a name="62"/>      DO_CLIPPING := &amp;null
+<a name="63"/>end
+<a name="64"/>
+<a name="65"/># Either clip a line or leave it alone
+<a name="66"/>#
+<a name="67"/>procedure Clip_Line(line,box)
+<a name="68"/>   if \DO_CLIPPING then
+<a name="69"/>      return LB_line_clip(line, box)
+<a name="70"/>   return line
+<a name="71"/>end
+<a name="72"/>
+<a name="73"/># Note: Liang-Barsky algorithms (or variants) are used.  If you
+<a name="74"/>#   have fast FP hardware, they are faster than Cohen-Sutherland
+<a name="75"/>#   (and *much* slower if you *don't*!).  Anyway, they're more
+<a name="76"/>#   fun to code and easier to extend to 3-D.
+<a name="77"/>
+<a name="78"/>#
+<a name="79"/># LB_line_clip -- takes a 2-D line (two points) and returns it clipped to
+<a name="80"/>#    a box (normally the viewport).
+<a name="81"/>procedure LB_line_clip(line, box)
+<a name="82"/>   local nline, u, dx, dy
+<a name="83"/>
+<a name="84"/>			# initialize important parametric values
+<a name="85"/>   dx := line[2][1] - line[1][1]
+<a name="86"/>   dy := line[2][2] - line[2][2]
+<a name="87"/>   u := [0.0, 1.0]
+<a name="88"/>
+<a name="89"/>			# do the clipping
+<a name="90"/>   if clipcheck(-dx, line[1][1] - box[1][1], u) &amp;
+<a name="91"/>      clipcheck( dx, box[2][1] - line[1][1], u) &amp;
+<a name="92"/>      clipcheck(-dy, line[1][2] - box[1][2], u) &amp;
+<a name="93"/>      clipcheck( dy, box[2][2] - line[1][1], u) then {
+<a name="94"/>			# return a modified copy of original line
+<a name="95"/>      nline := copy(line)
+<a name="96"/>      nline[1] := copy(line[1])
+<a name="97"/>      nline[2] := copy(line[2])
+<a name="98"/>
+<a name="99"/>      if u[2] &lt; 1.0 then {
+<a name="100"/>         nline[2][1] := line[1][1] + (u[2]*dx)
+<a name="101"/>         nline[2][2] := line[1][2] + (u[2]*dy)
+<a name="102"/>         }
+<a name="103"/>      if u[1] &lt; 1.0 then {
+<a name="104"/>         nline[1][1] := line[1][1] + (u[1]*dx)
+<a name="105"/>         nline[1][2] := line[1][2] + (u[1]*dy)
+<a name="106"/>         }
+<a name="107"/>      return nline
+<a name="108"/>      }
+<a name="109"/>			# no need to clip
+<a name="110"/>   fail
+<a name="111"/>end
+<a name="112"/>   
+<a name="113"/>procedure clipcheck(p,q,u)
+<a name="114"/>   local r
+<a name="115"/>
+<a name="116"/>   if p &lt; 0.0 then {
+<a name="117"/>      r := real(q)/p
+<a name="118"/>      if r &gt; u[2] then fail
+<a name="119"/>      else if r &gt; u[1] then u[1] := r
+<a name="120"/>      }
+<a name="121"/>   else if p &gt; 0.0 then {
+<a name="122"/>      r := real(q)/p
+<a name="123"/>      if r &gt; u[1] then fail
+<a name="124"/>      else if r &gt; u[2] then u[2] := r
+<a name="125"/>      }
+<a name="126"/>   else if q &gt;= 0.0 then return
+<a name="127"/>
+<a name="128"/>end
+<a name="129"/>
+<a name="130"/>#
+<a name="131"/># Clip a line to a convex polygon (2-D)
+<a name="132"/># 
+<a name="133"/>procedure Convex_clip(poly, line[])
+<a name="134"/>	# Cyrus-Beck line clipping against a convex polygon
+<a name="135"/>	#   (assumes poly is a convex polygon!)
+<a name="136"/>   local D, nc,  cline
+<a name="137"/>   local n, p		# point normal of polygon edge
+<a name="138"/>   local c, p1		# point slope of line
+<a name="139"/>   local t_in, t_out	# current endpoints
+<a name="140"/>   local t, i
+<a name="141"/>
+<a name="142"/>   c := make_vector(line[1],line[2])
+<a name="143"/>   p1 := line[1]
+<a name="144"/>   t_in := 0
+<a name="145"/>   t_out := 1
+<a name="146"/>
+<a name="147"/>   every i := 2 to *poly+1 do {	# for each edge
+<a name="148"/>      p := poly[i-1]
+<a name="149"/>      if i &gt; *poly then
+<a name="150"/>         n := normal_line(poly[i-1],poly[1])
+<a name="151"/>      else
+<a name="152"/>         n := normal_line(poly[i-1],poly[i])
+<a name="153"/>      D := dot(n,p)
+<a name="154"/>      
+<a name="155"/>      if (nc := dot(n,c)) = 0 then {	# parallel to edge
+<a name="156"/>         unless inside_line(p1,p,n) then fail
+<a name="157"/>                                    else next
+<a name="158"/>        
+<a name="159"/>         } 
+<a name="160"/>
+<a name="161"/>      t := (D - dot(n,p1))/nc
+<a name="162"/>
+<a name="163"/>      if nc &gt; 0 then 			# entering polygon
+<a name="164"/>         t_in &lt;:= t
+<a name="165"/>      else				# exiting polygon
+<a name="166"/>         t_out &gt;:= t
+<a name="167"/>
+<a name="168"/>      if t_in &gt;= t_out then {fail}
+<a name="169"/>      }
+<a name="170"/>
+<a name="171"/>   # if we get here, part of the line is visible, return that part
+<a name="172"/>
+<a name="173"/>   cline := copy(line)
+<a name="174"/>   cline[1] := vpara(line[1],line[2],t_in)
+<a name="175"/>   cline[2] := vpara(line[1],line[2],t_out)
+<a name="176"/>
+<a name="177"/>   return cline
+<a name="178"/>end
+<a name="179"/>
+<a name="180"/>
+<a name="181"/>
+<a name="182"/>#   - some interesting curves
+<a name="183"/>###
+<a name="184"/>
+<a name="185"/>############################################################################
+<a name="186"/># Draw a fractal snowflake or order N between two points
+<a name="187"/>############################################################################
+<a name="188"/>#
+<a name="189"/># Draw a fractal snowflake between two points
+<a name="190"/>#
+<a name="191"/>procedure fract_flake(win,A,C,n,lr,cp)
+<a name="192"/>   local direction, t
+<a name="193"/>
+<a name="194"/>   /lr := 1
+<a name="195"/>   direction := Rel_angle(A,C)
+<a name="196"/>   t := turtle(win, A, direction)
+<a name="197"/>   f_flake(t, distance(A,C), n, lr, cp)
+<a name="198"/>   return
+<a name="199"/>end
+<a name="200"/>
+<a name="201"/>procedure f_flake(t, len, n, lr, cp)
+<a name="202"/>   local angle, p, nextcolor
+<a name="203"/>
+<a name="204"/>   if n &gt; 0 then {
+<a name="205"/>      # if nextcolor is available, change the foreground color
+<a name="206"/>      t.win.vp.screen.fg ! (@\nextcolor)
+<a name="207"/>      Left(t,lr*60)
+<a name="208"/>      f_flake(t, len*0.333333, n-1, -lr, cp)
+<a name="209"/>      f_flake(t, len*0.333333, n-1,  lr, cp)
+<a name="210"/>      Right(t,lr*60)
+<a name="211"/>      f_flake(t, len*0.333333, n-1,  lr, cp)
+<a name="212"/>      Right(t,lr*60)
+<a name="213"/>      f_flake(t, len*0.333333, n-1,  lr, cp)
+<a name="214"/>      Right(t,lr*150)
+<a name="215"/>      f_flake(t, len*0.19244, n-1,  lr, cp)
+<a name="216"/>      f_flake(t, len*0.192498, n-1, -lr, cp)
+<a name="217"/>      Left(t,lr*60)
+<a name="218"/>      f_flake(t, len*0.192498, n-1, -lr, cp)
+<a name="219"/>      Left(t,lr*60)
+<a name="220"/>      f_flake(t, len*0.19244, n-1, -lr, cp)
+<a name="221"/>      Left(t,lr*90)
+<a name="222"/>      f_flake(t, len*0.333333, n-1,  lr, cp)
+<a name="223"/>      Right(t,lr*150)
+<a name="224"/>      f_flake(t, len*0.19247, n-1,  lr, cp)
+<a name="225"/>      f_flake(t, len*0.19247, n-1, -lr, cp)
+<a name="226"/>      Left(t,lr*150)
+<a name="227"/>      f_flake(t, len*0.333333, n-1, -lr, cp)
+<a name="228"/>      f_flake(t, len*0.333333, n-1,  lr, cp)
+<a name="229"/>      }
+<a name="230"/>   else {
+<a name="231"/>      if \cp then {
+<a name="232"/>         angle := Math.dtor(t.direction)
+<a name="233"/>         p := [t.pos[1]+len*Math.cos(angle), t.pos[2]+len*Math.sin(angle)]
+<a name="234"/>         DrawConvexClipped(t.win, cp, t.pos, p)
+<a name="235"/>         t.pos := p
+<a name="236"/>         }
+<a name="237"/>      else {
+<a name="238"/>         Line_Forward(t, len)
+<a name="239"/>         }
+<a name="240"/>      }
+<a name="241"/>
+<a name="242"/>   return
+<a name="243"/>end
+<a name="244"/> 
+<a name="245"/>############################################################################
+<a name="246"/># Draw a koch curve of order N between two points
+<a name="247"/>############################################################################
+<a name="248"/>#
+<a name="249"/># Draw a koch curve from A to B
+<a name="250"/>#
+<a name="251"/>procedure koch_line(win,A,B,n)
+<a name="252"/>   local t, direction
+<a name="253"/>
+<a name="254"/>   direction := Rel_angle(A,B)
+<a name="255"/>   t := turtle(win, A, direction)
+<a name="256"/>   koch(t, direction, distance(A,B), n)
+<a name="257"/>   return
+<a name="258"/>end
+<a name="259"/>#
+<a name="260"/># turtle graphics version
+<a name="261"/>#
+<a name="262"/>procedure koch(t, dir, len, n)
+<a name="263"/>
+<a name="264"/>   if n &gt; 0 then {
+<a name="265"/>      koch(t, dir, len/3.0, n-1)
+<a name="266"/>      Left(t,60)
+<a name="267"/>      koch(t, dir, len/3.0, n-1)
+<a name="268"/>      Right(t, 120)
+<a name="269"/>      koch(t, dir, len/3.0, n-1)
+<a name="270"/>      Left(t,60)
+<a name="271"/>      koch(t, dir, len/3.0, n-1)
+<a name="272"/>      }
+<a name="273"/>   else
+<a name="274"/>      Line_Forward(t, len)
+<a name="275"/>
+<a name="276"/>   return
+<a name="277"/>end
+<a name="278"/>
+<a name="279"/>
+<a name="280"/>############################################################################
+<a name="281"/># Draw a fractal curve between two points
+<a name="282"/>############################################################################
+<a name="283"/>#
+<a name="284"/>#
+<a name="285"/>#  The parameter 'H' is a 'roughness' factor.  At H=0.5,
+<a name="286"/>#     you get roughly brownian motion.
+<a name="287"/>#
+<a name="288"/>procedure fract_line(win,A,B,H,min_len,std_dev)
+<a name="289"/>   local  direction, t, N, f, r,  len
+<a name="290"/>
+<a name="291"/>   /H := 0.5
+<a name="292"/>   /min_len := 0.01
+<a name="293"/>   /std_dev := 0.12
+<a name="294"/>   len := distance(A,B)
+<a name="295"/>   direction := Rel_angle(A,B)
+<a name="296"/>   t := turtle(win, A, direction)
+<a name="297"/>
+<a name="298"/>   if len &lt;= min_len then
+<a name="299"/>      Line_Forward(t, len)
+<a name="300"/>   else {
+<a name="301"/>      f := Math.exp((0.5-H)*Math.log(2.0))
+<a name="302"/>      r := gauss() * std_dev * f
+<a name="303"/>      N := point()
+<a name="304"/>      N.x := 0.5*(A[1] + B[1]) - r*(B[2]-A[2]);
+<a name="305"/>      N.y := 0.5*(A[2] + B[2]) + r*(B[1]-A[1]);
+<a name="306"/>      fract_line(win, A, N, H, min_len, std_dev)
+<a name="307"/>      fract_line(win, N, B, H, min_len, std_dev)
+<a name="308"/>      }
+<a name="309"/>
+<a name="310"/>   return
+<a name="311"/>end
+<a name="312"/>
+<a name="313"/>
+<a name="314"/>
+<a name="315"/># Simple drawing primitives
+<a name="316"/>############################################################################
+<a name="317"/>
+<a name="318"/># draw a polyline
+<a name="319"/>procedure DrwLine(w,pnts[])	
+<a name="320"/>
+<a name="321"/>   if *pnts &lt; 2 then fail		# ... not enough points
+<a name="322"/>
+<a name="323"/>   return w.vp.screen.draw_line ! (transform_points(pnts,w.xform_mat[1]))
+<a name="324"/>end
+<a name="325"/>
+<a name="326"/># clip to polygon
+<a name="327"/>procedure DrawConvexClipped(w,poly,pnts[])	
+<a name="328"/>   local i
+<a name="329"/>
+<a name="330"/>   if (*pnts &lt; 2) | (*poly &lt; 3) then fail
+<a name="331"/>
+<a name="332"/>   every i := 2 to *pnts do {
+<a name="333"/>      DrwLine ! ([w]|||Convex_clip(poly,pnts[i-1],pnts[i]))
+<a name="334"/>      }
+<a name="335"/>      
+<a name="336"/>   return
+<a name="337"/>end
+<a name="338"/>
+<a name="339"/># draw a polygon
+<a name="340"/>procedure DrawPolygon(args[])	
+<a name="341"/>
+<a name="342"/>   return DrwLine ! (args|||[args[2]])
+<a name="343"/>
+<a name="344"/>end
+<a name="345"/>
+<a name="346"/># draw a filled polygon
+<a name="347"/>procedure FillPolygon(w,pnts[]) 
+<a name="348"/>
+<a name="349"/>   if *pnts &lt; 2 then fail		# ... not enough points
+<a name="350"/>
+<a name="351"/>   return FillPolygon ! ([w.vp.screen]|||
+<a name="352"/>                          transform_points(pnts|||[pnts[1]],w.xform_mat[1]))
+<a name="353"/>end
+<a name="354"/>
+<a name="355"/>
+<a name="356"/>
+<a name="357"/># Matrix operations
+<a name="358"/>############################################################################
+<a name="359"/>
+<a name="360"/>#   All matrices are stored as lists of lists, and all
+<a name="361"/>#     operations determine the size of the matrix directly
+<a name="362"/>#     from the matrix itself
+<a name="363"/>
+<a name="364"/># output a matrix (usually for debugging)
+<a name="365"/>procedure mwrite(m)		
+<a name="366"/>   local r, c, row, col
+<a name="367"/>
+<a name="368"/>   r := *m
+<a name="369"/>   c := *m[1]
+<a name="370"/>
+<a name="371"/>   writes("[")
+<a name="372"/>   every row := 1 to r do {
+<a name="373"/>      writes("[")
+<a name="374"/>      every col := 1 to c do {
+<a name="375"/>         writes(right(m[row][col],6),", ")
+<a name="376"/>         }
+<a name="377"/>      write("]")
+<a name="378"/>      }
+<a name="379"/>   write("]")
+<a name="380"/>end
+<a name="381"/>
+<a name="382"/># create a matrix
+<a name="383"/>procedure newmat(n,m)		
+<a name="384"/>   local M
+<a name="385"/>
+<a name="386"/>   M := list(n)
+<a name="387"/>   every !M := list(m)
+<a name="388"/>
+<a name="389"/>   return M
+<a name="390"/>end
+<a name="391"/>
+<a name="392"/># Identity matrix
+<a name="393"/>procedure Imatrix(n,m)		
+<a name="394"/>   local M, r, c
+<a name="395"/>
+<a name="396"/>   M := newmat(n,m)
+<a name="397"/>   every r := 1 to n do {
+<a name="398"/>      every c := 1 to m do {
+<a name="399"/>         M[r][c] := if r = c then 1.0 else 0.0
+<a name="400"/>         }
+<a name="401"/>      }
+<a name="402"/>   return M
+<a name="403"/>end
+<a name="404"/>
+<a name="405"/># matrix multiply
+<a name="406"/>procedure mmult(m1,m2)		
+<a name="407"/>   local m3, r, c, nk, k
+<a name="408"/>
+<a name="409"/>   if (nk := *m1[1]) ~= *m2 then runerr("Matrices are wrong size to multiply")
+<a name="410"/>
+<a name="411"/>   m3 := newmat(*m1,*m2[1])
+<a name="412"/>   every r := 1 to *m1 do {
+<a name="413"/>      every c := 1 to *m2[1] do {
+<a name="414"/>         m3[r][c] := 0.0
+<a name="415"/>         every k := 1 to nk do {
+<a name="416"/>             m3[r][c] +:= m1[r][k] * m2[k][c]
+<a name="417"/>             }
+<a name="418"/>         }
+<a name="419"/>      }
+<a name="420"/>
+<a name="421"/>   return m3
+<a name="422"/>end
+<a name="423"/>
+<a name="424"/>
+<a name="425"/># low-level screen activity
+<a name="426"/>############################################################################
+<a name="427"/>
+<a name="428"/>record viewport(ul, lr, screen)
+<a name="429"/>record window(ll, ur, vp, xform_mat)
+<a name="430"/>
+<a name="431"/># construct new graphics window
+<a name="432"/>procedure set_window(win, ll, ur, vp)	
+<a name="433"/>   local x_scale, y_scale, x_trans, y_trans, xfrm
+<a name="434"/>
+<a name="435"/>   if /vp then {	# make vp the entire 'screen'
+<a name="436"/>      vp := viewport()
+<a name="437"/>      vp.ul := [0,0]
+<a name="438"/>      vp.lr := [numeric(win.get_width()), numeric(win.get_height())]
+<a name="439"/>      vp.screen := win
+<a name="440"/>      }
+<a name="441"/>
+<a name="442"/>   # determine scale and translate factors ...
+<a name="443"/>   #   (note the strange viewpoint references to get lower left corner)
+<a name="444"/>   x_scale := real(vp.lr[1]-vp.ul[1]) / (ur[1]-ll[1])
+<a name="445"/>   y_scale := real(vp.ul[2]-vp.lr[2]) / (ur[2]-ll[2])
+<a name="446"/>   x_trans := real(vp.ul[1])-(ll[1]*x_scale)
+<a name="447"/>   y_trans := real(vp.lr[2])-(ll[2]*y_scale)
+<a name="448"/>
+<a name="449"/>   # ... and set up the transformation matrix
+<a name="450"/>   xfrm := [mmult(set_scale(x_scale, y_scale), set_trans(x_trans, y_trans))]
+<a name="451"/>
+<a name="452"/>   return window(ll, ur, vp, xfrm)
+<a name="453"/>end   
+<a name="454"/>
+<a name="455"/>procedure change_viewport(window, ul, lr)
+<a name="456"/>   local x_scale, y_scale, x_trans, y_trans, xfrm
+<a name="457"/>
+<a name="458"/>   # determine scale and translate factors ...
+<a name="459"/>   #   (note the strange viewpoint references to get lower left corner)
+<a name="460"/>   x_scale := real(lr[1]-ul[1]) / (window.ur[1]-window.ll[1])
+<a name="461"/>   y_scale := real(ul[2]-lr[2]) / (window.ur[2]-window.ll[2])
+<a name="462"/>   x_trans := real(ul[1])-(window.ll[1]*x_scale)
+<a name="463"/>   y_trans := real(lr[2])-(window.ll[2]*y_scale)
+<a name="464"/>
+<a name="465"/>   # ... and set up the transformation matrix
+<a name="466"/>   xfrm := [mmult(set_scale(x_scale, y_scale), set_trans(x_trans, y_trans))]
+<a name="467"/>
+<a name="468"/>   window.xform_mat := xfrm
+<a name="469"/>   window.vp.ul := ul
+<a name="470"/>   window.vp.lr := lr
+<a name="471"/>
+<a name="472"/>   return
+<a name="473"/>end
+<a name="474"/>
+<a name="475"/>
+<a name="476"/>
+<a name="477"/># support.icn -- miscellaneous support routines
+<a name="478"/>############################################################################
+<a name="479"/>
+<a name="480"/># para -- parametric equation for coordinate between two others
+<a name="481"/>#
+<a name="482"/>procedure para(a,b,t)
+<a name="483"/>   return (1.0-t)*a + t*b
+<a name="484"/>end
+<a name="485"/>
+<a name="486"/># vpara -- produce a vector that is parametrically between two others
+<a name="487"/>#
+<a name="488"/>procedure vpara(v1,v2,t)
+<a name="489"/>   local v, i
+<a name="490"/>
+<a name="491"/>   v := copy(v1)
+<a name="492"/>   every i := 1 to *v1 do
+<a name="493"/>      v[i] := para(v1[i],v2[i],t)
+<a name="494"/>
+<a name="495"/>   return v
+<a name="496"/>end
+<a name="497"/>
+<a name="498"/># sleep -- 'sleep' of n seconds (n may be fractional)
+<a name="499"/>#
+<a name="500"/>procedure sleep(n)
+<a name="501"/>   local start
+<a name="502"/>
+<a name="503"/>   start := &amp;time
+<a name="504"/>   while &amp;time &lt;= start+n*1000
+<a name="505"/>end
+<a name="506"/>
+<a name="507"/>procedure round(n,g)
+<a name="508"/>   return integer((n + g/2.0)/g) * g
+<a name="509"/>end
+<a name="510"/>
+<a name="511"/># Some nice random functions
+<a name="512"/>
+<a name="513"/># Do a Gaussian distribution about the value 'x'.
+<a name="514"/>#   The value of 'f' can be used to alter the shape
+<a name="515"/>#   of the Gaussian distribution (larger values flatten
+<a name="516"/>#   the curve...)
+<a name="517"/>
+<a name="518"/>procedure Gauss_random(x,f)
+<a name="519"/>   # if 'f' not passed in, default to 1.0
+<a name="520"/>   /f := 1.0
+<a name="521"/>   return gauss()*f+x
+<a name="522"/>end
+<a name="523"/>
+<a name="524"/># Produce a random value within a Gaussian distribution
+<a name="525"/>#   about 0.0.  (Sum 12 random numbers between 0 and 1,
+<a name="526"/>#   (expected mean is 6.0) and subtract 6 to center on 0.0
+<a name="527"/>
+<a name="528"/>procedure gauss()
+<a name="529"/>   local v
+<a name="530"/>
+<a name="531"/>   v := 0.0
+<a name="532"/>   every 1 to 12 do v +:= ?0
+<a name="533"/>   return v-6.0
+<a name="534"/>end
+<a name="535"/>
+<a name="536"/>
+<a name="537"/>#
+<a name="538"/># A simple implementation of 'turtle' graphics for multiple windows
+<a name="539"/>#   one can have more than one turtle simultaneously active
+<a name="540"/>#   In a turtle, the color field (if used) must be a co-expressions
+<a name="541"/>#   that produces the color.  This allows the turtle to change
+<a name="542"/>#   color as it runs.  In the simplest case, construct the
+<a name="543"/>#   turtle with a co-expression the repeatedly supplies the
+<a name="544"/>#   the same color:   create |"red"
+<a name="545"/>############################################################################
+<a name="546"/>
+<a name="547"/>record turtle(win,pos,direction,color)
+<a name="548"/>
+<a name="549"/>procedure moveto(t,p)
+<a name="550"/>   return t.pos := p
+<a name="551"/>end
+<a name="552"/>
+<a name="553"/>procedure lineto(t,p)
+<a name="554"/>   t.win.vp.screen.set_fg(\@\(t.color))
+<a name="555"/>   DrwLine(t.win, t.pos, p)
+<a name="556"/>   return t.pos := p
+<a name="557"/>end
+<a name="558"/>
+<a name="559"/>procedure moverel(t, displacement)
+<a name="560"/>   return moveto(t, add_vectors(t.pos, displacement))
+<a name="561"/>end
+<a name="562"/>
+<a name="563"/>procedure drawrel(t, displacement)
+<a name="564"/>   return lineto(t, add_vectors(t.pos, displacement))
+<a name="565"/>end
+<a name="566"/>
+<a name="567"/>procedure Line_Forward(t, dist)
+<a name="568"/>   local angle, p
+<a name="569"/>
+<a name="570"/>   angle := Math.dtor(t.direction)
+<a name="571"/>   p := [t.pos[1]+dist*Math.cos(angle), t.pos[2]+dist*Math.sin(angle)]
+<a name="572"/>   return lineto(t, p)
+<a name="573"/>end
+<a name="574"/>
+<a name="575"/>procedure Move_Forward(t, dist)
+<a name="576"/>   local angle, p
+<a name="577"/>
+<a name="578"/>   angle := Math.dtor(t.direction)
+<a name="579"/>   p := [t.pos[1]+dist*Math.cos(angle), t.pos[2]+dist*Math.sin(angle)]
+<a name="580"/>   return moveto(t, p)
+<a name="581"/>end
+<a name="582"/>
+<a name="583"/>procedure Right(t, angle)
+<a name="584"/>   return t.direction -:= angle
+<a name="585"/>end
+<a name="586"/>
+<a name="587"/>procedure Left(t, angle)
+<a name="588"/>   return t.direction +:= angle
+<a name="589"/>end
+<a name="590"/>
+<a name="591"/>
+<a name="592"/>
+<a name="593"/># Some vector operations
+<a name="594"/>############################################################################
+<a name="595"/>
+<a name="596"/>procedure add_vectors(v1,v2)
+<a name="597"/>   local v3, i
+<a name="598"/>
+<a name="599"/>   if *v1 ~= *v2 then runerr("Cannot add vectors of differing sizes")
+<a name="600"/>
+<a name="601"/>   v3 := copy(v1)
+<a name="602"/>   every i := 1 to *v3 do
+<a name="603"/>      v3[i] := v1[i]+v2[i]
+<a name="604"/>
+<a name="605"/>   return v3
+<a name="606"/>end
+<a name="607"/>
+<a name="608"/>procedure sub_vectors(v1,v2)
+<a name="609"/>   local v3, i
+<a name="610"/>
+<a name="611"/>   if *v1 ~= *v2 then runerr("Cannot subtract vectors of differing sizes")
+<a name="612"/>
+<a name="613"/>   v3 := copy(v1)
+<a name="614"/>   every i := 1 to *v3 do
+<a name="615"/>      v3[i] := v1[i]-v2[i]
+<a name="616"/>
+<a name="617"/>   return v3
+<a name="618"/>end
+<a name="619"/>
+<a name="620"/>procedure scale_vector(s,a)
+<a name="621"/>   local v, i
+<a name="622"/>
+<a name="623"/>   v := copy(a)
+<a name="624"/>   every i := 1 to *v do
+<a name="625"/>      v[i] *:= s
+<a name="626"/>
+<a name="627"/>   return v
+<a name="628"/>end
+<a name="629"/>
+<a name="630"/>procedure len_vector(v)
+<a name="631"/>   local sum_sq
+<a name="632"/>
+<a name="633"/>   sum_sq := 0
+<a name="634"/>   every sum_sq +:= (!v)^2
+<a name="635"/>   return Math.sqrt(sum_sq)
+<a name="636"/>end
+<a name="637"/>
+<a name="638"/>procedure unit_vector(v)
+<a name="639"/>   return scale_vector(1.0/len_vector(v), v)
+<a name="640"/>end
+<a name="641"/>
+<a name="642"/>procedure dot(v1,v2)
+<a name="643"/>   local sum, i
+<a name="644"/>
+<a name="645"/>   if *v1 ~= *v2 then runerr("dot: Vectors of differing sizes")
+<a name="646"/>   sum := 0
+<a name="647"/>   every i := 1 to *v1 do
+<a name="648"/>      sum +:= v1[i]*v2[i]
+<a name="649"/>   return sum
+<a name="650"/>end
+<a name="651"/>
+<a name="652"/>procedure angle_vectors(v1,v2)
+<a name="653"/>   return Math.rtod(Math.acos(dot(unit_vector(v1),unit_vector(v2))))
+<a name="654"/>end
+<a name="655"/>
+<a name="656"/>procedure normal_vector(v)
+<a name="657"/>   local n
+<a name="658"/>
+<a name="659"/>   n := copy(v)
+<a name="660"/>   n[1] := v[2]
+<a name="661"/>   n[2] := -v[1]
+<a name="662"/>   return n
+<a name="663"/>end
+<a name="664"/>
+<a name="665"/>#
+<a name="666"/># The following are special cases for points...
+<a name="667"/>#
+<a name="668"/>
+<a name="669"/>procedure make_vector(p1,p2)
+<a name="670"/>   return sub_vectors(p2,p1)
+<a name="671"/>end
+<a name="672"/>
+<a name="673"/>procedure distance(p1,p2)
+<a name="674"/>   return len_vector(sub_vectors(p2,p1))
+<a name="675"/>end
+<a name="676"/>
+<a name="677"/>procedure Rel_angle(A,B)
+<a name="678"/>   # get angle of line through points A and B (2D only!)
+<a name="679"/>   local rise, run
+<a name="680"/>
+<a name="681"/>   rise := B[2]-A[2]
+<a name="682"/>   run  := B[1]-A[1]
+<a name="683"/>
+<a name="684"/>   return Math.rtod(Math.atan(rise, run))
+<a name="685"/>end
+<a name="686"/>
+<a name="687"/>procedure normal_line(p1,p2)
+<a name="688"/>	# return a normal to a line
+<a name="689"/>   return normal_vector(make_vector(p1,p2))
+<a name="690"/>end
+<a name="691"/>
+<a name="692"/>procedure inside_line(P,L,n)
+<a name="693"/>	# is P inside line passing through L with normal n?
+<a name="694"/>   return 0 &lt;= dot(sub_vectors(P,L),n)
+<a name="695"/>end
+<a name="696"/>
+<a name="697"/>
+<a name="698"/>
+<a name="699"/># Transformation operations
+<a name="700"/>############################################################################
+<a name="701"/>
+<a name="702"/>procedure transform(p,M)
+<a name="703"/>   local pl, i
+<a name="704"/>
+<a name="705"/>	# convert p to a matrix for matrix multiply...
+<a name="706"/>   every put((pl := [[]])[1], (!p)|1.0)	# the 1.0 makes it homogeneous
+<a name="707"/>
+<a name="708"/>	# do the conversion...
+<a name="709"/>   pl := mmult(pl, M)
+<a name="710"/>
+<a name="711"/>	# convert list back to a point...
+<a name="712"/>   p := copy(p)
+<a name="713"/>   every i := 1 to *p do
+<a name="714"/>      p[i] := pl[1][i]
+<a name="715"/>
+<a name="716"/>   return p
+<a name="717"/>end
+<a name="718"/>
+<a name="719"/>procedure transform_points(pl,M)
+<a name="720"/>   local xformed
+<a name="721"/>
+<a name="722"/>   every put(xformed := [], !transform(!pl,M))
+<a name="723"/>   return xformed
+<a name="724"/>end
+<a name="725"/>   
+<a name="726"/># set up an Xform matrix for scaling
+<a name="727"/>procedure set_scale(x,y,z)	
+<a name="728"/>   local M
+<a name="729"/>
+<a name="730"/>   M := if /z then Imatrix(3,3)
+<a name="731"/>              else Imatrix(4,4)
+<a name="732"/>
+<a name="733"/>   M[1][1] := x
+<a name="734"/>   M[2][2] := y
+<a name="735"/>   M[3][3] := \z
+<a name="736"/>
+<a name="737"/>   return M
+<a name="738"/>end
+<a name="739"/>
+<a name="740"/># set up an Xform matrix for translation
+<a name="741"/>procedure set_trans(x,y,z)	
+<a name="742"/>   local M
+<a name="743"/>
+<a name="744"/>   M := if /z then Imatrix(3,3)
+<a name="745"/>              else Imatrix(4,4)
+<a name="746"/>
+<a name="747"/>   M[*M][1] := x
+<a name="748"/>   M[*M][2] := y
+<a name="749"/>   M[*M][3] := \z
+<a name="750"/>
+<a name="751"/>   return M
+<a name="752"/>end
+<a name="753"/>
+<a name="754"/># set up an Xform matrix for rotation
+<a name="755"/>procedure set_rotate(x,y,z)	
+<a name="756"/>   local X, Y, Z
+<a name="757"/>
+<a name="758"/>   if /y &amp; /z then {	# 2-D rotation
+<a name="759"/>      X := Imatrix(3,3)
+<a name="760"/>      X[1][1] := Math.cos(x)
+<a name="761"/>      X[2][2] := X[1][1]
+<a name="762"/>      X[1][2] := Math.sin(x)
+<a name="763"/>      X[2][1] := -X[1][2]
+<a name="764"/>      return X
+<a name="765"/>      }
+<a name="766"/>
+<a name="767"/>   X := Imatrix(4,4)
+<a name="768"/>   X[2][2] := Math.cos(x)
+<a name="769"/>   X[3][3] := X[2][2]
+<a name="770"/>   X[2][3] := Math.sin(x)
+<a name="771"/>   X[3][2] := -X[2][3]
+<a name="772"/>
+<a name="773"/>   Y := Imatrix(4,4)
+<a name="774"/>   Y[1][1] := Math.cos(y)
+<a name="775"/>   Y[3][3] := Y[1][1]
+<a name="776"/>   Y[3][1] := Math.sin(y)
+<a name="777"/>   Y[1][3] := -Y[3][1]
+<a name="778"/>
+<a name="779"/>   Z := Imatrix(4,4)
+<a name="780"/>   Z[1][1] := Math.cos(z)
+<a name="781"/>   Z[2][2] := Z[2][2]
+<a name="782"/>   Z[1][2] := Math.sin(z)
+<a name="783"/>   Z[2][1] := -Z[1][2]
+<a name="784"/>
+<a name="785"/>   return mmult(X,mmult(Y,Z))
+<a name="786"/>end
+<a name="787"/>
+<a name="788"/>#
+<a name="789"/># Generalized parametric curve drawing routine, using turtle t
+<a name="790"/>#
+<a name="791"/>procedure draw_curve(t,x,xa,y,ya,t1,t2,N)
+<a name="792"/>   local incr, t0
+<a name="793"/>
+<a name="794"/>   /t1 := 0.0
+<a name="795"/>   /t2 := 1.0
+<a name="796"/>   /N  := 500
+<a name="797"/>
+<a name="798"/>   incr := (t2-t1)/(N-1)
+<a name="799"/>
+<a name="800"/>   t0 := t1
+<a name="801"/>   moveto(t, point( x!([t0]|||xa), y!([t0]|||ya)))
+<a name="802"/>   every 1 to N-1 do {
+<a name="803"/>      t0 +:= incr
+<a name="804"/>      lineto(t, point( x!([t0]|||xa), y!([t0]|||ya)))
+<a name="805"/>      }
+<a name="806"/>
+<a name="807"/>end
+</pre></body></html>

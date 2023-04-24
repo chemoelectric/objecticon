@@ -1,0 +1,20 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>extended_euclid</title></head><body>
+<h1>extended_euclid(u, v)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.numbers-package.html" target="listFrame">ipl.numbers</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Calculate the gcd and coefficients of Bézout's identity for positive
+integers <code>u</code> and <code>v</code>, using the extended Euclidean algorithm, adapted
+from Knuth vol.2, 2nd ed., p325.
+<p/>
+Returns a record <code>r</code> with fields <code>u1, v1, u2, v2, gcd</code>, giving
+the two minimal pairs of coefficients :-
+<pre>
+    u * r.u1 + v * r.v1 = r.gcd, r.u1 &gt; 0, r.v1 &lt;= 0
+    u * r.u2 + v * r.v2 = r.gcd, r.u2 &lt;= 0, r.v2 &gt; 0
+</pre>
+<p/><a href="ipl.numbers-numbers.icn.html#592" target="displayFrame">Source - numbers.icn </a>
+<p/>
+</body></html>

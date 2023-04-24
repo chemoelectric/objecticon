@@ -1,0 +1,453 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Task</title></head><body>
+<h1>Task</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+<p/><a href="io-scheduler.icn.html#84" target="displayFrame">Source - scheduler.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#change_time">change_time()</a>
+<a href="#change_time_from_now">change_time_from_now()</a>
+<a href="#interrupt">interrupt()</a>
+<a href="#is_active">is_active()</a>
+<a href="#is_current">is_current()</a>
+<a href="#is_dormant">is_dormant()</a>
+<a href="#is_polling">is_polling()</a>
+<a href="#is_ready">is_ready()</a>
+<a href="#is_sleeping">is_sleeping()</a>
+<a href="#new">new()</a>
+<a href="#notify">notify()</a>
+<a href="#poll">poll()</a>
+<a href="#revert">revert()</a>
+<a href="#sleep">sleep()</a>
+<a href="#start">start()</a>
+<a href="#stop">stop()</a>
+<a href="#xstate_swap">xstate_swap()</a>
+<a href="#yield">yield()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#coex">coex</a>
+<a href="#interrupt_why">interrupt_why</a>
+<a href="#notify_flag">notify_flag</a>
+<a href="#old_state">old_state</a>
+<a href="#poll_err">poll_err</a>
+<a href="#poll_req">poll_req</a>
+<a href="#poll_res">poll_res</a>
+<a href="#scheduler">scheduler</a>
+<a href="#state">state</a>
+<a href="#time_from">time_from</a>
+<a href="#time_until">time_until</a>
+<a href="#xstate">xstate</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="change_time"/>
+<h3>change_time(n)</h3>
+public<p/>
+<dl>
+<dd>
+If a task is currently sleeping or polling, then this alters the
+time it will sleep for, behaving as though the original call to
+<code><a href="io.Task.html#sleep">sleep</a></code> or <code><a href="io.Task.html#poll">poll</a></code> had given <code>n</code> as its time parameter.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - The time to wait for.  If <code>&amp;null</code>, wait forever.
+</dd>
+</dl>
+<p/><a href="io-scheduler.icn.html#103" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="change_time_from_now"/>
+<h3>change_time_from_now(n)</h3>
+public<p/>
+<dl>
+<dd>
+This is like <code><a href="io.Task.html#change_time">change_time()</a></code>, but the time is set to <code>n</code>
+milliseconds from now, rather than from the time of the original
+call.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - The time to wait for.  If <code>&amp;null</code>, wait forever.
+</dd>
+</dl>
+<p/><a href="io-scheduler.icn.html#122" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="interrupt"/>
+<h3>interrupt(why)</h3>
+public<p/>
+<dl>
+<dd>
+Interrupt the task, which may not be currently active.  If the
+task is currently sleeping or polling, then it is placed back in
+the ready state.  This causes the original <code><a href="io.Task.html#poll">poll</a></code> or <code><a href="io.Task.html#sleep">sleep</a></code> call
+to fail, setting <code>&amp;why</code> to the value given in the optional
+parameter <code>why</code> (the default <code>&amp;why</code> is "Interrupted").
+<p/><a href="io-scheduler.icn.html#260" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="is_active"/>
+<h3>is_active()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the task is currently active.
+<p/><a href="io-scheduler.icn.html#141" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="is_current"/>
+<h3>is_current()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the task is the current task.  Note that a task may
+be active, but not the current task, since a task may itself
+invoke <code><a href="io.Scheduler.html#work">Scheduler.work</a></code> in order to activate another task, in a
+nested fashion.  This may happen for example when a task shows a
+modal dialog, and hence calls <code><a href="io.Scheduler.html#work">Scheduler.work</a></code> via the dispatcher
+event loop.
+<p/><a href="io-scheduler.icn.html#148" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="is_dormant"/>
+<h3>is_dormant()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the task is dormant, meaning it is not active, and is
+not sleeping, polling or ready, meaning it won't be scheduled by
+the scheduler, at least until <code><a href="io.Task.html#start">start</a></code> is called on it.
+<p/><a href="io-scheduler.icn.html#181" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="is_polling"/>
+<h3>is_polling()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the task is currently polling
+<p/><a href="io-scheduler.icn.html#167" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="is_ready"/>
+<h3>is_ready()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the task is currently in the ready state
+<p/><a href="io-scheduler.icn.html#174" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="is_sleeping"/>
+<h3>is_sleeping()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the task is currently sleeping
+<p/><a href="io-scheduler.icn.html#160" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(scheduler, coex, xstate)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new <code><a href="io.Task.html" target="displayFrame">Task</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>scheduler</code> - The <code><a href="io.Scheduler.html" target="displayFrame">Scheduler</a></code> to use to activate the task.
+</dd>
+<dd>
+<code>coex</code> - The co-expression body of the task.
+</dd>
+<dd>
+<code>xstate</code> - An optional instance of <code><a href="util.State.html" target="displayFrame">State</a></code> which is used
+to save and restore external state when switching to and
+from this Task.
+</dd>
+</dl>
+<p/><a href="io-scheduler.icn.html#341" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="notify"/>
+<h3>notify()</h3>
+public<p/>
+<dl>
+<dd>
+If the task is sleeping or polling, then place it immediately
+back into the ready state.  The task must not be currently
+active.
+<p/><a href="io-scheduler.icn.html#274" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="poll"/>
+<h3>poll(l, timeout)</h3>
+public<p/>
+<dl>
+<dd>
+Suspend this task, which must be the currently scheduled task, in
+order to carry out a <code><a href="io.DescStream.html#poll">DescStream.poll</a></code>.  The parameters and
+result are in the same form as for <code><a href="io.DescStream.html#poll">DescStream.poll</a></code>.  The
+difference between this and <code><a href="io.DescStream.html#poll">DescStream.poll</a></code> is that the
+scheduler will suspend this task whilst the poll is taking place,
+whereas <code><a href="io.DescStream.html#poll">DescStream.poll</a></code> will block.  If <code>timeout</code> is zero, then
+there is no advantage in using this method, and <code><a href="io.DescStream.html#poll">DescStream.poll</a></code>
+is preferable.
+<p/>
+If the task is interrupted whilst polling this method fails with
+<code>&amp;why</code> set to the value of <code><a href="io.Task.html#interrupt_why">interrupt_why</a></code>, which will be
+non-null.
+<p/>
+If the task is notified whilst polling, this method returns
+<code>&amp;null</code>, ie it behaves as though a timeout occurred.  The
+<code><a href="io.Task.html#notify_flag">notify_flag</a></code> is also set.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - A list of alternating <code><a href="io.DescStream.html" target="displayFrame">DescStream</a></code>, flag (from <code><a href="io.Poll.html" target="displayFrame">Poll</a></code>)
+pairs.
+</dd>
+<dd>
+<code>timeout</code> - The optional timeout
+</dd>
+</dl>
+<p/><a href="io-scheduler.icn.html#189" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="revert"/>
+<h3>revert()</h3>
+public<p/>
+<dl>
+<dd>
+Suspend this task, which must be the currently scheduled task,
+but do not resume it.  Control reverts to the scheduler.  The
+task may be subsequently restarted with <code><a href="io.Task.html#start">start</a></code>.  Note that to
+end a task, it is not simply sufficient to fall off the end of
+the task's co-expression, <code><a href="io.Task.html#revert">revert</a></code> must be used.
+<p/><a href="io-scheduler.icn.html#296" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="sleep"/>
+<h3>sleep(n)</h3>
+public<p/>
+<dl>
+<dd>
+Suspend this task, which must be the currently scheduled task,
+for <code>n</code> milliseconds; <code>&amp;null</code> means indefinitely.
+<p/>
+This task is woken and the method returns after one of three
+things happens :-
+<p/>
+<ol type="1">
+<li>
+After <code>n</code> milliseconds passes; the method succeeds.
+</li>
+<li>
+After it is notified; the method succeeds and the
+<code><a href="io.Task.html#notify_flag">notify_flag</a></code> is set.
+</li>
+<li>
+After it is interrupted; the method fails with <code>&amp;why</code>
+set to the value of <code><a href="io.Task.html#interrupt_why">interrupt_why</a></code>, which will be
+non-null.
+<p/>
+</li>
+</ol>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - The time to wait for.  If <code>&amp;null</code>, wait forever (or until
+interrupted or notified).
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+<code>self</code> when the task awakes; fails on interrupt
+</dd>
+</dl>
+<p/><a href="io-scheduler.icn.html#229" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="start"/>
+<h3>start()</h3>
+public<p/>
+<dl>
+<dd>
+Start the task, which may not be currently active.  If the task
+was previously stopped in a particular state (eg sleeping), then
+it continues from that same state.
+<p/><a href="io-scheduler.icn.html#310" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="stop"/>
+<h3>stop()</h3>
+public<p/>
+<dl>
+<dd>
+Stop the task, which may not be currently active.  This prevents
+the scheduler from activating it.  Its present state is
+remembered, and it may be started again in that state using
+<code><a href="io.Task.html#start">start</a></code>.
+<p/><a href="io-scheduler.icn.html#321" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="xstate_swap"/>
+<h3>xstate_swap()</h3>
+package<p/>
+<dl>
+<dd>
+This method swaps the values of external state previously saved,
+by invoking the <code>swap()</code> on the xstate member (if set).
+<p/><a href="io-scheduler.icn.html#333" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="yield"/>
+<h3>yield()</h3>
+public<p/>
+<dl>
+<dd>
+Suspend this task, which must be the currently scheduled task,
+placing it immediately into the ready state in the scheduler.
+<p/><a href="io-scheduler.icn.html#285" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="coex"/>
+<h3>coex</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#94" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="interrupt_why"/>
+<h3>interrupt_why</h3>
+package readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#100" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="notify_flag"/>
+<h3>notify_flag</h3>
+package readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#101" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="old_state"/>
+<h3>old_state</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#96" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="poll_err"/>
+<h3>poll_err</h3>
+package readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#98" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="poll_req"/>
+<h3>poll_req</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#90" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="poll_res"/>
+<h3>poll_res</h3>
+package readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#99" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="scheduler"/>
+<h3>scheduler</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#85" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="state"/>
+<h3>state</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#95" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="time_from"/>
+<h3>time_from</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#88" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="time_until"/>
+<h3>time_until</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#89" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="xstate"/>
+<h3>xstate</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#91" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+</body></html>

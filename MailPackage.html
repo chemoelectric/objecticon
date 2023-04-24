@@ -34,7 +34,7 @@
 <h1 id="introduction">Introduction</h1>
 <p>This page describes the classes in the mail package. These provide an API for handling emails and attachments, and for sending and receiving them via SMTP and POP servers respectively.</p>
 <h1 id="the-message-class">The Message class</h1>
-<p>At the heart of the library is the <a href="http://objecticon.sourceforge.net/libref/index.html?mail.Message.html"><code>mail.Message</code></a> class. This represents either</p>
+<p>At the heart of the library is the <a href="libref/index.html?mail.Message.html"><code>mail.Message</code></a> class. This represents either</p>
 <ul>
 <li>A whole email message, or</li>
 <li>A single part of a multipart message (an attachment)</li>
@@ -63,12 +63,12 @@ m.add_header(&quot;To&quot;, &quot;jones@xyz.com&quot;)</code></pre>
 <p>For this reason, there are several methods which get and set header values, taking appropriate objects (as opposed to simple strings) as parameters and return values.</p>
 <p>Several sorts of objects are involved :-</p>
 <ul>
-<li><a href="http://objecticon.sourceforge.net/libref/index.html?util.Time.html"><code>util.Time</code></a>. Represents date/time values.</li>
-<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.Address.html"><code>mail.Address</code></a>. A base class with two subclasses, <code>Mailbox</code> and <code>Group</code></li>
-<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.Mailbox.html"><code>mail.Mailbox</code></a>. Represents a single simple email address, eg “smith@xyz.com”</li>
-<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.Group.html"><code>mail.Group</code></a>. Represents a named group of several Mailboxes</li>
-<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.ContentType.html"><code>mail.ContentType</code></a>. Represents a Content type specification (eg “multipart/mixed; boundary=xyzQOIU980”)</li>
-<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.ContentDisposition.html"><code>mail.ContentDisposition</code></a>. Represents a Content-disposition specification.</li>
+<li><a href="libref/index.html?util.Time.html"><code>util.Time</code></a>. Represents date/time values.</li>
+<li><a href="libref/index.html?mail.Address.html"><code>mail.Address</code></a>. A base class with two subclasses, <code>Mailbox</code> and <code>Group</code></li>
+<li><a href="libref/index.html?mail.Mailbox.html"><code>mail.Mailbox</code></a>. Represents a single simple email address, eg “smith@xyz.com”</li>
+<li><a href="libref/index.html?mail.Group.html"><code>mail.Group</code></a>. Represents a named group of several Mailboxes</li>
+<li><a href="libref/index.html?mail.ContentType.html"><code>mail.ContentType</code></a>. Represents a Content type specification (eg “multipart/mixed; boundary=xyzQOIU980”)</li>
+<li><a href="libref/index.html?mail.ContentDisposition.html"><code>mail.ContentDisposition</code></a>. Represents a Content-disposition specification.</li>
 </ul>
 <p>The <code>Time</code> object would be used with the get_date and set_date methods.</p>
 <pre><code>m := Message()
@@ -116,7 +116,7 @@ m.set_content(&quot;Here is a line\r\nHere is another line.&quot;)</code></pre>
 <li>The content object. This takes the result of the last stage and transforms it into a value based on the “Content-Type” field. There are four supported values :-
 <ol type="1">
 <li>"text/*" - the decoded content is transformed to/from a string with CRLF replaced by a single .</li>
-<li>"multipart/*" - the decoded content is transformed to/from a <a href="http://objecticon.sourceforge.net/libref/index.html?mail.Multipart.html"><code>mail.Multipart</code></a> object (see below)</li>
+<li>"multipart/*" - the decoded content is transformed to/from a <a href="libref/index.html?mail.Multipart.html"><code>mail.Multipart</code></a> object (see below)</li>
 <li>“message/rfc822” - the decoded content is transformed to/from a Message object.</li>
 <li>“application/octet-stream” - the decoded content is unchanged; this is a “straight-through” encoding. The default Content-Type is “text/plain”. Note that there is a <code>ContentType</code> object which can be used to handle the content type in object form; alternatively the set_header method may be used. If a Content-Type other than the above four is used, then it just means that the decoded content must be set and retrieved directly, rather than via the content object methods (which will simply fail when called).</li>
 </ol></li>
@@ -189,9 +189,9 @@ m.set_content(&quot;Here is a line\r\nHere is another line.&quot;)</code></pre>
 <pre><code>m.get_content_object()</code></pre>
 <p>the call simply fails, setting <code>&amp;why</code> appropriately.</p>
 <h1 id="multipart-messages">Multipart messages</h1>
-<p>Multipart messages are used to create messages with attachments. <a href="http://objecticon.sourceforge.net/libref/index.html?mail.Multipart.html"><code>mail.Multipart</code></a> is a very simple class which simply holds a list of <code>Message</code>s. The <code>Multipart</code> object is then set as the content object of a <code>Message</code>, together with a Content-Type such as “multipart/mixed”. An example is given below, which shows a multipart message being sent over SMTP.</p>
+<p>Multipart messages are used to create messages with attachments. <a href="libref/index.html?mail.Multipart.html"><code>mail.Multipart</code></a> is a very simple class which simply holds a list of <code>Message</code>s. The <code>Multipart</code> object is then set as the content object of a <code>Message</code>, together with a Content-Type such as “multipart/mixed”. An example is given below, which shows a multipart message being sent over SMTP.</p>
 <h1 id="sending-messages">Sending messages</h1>
-<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?mail.SmtpClient.html"><code>mail.SmtpClient</code></a> is used to send messages. It is a subclass of <a href="http://objecticon.sourceforge.net/libref/index.html?net.NetClient.html"><code>net.NetClient</code></a>, which takes care of the lower-level networking. All that is required is to set the server, port and hostname (unless the defaults suffice), to open the connection and to send the message.</p>
+<p>The class <a href="libref/index.html?mail.SmtpClient.html"><code>mail.SmtpClient</code></a> is used to send messages. It is a subclass of <a href="libref/index.html?net.NetClient.html"><code>net.NetClient</code></a>, which takes care of the lower-level networking. All that is required is to set the server, port and hostname (unless the defaults suffice), to open the connection and to send the message.</p>
 <p>The following example creates a multipart message, and sends it using an <code>SmtpClient</code>.</p>
 <p><a href="multipart.icn">Download multipart.icn</a></p>
 <pre><code>import mail, io
@@ -277,7 +277,7 @@ end
 <p>The resulting message looks like this when viewed in Thunderbird :-</p>
 <p><img src="mail.png" /></p>
 <h1 id="receiving-messages">Receiving messages</h1>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?mail.PopClient.html"><code>mail.PopClient</code></a> is a very simple class for retrieving messages using the POP mail protocol. Here is a simple example :-</p>
+<p><a href="libref/index.html?mail.PopClient.html"><code>mail.PopClient</code></a> is a very simple class for retrieving messages using the POP mail protocol. Here is a simple example :-</p>
 <p><a href="poplist.icn">Download poplist.icn</a></p>
 <pre><code>import mail, io, net, lang
 

@@ -1,0 +1,503 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Mime</title></head><body>
+<h1>Mime</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="xdg-package.html" target="listFrame">xdg</a></dd>
+</dl><p/>
+This class contains static methods for looking up XDG mime data.
+<p/><a href="xdg-xdg.icn.html#796" target="displayFrame">Source - xdg.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#alternative_mime_types">alternative_mime_types()</a>
+<a href="#alternative_mime_types1">alternative_mime_types1()</a>
+<a href="#build_desktop_entry">build_desktop_entry()</a>
+<a href="#dump">dump()</a>
+<a href="#ensure_DE">ensure_DE()</a>
+<a href="#find_icon_for_file">find_icon_for_file()</a>
+<a href="#find_icon_for_file_and_cache">find_icon_for_file_and_cache()</a>
+<a href="#gen_all_desktop_entries">gen_all_desktop_entries()</a>
+<a href="#gen_all_icons">gen_all_icons()</a>
+<a href="#gen_desktop_entries">gen_desktop_entries()</a>
+<a href="#gen_desktop_entries_for_file">gen_desktop_entries_for_file()</a>
+<a href="#gen_desktop_entries_for_path">gen_desktop_entries_for_path()</a>
+<a href="#gen_desktop_entries_for_scheme">gen_desktop_entries_for_scheme()</a>
+<a href="#gen_desktop_mime_types">gen_desktop_mime_types()</a>
+<a href="#gen_generic_icons">gen_generic_icons()</a>
+<a href="#gen_icons">gen_icons()</a>
+<a href="#get_mime_type_for_file">get_mime_type_for_file()</a>
+<a href="#init">init()</a>
+<a href="#load_DE_ini">load_DE_ini()</a>
+<a href="#need_mime_type">need_mime_type()</a>
+<a href="#parse_glob_file">parse_glob_file()</a>
+<a href="#prefcmp">prefcmp()</a>
+<a href="#process_mimeapps_list">process_mimeapps_list()</a>
+<a href="#read_generic_icons">read_generic_icons()</a>
+<a href="#read_globs">read_globs()</a>
+<a href="#read_icons">read_icons()</a>
+<a href="#read_mime_graph">read_mime_graph()</a>
+<a href="#refresh">refresh()</a>
+<a href="#scan_application_dir">scan_application_dir()</a>
+<a href="#scan_desktop_entries">scan_desktop_entries()</a>
+<a href="#tidy">tidy()</a>
+<a href="#true_key">true_key()</a>
+<a href="#use_mimeinfo_cache">use_mimeinfo_cache()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ALL_DESKTOP_ENTRIES">ALL_DESKTOP_ENTRIES</a>
+<a href="#CACHE_DIRS">CACHE_DIRS</a>
+<a href="#DEFINED">DEFINED</a>
+<a href="#DESKTOP_ENTRIES">DESKTOP_ENTRIES</a>
+<a href="#EDITS">EDITS</a>
+<a href="#FIFF_CACHE">FIFF_CACHE</a>
+<a href="#GENERIC_ICONS">GENERIC_ICONS</a>
+<a href="#GLOBS">GLOBS</a>
+<a href="#ICONS">ICONS</a>
+<a href="#LOADED">LOADED</a>
+<a href="#MIME_ALTERNATIVES">MIME_ALTERNATIVES</a>
+<a href="#MIME_GRAPH">MIME_GRAPH</a>
+<a href="#PATHS">PATHS</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="alternative_mime_types"/>
+<h3>alternative_mime_types(mt)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate the alternative mime types for the given mime type.
+This traverses the graph formed from the subclasses and aliases
+files, in a breadth-first fashion, and generates all possible
+alternatives.
+<p/><a href="xdg-xdg.icn.html#937" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="alternative_mime_types1"/>
+<h3>alternative_mime_types1(mt)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#953" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="build_desktop_entry"/>
+<h3>build_desktop_entry(dm, src)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1092" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="dump"/>
+<h3>dump()</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#847" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="ensure_DE"/>
+<h3>ensure_DE(id)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1182" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_icon_for_file"/>
+<h3>find_icon_for_file(file, size, scale)</h3>
+public static<p/>
+<dl>
+<dd>
+Find an icon given a filename (not a path), integer size, and
+optional scale (see <code><a href="xdg.IconTheme.html#find_icon">IconTheme.find_icon()</a></code>).
+<p/><a href="xdg-xdg.icn.html#1071" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="find_icon_for_file_and_cache"/>
+<h3>find_icon_for_file_and_cache(file, size, scale, exact)</h3>
+public static<p/>
+<dl>
+<dd>
+This calls <code><a href="xdg.Mime.html#find_icon_for_file">find_icon_for_file</a></code>, caches the result in
+<code><a href="gui.ImageCache.html" target="displayFrame">ImageCache</a></code>, and returns the cache key.
+<p/>
+The <code>exact</code> parameter has the same effect as in
+<code>find_icon_and_cache</code>.
+<p/><a href="xdg-xdg.icn.html#979" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_all_desktop_entries"/>
+<h3>gen_all_desktop_entries(mt)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a mime type (string), generate the corresponding
+<code><a href="xdg.DesktopEntry.html" target="displayFrame">DesktopEntry</a></code> objects, for that type, in preference order, and
+then likewise for all the alternative mime types.
+<p/><a href="xdg-xdg.icn.html#1287" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_all_icons"/>
+<h3>gen_all_icons(mt)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate all the icons defined for the given mime type, namely
+any mappings from the "icons" files, then the default icon formed
+from substituting "/" for "-", and then any mappings from the
+"generic-icons" files.  This method will always generate at least
+one result.
+<p/><a href="xdg-xdg.icn.html#925" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_desktop_entries"/>
+<h3>gen_desktop_entries(mt)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a mime type (string), generate the corresponding
+<code><a href="xdg.DesktopEntry.html" target="displayFrame">DesktopEntry</a></code> objects, in preference order.
+<p/><a href="xdg-xdg.icn.html#1302" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_desktop_entries_for_file"/>
+<h3>gen_desktop_entries_for_file(file)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate the <code><a href="xdg.DesktopEntry.html" target="displayFrame">DesktopEntry</a></code> objects suitable for a particular
+filename (without path), with the most suitable first.
+<p/><a href="xdg-xdg.icn.html#1271" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_desktop_entries_for_path"/>
+<h3>gen_desktop_entries_for_path(file)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a file path (as a string), if the path represents an
+existing directory, then the desktop entries for mime type
+"inode/directory" (and its alternatives) are returned; otherwise
+<code><a href="xdg.Mime.html#gen_desktop_entries_for_file">gen_desktop_entries_for_file()</a></code> is called on the last path
+component.
+<p/><a href="xdg-xdg.icn.html#1257" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_desktop_entries_for_scheme"/>
+<h3>gen_desktop_entries_for_scheme(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Convenient method to call <code><a href="xdg.Mime.html#gen_all_desktop_entries">gen_all_desktop_entries()</a></code> for the
+mime type <code>x-scheme-handler/</code> with subtype <code>s</code>.
+<p/><a href="xdg-xdg.icn.html#1279" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_desktop_mime_types"/>
+<h3>gen_desktop_mime_types(dm)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1112" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_generic_icons"/>
+<h3>gen_generic_icons(mt)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate the icon names from the "generic-icons" files, defined
+for the given mime type.
+<p/><a href="xdg-xdg.icn.html#909" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_icons"/>
+<h3>gen_icons(mt)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate the icon names from the "icons" files, defined for the
+given mime type.
+<p/><a href="xdg-xdg.icn.html#917" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mime_type_for_file"/>
+<h3>get_mime_type_for_file(f)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a filename (not a path), return the corresponding mime
+type, or fail if no mime type could be deduced.
+<p/><a href="xdg-xdg.icn.html#901" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#821" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="load_DE_ini"/>
+<h3>load_DE_ini(path)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1173" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="need_mime_type"/>
+<h3>need_mime_type(mt)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#897" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_glob_file"/>
+<h3>parse_glob_file(g, s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#881" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="prefcmp"/>
+<h3>prefcmp(d1, d2)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1161" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="process_mimeapps_list"/>
+<h3>process_mimeapps_list(f, mm)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1135" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="read_generic_icons"/>
+<h3>read_generic_icons()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#990" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="read_globs"/>
+<h3>read_globs()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1061" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="read_icons"/>
+<h3>read_icons()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1008" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="read_mime_graph"/>
+<h3>read_mime_graph()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1026" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="refresh"/>
+<h3>refresh()</h3>
+public static<p/>
+<dl>
+<dd>
+Reload all the settings and reset everything.
+<p/><a href="xdg-xdg.icn.html#828" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_application_dir"/>
+<h3>scan_application_dir(p, prefix, N)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1116" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="scan_desktop_entries"/>
+<h3>scan_desktop_entries()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1194" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="tidy"/>
+<h3>tidy()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1248" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="true_key"/>
+<h3>true_key(dm, key)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#1088" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="use_mimeinfo_cache"/>
+<h3>use_mimeinfo_cache(d)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#843" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ALL_DESKTOP_ENTRIES"/>
+<h3>ALL_DESKTOP_ENTRIES</h3>
+private static<p/>
+<dl>
+<dd>
+A map of mime-types (string) to list of DesktopEntry objects.
+<p/><a href="xdg-xdg.icn.html#816" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="CACHE_DIRS"/>
+<h3>CACHE_DIRS</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="xdg-xdg.icn.html#818" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFINED"/>
+<h3>DEFINED</h3>
+private static<p/>
+<dl>
+<dd>
+A map of mime-type (string) to sets of IDs (strings), being
+<p/><a href="xdg-xdg.icn.html#812" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="DESKTOP_ENTRIES"/>
+<h3>DESKTOP_ENTRIES</h3>
+private static<p/>
+<dl>
+<dd>
+A map of mime-types (string) to list of DesktopEntry objects.
+<p/><a href="xdg-xdg.icn.html#815" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="EDITS"/>
+<h3>EDITS</h3>
+private static<p/>
+<dl>
+<dd>
+A list of Edit() records to be applied in order
+<p/><a href="xdg-xdg.icn.html#811" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="FIFF_CACHE"/>
+<h3>FIFF_CACHE</h3>
+private static<p/>
+<dl>
+<dd>
+A cache of find_icon_for_file() results, mapping string key to icon
+<p/><a href="xdg-xdg.icn.html#807" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="GENERIC_ICONS"/>
+<h3>GENERIC_ICONS</h3>
+private static<p/>
+<dl>
+<dd>
+- ditto -
+<p/><a href="xdg-xdg.icn.html#803" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="GLOBS"/>
+<h3>GLOBS</h3>
+private static<p/>
+<dl>
+<dd>
+A Globs instance for file pattern matching.
+<p/><a href="xdg-xdg.icn.html#801" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="ICONS"/>
+<h3>ICONS</h3>
+private static<p/>
+<dl>
+<dd>
+A map of mime-type (string) to list of icon names (strings)
+<p/><a href="xdg-xdg.icn.html#802" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="LOADED"/>
+<h3>LOADED</h3>
+private static<p/>
+<dl>
+<dd>
+A map of ID (string) to DesktopEntry or null
+<p/><a href="xdg-xdg.icn.html#814" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="MIME_ALTERNATIVES"/>
+<h3>MIME_ALTERNATIVES</h3>
+private static<p/>
+<dl>
+<dd>
+A cache of alternative_mime_types() results,
+<p/><a href="xdg-xdg.icn.html#805" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="MIME_GRAPH"/>
+<h3>MIME_GRAPH</h3>
+private static<p/>
+<dl>
+<dd>
+A map of mime-type (string) to lists of mime-types (strings)
+<p/><a href="xdg-xdg.icn.html#804" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+<a name="PATHS"/>
+<h3>PATHS</h3>
+private static<p/>
+<dl>
+<dd>
+A map of ID (string) to path (string), (eg "gimp.desktop" -&gt;
+<p/><a href="xdg-xdg.icn.html#809" target="displayFrame">Source - xdg.icn </a>
+</dd>
+</dl><hr>
+</body></html>

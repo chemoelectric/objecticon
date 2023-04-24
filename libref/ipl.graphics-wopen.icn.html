@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>wopen.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     wopen.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for graphics input/output
+<a name="6"/>#
+<a name="7"/>#	Authors:  Gregg M. Townsend and Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     July 26, 1999
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	These procedures provide window input and output using "W" names as
+<a name="18"/>#	substitutes for standard input and output functions.
+<a name="19"/>#
+<a name="20"/>#	WDone(), WQuit(), QuitCheck(), and QuitEvents() incorporate knowledge
+<a name="21"/>#	of the Icon standard set of "quit" events, currently the letters
+<a name="22"/>#	"q" or "Q".  The procedures themselves are trivial.
+<a name="23"/>#
+<a name="24"/>#	WQuit() consumes unread window events and succeeds if a quit event
+<a name="25"/>#	is seen.  It does not wait.  WDone() waits until a quit event is read,
+<a name="26"/>#	then exits the program.  QuitCheck(ev) calls exit() if its parameter
+<a name="27"/>#	is a quit event; QuitCheck can be used with the vidget package as a
+<a name="28"/>#	default event handler.  QuitEvents() generates the standard set of
+<a name="29"/>#	quit events.
+<a name="30"/>#
+<a name="31"/>#	ZDone() is a zooming version of WDone().  If the window is resized
+<a name="32"/>#	while waiting for a quit event, its contents are zoomed to fill the
+<a name="33"/>#	new size.  Zooming to a multiple of the original size can also be
+<a name="34"/>#	accomplished by typing a nonzero digit into the window.
+<a name="35"/>#
+<a name="36"/>#	Subwindow(W, x, y, w, h) produces a subwindow by creating and
+<a name="37"/>#	reconfiguring a clone of the given window.  The original window
+<a name="38"/>#	is not modified.  In the clone, which is returned, clipping
+<a name="39"/>#	bounds are set by the given rectangle and the origin is
+<a name="40"/>#	set at the rectangle's upper left corner.
+<a name="41"/>#
+<a name="42"/>############################################################################
+<a name="43"/>#
+<a name="44"/>#  Requires:  Version 9 graphics
+<a name="45"/>#
+<a name="46"/>############################################################################
+<a name="47"/>
+<a name="48"/>package ipl.graphics
+<a name="49"/>
+<a name="50"/>import
+<a name="51"/>   graphics(Window),
+<a name="52"/>   util(Time, toggle_flag)
+<a name="53"/>
+<a name="54"/>
+<a name="55"/>procedure QuitEvents()
+<a name="56"/>   suspend !"qQ" | Window.CLOSE_BUTTON
+<a name="57"/>end
+<a name="58"/>
+<a name="59"/>
+<a name="60"/>procedure QuitCheck(ev)
+<a name="61"/>   if ev === QuitEvents() then
+<a name="62"/>      exit()
+<a name="63"/>   return
+<a name="64"/>end
+<a name="65"/>
+<a name="66"/>
+<a name="67"/>procedure WQuit(win)
+<a name="68"/>   local e
+<a name="69"/>   while e := win.event() do
+<a name="70"/>      if e[1] === QuitEvents() then
+<a name="71"/>         return win
+<a name="72"/>   fail
+<a name="73"/>end
+<a name="74"/>
+<a name="75"/>#
+<a name="76"/># Get the next event from `win`, waiting if necessary. `timeout` gives
+<a name="77"/># the max time to wait; if omitted wait forever.
+<a name="78"/>#
+<a name="79"/>procedure WEvent(win, timeout)
+<a name="80"/>   local e, lim
+<a name="81"/>   lim := \timeout + Time.get_system_millis()
+<a name="82"/>   until e := win.event() do {
+<a name="83"/>      if \lim &lt; Time.get_system_millis() then
+<a name="84"/>         fail
+<a name="85"/>      delay(50)
+<a name="86"/>   }
+<a name="87"/>   return e
+<a name="88"/>end
+<a name="89"/>
+<a name="90"/>#
+<a name="91"/># A helpful procedure to delay for the given time, whilst processing
+<a name="92"/># window events from `win`, and checking for quit events (see
+<a name="93"/># `QuitEvent()`).  If the user presses "p", then the program pauses
+<a name="94"/># until "p" is pressed again.
+<a name="95"/>#
+<a name="96"/>procedure WDelay(win, time)
+<a name="97"/>   local e, lim, pause
+<a name="98"/>   lim := time + Time.get_system_millis()
+<a name="99"/>   repeat {
+<a name="100"/>      while e := win.event() do {
+<a name="101"/>         QuitCheck(e[1])
+<a name="102"/>         if e[1] === "p" &amp; e[5] = 0 then
+<a name="103"/>            pause := toggle_flag(pause)
+<a name="104"/>      }
+<a name="105"/>      if /pause &amp; (lim &lt; Time.get_system_millis()) then
+<a name="106"/>         return
+<a name="107"/>      delay(50)
+<a name="108"/>   }
+<a name="109"/>end
+<a name="110"/>
+<a name="111"/>procedure WDone(win)
+<a name="112"/>   until WEvent(win)[1] === QuitEvents()
+<a name="113"/>   exit()
+<a name="114"/>end
+<a name="115"/>
+<a name="116"/>
+<a name="117"/>#  ZDone(win) -- like WDone(), but zoom window if resized while waiting
+<a name="118"/>
+<a name="119"/>procedure ZDone(win)
+<a name="120"/>   local org, e, w, h, ww, hh
+<a name="121"/>
+<a name="122"/>   w := win.get_width()
+<a name="123"/>   h := win.get_height()
+<a name="124"/>   org := Window().set_size(w, h) | WDone()
+<a name="125"/>   win.copy_to(,,,, org)
+<a name="126"/>   win.set_resize(&amp;yes)
+<a name="127"/>   while e := WEvent(win) do case e[1] of {
+<a name="128"/>      QuitEvents():
+<a name="129"/>         exit()
+<a name="130"/>      Window.RESIZE:
+<a name="131"/>         Zoom(org,,,,, win)
+<a name="132"/>      !"123456789": {
+<a name="133"/>         if e[5] = 0 then {
+<a name="134"/>            ww := e[1] * w
+<a name="135"/>            hh := e[1] * h
+<a name="136"/>            win.set_size(ww, hh)
+<a name="137"/>            Zoom(org,,,,, win)
+<a name="138"/>            }
+<a name="139"/>         }
+<a name="140"/>      }
+<a name="141"/>end
+<a name="142"/>
+<a name="143"/>procedure SubWindow(win, x, y, w, h)
+<a name="144"/>   local r
+<a name="145"/>
+<a name="146"/>   r := win.canonical(x, y, w, h)
+<a name="147"/>
+<a name="148"/>   win := win.clone().set_dx(win.get_dx() + r.x).set_dy(win.get_dy() + r.y)
+<a name="149"/>   win.clip( 0, 0, r.width, r.height)
+<a name="150"/>   return win
+<a name="151"/>end
+</pre></body></html>

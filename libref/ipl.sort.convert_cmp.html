@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>convert_cmp</title></head><body>
+<h1>convert_cmp(cnv, f)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.sort-package.html" target="listFrame">ipl.sort</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Return a compare function which first applies the conversion
+function <code>cnv</code> to the two arguments given to it, and then returns
+the result of applying the compare function <code>f</code>, which defaults to
+<code><a href="lang.Internal.html#compare">Internal.compare</a></code>.
+<p/>
+For example :-
+<pre>
+    l := ["abc", "def",  u"abc",  u"xyz"]
+    qsort(l, convert_cmp(string))
+</pre>
+leaves l as
+<pre>
+    [u"abc", "abc", "def", u"xyz"]
+</pre>
+whilst
+<pre>
+    l := [2, 1, 1.5, 4.0, 1.2, 4]
+    qsort(l, convert_cmp(real))
+</pre>
+leaves l as
+<pre>
+    [1, 1.2, 1.5, 2, 4, 4.0]
+</pre>
+<p/>
+Tip: If cnv is an expensive function, consider using
+<code><a href="ipl.functional.memoize1.html" target="displayFrame">ipl.functional.memoize1</a></code> so that it is only called once
+for each item; for example :-
+<pre>
+procedure expensive_key(x)
+  return ... expensive computation on x
+end
+
+...
+      qsort(big_list, convert_cmp(memoize1(expensive_key)))
+
+</pre>
+<p/><a href="ipl.sort-sort.icn.html#311" target="displayFrame">Source - sort.icn </a>
+<p/>
+</body></html>

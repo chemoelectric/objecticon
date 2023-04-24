@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>CacheData</title></head><body>
+<h1>CacheData</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="ipl.browser.CacheEntry.html" target="displayFrame">ipl.browser.CacheEntry</a><br>
+<a href="ipl.browser.StaticData.html" target="displayFrame">ipl.browser.StaticData</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-browser.icn.html#117" target="displayFrame">Source - browser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.StaticData.html">ipl.browser.StaticData</a>
+<a href="ipl.browser.CacheEntry.html">ipl.browser.CacheEntry</a>
+<a href="ipl.browser.CacheData.html">ipl.browser.CacheData</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from ipl.browser.StaticData</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.StaticData.html#content_disposition">content_disposition</a>
+<a href="ipl.browser.StaticData.html#content_type">content_type</a>
+<a href="ipl.browser.StaticData.html#data">data</a>
+<a href="ipl.browser.StaticData.html#fname">fname</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from ipl.browser.CacheEntry</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.CacheEntry.html#hasnt_expired">hasnt_expired()</a>
+<a href="ipl.browser.CacheEntry.html#set_expiry">set_expiry()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from ipl.browser.CacheEntry</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.CacheEntry.html#expiry">expiry</a>
+<a href="ipl.browser.CacheEntry.html#url">url</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#is_local">is_local()</a>
+<a href="#is_valid">is_valid()</a>
+<a href="#may_revalidate">may_revalidate()</a>
+<a href="#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#etag">etag</a>
+<a href="#last_modified">last_modified</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="is_local"/>
+<h3>is_local()</h3>
+public<p/>
+<dl>
+<dd>
+Indicates whether this is a local "cache:" URL.
+<p/><a href="ipl.browser-browser.icn.html#129" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_valid"/>
+<h3>is_valid(now)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.CacheEntry.html#is_valid">is_valid()</a> in <a href="ipl.browser.CacheEntry.html" target="displayFrame">ipl.browser.CacheEntry</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#121" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="may_revalidate"/>
+<h3>may_revalidate()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#125" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.StaticData.html#new">new()</a> in <a href="ipl.browser.StaticData.html" target="displayFrame">ipl.browser.StaticData</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#136" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="etag"/>
+<h3>etag</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#119" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="last_modified"/>
+<h3>last_modified</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#119" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

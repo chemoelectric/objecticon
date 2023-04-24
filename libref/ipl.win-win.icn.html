@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>win.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     win.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to open bare-bones window
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  These procedures are provided as quick-and-dirty ways to get a
+<a name="18"/>#  nominal window as, for example, when testing.
+<a name="19"/>#
+<a name="20"/>#  win() causes error termination if a window can't be opened.
+<a name="21"/>#  winf(), on the other hand, just fails.
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>#
+<a name="25"/>#  Requires:  Version 9 graphics
+<a name="26"/>#
+<a name="27"/>############################################################################
+<a name="28"/>#
+<a name="29"/>#  Links:  wopen
+<a name="30"/>#
+<a name="31"/>############################################################################
+<a name="32"/>
+<a name="33"/>package ipl.win
+<a name="34"/>
+<a name="35"/>import
+<a name="36"/>   graphics(Window),
+<a name="37"/>   io(stop)
+<a name="38"/>
+<a name="39"/>procedure win(width, height)
+<a name="40"/>
+<a name="41"/>   /width := 500
+<a name="42"/>   /height := 500
+<a name="43"/>
+<a name="44"/>   return Window().set_size(width, height).set_canvas("normal") |
+<a name="45"/>      stop("*** can't open window")
+<a name="46"/>
+<a name="47"/>   return
+<a name="48"/>
+<a name="49"/>end
+<a name="50"/>
+<a name="51"/>procedure winf(width, height)
+<a name="52"/>
+<a name="53"/>   /width := 500
+<a name="54"/>   /height := 500
+<a name="55"/>
+<a name="56"/>   return Window().set_size(width, height).set_canvas("normal")
+<a name="57"/>
+<a name="58"/>end
+</pre></body></html>

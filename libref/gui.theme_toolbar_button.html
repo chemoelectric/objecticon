@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>theme_toolbar_button</title></head><body>
+<h1>theme_toolbar_button(b, icon, svg)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This standardizes a toolbar button.  If the button <code>b</code> is an
+<code><a href="gui.IconButton.html" target="displayFrame">IconButton</a></code> or a <code><a href="gui.MenuButton.html" target="displayFrame">MenuButton</a></code>, then this procedure will try to
+replace its <code><a href="gui.Paint.html" target="displayFrame">Paint</a></code> in three ways :-
+<ol type="1">
+<li>
+if <code>icon</code> is given, then with the matching Xdg icon with that
+name, appropriately resized;
+</li>
+<li>
+if <code>svg</code> is given (it should be an <code><a href="gui.ImageCache.html" target="displayFrame">ImageCache</a></code> key), then with
+the corresponding svg image, appropriately scaled;
+</li>
+<li>
+if the <code><a href="gui.Paint.html" target="displayFrame">Paint</a></code> has an <code><a href="gui.ImageCache.html" target="displayFrame">ImageCache</a></code> key, then with a resized
+version of that image, if necessary.
+</li>
+</ol>
+Finally, <code>b</code>'s size is set to the standard toolbar icon size.
+<p/><a href="gui-guiprocs.icn.html#1018" target="displayFrame">Source - guiprocs.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,1650 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>UcodeOp</title></head><body>
+<h1>UcodeOp</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+<p/><a href="lang-ucodeconsts.icn.html#7" target="displayFrame">Source - ucodeconsts.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_sym">get_sym()</a>
+<a href="#init">init()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#_UCODE_H">_UCODE_H</a>
+<a href="#Alt">Alt</a>
+<a href="#Apply">Apply</a>
+<a href="#Asgn">Asgn</a>
+<a href="#Asgn1">Asgn1</a>
+<a href="#Augactivate">Augactivate</a>
+<a href="#Augapply">Augapply</a>
+<a href="#Augcat">Augcat</a>
+<a href="#Augconj">Augconj</a>
+<a href="#Augdiff">Augdiff</a>
+<a href="#Augdiv">Augdiv</a>
+<a href="#Augeqv">Augeqv</a>
+<a href="#Auginter">Auginter</a>
+<a href="#Auglconcat">Auglconcat</a>
+<a href="#Auglexeq">Auglexeq</a>
+<a href="#Auglexge">Auglexge</a>
+<a href="#Auglexgt">Auglexgt</a>
+<a href="#Auglexle">Auglexle</a>
+<a href="#Auglexlt">Auglexlt</a>
+<a href="#Auglexne">Auglexne</a>
+<a href="#Augminus">Augminus</a>
+<a href="#Augmod">Augmod</a>
+<a href="#Augmult">Augmult</a>
+<a href="#Augneqv">Augneqv</a>
+<a href="#Augnumeq">Augnumeq</a>
+<a href="#Augnumge">Augnumge</a>
+<a href="#Augnumgt">Augnumgt</a>
+<a href="#Augnumle">Augnumle</a>
+<a href="#Augnumlt">Augnumlt</a>
+<a href="#Augnumne">Augnumne</a>
+<a href="#Augplus">Augplus</a>
+<a href="#Augpower">Augpower</a>
+<a href="#Augscan">Augscan</a>
+<a href="#Augunion">Augunion</a>
+<a href="#Bactivate">Bactivate</a>
+<a href="#Bang">Bang</a>
+<a href="#Break">Break</a>
+<a href="#Breakexpr">Breakexpr</a>
+<a href="#Case">Case</a>
+<a href="#Casedef">Casedef</a>
+<a href="#Cat">Cat</a>
+<a href="#Class">Class</a>
+<a href="#Classfield">Classfield</a>
+<a href="#CoInvoke">CoInvoke</a>
+<a href="#Compl">Compl</a>
+<a href="#Conj">Conj</a>
+<a href="#Const">Const</a>
+<a href="#Create">Create</a>
+<a href="#Declend">Declend</a>
+<a href="#Diff">Diff</a>
+<a href="#Div">Div</a>
+<a href="#Empty">Empty</a>
+<a href="#End">End</a>
+<a href="#Eqv">Eqv</a>
+<a href="#Error">Error</a>
+<a href="#Every">Every</a>
+<a href="#Everydo">Everydo</a>
+<a href="#Fail">Fail</a>
+<a href="#Field">Field</a>
+<a href="#Filen">Filen</a>
+<a href="#Global">Global</a>
+<a href="#If">If</a>
+<a href="#Ifelse">Ifelse</a>
+<a href="#Impl">Impl</a>
+<a href="#Import">Import</a>
+<a href="#Importsym">Importsym</a>
+<a href="#Inter">Inter</a>
+<a href="#Invocable">Invocable</a>
+<a href="#Invoke">Invoke</a>
+<a href="#Keyword">Keyword</a>
+<a href="#Lconcat">Lconcat</a>
+<a href="#Ldata">Ldata</a>
+<a href="#Lexeq">Lexeq</a>
+<a href="#Lexge">Lexge</a>
+<a href="#Lexgt">Lexgt</a>
+<a href="#Lexle">Lexle</a>
+<a href="#Lexlt">Lexlt</a>
+<a href="#Lexne">Lexne</a>
+<a href="#Limit">Limit</a>
+<a href="#Line">Line</a>
+<a href="#Link">Link</a>
+<a href="#Linkexpr">Linkexpr</a>
+<a href="#List">List</a>
+<a href="#Local">Local</a>
+<a href="#Method">Method</a>
+<a href="#Minus">Minus</a>
+<a href="#Mod">Mod</a>
+<a href="#Mult">Mult</a>
+<a href="#Mutual">Mutual</a>
+<a href="#Neg">Neg</a>
+<a href="#Neqv">Neqv</a>
+<a href="#Next">Next</a>
+<a href="#Nonnull">Nonnull</a>
+<a href="#Not">Not</a>
+<a href="#Null">Null</a>
+<a href="#Number">Number</a>
+<a href="#Numeq">Numeq</a>
+<a href="#Numge">Numge</a>
+<a href="#Numgt">Numgt</a>
+<a href="#Numle">Numle</a>
+<a href="#Numlt">Numlt</a>
+<a href="#Numne">Numne</a>
+<a href="#Package">Package</a>
+<a href="#PkClass">PkClass</a>
+<a href="#PkGlobal">PkGlobal</a>
+<a href="#PkProcdecl">PkProcdecl</a>
+<a href="#PkRdGlobal">PkRdGlobal</a>
+<a href="#PkRecord">PkRecord</a>
+<a href="#Plus">Plus</a>
+<a href="#Power">Power</a>
+<a href="#Proc">Proc</a>
+<a href="#Procdecl">Procdecl</a>
+<a href="#Random">Random</a>
+<a href="#Rasgn">Rasgn</a>
+<a href="#Real">Real</a>
+<a href="#Record">Record</a>
+<a href="#Recordfield">Recordfield</a>
+<a href="#Refresh">Refresh</a>
+<a href="#Repeat">Repeat</a>
+<a href="#Return">Return</a>
+<a href="#Returnexpr">Returnexpr</a>
+<a href="#Rptalt">Rptalt</a>
+<a href="#Rswap">Rswap</a>
+<a href="#Scan">Scan</a>
+<a href="#Sdata">Sdata</a>
+<a href="#Sect">Sect</a>
+<a href="#Sectm">Sectm</a>
+<a href="#Sectp">Sectp</a>
+<a href="#Size">Size</a>
+<a href="#Slist">Slist</a>
+<a href="#Start">Start</a>
+<a href="#Subsc">Subsc</a>
+<a href="#Succeed">Succeed</a>
+<a href="#Succeedexpr">Succeedexpr</a>
+<a href="#Super">Super</a>
+<a href="#Suspend">Suspend</a>
+<a href="#Suspenddo">Suspenddo</a>
+<a href="#Suspendexpr">Suspendexpr</a>
+<a href="#Swap">Swap</a>
+<a href="#Swap1">Swap1</a>
+<a href="#Tabmat">Tabmat</a>
+<a href="#To">To</a>
+<a href="#Toby">Toby</a>
+<a href="#TYPE_16">TYPE_16</a>
+<a href="#TYPE_32">TYPE_32</a>
+<a href="#TYPE_LBIN">TYPE_LBIN</a>
+<a href="#TYPE_NONE">TYPE_NONE</a>
+<a href="#TYPE_SBIN">TYPE_SBIN</a>
+<a href="#TYPE_STR">TYPE_STR</a>
+<a href="#Uactivate">Uactivate</a>
+<a href="#Union">Union</a>
+<a href="#Unless">Unless</a>
+<a href="#Unlesselse">Unlesselse</a>
+<a href="#Until">Until</a>
+<a href="#Untildo">Untildo</a>
+<a href="#Value">Value</a>
+<a href="#Var">Var</a>
+<a href="#Version">Version</a>
+<a href="#While">While</a>
+<a href="#Whiledo">Whiledo</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_sym"/>
+<h3>get_sym(k)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#486" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#323" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="_UCODE_H"/>
+<h3>_UCODE_H</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#9" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Alt"/>
+<h3>Alt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Alt
+<p/><a href="lang-ucodeconsts.icn.html#276" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Apply"/>
+<h3>Apply</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Apply
+<p/><a href="lang-ucodeconsts.icn.html#320" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Asgn"/>
+<h3>Asgn</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Asgn
+<p/><a href="lang-ucodeconsts.icn.html#20" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Asgn1"/>
+<h3>Asgn1</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Asgn1
+<p/><a href="lang-ucodeconsts.icn.html#16" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augactivate"/>
+<h3>Augactivate</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augactivate
+<p/><a href="lang-ucodeconsts.icn.html#310" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augapply"/>
+<h3>Augapply</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augapply
+<p/><a href="lang-ucodeconsts.icn.html#130" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augcat"/>
+<h3>Augcat</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augcat
+<p/><a href="lang-ucodeconsts.icn.html#82" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augconj"/>
+<h3>Augconj</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augconj
+<p/><a href="lang-ucodeconsts.icn.html#280" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augdiff"/>
+<h3>Augdiff</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augdiff
+<p/><a href="lang-ucodeconsts.icn.html#84" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augdiv"/>
+<h3>Augdiv</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augdiv
+<p/><a href="lang-ucodeconsts.icn.html#124" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augeqv"/>
+<h3>Augeqv</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augeqv
+<p/><a href="lang-ucodeconsts.icn.html#86" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auginter"/>
+<h3>Auginter</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auginter
+<p/><a href="lang-ucodeconsts.icn.html#88" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auglconcat"/>
+<h3>Auglconcat</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auglconcat
+<p/><a href="lang-ucodeconsts.icn.html#90" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auglexeq"/>
+<h3>Auglexeq</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auglexeq
+<p/><a href="lang-ucodeconsts.icn.html#92" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auglexge"/>
+<h3>Auglexge</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auglexge
+<p/><a href="lang-ucodeconsts.icn.html#94" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auglexgt"/>
+<h3>Auglexgt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auglexgt
+<p/><a href="lang-ucodeconsts.icn.html#96" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auglexle"/>
+<h3>Auglexle</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auglexle
+<p/><a href="lang-ucodeconsts.icn.html#98" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auglexlt"/>
+<h3>Auglexlt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auglexlt
+<p/><a href="lang-ucodeconsts.icn.html#100" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Auglexne"/>
+<h3>Auglexne</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Auglexne
+<p/><a href="lang-ucodeconsts.icn.html#102" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augminus"/>
+<h3>Augminus</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augminus
+<p/><a href="lang-ucodeconsts.icn.html#104" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augmod"/>
+<h3>Augmod</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augmod
+<p/><a href="lang-ucodeconsts.icn.html#106" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augmult"/>
+<h3>Augmult</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augmult
+<p/><a href="lang-ucodeconsts.icn.html#126" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augneqv"/>
+<h3>Augneqv</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augneqv
+<p/><a href="lang-ucodeconsts.icn.html#108" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augnumeq"/>
+<h3>Augnumeq</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augnumeq
+<p/><a href="lang-ucodeconsts.icn.html#110" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augnumge"/>
+<h3>Augnumge</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augnumge
+<p/><a href="lang-ucodeconsts.icn.html#112" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augnumgt"/>
+<h3>Augnumgt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augnumgt
+<p/><a href="lang-ucodeconsts.icn.html#114" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augnumle"/>
+<h3>Augnumle</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augnumle
+<p/><a href="lang-ucodeconsts.icn.html#116" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augnumlt"/>
+<h3>Augnumlt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augnumlt
+<p/><a href="lang-ucodeconsts.icn.html#118" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augnumne"/>
+<h3>Augnumne</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augnumne
+<p/><a href="lang-ucodeconsts.icn.html#120" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augplus"/>
+<h3>Augplus</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augplus
+<p/><a href="lang-ucodeconsts.icn.html#122" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augpower"/>
+<h3>Augpower</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augpower
+<p/><a href="lang-ucodeconsts.icn.html#80" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augscan"/>
+<h3>Augscan</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augscan
+<p/><a href="lang-ucodeconsts.icn.html#202" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Augunion"/>
+<h3>Augunion</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Augunion
+<p/><a href="lang-ucodeconsts.icn.html#128" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Bactivate"/>
+<h3>Bactivate</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Bactivate
+<p/><a href="lang-ucodeconsts.icn.html#308" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Bang"/>
+<h3>Bang</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Bang
+<p/><a href="lang-ucodeconsts.icn.html#146" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Break"/>
+<h3>Break</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Break
+<p/><a href="lang-ucodeconsts.icn.html#176" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Breakexpr"/>
+<h3>Breakexpr</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Breakexpr
+<p/><a href="lang-ucodeconsts.icn.html#182" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Case"/>
+<h3>Case</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Case
+<p/><a href="lang-ucodeconsts.icn.html#164" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Casedef"/>
+<h3>Casedef</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Casedef
+<p/><a href="lang-ucodeconsts.icn.html#166" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Cat"/>
+<h3>Cat</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Cat
+<p/><a href="lang-ucodeconsts.icn.html#24" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Class"/>
+<h3>Class</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Class
+<p/><a href="lang-ucodeconsts.icn.html#258" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Classfield"/>
+<h3>Classfield</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Classfield
+<p/><a href="lang-ucodeconsts.icn.html#238" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CoInvoke"/>
+<h3>CoInvoke</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_CoInvoke
+<p/><a href="lang-ucodeconsts.icn.html#316" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Compl"/>
+<h3>Compl</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Compl
+<p/><a href="lang-ucodeconsts.icn.html#152" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Conj"/>
+<h3>Conj</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Conj
+<p/><a href="lang-ucodeconsts.icn.html#278" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Const"/>
+<h3>Const</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Const
+<p/><a href="lang-ucodeconsts.icn.html#220" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Create"/>
+<h3>Create</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Create
+<p/><a href="lang-ucodeconsts.icn.html#188" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Declend"/>
+<h3>Declend</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Declend
+<p/><a href="lang-ucodeconsts.icn.html#222" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Diff"/>
+<h3>Diff</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Diff
+<p/><a href="lang-ucodeconsts.icn.html#26" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Div"/>
+<h3>Div</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Div
+<p/><a href="lang-ucodeconsts.icn.html#72" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Empty"/>
+<h3>Empty</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Empty
+<p/><a href="lang-ucodeconsts.icn.html#268" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="End"/>
+<h3>End</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_End
+<p/><a href="lang-ucodeconsts.icn.html#224" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Eqv"/>
+<h3>Eqv</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Eqv
+<p/><a href="lang-ucodeconsts.icn.html#28" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Error"/>
+<h3>Error</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Error
+<p/><a href="lang-ucodeconsts.icn.html#250" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Every"/>
+<h3>Every</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Every
+<p/><a href="lang-ucodeconsts.icn.html#294" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Everydo"/>
+<h3>Everydo</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Everydo
+<p/><a href="lang-ucodeconsts.icn.html#304" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Fail"/>
+<h3>Fail</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Fail
+<p/><a href="lang-ucodeconsts.icn.html#184" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Field"/>
+<h3>Field</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Field
+<p/><a href="lang-ucodeconsts.icn.html#218" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Filen"/>
+<h3>Filen</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Filen
+<p/><a href="lang-ucodeconsts.icn.html#232" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Global"/>
+<h3>Global</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Global
+<p/><a href="lang-ucodeconsts.icn.html#208" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="If"/>
+<h3>If</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_If
+<p/><a href="lang-ucodeconsts.icn.html#282" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Ifelse"/>
+<h3>Ifelse</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Ifelse
+<p/><a href="lang-ucodeconsts.icn.html#284" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Impl"/>
+<h3>Impl</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Impl
+<p/><a href="lang-ucodeconsts.icn.html#248" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Import"/>
+<h3>Import</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Import
+<p/><a href="lang-ucodeconsts.icn.html#236" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Importsym"/>
+<h3>Importsym</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Importsym
+<p/><a href="lang-ucodeconsts.icn.html#244" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Inter"/>
+<h3>Inter</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Inter
+<p/><a href="lang-ucodeconsts.icn.html#30" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Invocable"/>
+<h3>Invocable</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Invocable
+<p/><a href="lang-ucodeconsts.icn.html#256" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Invoke"/>
+<h3>Invoke</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Invoke
+<p/><a href="lang-ucodeconsts.icn.html#314" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Keyword"/>
+<h3>Keyword</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Keyword
+<p/><a href="lang-ucodeconsts.icn.html#168" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lconcat"/>
+<h3>Lconcat</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Lconcat
+<p/><a href="lang-ucodeconsts.icn.html#34" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Ldata"/>
+<h3>Ldata</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Ldata
+<p/><a href="lang-ucodeconsts.icn.html#226" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lexeq"/>
+<h3>Lexeq</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Lexeq
+<p/><a href="lang-ucodeconsts.icn.html#36" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lexge"/>
+<h3>Lexge</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Lexge
+<p/><a href="lang-ucodeconsts.icn.html#38" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lexgt"/>
+<h3>Lexgt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Lexgt
+<p/><a href="lang-ucodeconsts.icn.html#40" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lexle"/>
+<h3>Lexle</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Lexle
+<p/><a href="lang-ucodeconsts.icn.html#42" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lexlt"/>
+<h3>Lexlt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Lexlt
+<p/><a href="lang-ucodeconsts.icn.html#44" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lexne"/>
+<h3>Lexne</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Lexne
+<p/><a href="lang-ucodeconsts.icn.html#46" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Limit"/>
+<h3>Limit</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Limit
+<p/><a href="lang-ucodeconsts.icn.html#170" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Line"/>
+<h3>Line</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Line
+<p/><a href="lang-ucodeconsts.icn.html#296" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Link"/>
+<h3>Link</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Link
+<p/><a href="lang-ucodeconsts.icn.html#252" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Linkexpr"/>
+<h3>Linkexpr</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Linkexpr
+<p/><a href="lang-ucodeconsts.icn.html#254" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="List"/>
+<h3>List</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_List
+<p/><a href="lang-ucodeconsts.icn.html#172" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Local"/>
+<h3>Local</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Local
+<p/><a href="lang-ucodeconsts.icn.html#210" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Method"/>
+<h3>Method</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Method
+<p/><a href="lang-ucodeconsts.icn.html#266" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Minus"/>
+<h3>Minus</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Minus
+<p/><a href="lang-ucodeconsts.icn.html#48" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Mod"/>
+<h3>Mod</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Mod
+<p/><a href="lang-ucodeconsts.icn.html#50" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Mult"/>
+<h3>Mult</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Mult
+<p/><a href="lang-ucodeconsts.icn.html#74" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Mutual"/>
+<h3>Mutual</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Mutual
+<p/><a href="lang-ucodeconsts.icn.html#318" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Neg"/>
+<h3>Neg</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Neg
+<p/><a href="lang-ucodeconsts.icn.html#154" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Neqv"/>
+<h3>Neqv</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Neqv
+<p/><a href="lang-ucodeconsts.icn.html#52" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Next"/>
+<h3>Next</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Next
+<p/><a href="lang-ucodeconsts.icn.html#174" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Nonnull"/>
+<h3>Nonnull</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Nonnull
+<p/><a href="lang-ucodeconsts.icn.html#144" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Not"/>
+<h3>Not</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Not
+<p/><a href="lang-ucodeconsts.icn.html#204" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Null"/>
+<h3>Null</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Null
+<p/><a href="lang-ucodeconsts.icn.html#162" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Number"/>
+<h3>Number</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Number
+<p/><a href="lang-ucodeconsts.icn.html#150" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Numeq"/>
+<h3>Numeq</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Numeq
+<p/><a href="lang-ucodeconsts.icn.html#54" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Numge"/>
+<h3>Numge</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Numge
+<p/><a href="lang-ucodeconsts.icn.html#56" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Numgt"/>
+<h3>Numgt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Numgt
+<p/><a href="lang-ucodeconsts.icn.html#58" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Numle"/>
+<h3>Numle</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Numle
+<p/><a href="lang-ucodeconsts.icn.html#60" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Numlt"/>
+<h3>Numlt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Numlt
+<p/><a href="lang-ucodeconsts.icn.html#62" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Numne"/>
+<h3>Numne</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Numne
+<p/><a href="lang-ucodeconsts.icn.html#64" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Package"/>
+<h3>Package</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Package
+<p/><a href="lang-ucodeconsts.icn.html#234" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="PkClass"/>
+<h3>PkClass</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_PkClass
+<p/><a href="lang-ucodeconsts.icn.html#136" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="PkGlobal"/>
+<h3>PkGlobal</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_PkGlobal
+<p/><a href="lang-ucodeconsts.icn.html#138" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="PkProcdecl"/>
+<h3>PkProcdecl</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_PkProcdecl
+<p/><a href="lang-ucodeconsts.icn.html#134" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="PkRdGlobal"/>
+<h3>PkRdGlobal</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_PkRdGlobal
+<p/><a href="lang-ucodeconsts.icn.html#140" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="PkRecord"/>
+<h3>PkRecord</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_PkRecord
+<p/><a href="lang-ucodeconsts.icn.html#132" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Plus"/>
+<h3>Plus</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Plus
+<p/><a href="lang-ucodeconsts.icn.html#66" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Power"/>
+<h3>Power</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Power
+<p/><a href="lang-ucodeconsts.icn.html#22" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Proc"/>
+<h3>Proc</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Proc
+<p/><a href="lang-ucodeconsts.icn.html#262" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Procdecl"/>
+<h3>Procdecl</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Procdecl
+<p/><a href="lang-ucodeconsts.icn.html#242" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Random"/>
+<h3>Random</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Random
+<p/><a href="lang-ucodeconsts.icn.html#160" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rasgn"/>
+<h3>Rasgn</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Rasgn
+<p/><a href="lang-ucodeconsts.icn.html#68" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Real"/>
+<h3>Real</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Real
+<p/><a href="lang-ucodeconsts.icn.html#206" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Record"/>
+<h3>Record</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Record
+<p/><a href="lang-ucodeconsts.icn.html#246" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Recordfield"/>
+<h3>Recordfield</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Recordfield
+<p/><a href="lang-ucodeconsts.icn.html#240" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Refresh"/>
+<h3>Refresh</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Refresh
+<p/><a href="lang-ucodeconsts.icn.html#148" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Repeat"/>
+<h3>Repeat</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Repeat
+<p/><a href="lang-ucodeconsts.icn.html#286" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Return"/>
+<h3>Return</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Return
+<p/><a href="lang-ucodeconsts.icn.html#186" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Returnexpr"/>
+<h3>Returnexpr</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Returnexpr
+<p/><a href="lang-ucodeconsts.icn.html#178" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rptalt"/>
+<h3>Rptalt</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Rptalt
+<p/><a href="lang-ucodeconsts.icn.html#312" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rswap"/>
+<h3>Rswap</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Rswap
+<p/><a href="lang-ucodeconsts.icn.html#70" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Scan"/>
+<h3>Scan</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Scan
+<p/><a href="lang-ucodeconsts.icn.html#200" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sdata"/>
+<h3>Sdata</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Sdata
+<p/><a href="lang-ucodeconsts.icn.html#230" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sect"/>
+<h3>Sect</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Sect
+<p/><a href="lang-ucodeconsts.icn.html#194" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sectm"/>
+<h3>Sectm</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Sectm
+<p/><a href="lang-ucodeconsts.icn.html#196" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sectp"/>
+<h3>Sectp</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Sectp
+<p/><a href="lang-ucodeconsts.icn.html#198" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Size"/>
+<h3>Size</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Size
+<p/><a href="lang-ucodeconsts.icn.html#158" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Slist"/>
+<h3>Slist</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Slist
+<p/><a href="lang-ucodeconsts.icn.html#270" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Start"/>
+<h3>Start</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Start
+<p/><a href="lang-ucodeconsts.icn.html#264" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Subsc"/>
+<h3>Subsc</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Subsc
+<p/><a href="lang-ucodeconsts.icn.html#32" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Succeed"/>
+<h3>Succeed</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Succeed
+<p/><a href="lang-ucodeconsts.icn.html#272" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Succeedexpr"/>
+<h3>Succeedexpr</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Succeedexpr
+<p/><a href="lang-ucodeconsts.icn.html#274" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Super"/>
+<h3>Super</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Super
+<p/><a href="lang-ucodeconsts.icn.html#260" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Suspend"/>
+<h3>Suspend</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Suspend
+<p/><a href="lang-ucodeconsts.icn.html#290" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Suspenddo"/>
+<h3>Suspenddo</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Suspenddo
+<p/><a href="lang-ucodeconsts.icn.html#300" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Suspendexpr"/>
+<h3>Suspendexpr</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Suspendexpr
+<p/><a href="lang-ucodeconsts.icn.html#180" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Swap"/>
+<h3>Swap</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Swap
+<p/><a href="lang-ucodeconsts.icn.html#76" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Swap1"/>
+<h3>Swap1</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Swap1
+<p/><a href="lang-ucodeconsts.icn.html#18" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tabmat"/>
+<h3>Tabmat</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Tabmat
+<p/><a href="lang-ucodeconsts.icn.html#156" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="To"/>
+<h3>To</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_To
+<p/><a href="lang-ucodeconsts.icn.html#190" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Toby"/>
+<h3>Toby</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Toby
+<p/><a href="lang-ucodeconsts.icn.html#192" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="TYPE_16"/>
+<h3>TYPE_16</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#12" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="TYPE_32"/>
+<h3>TYPE_32</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#11" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="TYPE_LBIN"/>
+<h3>TYPE_LBIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#15" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="TYPE_NONE"/>
+<h3>TYPE_NONE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#10" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="TYPE_SBIN"/>
+<h3>TYPE_SBIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#14" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="TYPE_STR"/>
+<h3>TYPE_STR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="lang-ucodeconsts.icn.html#13" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Uactivate"/>
+<h3>Uactivate</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Uactivate
+<p/><a href="lang-ucodeconsts.icn.html#306" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Union"/>
+<h3>Union</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Union
+<p/><a href="lang-ucodeconsts.icn.html#78" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Unless"/>
+<h3>Unless</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Unless
+<p/><a href="lang-ucodeconsts.icn.html#214" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Unlesselse"/>
+<h3>Unlesselse</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Unlesselse
+<p/><a href="lang-ucodeconsts.icn.html#216" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Until"/>
+<h3>Until</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Until
+<p/><a href="lang-ucodeconsts.icn.html#292" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Untildo"/>
+<h3>Untildo</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Untildo
+<p/><a href="lang-ucodeconsts.icn.html#302" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Value"/>
+<h3>Value</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Value
+<p/><a href="lang-ucodeconsts.icn.html#142" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Var"/>
+<h3>Var</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Var
+<p/><a href="lang-ucodeconsts.icn.html#212" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Version"/>
+<h3>Version</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Version
+<p/><a href="lang-ucodeconsts.icn.html#228" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="While"/>
+<h3>While</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_While
+<p/><a href="lang-ucodeconsts.icn.html#288" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Whiledo"/>
+<h3>Whiledo</h3>
+public static const<p/>
+<dl>
+<dd>
+Uop_Whiledo
+<p/><a href="lang-ucodeconsts.icn.html#298" target="displayFrame">Source - ucodeconsts.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,323 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>xbfont.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     xbfont.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for X font selection
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	BestFont(s, ...) generates X-windows font names matching a
+<a name="18"/>#	given specification, beginning with the closest match.  The
+<a name="19"/>#	ranking algorithm is similar to that used in Font() but it is
+<a name="20"/>#	not identical.
+<a name="21"/>#
+<a name="22"/>############################################################################
+<a name="23"/>#
+<a name="24"/>#      BestFont(spec, ...) returns the name of whichever available
+<a name="25"/>#   X-Windows font most closely matches the given specification.  Note that
+<a name="26"/>#   matching is done using a slightly different algorithm from that of the
+<a name="27"/>#   Icon runtime system; this procedure preceded Icon's font selection
+<a name="28"/>#   implementation and served as a prototype.
+<a name="29"/>#
+<a name="30"/>#      The font specification is one or more strings containing whitespace-
+<a name="31"/>#   or comma-separated tokens.  Tokens are case-insensitive.  There are
+<a name="32"/>#   three kinds of tokens.
+<a name="33"/>#      A token having the form of an integer specifies the desired "pixel
+<a name="34"/>#   size" (height).  If no size is included, a target size of 14 is used.
+<a name="35"/>#      An unrecognized token is taken as a substring of the desired X font
+<a name="36"/>#   name.  Family names, weights, and other such factors are specified this
+<a name="37"/>#   way.
+<a name="38"/>#      Certain tokens are recognized and handled specially:
+<a name="39"/>#         m  mono  monospaced
+<a name="40"/>#         p  prop  proportional
+<a name="41"/>#         r  roman
+<a name="42"/>#         i  italic
+<a name="43"/>#         o  oblique
+<a name="44"/>#         s  sans  sans-serif  sansserif
+<a name="45"/>#   These are turned into search strings of a particular form.  For example,
+<a name="46"/>#   "roman" and "r" specify the search string "-r-".
+<a name="47"/>#
+<a name="48"/>#      The "best match" to a given specification is calculated by reviewing
+<a name="49"/>#   all the available fonts, assigning a score to each, then choosing the
+<a name="50"/>#   one with the highest value.  There are several aspects of scoring.
+<a name="51"/>#      Size is the most important factor.  A tuned font of the correct size
+<a name="52"/>#   gets the maximum score.  Nearby sizes receive partial credit, with
+<a name="53"/>#   an undersized font preferred over an oversized font.  Scalable fonts
+<a name="54"/>#   are also recognized, but a tuned font of the correct or nearly-correct
+<a name="55"/>#   size gets a higher score.
+<a name="56"/>#      Each successful substring match increases the score, whether the
+<a name="57"/>#   test string comes from an unrecognized token or a special keyword.
+<a name="58"/>#   Earlier tokens receive slightly more weight than later ones.
+<a name="59"/>#      All tokens need not match.  The string "lucida gill sans 18"
+<a name="60"/>#   is perfectly reasonable; it specifies a preference for Lucida Sans
+<a name="61"/>#   over Gill Sans by the position of the tokens, but will match either.
+<a name="62"/>#      Ties are broken by giving slight preferences for normal weight,
+<a name="63"/>#   no slant, normal width, and ASCII ("iso8859") encoding.  A slight
+<a name="64"/>#   penalty is assessed for "typewriter" fonts.  Oblique fonts receive
+<a name="65"/>#   partial credit for matching "italic" requests, and vice versa.
+<a name="66"/>#      The scoring function can be altered by assigning values to certain
+<a name="67"/>#   global variables.  See XBF_defaults() for a commented list of these.
+<a name="68"/>#
+<a name="69"/>#      For a scalable font, the returned value is a string specifying an
+<a name="70"/>#   instance of the font scaled to the target size.  For large sizes, the
+<a name="71"/>#   scaling time may be noticeable when the font is used.
+<a name="72"/>#
+<a name="73"/>#      BestFont() is actually a generator that produces the entire list
+<a name="74"/>#   of available fonts in order of preference.  RankFonts(w, spec, ...)
+<a name="75"/>#   is similar to BestFont but produces a sequence of two-element records,
+<a name="76"/>#   where result.str is the font name and result.val is its score.  For
+<a name="77"/>#   either of these, a list of X font names can be passed instead of a
+<a name="78"/>#   window.
+<a name="79"/>#
+<a name="80"/>#      There is some startup cost the first time BestFont is called; it
+<a name="81"/>#   opens a pipe to the "xlsfonts" program and reads the output.  Results
+<a name="82"/>#   are cached, so this overhead is only incurred once.
+<a name="83"/>#
+<a name="84"/>#      Examples:
+<a name="85"/>#         Font(w, BestFont("times bold italic 20"))
+<a name="86"/>#         s := BestFont(size, family, "italic")
+<a name="87"/>#
+<a name="88"/>############################################################################
+<a name="89"/>#
+<a name="90"/>#  Requires:  Version 9 graphics under Unix
+<a name="91"/>#
+<a name="92"/>############################################################################
+<a name="93"/>
+<a name="94"/>
+<a name="95"/>package ipl.xbfont
+<a name="96"/>
+<a name="97"/>import
+<a name="98"/>   io(close, open, read, stop)
+<a name="99"/>
+<a name="100"/>record XBF_rec(str, val)
+<a name="101"/>
+<a name="102"/>global XBF_wantsize		# requested font size
+<a name="103"/>global XBF_sizval		# array of scores indexed by actual font size
+<a name="104"/>
+<a name="105"/>
+<a name="106"/># globals used for tuning the scoring function; see XBF_defaults()
+<a name="107"/>
+<a name="108"/>global XFW_defsize, XFW_size, XFW_maxover, XFW_maxunder, XFW_scaled
+<a name="109"/>global XFW_spacing, XFW_slant, XFW_aslant, XFW_sans
+<a name="110"/>global XFW_default, XFW_exact, XFW_posn, XFW_tiebreakers
+<a name="111"/>
+<a name="112"/>
+<a name="113"/>#  BestFont(window, spec...) - generate ranked sequence of font names
+<a name="114"/>
+<a name="115"/># generate best X fonts
+<a name="116"/>procedure BestFont(args[])		
+<a name="117"/>   suspend (RankFonts ! args) . str
+<a name="118"/>end
+<a name="119"/>
+<a name="120"/>
+<a name="121"/>#  RankFonts(spec...) - generate sequence of (name,score) tuples
+<a name="122"/>
+<a name="123"/># generate scores for X fonts
+<a name="124"/>procedure RankFonts(args[])		
+<a name="125"/>   local tokens, cklist, sclist, fspec, ranks, r
+<a name="126"/>
+<a name="127"/>   XBF_defaults()			# set default values
+<a name="128"/>   XBF_wantsize := XFW_defsize		# set target size to default
+<a name="129"/>   tokens := XBF_tokenlist(args)	# break args into list of tokens
+<a name="130"/>   cklist := XBF_weights(tokens)	# get list of (substring,weight)s
+<a name="131"/>   XBF_sizval := XBF_sizes(XBF_wantsize) # build array for scoring sizes
+<a name="132"/>
+<a name="133"/>   # make a list of (fontname,score) tuples, and sort it
+<a name="134"/>   sclist := []
+<a name="135"/>   every fspec := XBF_fontlist() do
+<a name="136"/>      put(sclist, XBF_rec(fspec, XBF_eval(fspec, cklist)))
+<a name="137"/>   ranks := sortf(sclist, 2)
+<a name="138"/>
+<a name="139"/>   # generate results from hightest to lowest rank
+<a name="140"/>   while r := pull(ranks) do
+<a name="141"/>      suspend XBF_rec(XBF_spec(r.str, XBF_wantsize), r.val)
+<a name="142"/>end
+<a name="143"/>
+<a name="144"/>
+<a name="145"/>#  XBF_defaults() - assign default values to any unset tuning parameters
+<a name="146"/>
+<a name="147"/>procedure XBF_defaults()
+<a name="148"/>   /XFW_defsize := 14		# default size if unspecified
+<a name="149"/>   /XFW_size := 1000		# points for matching size exactly
+<a name="150"/>   /XFW_maxover := 30		# max allowable overage on size (per cent)
+<a name="151"/>   /XFW_maxunder := 60		# max allowable shortfall on size (per cent)
+<a name="152"/>   /XFW_scaled := 800		# points for matching size with scaled font
+<a name="153"/>
+<a name="154"/>   /XFW_spacing := 500		# points for matching prop/mono spacing
+<a name="155"/>   /XFW_slant := 500		# points for matching slant
+<a name="156"/>   /XFW_aslant := 300		# points for approx slant (oblique : italic)
+<a name="157"/>   /XFW_sans := 500		# points for matching "sans" spec
+<a name="158"/>
+<a name="159"/>   /XFW_exact := 1100		# points for matching entire font name
+<a name="160"/>   /XFW_default := 500		# points for matching unrecognized token
+<a name="161"/>   /XFW_posn := 10		# points for position in request list
+<a name="162"/>
+<a name="163"/>   /XFW_tiebreakers := [	# "tiebreaker" strings always scored
+<a name="164"/>      XBF_rec("-normal-", 1),		# prefer normal width
+<a name="165"/>      XBF_rec("-medium-", 1),		# prefer medium weight
+<a name="166"/>      XBF_rec("-r-", 2),		# upright slant is even more important
+<a name="167"/>      XBF_rec("-iso8859-", 1),		# prefer ASCII, not symbol/kana/etc
+<a name="168"/>      XBF_rec("typewriter", -4)]	# penalize typewriter fonts
+<a name="169"/>
+<a name="170"/>   return
+<a name="171"/>end
+<a name="172"/>
+<a name="173"/>
+<a name="174"/>#  XBF_tokenlist(args) -- turn list of args into list of tokens
+<a name="175"/>
+<a name="176"/>procedure XBF_tokenlist(args)
+<a name="177"/>   local tokens
+<a name="178"/>
+<a name="179"/>   tokens := []
+<a name="180"/>   every map(trim(!args)) ? repeat {
+<a name="181"/>      tab(many(' \t,'))
+<a name="182"/>      if pos(0) then
+<a name="183"/>         break
+<a name="184"/>      put(tokens, tab(upto(' \t,') | 0))
+<a name="185"/>      }
+<a name="186"/>   return tokens
+<a name="187"/>end
+<a name="188"/>
+<a name="189"/>
+<a name="190"/>#  XBF_weights(tokens) -- turn tokens into list of substrings and weights
+<a name="191"/>#
+<a name="192"/>#  Also saves the size value in the global XBF_wantsize.
+<a name="193"/>
+<a name="194"/>procedure XBF_weights(tokens)
+<a name="195"/>   local cklist, tk, pf
+<a name="196"/>
+<a name="197"/>   cklist := []
+<a name="198"/>   pf := *tokens * XFW_posn
+<a name="199"/>   every tk := !tokens do {
+<a name="200"/>      unless XBF_wantsize := integer(tk) then {
+<a name="201"/>         pf -:= XFW_posn
+<a name="202"/>         case tk of {
+<a name="203"/>            "m" | "mono" | "monospaced":
+<a name="204"/>               every put(cklist, XBF_rec("-m-" | "-c-", XFW_spacing + pf))
+<a name="205"/>            "p" | "prop" | "proportional":
+<a name="206"/>               put(cklist, XBF_rec("-p-", XFW_spacing + pf))
+<a name="207"/>            "r" | "roman":
+<a name="208"/>               put(cklist, XBF_rec("-r-", XFW_slant + pf))
+<a name="209"/>            "i" | "italic": {
+<a name="210"/>               put(cklist, XBF_rec("-i-", XFW_slant + pf))
+<a name="211"/>               put(cklist, XBF_rec("-o-", XFW_aslant + pf))
+<a name="212"/>               }
+<a name="213"/>            "o" | "oblique": {
+<a name="214"/>               put(cklist, XBF_rec("-o-", XFW_slant + pf))
+<a name="215"/>               put(cklist, XBF_rec("-i-", XFW_aslant + pf))
+<a name="216"/>               }
+<a name="217"/>            "s" | "sans" | "sans-serif" | "sansserif":
+<a name="218"/>               put(cklist, XBF_rec("sans", XFW_sans + pf))
+<a name="219"/>            default:
+<a name="220"/>               put(cklist, XBF_rec(tk, XFW_default + pf))
+<a name="221"/>            }
+<a name="222"/>         }
+<a name="223"/>      }
+<a name="224"/>   every put(cklist, !XFW_tiebreakers)
+<a name="225"/>   return cklist
+<a name="226"/>end
+<a name="227"/>
+<a name="228"/>
+<a name="229"/>#  XBF_sizes(wantsize) -- build array of scores for evaluating font sizes
+<a name="230"/>
+<a name="231"/>procedure XBF_sizes(wantsize)
+<a name="232"/>   local l, sz, diff, score, maxunder, maxover
+<a name="233"/>
+<a name="234"/>   l := [XFW_scaled]			# initial entry scores scaled fonts
+<a name="235"/>
+<a name="236"/>   # set scores for undersized fonts
+<a name="237"/>   maxunder := (XFW_maxunder / 100.0) * wantsize
+<a name="238"/>   every sz := 1 to wantsize-1 do {
+<a name="239"/>      diff := wantsize - sz
+<a name="240"/>      score := integer(XFW_size * (1 - diff / maxunder))
+<a name="241"/>      score &lt;:= 0
+<a name="242"/>      put(l, score)
+<a name="243"/>      }
+<a name="244"/>
+<a name="245"/>   # set scores for correct and oversized fonts
+<a name="246"/>   maxover := (XFW_maxover / 100.0) * wantsize
+<a name="247"/>   repeat {
+<a name="248"/>      sz +:= 1
+<a name="249"/>      diff := sz - wantsize
+<a name="250"/>      score := integer(XFW_size * (1 - diff / maxover))
+<a name="251"/>      if score &lt;= 0 then
+<a name="252"/>         break			# quit when too big to be useful
+<a name="253"/>      put(l, score)
+<a name="254"/>      }
+<a name="255"/>
+<a name="256"/>   return l
+<a name="257"/>end
+<a name="258"/>
+<a name="259"/>
+<a name="260"/># XBF_fontlist(w) - generate list of font names for window (or list) w
+<a name="261"/>
+<a name="262"/>procedure XBF_fontlist()
+<a name="263"/>   static fontlist
+<a name="264"/>   local pipe
+<a name="265"/>   if /fontlist then {
+<a name="266"/>      fontlist := []
+<a name="267"/>      pipe := open("xlsfonts", "pr") | stop("can't open xlsfonts pipe")
+<a name="268"/>      while put(fontlist, trim(read(pipe)))
+<a name="269"/>      close(pipe)
+<a name="270"/>   }
+<a name="271"/>   suspend !fontlist
+<a name="272"/>end
+<a name="273"/>
+<a name="274"/>
+<a name="275"/>#  XBF_eval(fontname, cklist) -- evaluate the score of an X font name
+<a name="276"/>
+<a name="277"/>procedure XBF_eval(fontname, cklist)
+<a name="278"/>   local t, r
+<a name="279"/>
+<a name="280"/>   # find the size and look up its score in the XBF_sizval array
+<a name="281"/>   fontname ? {
+<a name="282"/>      every 1 to 7 do
+<a name="283"/>         tab(upto('\-')) &amp; move(1)
+<a name="284"/>      t := XBF_sizval [1 + integer(tab(upto('\-')))] | 0
+<a name="285"/>   }
+<a name="286"/>
+<a name="287"/>   # add the corresponding value for every substring that matches
+<a name="288"/>   every r := !cklist do
+<a name="289"/>      if find(r.str, fontname) then
+<a name="290"/>         if r.str == fontname then
+<a name="291"/>            t +:= XFW_exact		# high score for matching entire name
+<a name="292"/>         else
+<a name="293"/>            t +:= r.val			# else give specified value
+<a name="294"/>   return t
+<a name="295"/>end
+<a name="296"/>
+<a name="297"/>
+<a name="298"/>#  XBF_spec(fontname, size) -- return the correct form of an X font name
+<a name="299"/>#
+<a name="300"/>#  This is just the name itself except in the case of scalable fonts.
+<a name="301"/>
+<a name="302"/>procedure XBF_spec(fontname, size)
+<a name="303"/>   local s
+<a name="304"/>
+<a name="305"/>   fontname ? {
+<a name="306"/>      s := tab(find("-0-0-")) | return fontname	# return if not scalable
+<a name="307"/>      move(5)					# skip pixel size, point size
+<a name="308"/>      tab(upto('\-')) &amp; move(1)			# skip x-resolution
+<a name="309"/>      tab(upto('\-')) &amp; move(1)			# skip y-resolution
+<a name="310"/>      s ||:= "-"
+<a name="311"/>      s ||:= size				# spec pixel size
+<a name="312"/>      s ||:= "-*-*-*-"				# wildcard ptsize &amp; resolutions
+<a name="313"/>      s ||:= tab(upto('\-'))			# copy spacing field
+<a name="314"/>      s ||:= move(1)
+<a name="315"/>      tab(upto('\-'))				# skip average width
+<a name="316"/>      s ||:= "*"
+<a name="317"/>      s ||:= tab(0)				# copy the rest
+<a name="318"/>      }
+<a name="319"/>   return s
+<a name="320"/>end
+</pre></body></html>

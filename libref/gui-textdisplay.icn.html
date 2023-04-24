@@ -1,0 +1,407 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>textdisplay.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: textdisplay.icn 8827 2021-01-07 17:05:38Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import 
+<a name="12"/>   util,
+<a name="13"/>   ipl.strings,
+<a name="14"/>   ipl.lists
+<a name="15"/>
+<a name="16"/>#
+<a name="17"/># This class displays a list of strings.
+<a name="18"/>#
+<a name="19"/>class TextDisplay(LineBasedScrollArea)
+<a name="20"/>   public
+<a name="21"/>      contents, 
+<a name="22"/>      split_words_flag,
+<a name="23"/>      view_list,
+<a name="24"/>      view_list_split_width,
+<a name="25"/>      long_line,
+<a name="26"/>      line_splitter,
+<a name="27"/>      last_split,
+<a name="28"/>      tab_width
+<a name="29"/>
+<a name="30"/>   public get_split(sw)
+<a name="31"/>      local s, i, pos, j, p, l, ll, v
+<a name="32"/>
+<a name="33"/>      if \last_split &amp;
+<a name="34"/>         not(is(line_splitter, WidthLineSplitter) &amp; last_split.width ~=== sw) then
+<a name="35"/>         return last_split
+<a name="36"/>
+<a name="37"/>      l := []
+<a name="38"/>      every i := 1 to *self.contents do {
+<a name="39"/>         pos := 1
+<a name="40"/>         s := self.contents[i]
+<a name="41"/>         every j := line_splitter.split(s, sw) do {
+<a name="42"/>            p := s[pos:j]
+<a name="43"/>            put(l, ViewLine(i, p, pos, j - 1, 
+<a name="44"/>                            text_width_ex(view.cbwin, p,,, self.tab_width)))
+<a name="45"/>            pos := j
+<a name="46"/>         }
+<a name="47"/>         l[-1].last +:= 1
+<a name="48"/>      }
+<a name="49"/>      ll := l[1] | &amp;null
+<a name="50"/>      every v := !l do {
+<a name="51"/>         if v.tw &gt; ll.tw then
+<a name="52"/>            ll := v
+<a name="53"/>      }
+<a name="54"/>      return last_split := TextSplit(sw, l, ll)
+<a name="55"/>  end
+<a name="56"/>
+<a name="57"/>   public override get_default_subject_height(dw)
+<a name="58"/>      local spl
+<a name="59"/>      spl := get_split(dw  - 2 * Gui.TEXT_INSET)
+<a name="60"/>      return get_line_height() * *spl.lines
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   public override get_default_subject_width()
+<a name="64"/>      local spl
+<a name="65"/>      spl := get_split()
+<a name="66"/>      return 2 * Gui.TEXT_INSET + ((\spl.long_line).tw | 0)
+<a name="67"/>   end
+<a name="68"/>
+<a name="69"/>   public override calculate_line_count()
+<a name="70"/>      if /view_list then
+<a name="71"/>         create_view_list()
+<a name="72"/>      return *self.view_list
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   #
+<a name="76"/>   # Useful method to get the contents as a string, with each line
+<a name="77"/>   # separated by the end-of-line character.
+<a name="78"/>   #
+<a name="79"/>   public get_contents_str()
+<a name="80"/>      return cat_lines(self.contents)
+<a name="81"/>   end
+<a name="82"/>
+<a name="83"/>   #
+<a name="84"/>   # Useful method to set the contents from a string in which each line
+<a name="85"/>   # is separated by the end-of-line character.
+<a name="86"/>   #
+<a name="87"/>   public set_contents_str(s)
+<a name="88"/>      set_contents(break_lines(s))
+<a name="89"/>      link
+<a name="90"/>   end
+<a name="91"/>
+<a name="92"/>   #
+<a name="93"/>   # Set the data to be displayed.
+<a name="94"/>   # :Parameters :
+<a name="95"/>   # :  `x` - The list of data.
+<a name="96"/>   #
+<a name="97"/>   public set_contents(x)
+<a name="98"/>      self.contents := need_list(x)
+<a name="99"/>      contents_changed()
+<a name="100"/>      link
+<a name="101"/>   end
+<a name="102"/>
+<a name="103"/>   public override finally()
+<a name="104"/>      LineBasedScrollArea.finally()
+<a name="105"/>      # In case the component changes the contents and is then re-inited.
+<a name="106"/>      clear_split_list()
+<a name="107"/>   end
+<a name="108"/>
+<a name="109"/>   #
+<a name="110"/>   # Call this method if the contents list, previously
+<a name="111"/>   # set with `set_contents()`, has changed.
+<a name="112"/>   #
+<a name="113"/>   public contents_changed()
+<a name="114"/>      clear_split_list()
+<a name="115"/>      compute_and_invalidate()
+<a name="116"/>      link
+<a name="117"/>   end
+<a name="118"/>
+<a name="119"/>   #
+<a name="120"/>   # Clear the view list, forcing it to be re-created next
+<a name="121"/>   # time it's needed.
+<a name="122"/>   # 
+<a name="123"/>   public clear_split_list()
+<a name="124"/>      last_split := &amp;null
+<a name="125"/>      clear_view_list()
+<a name="126"/>   end
+<a name="127"/>
+<a name="128"/>   public clear_view_list()
+<a name="129"/>      view_list := long_line := &amp;null
+<a name="130"/>      invalidate_subject_width()
+<a name="131"/>      invalidate_line_count()
+<a name="132"/>   end
+<a name="133"/>
+<a name="134"/>   #
+<a name="135"/>   # Run through the view list looking for the longest line.
+<a name="136"/>   # 
+<a name="137"/>   public find_long_line()
+<a name="138"/>      local v
+<a name="139"/>      long_line := view_list[1] | &amp;null
+<a name="140"/>      every v := !view_list do {
+<a name="141"/>         if v.tw &gt; long_line.tw then
+<a name="142"/>            long_line := v
+<a name="143"/>      }
+<a name="144"/>   end
+<a name="145"/>
+<a name="146"/>   #
+<a name="147"/>   # Update the view list, given that the contents have changed.
+<a name="148"/>   # This takes care to minimize the work that has to be done.  The
+<a name="149"/>   # first param is an index into the contents list.  The second param
+<a name="150"/>   # indicates some view_list lines corresponding to those beginning
+<a name="151"/>   # with index should be removed; the third param says that some should
+<a name="152"/>   # be added.
+<a name="153"/>   #
+<a name="154"/>   # Any subject_width/line_count invalidations are done by the caller (or
+<a name="155"/>   # end_handle).
+<a name="156"/>   #
+<a name="157"/>   public update_view_list(index, del, add)
+<a name="158"/>      local vi, i, pos, j, v, p, s
+<a name="159"/>
+<a name="160"/>      # We allow adding new lines past the end of the current view_list.
+<a name="161"/>      if del = 0 &amp; ((*view_list = 0 &amp; index = 1) | (index = view_list[-1].index + 1)) then
+<a name="162"/>         vi := *view_list + 1
+<a name="163"/>      else {
+<a name="164"/>         vi := get_view_list_index(1, index) | syserr("No such view index: " || index)
+<a name="165"/>         # Do the deletions
+<a name="166"/>         while view_list[vi].index &lt;= index + del - 1 do {
+<a name="167"/>            if view_list[vi] === long_line then
+<a name="168"/>               long_line := &amp;null
+<a name="169"/>            delete(view_list, vi)
+<a name="170"/>         }
+<a name="171"/>         # Did we just get rid of long_line; if so get it again.
+<a name="172"/>         if /long_line then
+<a name="173"/>            find_long_line()
+<a name="174"/>      }
+<a name="175"/>
+<a name="176"/>      # Now do the additions
+<a name="177"/>      every i := index to index + add - 1 do {
+<a name="178"/>         pos := 1
+<a name="179"/>         s := self.contents[i]
+<a name="180"/>         every j := line_splitter.split(s, view_list_split_width) do {
+<a name="181"/>            p := s[pos:j]
+<a name="182"/>            v := ViewLine(i, p, pos, j - 1, text_width_ex(view.cbwin, p,,, self.tab_width))
+<a name="183"/>            insert(view_list, vi, v)
+<a name="184"/>            if /long_line | (v.tw &gt; long_line.tw) then
+<a name="185"/>               long_line := v
+<a name="186"/>            pos := j
+<a name="187"/>            vi +:= 1
+<a name="188"/>         }
+<a name="189"/>         view_list[vi - 1].last +:= 1
+<a name="190"/>      }
+<a name="191"/>
+<a name="192"/>      #
+<a name="193"/>      # Adjust index values
+<a name="194"/>      #
+<a name="195"/>      if del ~= add then
+<a name="196"/>         every view_list[vi to *view_list].index +:= (add - del)
+<a name="197"/>
+<a name="198"/>      # Clear the cached split
+<a name="199"/>      last_split := &amp;null
+<a name="200"/>   end
+<a name="201"/>
+<a name="202"/>   #
+<a name="203"/>   # Append lines of text and go to the bottom of the content.
+<a name="204"/>   # :Parameters :
+<a name="205"/>   # :  `l` - a list of lines to append
+<a name="206"/>   # :  `max` - optional maximum length of resulting contents
+<a name="207"/>   #
+<a name="208"/>   public log(l, max)
+<a name="209"/>      local n
+<a name="210"/>      need_list(l)
+<a name="211"/>      max := need_integer(\max)
+<a name="212"/>      every put(self.contents, !l)
+<a name="213"/>      if is_live() then {
+<a name="214"/>         update_view_list(*self.contents - *l + 1, 0, *l)
+<a name="215"/>         if (n := *self.contents - \max) &gt; 0 then {
+<a name="216"/>            every 1 to n do
+<a name="217"/>               pop(self.contents)
+<a name="218"/>            update_view_list(1, n, 0)
+<a name="219"/>         }
+<a name="220"/>         invalidate_line_count()
+<a name="221"/>         invalidate_subject_width()
+<a name="222"/>         compute_and_invalidate()
+<a name="223"/>         goto_last(get_line_count())
+<a name="224"/>      } else {
+<a name="225"/>         while *self.contents &gt; \max do
+<a name="226"/>            pop(self.contents)
+<a name="227"/>      }
+<a name="228"/>      link
+<a name="229"/>   end
+<a name="230"/>
+<a name="231"/>   # Similar to `log()`, but log a string, rather than a list of
+<a name="232"/>   # lines.  The string is separated into lines and the first is
+<a name="233"/>   # appended to the last content line; the remaining lines (if any)
+<a name="234"/>   # are appended to the content.
+<a name="235"/>   #
+<a name="236"/>   public log_str(s, max)
+<a name="237"/>      local t, n, fl
+<a name="238"/>      s := need_text(s)
+<a name="239"/>      max := need_integer(\max)
+<a name="240"/>      n := *contents
+<a name="241"/>      if n = 0 then
+<a name="242"/>         fl := &amp;yes
+<a name="243"/>      every t := separate_lines(s) do {
+<a name="244"/>         if /fl then {
+<a name="245"/>            contents[-1] ||:= t
+<a name="246"/>            fl := &amp;yes
+<a name="247"/>         } else
+<a name="248"/>            put(contents, t)
+<a name="249"/>      }
+<a name="250"/>      if is_live() then {
+<a name="251"/>         if n = 0 then
+<a name="252"/>            update_view_list(1, 0, *contents)
+<a name="253"/>         else
+<a name="254"/>            update_view_list(n, 1, 1 + *contents - n)
+<a name="255"/>         if (n := *self.contents - \max) &gt; 0 then {
+<a name="256"/>            every 1 to n do
+<a name="257"/>               pop(self.contents)
+<a name="258"/>            update_view_list(1, n, 0)
+<a name="259"/>         }
+<a name="260"/>         invalidate_line_count()
+<a name="261"/>         invalidate_subject_width()
+<a name="262"/>         compute_and_invalidate()
+<a name="263"/>         goto_last(get_line_count())
+<a name="264"/>      } else {
+<a name="265"/>         while *self.contents &gt; \max do
+<a name="266"/>            pop(self.contents)
+<a name="267"/>      }
+<a name="268"/>      link
+<a name="269"/>   end
+<a name="270"/>
+<a name="271"/>   #
+<a name="272"/>   # Return the contents of the `ScrollArea`
+<a name="273"/>   #
+<a name="274"/>   public get_contents()
+<a name="275"/>      return self.contents
+<a name="276"/>   end
+<a name="277"/>
+<a name="278"/>   public override calculate_line_height()
+<a name="279"/>      return view.cbwin.get_line_height()
+<a name="280"/>   end
+<a name="281"/>
+<a name="282"/>   public override calculate_subject_width()
+<a name="283"/>      if /view_list then
+<a name="284"/>         create_view_list()
+<a name="285"/>      # self.long_line will be null if contents is the empty list.
+<a name="286"/>      return 2 * Gui.TEXT_INSET + ((\self.long_line).tw | 0)
+<a name="287"/>   end
+<a name="288"/>
+<a name="289"/>   public override draw_line(xp, yp, lh, i)
+<a name="290"/>      view.cbwin.draw_string(xp + Gui.TEXT_INSET, yp + view.cbwin.get_line_ascent(), detab(view_list[i].str, self.tab_width + 1))
+<a name="291"/>   end
+<a name="292"/>
+<a name="293"/>   #
+<a name="294"/>   # Create the view_list from the contents.
+<a name="295"/>   # 
+<a name="296"/>   public create_view_list()
+<a name="297"/>      local spl
+<a name="298"/>      spl := get_split(predict_view_width(w, vsb) - 2 * Gui.TEXT_INSET)
+<a name="299"/>      view_list := spl.lines
+<a name="300"/>      view_list_split_width := spl.width
+<a name="301"/>      long_line := spl.long_line
+<a name="302"/>   end
+<a name="303"/>
+<a name="304"/>   #
+<a name="305"/>   # Return the index into view_list containing the content position
+<a name="306"/>   # x, y, or fail on out of range x or y.  Binary search is used.
+<a name="307"/>   #
+<a name="308"/>   public get_view_list_index(x, y)
+<a name="309"/>      local i, j, mid, v
+<a name="310"/>      # A search is not necessary with wrap mode off, since
+<a name="311"/>      # view_list[i].index=i for every line.
+<a name="312"/>      if is(line_splitter, DefaultLineSplitter) then
+<a name="313"/>         return (v := view_list[y]) &amp; (v.index = y) &amp; (v.first &lt;= x &lt;= v.last) &amp; y
+<a name="314"/>      i := 1
+<a name="315"/>      j := *view_list
+<a name="316"/>      while i &lt;= j do {
+<a name="317"/>         mid := (i+j) / 2
+<a name="318"/>         v := view_list[mid]
+<a name="319"/>         if (v.index = y) &amp; (v.first &lt;= x &lt;= v.last) then
+<a name="320"/>            return mid
+<a name="321"/>         if (v.index &lt; y) | (v.index = y &amp; v.last &lt; x) then
+<a name="322"/>            i := mid + 1
+<a name="323"/>         else
+<a name="324"/>            j := mid - 1
+<a name="325"/>      }
+<a name="326"/>   end
+<a name="327"/>
+<a name="328"/>   public override set_internal_fields()
+<a name="329"/>      local had_vsb
+<a name="330"/>      had_vsb := self.vsb
+<a name="331"/>      LineBasedScrollArea.set_internal_fields()
+<a name="332"/>      if is(line_splitter, WidthLineSplitter) &amp; had_vsb ~=== self.vsb then {
+<a name="333"/>         clear_split_list()
+<a name="334"/>         set_internal_fields()
+<a name="335"/>      }
+<a name="336"/>   end
+<a name="337"/>
+<a name="338"/>   #
+<a name="339"/>   # Set the tab width to use.  Default is set from the style object.
+<a name="340"/>   #
+<a name="341"/>   public set_tab_width(n)
+<a name="342"/>      self.tab_width := need_integer(n, 1)
+<a name="343"/>      if is_live() then {
+<a name="344"/>         clear_split_list()
+<a name="345"/>         compute_and_invalidate()
+<a name="346"/>      }
+<a name="347"/>      link
+<a name="348"/>   end
+<a name="349"/>
+<a name="350"/>   public override layout()
+<a name="351"/>      if is(line_splitter, WidthLineSplitter) then
+<a name="352"/>         clear_view_list()
+<a name="353"/>      ScrollArea.layout()
+<a name="354"/>   end
+<a name="355"/>
+<a name="356"/>   #
+<a name="357"/>   # Set the word-wrap mode, which should be one of the following
+<a name="358"/>   # values :-
+<a name="359"/>   #
+<a name="360"/>   # &amp;null, "false", "off", "no", meaning don't do word-wrap (the default).
+<a name="361"/>   #
+<a name="362"/>   # an integer (eg 20), meaning wrap at that line length.
+<a name="363"/>   #
+<a name="364"/>   # "width", meaning wrap at the width of the component.
+<a name="365"/>   #
+<a name="366"/>   public set_wrap_mode(s)
+<a name="367"/>      local wc
+<a name="368"/>      if /flag(s) then
+<a name="369"/>         line_splitter := DefaultLineSplitter(self)
+<a name="370"/>      else if wc := integer(s) then
+<a name="371"/>         line_splitter := ColumnLineSplitter(self, wc)
+<a name="372"/>      else if s == "width" then
+<a name="373"/>         line_splitter := WidthLineSplitter(self)
+<a name="374"/>      else
+<a name="375"/>         runerr("Bad wrap mode", s)
+<a name="376"/>
+<a name="377"/>      if is_live() then {
+<a name="378"/>         clear_split_list()
+<a name="379"/>         compute_and_invalidate()
+<a name="380"/>      }
+<a name="381"/>      link
+<a name="382"/>   end
+<a name="383"/>
+<a name="384"/>   #
+<a name="385"/>   # Indicate, if wrapping, whether to split words or not (default no).
+<a name="386"/>   #
+<a name="387"/>   public set_split_words(s)
+<a name="388"/>      self.split_words_flag := need_flag(s)
+<a name="389"/>      if is_live() then {
+<a name="390"/>         clear_split_list()
+<a name="391"/>         compute_and_invalidate()
+<a name="392"/>      }
+<a name="393"/>      link
+<a name="394"/>   end
+<a name="395"/>
+<a name="396"/>   public override new()
+<a name="397"/>      LineBasedScrollArea.new()
+<a name="398"/>      tab_width := Gui.TAB_WIDTH
+<a name="399"/>      set_contents([])
+<a name="400"/>      set_wrap_mode("off")
+<a name="401"/>      set_use_default_keys(&amp;yes)
+<a name="402"/>      return
+<a name="403"/>   end
+<a name="404"/>end
+</pre></body></html>

@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MeshPattern</title></head><body>
+<h1>MeshPattern</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="cairo.Pattern.html" target="displayFrame">cairo.Pattern</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="cairo-package.html" target="listFrame">cairo</a></dd>
+</dl><p/>
+A <code><a href="cairo.Pattern.html" target="displayFrame">Pattern</a></code> which wraps a cairo mesh pattern.
+<p/><a href="cairo-cairo.icn.html#507" target="displayFrame">Source - cairo.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="cairo.Pattern.html">cairo.Pattern</a>
+<a href="cairo.MeshPattern.html">cairo.MeshPattern</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from cairo.Pattern</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="cairo.Pattern.html#close">close()</a>
+<a href="cairo.Pattern.html#get_extend">get_extend()</a>
+<a href="cairo.Pattern.html#get_filter">get_filter()</a>
+<a href="cairo.Pattern.html#get_matrix">get_matrix()</a>
+<a href="cairo.Pattern.html#get_matrix_impl">get_matrix_impl()</a>
+<a href="cairo.Pattern.html#get_type">get_type()</a>
+<a href="cairo.Pattern.html#identity_matrix">identity_matrix()</a>
+<a href="cairo.Pattern.html#set_extend">set_extend()</a>
+<a href="cairo.Pattern.html#set_filter">set_filter()</a>
+<a href="cairo.Pattern.html#set_matrix">set_matrix()</a>
+<a href="cairo.Pattern.html#set_matrix_impl">set_matrix_impl()</a>
+<a href="cairo.Pattern.html#set_ptr">set_ptr()</a>
+<a href="cairo.Pattern.html#to_pattern">to_pattern()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from cairo.Pattern</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="cairo.Pattern.html#ptr">ptr</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#begin_patch">begin_patch()</a>
+<a href="#create_for_ptr">create_for_ptr()</a>
+<a href="#curve_to">curve_to()</a>
+<a href="#end_patch">end_patch()</a>
+<a href="#get_control_point">get_control_point()</a>
+<a href="#get_control_point_impl">get_control_point_impl()</a>
+<a href="#get_corner_color">get_corner_color()</a>
+<a href="#get_corner_color_rgba">get_corner_color_rgba()</a>
+<a href="#get_patch_count">get_patch_count()</a>
+<a href="#get_path">get_path()</a>
+<a href="#get_path_impl">get_path_impl()</a>
+<a href="#init">init()</a>
+<a href="#line_to">line_to()</a>
+<a href="#move_to">move_to()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#set_control_point">set_control_point()</a>
+<a href="#set_corner_color">set_corner_color()</a>
+<a href="#set_corner_color_rgba">set_corner_color_rgba()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="begin_patch"/>
+<h3>begin_patch()</h3>
+public native<p/>
+<dl>
+<dd>
+Begin a patch in this mesh pattern.
+<p/><a href="cairo-cairo.icn.html#518" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="create_for_ptr"/>
+<h3>create_for_ptr(ptr)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#514" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="curve_to"/>
+<h3>curve_to(x1, y1, x2, y2, x3, y3)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a cubic Bézier spline to the current patch from the current
+point to position <code>(x3, y3)</code> in pattern-space coordinates, using
+<code>(x1, y1)</code> and <code>(x2, y2)</code> as the control points.
+<p/><a href="cairo-cairo.icn.html#535" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="end_patch"/>
+<h3>end_patch()</h3>
+public native<p/>
+<dl>
+<dd>
+Indicates the end of the current patch in this mesh pattern.
+<p/><a href="cairo-cairo.icn.html#522" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_control_point"/>
+<h3>get_control_point(patch_num, point_num)</h3>
+public<p/>
+<dl>
+<dd>
+Gets the control point <code>point_num</code> of patch <code>patch_num</code> as a
+<code><a href="graphics.Point.html" target="displayFrame">Point</a></code> record.
+<p/><a href="cairo-cairo.icn.html#571" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_control_point_impl"/>
+<h3>get_control_point_impl(patch_num, point_num, con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#578" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_corner_color"/>
+<h3>get_corner_color(patch_num, corner_num)</h3>
+public<p/>
+<dl>
+<dd>
+Gets the color information in corner <code>corner_num</code> of patch
+<code>patch_num</code> as an icon colour string.
+<p/><a href="cairo-cairo.icn.html#580" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_corner_color_rgba"/>
+<h3>get_corner_color_rgba(patch_num, corner_num)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#587" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_patch_count"/>
+<h3>get_patch_count()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the number of patches specified in this mesh pattern.
+<p/><a href="cairo-cairo.icn.html#558" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path"/>
+<h3>get_path(patch_num)</h3>
+public<p/>
+<dl>
+<dd>
+Gets path defining the patch number <code>patch_num</code>. A list of
+<code><a href="cairo.PathElement.html" target="displayFrame">PathElement</a></code> objects is returned.
+<p/><a href="cairo-cairo.icn.html#562" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path_impl"/>
+<h3>get_path_impl(patch_num)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#569" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#510" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="line_to"/>
+<h3>line_to(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a line to the current patch from the current point to
+position <code>(x, y)</code> in pattern-space coordinates.
+<p/><a href="cairo-cairo.icn.html#530" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="move_to"/>
+<h3>move_to(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Define the first point of the current patch in this mesh pattern.
+<p/><a href="cairo-cairo.icn.html#526" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#591" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#589" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_control_point"/>
+<h3>set_control_point(point_num, x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Set an internal control point of the current patch.  Valid values
+for <code>point_num</code> are from 0 to 3.
+<p/><a href="cairo-cairo.icn.html#541" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_corner_color"/>
+<h3>set_corner_color(corner_num, col)</h3>
+public<p/>
+<dl>
+<dd>
+Sets the color of a corner of the current patch in a mesh
+pattern.  Valid values for <code>corner_num</code> are from 0 to 3 and
+identify the corners.  <code>col</code> is an icon colour string.
+<p/><a href="cairo-cairo.icn.html#546" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_corner_color_rgba"/>
+<h3>set_corner_color_rgba(corner_num, r, g, b, a)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#556" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+</body></html>

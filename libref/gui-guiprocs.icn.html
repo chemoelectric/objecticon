@@ -1,0 +1,1253 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>guiprocs.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: guiprocs.icn 9056 2021-04-17 15:37:01Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import graphics(Mouse,Window,Pixels,Selection,need_Window,need_Pixels),
+<a name="12"/>   lang, util, io, xdg, ipl.strings, ipl.numbers
+<a name="13"/>
+<a name="14"/>final abstract class Event()
+<a name="15"/>   public static const
+<a name="16"/>      MOUSE_LEFT_PRESS,
+<a name="17"/>      MOUSE_MIDDLE_PRESS,
+<a name="18"/>      MOUSE_RIGHT_PRESS,
+<a name="19"/>      MOUSE_LEFT_RELEASE,
+<a name="20"/>      MOUSE_MIDDLE_RELEASE,
+<a name="21"/>      MOUSE_RIGHT_RELEASE,
+<a name="22"/>      MOUSE_LEFT_DRAG,
+<a name="23"/>      MOUSE_MIDDLE_DRAG,
+<a name="24"/>      MOUSE_RIGHT_DRAG,
+<a name="25"/>      MOUSE_MOVEMENT,
+<a name="26"/>      MOUSE_WHEEL_UP,
+<a name="27"/>      MOUSE_WHEEL_DOWN,
+<a name="28"/>      MOUSE_WHEEL_LEFT,
+<a name="29"/>      MOUSE_WHEEL_RIGHT,
+<a name="30"/>      WINDOW_STATE,
+<a name="31"/>      WINDOW_RESIZE,
+<a name="32"/>      WINDOW_MOVE,
+<a name="33"/>      MOUSE_LEFT_DRAG_OVER,
+<a name="34"/>      MOUSE_MIDDLE_DRAG_OVER,
+<a name="35"/>      MOUSE_RIGHT_DRAG_OVER,
+<a name="36"/>      MOUSE_LEFT_RELEASE_OVER,
+<a name="37"/>      MOUSE_MIDDLE_RELEASE_OVER,
+<a name="38"/>      MOUSE_RIGHT_RELEASE_OVER,
+<a name="39"/>      WINDOW_CLOSE_BUTTON,
+<a name="40"/>      # This event listens for all window-system generated events
+<a name="41"/>      ICON,
+<a name="42"/>      BUTTON_RELEASE,
+<a name="43"/>      BUTTON_PRESS,
+<a name="44"/>      BUTTON_HELD,
+<a name="45"/>      SELECTION_CHANGED,
+<a name="46"/>      CONTENT_CHANGED,
+<a name="47"/>      CURSOR_MOVED,
+<a name="48"/>      VALUE_CHANGED,
+<a name="49"/>      ACTION,
+<a name="50"/>      TREE_NODE_EXPANSION,
+<a name="51"/>      SIZER_PRESS,
+<a name="52"/>      SIZER_DRAG,
+<a name="53"/>      SIZER_RELEASE,
+<a name="54"/>      MOUSE_ENTER,
+<a name="55"/>      MOUSE_EXIT,
+<a name="56"/>      KEY_PRESS,
+<a name="57"/>      KEY_RELEASE,
+<a name="58"/>      GOT_FOCUS,
+<a name="59"/>      LOST_FOCUS,
+<a name="60"/>      DIALOG_SHOWN,
+<a name="61"/>      DIALOG_DISPOSED,
+<a name="62"/>      IN_POINT_CHAIN,
+<a name="63"/>      POPUP_OPENED,
+<a name="64"/>      POPUP_CLOSED,
+<a name="65"/>      INTERRUPTED,
+<a name="66"/>      RESUMED
+<a name="67"/>
+<a name="68"/>   private static init()
+<a name="69"/>      MOUSE_LEFT_PRESS := Mouse.LEFT_PRESS
+<a name="70"/>      MOUSE_MIDDLE_PRESS := Mouse.MIDDLE_PRESS
+<a name="71"/>      MOUSE_RIGHT_PRESS := Mouse.RIGHT_PRESS
+<a name="72"/>      MOUSE_LEFT_RELEASE := Mouse.LEFT_RELEASE
+<a name="73"/>      MOUSE_MIDDLE_RELEASE := Mouse.MIDDLE_RELEASE
+<a name="74"/>      MOUSE_RIGHT_RELEASE := Mouse.RIGHT_RELEASE
+<a name="75"/>      MOUSE_LEFT_DRAG := 11
+<a name="76"/>      MOUSE_MIDDLE_DRAG := 12
+<a name="77"/>      MOUSE_RIGHT_DRAG := 13
+<a name="78"/>      MOUSE_MOVEMENT := Mouse.MOVEMENT
+<a name="79"/>      MOUSE_WHEEL_UP := Mouse.WHEEL_UP
+<a name="80"/>      MOUSE_WHEEL_DOWN := Mouse.WHEEL_DOWN
+<a name="81"/>      MOUSE_WHEEL_LEFT := Mouse.WHEEL_LEFT
+<a name="82"/>      MOUSE_WHEEL_RIGHT := Mouse.WHEEL_RIGHT
+<a name="83"/>      WINDOW_STATE := Window.STATE
+<a name="84"/>      WINDOW_MOVE := Window.MOVE
+<a name="85"/>      WINDOW_RESIZE := Window.RESIZE
+<a name="86"/>      WINDOW_CLOSE_BUTTON := Window.CLOSE_BUTTON
+<a name="87"/>      ICON := 1
+<a name="88"/>      BUTTON_RELEASE := 20
+<a name="89"/>      BUTTON_PRESS := 21
+<a name="90"/>      BUTTON_HELD := 22
+<a name="91"/>      SELECTION_CHANGED := 40
+<a name="92"/>      CONTENT_CHANGED := 50
+<a name="93"/>      CURSOR_MOVED := 51
+<a name="94"/>      VALUE_CHANGED := 55
+<a name="95"/>      ACTION := 60
+<a name="96"/>      TREE_NODE_EXPANSION := 70
+<a name="97"/>      SIZER_PRESS := 80
+<a name="98"/>      SIZER_DRAG := 81
+<a name="99"/>      SIZER_RELEASE := 82
+<a name="100"/>      MOUSE_ENTER := 94
+<a name="101"/>      MOUSE_EXIT := 95
+<a name="102"/>      KEY_PRESS := 100
+<a name="103"/>      KEY_RELEASE := 101
+<a name="104"/>      MOUSE_LEFT_DRAG_OVER := 201
+<a name="105"/>      MOUSE_MIDDLE_DRAG_OVER := 202
+<a name="106"/>      MOUSE_RIGHT_DRAG_OVER := 203
+<a name="107"/>      MOUSE_LEFT_RELEASE_OVER := 204
+<a name="108"/>      MOUSE_MIDDLE_RELEASE_OVER := 205
+<a name="109"/>      MOUSE_RIGHT_RELEASE_OVER := 206
+<a name="110"/>      GOT_FOCUS := 400
+<a name="111"/>      LOST_FOCUS := 401
+<a name="112"/>      DIALOG_DISPOSED := 500
+<a name="113"/>      IN_POINT_CHAIN :=  501
+<a name="114"/>      POPUP_CLOSED := 502
+<a name="115"/>      INTERRUPTED := 503
+<a name="116"/>      RESUMED := 504
+<a name="117"/>      DIALOG_SHOWN := 505
+<a name="118"/>      POPUP_OPENED := 506
+<a name="119"/>   end
+<a name="120"/>end
+<a name="121"/>
+<a name="122"/>final abstract class Select()
+<a name="123"/>   public static const 
+<a name="124"/>      NONE,
+<a name="125"/>      ONE,
+<a name="126"/>      MANY
+<a name="127"/>
+<a name="128"/>   private static init()
+<a name="129"/>      NONE := "none"
+<a name="130"/>      ONE := "one"
+<a name="131"/>      MANY := "many"
+<a name="132"/>   end
+<a name="133"/>end
+<a name="134"/>
+<a name="135"/>final abstract class Direction()
+<a name="136"/>   public static const
+<a name="137"/>      UP,
+<a name="138"/>      DOWN,
+<a name="139"/>      BEST
+<a name="140"/>
+<a name="141"/>   private static init()
+<a name="142"/>      UP := "up"
+<a name="143"/>      DOWN := "down"
+<a name="144"/>      BEST := "best"
+<a name="145"/>   end
+<a name="146"/>end
+<a name="147"/>
+<a name="148"/># Alignment constants
+<a name="149"/>final abstract class Align()
+<a name="150"/>   public static const 
+<a name="151"/>      L,
+<a name="152"/>      C,
+<a name="153"/>      R,
+<a name="154"/>      T,
+<a name="155"/>      B
+<a name="156"/>
+<a name="157"/>   private static init()
+<a name="158"/>      L := "l"
+<a name="159"/>      C := "c"
+<a name="160"/>      R := "r"
+<a name="161"/>      T := "t"
+<a name="162"/>      B := "b"
+<a name="163"/>   end
+<a name="164"/>end
+<a name="165"/>
+<a name="166"/>final abstract class WAttrib()
+<a name="167"/>   public static const
+<a name="168"/>      BG,
+<a name="169"/>      CANVAS,
+<a name="170"/>      CLIP,
+<a name="171"/>      DISPLAY,
+<a name="172"/>      DRAW_OP,
+<a name="173"/>      DX,
+<a name="174"/>      DY,
+<a name="175"/>      FG,
+<a name="176"/>      FONT,
+<a name="177"/>      GEOMETRY,
+<a name="178"/>      HEIGHT,
+<a name="179"/>      ICON,
+<a name="180"/>      IMAGE,
+<a name="181"/>      LABEL,
+<a name="182"/>      LEADING,
+<a name="183"/>      LINE_JOIN,
+<a name="184"/>      LINE_END,
+<a name="185"/>      LINE_WIDTH,
+<a name="186"/>      MAX_HEIGHT,
+<a name="187"/>      MAX_SIZE,
+<a name="188"/>      MAX_WIDTH,
+<a name="189"/>      MIN_HEIGHT,
+<a name="190"/>      MIN_SIZE,
+<a name="191"/>      MIN_WIDTH,
+<a name="192"/>      BASE_HEIGHT,
+<a name="193"/>      BASE_SIZE,
+<a name="194"/>      BASE_WIDTH,
+<a name="195"/>      INCREMENT_HEIGHT,
+<a name="196"/>      INCREMENT_SIZE,
+<a name="197"/>      INCREMENT_WIDTH,
+<a name="198"/>      MAX_ASPECT_RATIO,
+<a name="199"/>      MIN_ASPECT_RATIO,
+<a name="200"/>      PATTERN,
+<a name="201"/>      MASK,
+<a name="202"/>      POINTER,
+<a name="203"/>      POS,
+<a name="204"/>      RESIZE,
+<a name="205"/>      SIZE,
+<a name="206"/>      TRANSIENT_FOR,
+<a name="207"/>      UNCLIP,
+<a name="208"/>      WIDTH,
+<a name="209"/>      X,
+<a name="210"/>      Y
+<a name="211"/>
+<a name="212"/>   # For a given attribute `k`, generate those attributes which will
+<a name="213"/>   # also set the same thing `k` does.
+<a name="214"/>   #
+<a name="215"/>   public static gen_conflicting(k)
+<a name="216"/>      suspend case k of {
+<a name="217"/>         POS: X | Y | GEOMETRY
+<a name="218"/>         X | Y: POS | GEOMETRY
+<a name="219"/>         SIZE: HEIGHT | WIDTH | GEOMETRY
+<a name="220"/>         WIDTH | HEIGHT: SIZE | GEOMETRY
+<a name="221"/>         GEOMETRY : POS | X | Y | SIZE | HEIGHT | WIDTH
+<a name="222"/>
+<a name="223"/>         MIN_WIDTH | MIN_HEIGHT : MIN_SIZE
+<a name="224"/>         MIN_SIZE : MIN_WIDTH | MIN_HEIGHT
+<a name="225"/>
+<a name="226"/>         MAX_WIDTH | MAX_HEIGHT : MAX_SIZE
+<a name="227"/>         MAX_SIZE : MAX_WIDTH | MAX_HEIGHT
+<a name="228"/>
+<a name="229"/>         BASE_WIDTH | BASE_HEIGHT : BASE_SIZE
+<a name="230"/>         BASE_SIZE : BASE_WIDTH | BASE_HEIGHT
+<a name="231"/>
+<a name="232"/>         INCREMENT_WIDTH | INCREMENT_HEIGHT : INCREMENT_SIZE
+<a name="233"/>         INCREMENT_SIZE : INCREMENT_WIDTH | INCREMENT_HEIGHT
+<a name="234"/>      }
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   private static init()
+<a name="238"/>      BG := "bg"
+<a name="239"/>      CLIP := "clip"
+<a name="240"/>      CANVAS := "canvas"
+<a name="241"/>      DISPLAY := "display"
+<a name="242"/>      DRAW_OP := "draw_op"
+<a name="243"/>      DX := "dx"
+<a name="244"/>      DY := "dy"
+<a name="245"/>      FG := "fg"
+<a name="246"/>      FONT := "font"
+<a name="247"/>      GEOMETRY := "geometry"
+<a name="248"/>      HEIGHT := "height"
+<a name="249"/>      ICON := "icon"
+<a name="250"/>      IMAGE := "image"
+<a name="251"/>      LABEL := "label"
+<a name="252"/>      LEADING := "leading"
+<a name="253"/>      LINE_JOIN := "line_join"
+<a name="254"/>      LINE_END := "line_end"
+<a name="255"/>      LINE_WIDTH := "line_width"
+<a name="256"/>      MAX_HEIGHT := "max_height"
+<a name="257"/>      MAX_SIZE := "max_size"
+<a name="258"/>      MAX_WIDTH := "max_width"
+<a name="259"/>      MIN_HEIGHT := "min_height"
+<a name="260"/>      MIN_SIZE := "min_size"
+<a name="261"/>      MIN_WIDTH := "min_width"
+<a name="262"/>      BASE_HEIGHT := "base_height"
+<a name="263"/>      BASE_SIZE := "base_size"
+<a name="264"/>      BASE_WIDTH := "base_width"
+<a name="265"/>      INCREMENT_HEIGHT := "increment_height"
+<a name="266"/>      INCREMENT_SIZE := "increment_size"
+<a name="267"/>      INCREMENT_WIDTH := "increment_width"
+<a name="268"/>      MAX_ASPECT_RATIO := "max_aspect_ratio"
+<a name="269"/>      MIN_ASPECT_RATIO := "min_aspect_ratio"
+<a name="270"/>      PATTERN := "pattern"
+<a name="271"/>      MASK := "mask"
+<a name="272"/>      POINTER := "pointer"
+<a name="273"/>      POS := "pos"
+<a name="274"/>      RESIZE := "resize"
+<a name="275"/>      SIZE := "size"
+<a name="276"/>      TRANSIENT_FOR := "transient_for"
+<a name="277"/>      UNCLIP := "unclip"
+<a name="278"/>      WIDTH := "width"
+<a name="279"/>      X := "x"
+<a name="280"/>      Y := "y"
+<a name="281"/>   end
+<a name="282"/>end
+<a name="283"/>
+<a name="284"/>#
+<a name="285"/># Scale the given number using the current scale factor.  Note that
+<a name="286"/># since `SCALE &gt;= 1.0`, if `i &gt;= 0`, then the result should be `&gt;= i`.
+<a name="287"/>#
+<a name="288"/>procedure scale(i)
+<a name="289"/>   return round(Gui.SCALE * i)
+<a name="290"/>end
+<a name="291"/>
+<a name="292"/>#
+<a name="293"/># Scale, but don't round and convert to integer.
+<a name="294"/>#
+<a name="295"/>procedure scale_real(r)
+<a name="296"/>   return Gui.SCALE * r
+<a name="297"/>end
+<a name="298"/>
+<a name="299"/>#
+<a name="300"/># Like `scale`, but ensure an odd number results.  If `j` is -ve, then
+<a name="301"/># the number is moved down one rather than up one, if necessary.
+<a name="302"/>#
+<a name="303"/>procedure scale_odd(i, j)
+<a name="304"/>   i := scale(i)
+<a name="305"/>   if i % 2 = 0 then if \j &lt; 0 then i -:= 1 else i +:= 1
+<a name="306"/>   return i
+<a name="307"/>end
+<a name="308"/>
+<a name="309"/>#
+<a name="310"/># Like `scale`, but ensure an even number results.  `j` has the same
+<a name="311"/># effect as for `scale_odd`.
+<a name="312"/>#
+<a name="313"/>procedure scale_even(i, j)
+<a name="314"/>   i := scale(i)
+<a name="315"/>   if i % 2 = 1 then if \j &lt; 0 then i -:= 1 else i +:= 1
+<a name="316"/>   return i
+<a name="317"/>end
+<a name="318"/>
+<a name="319"/>#
+<a name="320"/># Convenient procedure to combine `env_real` and `scale`.  The result
+<a name="321"/># is checked to ensure it is positive.
+<a name="322"/>#
+<a name="323"/>procedure env_scale(s, min, max)
+<a name="324"/>   local v
+<a name="325"/>   v := scale(env_real(s, min, max)) | fail
+<a name="326"/>   if v &lt; 1 then
+<a name="327"/>      runerr("Scaled value of " || s || " out of range", v)
+<a name="328"/>   return v
+<a name="329"/>end
+<a name="330"/>
+<a name="331"/>#
+<a name="332"/># Convenient procedure to combine `env_real` and `scale_even`.  The result
+<a name="333"/># is checked to ensure it is positive.
+<a name="334"/>#
+<a name="335"/>procedure env_scale_even(s, min, max, j)
+<a name="336"/>   local v
+<a name="337"/>   v := scale_even(env_real(s, min, max), j) | fail
+<a name="338"/>   if v &lt; 1 then
+<a name="339"/>      runerr("Scaled value of " || s || " out of range", v)
+<a name="340"/>   return v
+<a name="341"/>end
+<a name="342"/>
+<a name="343"/>#
+<a name="344"/># Convenient procedure to combine `env_real` and `scale_odd`.  The result
+<a name="345"/># is checked to ensure it is positive.
+<a name="346"/>#
+<a name="347"/>procedure env_scale_odd(s, min, max, j)
+<a name="348"/>   local v
+<a name="349"/>   v := scale_odd(env_real(s, min, max), j) | fail
+<a name="350"/>   if v &lt; 1 then
+<a name="351"/>      runerr("Scaled value of " || s || " out of range", v)
+<a name="352"/>   return v
+<a name="353"/>end
+<a name="354"/>
+<a name="355"/>#
+<a name="356"/># Return a valid icon colour value from the environment.
+<a name="357"/>#
+<a name="358"/>procedure env_color(s)
+<a name="359"/>   local c
+<a name="360"/>   c := env_string(s) | fail
+<a name="361"/>   Window.color_value(c) | runerr("Colour value " || c || " of " || s || " is invalid")
+<a name="362"/>   return c
+<a name="363"/>end
+<a name="364"/>
+<a name="365"/>#
+<a name="366"/># Return a valid icon font string value from the environment.
+<a name="367"/>#
+<a name="368"/>procedure env_font(s)
+<a name="369"/>   local f, w
+<a name="370"/>   f := env_string(s) | fail
+<a name="371"/>   use{ w := new_win(), w.set_font(f) } | runerr("Font value " || f || " of " || s || " is invalid")
+<a name="372"/>   return f
+<a name="373"/>end
+<a name="374"/>
+<a name="375"/>#
+<a name="376"/># Return a valid icon pattern string value from the environment.
+<a name="377"/>#
+<a name="378"/>procedure env_pattern(s)
+<a name="379"/>   local p, w
+<a name="380"/>   p := env_string(s) | fail
+<a name="381"/>   use{ w := new_win(), w.set_masked_pattern(p) } | runerr("Pattern value " || p || " of " || s || " is invalid")
+<a name="382"/>   return p
+<a name="383"/>end
+<a name="384"/>
+<a name="385"/>#
+<a name="386"/># Return a valid icon filter string value from the environment.
+<a name="387"/>#
+<a name="388"/>procedure env_filter(s)
+<a name="389"/>   local f, p
+<a name="390"/>   f := env_string(s) | fail
+<a name="391"/>   use{ p := Pixels(1, 1), p.filter(,,,, f) } | runerr("Filter value " || f || " of " || s || " is invalid")
+<a name="392"/>   return f
+<a name="393"/>end
+<a name="394"/>
+<a name="395"/>#
+<a name="396"/># Return a valid icon pointer string value from the environment.
+<a name="397"/>#
+<a name="398"/>procedure env_pointer(s)
+<a name="399"/>   local p, w
+<a name="400"/>   p := env_string(s) | fail
+<a name="401"/>   use{ w := new_win(), w.set_pointer(p) } | runerr("Pointer value " || p || " of " || s || " is invalid")
+<a name="402"/>   return p
+<a name="403"/>end
+<a name="404"/>
+<a name="405"/>final abstract class Gui()
+<a name="406"/>   public static const
+<a name="407"/>      SCALE,
+<a name="408"/>      UNIT,
+<a name="409"/>      BORDER_WIDTH,
+<a name="410"/>      CURSOR_WIDTH,
+<a name="411"/>      FINE_WIDTH,
+<a name="412"/>      DASHED_WIDTH,
+<a name="413"/>      TOOLBAR_ICON_SIZE,
+<a name="414"/>      MENU_ICON_SIZE,
+<a name="415"/>      TEXT_INSET,
+<a name="416"/>      X_INSET,
+<a name="417"/>      Y_INSET,
+<a name="418"/>      VISUALIZE_DELAY,
+<a name="419"/>      # Default delay for important message bar information.
+<a name="420"/>      INFO_DELAY,
+<a name="421"/>      REPEAT_DELAY,            
+<a name="422"/>      REPEAT_RATE,
+<a name="423"/>      CURSOR_BLINK,
+<a name="424"/>      IDLE_SLEEP,
+<a name="425"/>      # Default tab char width
+<a name="426"/>      TAB_WIDTH,
+<a name="427"/>      ALLOW_INTERNAL_POPUPS,
+<a name="428"/>      # Gives extra preference to the downward direction in list popups.
+<a name="429"/>      POPUP_LIST_DIRECTION_FACTOR,
+<a name="430"/>      # A set of all window attribs.
+<a name="431"/>      WATTRIB_SET,
+<a name="432"/>      # A set of attribs that affect the graphical drawing context
+<a name="433"/>      CONTEXT_WATTRIB_SET,
+<a name="434"/>      # A Component that always has empty effective wattribs.
+<a name="435"/>      EMPTY_WATTRIB_ANCESTOR,
+<a name="436"/>      # Printable on a single line of text
+<a name="437"/>      PRINTABLE_1,
+<a name="438"/>      # Printable on multi lines of text
+<a name="439"/>      PRINTABLE_N,
+<a name="440"/>      style
+<a name="441"/>
+<a name="442"/>   #
+<a name="443"/>   # Try to calculate a default value for SCALE
+<a name="444"/>   #
+<a name="445"/>   private static calc_scale1(w)
+<a name="446"/>      local pix, mm, t
+<a name="447"/>      pix := w.get_display_size() | fail
+<a name="448"/>      mm := w.get_display_size_mm() | fail
+<a name="449"/>      t := (pix.width + pix.height) / ((mm.width + mm.height) / 25.4) / 96.0
+<a name="450"/>      # Round to nearest 1%
+<a name="451"/>      t := round(t * 100.0) / 100.0
+<a name="452"/>      return (1.0 &lt; t)
+<a name="453"/>   end
+<a name="454"/>
+<a name="455"/>   private static calc_scale()
+<a name="456"/>      local w
+<a name="457"/>      return use {
+<a name="458"/>         w := Window(),
+<a name="459"/>         calc_scale1(w)
+<a name="460"/>      }
+<a name="461"/>   end
+<a name="462"/>
+<a name="463"/>   private static init()
+<a name="464"/>      local s
+<a name="465"/>      SCALE := env_real("OI_GUI_SCALE", 1.0) | calc_scale() | 1.0
+<a name="466"/>      UNIT := scale(1)
+<a name="467"/>      FINE_WIDTH := env_scale("OI_GUI_FINE_WIDTH") | UNIT
+<a name="468"/>      DASHED_WIDTH := env_scale("OI_GUI_DASHED_WIDTH") | FINE_WIDTH
+<a name="469"/>      CURSOR_WIDTH := env_scale_even("OI_GUI_CURSOR_WIDTH") | scale_even(2)
+<a name="470"/>      # Has to be even; see BevelledBorder
+<a name="471"/>      BORDER_WIDTH := env_scale_even("OI_GUI_BORDER_WIDTH") | scale_even(2)
+<a name="472"/>      TEXT_INSET := env_scale("OI_GUI_TEXT_INSET") | scale(3)
+<a name="473"/>      X_INSET := env_scale("OI_GUI_X_INSET") | scale(6)
+<a name="474"/>      Y_INSET := env_scale("OI_GUI_Y_INSET") | scale(2)
+<a name="475"/>      VISUALIZE_DELAY := env_int("OI_GUI_VISUALIZE_DELAY", 10) | 50
+<a name="476"/>      REPEAT_DELAY := env_int("OI_GUI_REPEAT_DELAY", 250) | 500
+<a name="477"/>      INFO_DELAY := env_int("OI_GUI_INFO_DELAY", 500) | 3000
+<a name="478"/>      REPEAT_RATE := env_int("OI_GUI_REPEAT_RATE", 50) | 100
+<a name="479"/>      CURSOR_BLINK := env_int("OI_GUI_CURSOR_BLINK", 100) | 400
+<a name="480"/>      TAB_WIDTH := env_int("OI_GUI_TAB_WIDTH", 1) | 8
+<a name="481"/>      IDLE_SLEEP := env_int("OI_GUI_IDLE_SLEEP", 0) | 50
+<a name="482"/>      TOOLBAR_ICON_SIZE := env_scale("OI_GUI_TOOLBAR_ICON_SIZE") | scale(24)
+<a name="483"/>      MENU_ICON_SIZE := env_scale("OI_GUI_MENU_ICON_SIZE") | scale(16)
+<a name="484"/>      ALLOW_INTERNAL_POPUPS := env_flag("OI_GUI_ALLOW_INTERNAL_POPUPS") | &amp;yes
+<a name="485"/>      POPUP_LIST_DIRECTION_FACTOR := env_real("OI_GUI_POPUP_LIST_DIRECTION_FACTOR") | 2.0
+<a name="486"/>      if s := env_string("OI_GUI_STYLE") then {
+<a name="487"/>         style := Class.for_name(s)() | runerr("Unable to instantiate Style class", s)
+<a name="488"/>         is(style, Style) | runerr("Style class not a subclass of gui.Style", style)
+<a name="489"/>      } else
+<a name="490"/>         style := Style()
+<a name="491"/>      PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
+<a name="492"/>      PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
+<a name="493"/>      WATTRIB_SET := set(WAttrib.LABEL, WAttrib.X, WAttrib.POS, WAttrib.Y, WAttrib.RESIZE, WAttrib.SIZE,
+<a name="494"/>                         WAttrib.HEIGHT, WAttrib.WIDTH, WAttrib.IMAGE, WAttrib.CANVAS, WAttrib.POINTER, 
+<a name="495"/>                         WAttrib.DISPLAY, WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.ICON, WAttrib.LEADING,
+<a name="496"/>                         WAttrib.FONT, WAttrib.LINE_WIDTH, WAttrib.GEOMETRY, WAttrib.TRANSIENT_FOR,
+<a name="497"/>                         WAttrib.LINE_END, WAttrib.PATTERN, WAttrib.CLIP, WAttrib.UNCLIP, WAttrib.DX,
+<a name="498"/>                         WAttrib.DY, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT, WAttrib.LINE_JOIN,
+<a name="499"/>                         WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE,
+<a name="500"/>                         WAttrib.BASE_HEIGHT, WAttrib.BASE_SIZE, WAttrib.BASE_WIDTH,
+<a name="501"/>                         WAttrib.INCREMENT_HEIGHT, WAttrib.INCREMENT_SIZE, WAttrib.INCREMENT_WIDTH,
+<a name="502"/>                         WAttrib.MAX_ASPECT_RATIO, WAttrib.MIN_ASPECT_RATIO, WAttrib.MASK)
+<a name="503"/>      CONTEXT_WATTRIB_SET := set(WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.FONT, WAttrib.LEADING,
+<a name="504"/>                                 WAttrib.LINE_WIDTH, WAttrib.LINE_END, WAttrib.LINE_JOIN, WAttrib.PATTERN,
+<a name="505"/>                                 WAttrib.MASK)
+<a name="506"/>      EMPTY_WATTRIB_ANCESTOR := EmptyWAttribAncestor() 
+<a name="507"/>   end
+<a name="508"/>
+<a name="509"/>   public static allow_internal_popups()
+<a name="510"/>      succeed \ALLOW_INTERNAL_POPUPS
+<a name="511"/>   end
+<a name="512"/>
+<a name="513"/>   public static is_window_attrib(s)
+<a name="514"/>      succeed member(WATTRIB_SET, s)
+<a name="515"/>   end
+<a name="516"/>
+<a name="517"/>   public static is_context_attrib(s)
+<a name="518"/>      succeed member(CONTEXT_WATTRIB_SET, s)
+<a name="519"/>   end
+<a name="520"/>end
+<a name="521"/>
+<a name="522"/>#
+<a name="523"/># A `Component` for providing empty effective wattribs.
+<a name="524"/>#
+<a name="525"/>package class EmptyWAttribAncestor(Component)
+<a name="526"/>   public override get_effective_wattribs()
+<a name="527"/>      return table()
+<a name="528"/>   end
+<a name="529"/>end
+<a name="530"/>
+<a name="531"/>package procedure tab_ws()
+<a name="532"/>   return tab(many(' \t\n\r'))
+<a name="533"/>end
+<a name="534"/>
+<a name="535"/>package procedure trim_ws(s)
+<a name="536"/>   return trim(s, ' \t\n\r')
+<a name="537"/>end
+<a name="538"/>
+<a name="539"/>#
+<a name="540"/># Test if the given string is (probably) a classic Icon image string.
+<a name="541"/>#
+<a name="542"/>procedure is_image_string(v)
+<a name="543"/>   string(v) ? {
+<a name="544"/>      tab_ws()
+<a name="545"/>      tab(many(&amp;digits)) | fail
+<a name="546"/>      tab_ws()
+<a name="547"/>      ="," | fail
+<a name="548"/>      return
+<a name="549"/>   }
+<a name="550"/>end
+<a name="551"/>
+<a name="552"/>#
+<a name="553"/># A simple helper class for parsing an image string.
+<a name="554"/>#
+<a name="555"/>class ImageStringInfo()
+<a name="556"/>   public const
+<a name="557"/>     width, height, pal, extra, data
+<a name="558"/>
+<a name="559"/>   public new(s)
+<a name="560"/>      s := need_string(s)
+<a name="561"/>      s ? {
+<a name="562"/>         tab_ws()
+<a name="563"/>         width := (0 &lt; integer(tab(many(&amp;digits)))) | return error("Width expected")
+<a name="564"/>         tab_ws()
+<a name="565"/>         ="," | return error("Comma expected")
+<a name="566"/>         tab_ws()
+<a name="567"/>         if any('cg') then {
+<a name="568"/>            pal := (move(1) || tab(many(&amp;digits))) | return error("Palette expected")
+<a name="569"/>            tab_ws()
+<a name="570"/>         }
+<a name="571"/>         if ="(" then {
+<a name="572"/>            extra := tab(upto(')')) | return error("Missing )")
+<a name="573"/>            move(1)
+<a name="574"/>            tab_ws()
+<a name="575"/>         }
+<a name="576"/>         ="," | return error("Comma expected")
+<a name="577"/>         data := tab(0)
+<a name="578"/>         if *data = 0 | *data % width ~= 0 then
+<a name="579"/>            return error("Wrong number of image characters")
+<a name="580"/>         height := *data / width
+<a name="581"/>      }
+<a name="582"/>      return
+<a name="583"/>   end
+<a name="584"/>
+<a name="585"/>   public static from_parts(width, pal, extra, data)
+<a name="586"/>      local i
+<a name="587"/>      i := Class.create_raw_instance()
+<a name="588"/>      i.width := need_integer(width, 1)
+<a name="589"/>      i.pal := need_string(\pal)
+<a name="590"/>      i.extra := need_string(\extra)
+<a name="591"/>      i.data := need_string(data)
+<a name="592"/>      if *data = 0 | *data % width ~= 0 then
+<a name="593"/>         return error("Wrong number of image characters")
+<a name="594"/>      i.height := *data / width
+<a name="595"/>      return Class.complete_raw_instance(i)
+<a name="596"/>   end
+<a name="597"/>
+<a name="598"/>   public to_image_string()
+<a name="599"/>      local s
+<a name="600"/>      s := width || ","
+<a name="601"/>      s ||:= \pal
+<a name="602"/>      s ||:= "(" || \extra || ")"
+<a name="603"/>      return s || "," || data
+<a name="604"/>   end
+<a name="605"/>end
+<a name="606"/>
+<a name="607"/>package procedure image_string_to_pixels1(q, r, W)
+<a name="608"/>   local t, k, v
+<a name="609"/>   # Add chars from palette, if specified.
+<a name="610"/>   if \r.pal then
+<a name="611"/>      q.load_palette(r.pal) | fail
+<a name="612"/>
+<a name="613"/>   # Add extra chars
+<a name="614"/>   every t := separate(\r.extra, ';') do trim_ws(t) ? {
+<a name="615"/>      k := move(1) | return error("Char expected")
+<a name="616"/>      ="=" | return error("= expected")
+<a name="617"/>      v := tab(upto(', ') | 0)
+<a name="618"/>      v := case v of {
+<a name="619"/>         "hilite" : Gui.style.get_hilite_color(W)
+<a name="620"/>         "shadow" : Gui.style.get_shadow_color(W)
+<a name="621"/>         "fg" : W.get_fg()
+<a name="622"/>         "bg" : W.get_bg()
+<a name="623"/>      }
+<a name="624"/>      v ||:= tab(0)
+<a name="625"/>      q.set_palette(ord(k), v) |
+<a name="626"/>         return error("Invalid colour in image spec: " || v)
+<a name="627"/>   }
+<a name="628"/>   return
+<a name="629"/>end
+<a name="630"/>
+<a name="631"/># Convert an image string to a `Pixels` object, based on the window
+<a name="632"/># `W` for hilite, shadow colours etc.
+<a name="633"/>#
+<a name="634"/>procedure image_string_to_pixels(s, W)
+<a name="635"/>   local q, r
+<a name="636"/>   r := ImageStringInfo(s) | fail
+<a name="637"/>   need_Window(W)
+<a name="638"/>
+<a name="639"/>   q := Pixels(r.width, r.height, Pixels.PALETTE8).
+<a name="640"/>      set_data(r.data)
+<a name="641"/>
+<a name="642"/>   if image_string_to_pixels1(q, r, W) then
+<a name="643"/>      return q
+<a name="644"/>
+<a name="645"/>   q.close()
+<a name="646"/>end
+<a name="647"/>
+<a name="648"/>#
+<a name="649"/># Extended TextWidth function, handling tabs in s.  Returns the
+<a name="650"/># width of the string from positions i through j.
+<a name="651"/>#
+<a name="652"/>procedure text_width_ex(win, s, i, j, tw)
+<a name="653"/>   if /i then {
+<a name="654"/>      i := 1
+<a name="655"/>      j := *s + 1
+<a name="656"/>   } else {
+<a name="657"/>      /j:= i + 1
+<a name="658"/>      if j &lt;= 0 then
+<a name="659"/>         j +:= *s + 1
+<a name="660"/>   }
+<a name="661"/>   unless upto('\t', s) then
+<a name="662"/>      return win.text_width(s[i:j])
+<a name="663"/>   /tw := 8
+<a name="664"/>   return win.text_width(detab(s[1:j], tw + 1)) - win.text_width(detab(s[1:i], tw + 1))
+<a name="665"/>end
+<a name="666"/>
+<a name="667"/># Draw a string in the normal way, but including an underscore below
+<a name="668"/># the first character `k`.
+<a name="669"/>#
+<a name="670"/>procedure draw_string_ex(win, x, y, s, k)
+<a name="671"/>   local i
+<a name="672"/>   win.draw_string(x, y, s)
+<a name="673"/>   if i := upto(\k, Text.lower(s)) then {
+<a name="674"/>      win.fill_rectangle(x + win.text_width(s[1:i]),
+<a name="675"/>                         y + win.get_font_descent() - Gui.FINE_WIDTH,
+<a name="676"/>                         win.text_width(s[i]), Gui.FINE_WIDTH)
+<a name="677"/>   }
+<a name="678"/>end
+<a name="679"/>
+<a name="680"/>#
+<a name="681"/># This utility takes a string or ucs and returns a string or ucs
+<a name="682"/># according to the target parameter.  Strings are assumed to be in
+<a name="683"/># ISO-8859 format, rather than UTF-8 format.
+<a name="684"/>#
+<a name="685"/>procedure text_convert(s, target)
+<a name="686"/>   s := text(s) | fail
+<a name="687"/>   if type(s) == target then
+<a name="688"/>      return s
+<a name="689"/>   return case target of {
+<a name="690"/>      "ucs": Text.iso_8859_1_to_ucs(s)
+<a name="691"/>      "string": Text.ucs_to_iso_8859_1(s)
+<a name="692"/>      default: runerr("Bad target type", target)
+<a name="693"/>   }
+<a name="694"/>end
+<a name="695"/>
+<a name="696"/>#
+<a name="697"/># This utility takes a string or ucs and returns a string or ucs
+<a name="698"/># according to the target parameter.  The format of strings are
+<a name="699"/># guessed using the ucs() function; if that fails they are assumed to
+<a name="700"/># be in ISO-8859 format.
+<a name="701"/>#
+<a name="702"/>procedure text_guess_convert(s, target)
+<a name="703"/>   s := text(s) | fail
+<a name="704"/>   return case target of {
+<a name="705"/>      "ucs": ucs(s) | Text.iso_8859_1_to_ucs(s)
+<a name="706"/>      "string": Text.ucs_to_iso_8859_1(ucs(s)) | s
+<a name="707"/>      default: runerr("Bad target type", target)
+<a name="708"/>   }
+<a name="709"/>end
+<a name="710"/>
+<a name="711"/>#
+<a name="712"/># Given a result from a selection request (`target_type` and `data`), produce
+<a name="713"/># a corresponding string or a ucs as appropriate.
+<a name="714"/>#
+<a name="715"/>procedure selection_convert(target_type, data)
+<a name="716"/>   return case target_type of {
+<a name="717"/>      Selection.UTF8_STRING_TARGET : ucs(data)
+<a name="718"/>      Selection.STRING_TARGET : string(data)
+<a name="719"/>   }
+<a name="720"/>end
+<a name="721"/>
+<a name="722"/>#
+<a name="723"/># Return a new `Window` with the attributes in table `t` applied.
+<a name="724"/>#
+<a name="725"/>procedure open_win_with(t)
+<a name="726"/>   return apply_window_table(new_win(t[WAttrib.DISPLAY]), t)
+<a name="727"/>end
+<a name="728"/>
+<a name="729"/>#
+<a name="730"/># Apply the attributes from table `t` to `Window` w.
+<a name="731"/>#
+<a name="732"/>procedure apply_window_table(w, t)
+<a name="733"/>   local e, v
+<a name="734"/>   every e := !sort(t) do {
+<a name="735"/>      v := e[2]
+<a name="736"/>      case e[1] of {
+<a name="737"/>         WAttrib.LABEL: w.set_label(v)
+<a name="738"/>         WAttrib.X: w.set_x(v)
+<a name="739"/>         WAttrib.POS:  w.set_pos(v[1],v[2])
+<a name="740"/>         WAttrib.Y: w.set_y(v)
+<a name="741"/>         WAttrib.RESIZE: w.set_resize(v)
+<a name="742"/>         WAttrib.SIZE: w.set_size(v[1],v[2])
+<a name="743"/>         WAttrib.HEIGHT: w.set_height(v)
+<a name="744"/>         WAttrib.WIDTH: w.set_width(v)
+<a name="745"/>         WAttrib.IMAGE: w.set_image(v)
+<a name="746"/>         WAttrib.POINTER: w.set_pointer(v)
+<a name="747"/>         WAttrib.FG: w.set_fg(v)
+<a name="748"/>         WAttrib.BG: w.set_bg(v)
+<a name="749"/>         WAttrib.DRAW_OP: w.set_draw_op(v)
+<a name="750"/>         WAttrib.ICON: w.set_icon(v)
+<a name="751"/>         WAttrib.FONT: w.set_font(v)
+<a name="752"/>         WAttrib.LEADING: w.set_leading(v)
+<a name="753"/>         WAttrib.LINE_WIDTH: w.set_line_width(v)
+<a name="754"/>         WAttrib.GEOMETRY: w.set_geometry(v[1],v[2],v[3],v[4])
+<a name="755"/>         WAttrib.TRANSIENT_FOR: w.set_transient_for(v)
+<a name="756"/>         WAttrib.LINE_JOIN: w.set_line_join(v)
+<a name="757"/>         WAttrib.LINE_END: w.set_line_end(v)
+<a name="758"/>         WAttrib.PATTERN: w.set_pattern(v)
+<a name="759"/>         WAttrib.MASK: w.set_mask(v)
+<a name="760"/>         WAttrib.CLIP: w.clip(v[1],v[2],v[3],v[4])
+<a name="761"/>         WAttrib.UNCLIP: w.unclip()
+<a name="762"/>         WAttrib.DX: w.set_dx(v)
+<a name="763"/>         WAttrib.DY: w.set_dy(v)
+<a name="764"/>         WAttrib.MIN_WIDTH: w.set_min_width(v)
+<a name="765"/>         WAttrib.MIN_HEIGHT: w.set_min_height(v)
+<a name="766"/>         WAttrib.MIN_SIZE: w.set_min_size(v[1],v[2])
+<a name="767"/>         WAttrib.MAX_WIDTH: w.set_max_width(v)
+<a name="768"/>         WAttrib.MAX_HEIGHT: w.set_max_height(v)
+<a name="769"/>         WAttrib.MAX_SIZE: w.set_max_size(v[1],v[2])
+<a name="770"/>         WAttrib.INCREMENT_WIDTH: w.set_increment_width(v)
+<a name="771"/>         WAttrib.INCREMENT_HEIGHT: w.set_increment_height(v)
+<a name="772"/>         WAttrib.INCREMENT_SIZE: w.set_increment_size(v[1],v[2])
+<a name="773"/>         WAttrib.BASE_WIDTH: w.set_base_width(v)
+<a name="774"/>         WAttrib.BASE_HEIGHT: w.set_base_height(v)
+<a name="775"/>         WAttrib.BASE_SIZE: w.set_base_size(v[1],v[2])
+<a name="776"/>         WAttrib.MAX_ASPECT_RATIO: w.set_max_aspect_ratio(v)
+<a name="777"/>         WAttrib.MIN_ASPECT_RATIO: w.set_min_aspect_ratio(v)
+<a name="778"/>      }
+<a name="779"/>   }
+<a name="780"/>   w.erase_area()
+<a name="781"/>   if v := member(t, WAttrib.CANVAS) then
+<a name="782"/>      w.set_canvas(v) | runerr(&amp;why, v)
+<a name="783"/>   return w
+<a name="784"/>end
+<a name="785"/>
+<a name="786"/>#
+<a name="787"/># Apply just the context attributes (except `dx` and `dy`) from table
+<a name="788"/># `t` to `Window` w.
+<a name="789"/>#
+<a name="790"/>procedure apply_context_table(w, t)
+<a name="791"/>   local e, v
+<a name="792"/>   every e := !sort(t) do {
+<a name="793"/>      v := e[2]
+<a name="794"/>      case e[1] of {
+<a name="795"/>         WAttrib.FG: w.set_fg(v)
+<a name="796"/>         WAttrib.BG: w.set_bg(v)
+<a name="797"/>         WAttrib.DRAW_OP: w.set_draw_op(v)
+<a name="798"/>         WAttrib.FONT: w.set_font(v)
+<a name="799"/>         WAttrib.LEADING: w.set_leading(v)
+<a name="800"/>         WAttrib.LINE_WIDTH: w.set_line_width(v)
+<a name="801"/>         WAttrib.LINE_END: w.set_line_end(v)
+<a name="802"/>         WAttrib.LINE_JOIN: w.set_line_join(v)
+<a name="803"/>         WAttrib.PATTERN: w.set_pattern(v)
+<a name="804"/>         WAttrib.MASK: w.set_mask(v)
+<a name="805"/>      }
+<a name="806"/>   }
+<a name="807"/>   return w
+<a name="808"/>end
+<a name="809"/>
+<a name="810"/>#
+<a name="811"/># Return a clone of `Window` w, with additional context attributes
+<a name="812"/># from table `t` applied.
+<a name="813"/>#
+<a name="814"/>procedure clone_win_with(w, t)
+<a name="815"/>   return apply_context_table(w.clone(), t)
+<a name="816"/>end
+<a name="817"/>
+<a name="818"/>#
+<a name="819"/># Return a new `Window` which shares just the canvas of `w`, its `dx`
+<a name="820"/># and `dy` offset, and context attributes from table `t`.
+<a name="821"/>#
+<a name="822"/>procedure fresh_clone_win_with(w, t)
+<a name="823"/>   local wt
+<a name="824"/>   return use {
+<a name="825"/>      wt := new_win(w.get_display()),
+<a name="826"/>      {
+<a name="827"/>         wt.set_dx(w.get_dx()).set_dy(w.get_dy())
+<a name="828"/>         apply_context_table(w.couple(wt), t)
+<a name="829"/>      }
+<a name="830"/>   }
+<a name="831"/>end
+<a name="832"/>
+<a name="833"/>#
+<a name="834"/># Produce a string which is an initial substring of s, but tries to
+<a name="835"/># fit into n pixels of width.  If truncation takes place, the result
+<a name="836"/># ends in "...".
+<a name="837"/>#
+<a name="838"/>procedure limit_text(W, s, n)
+<a name="839"/>   local i, t
+<a name="840"/>   t := s
+<a name="841"/>   i := *s
+<a name="842"/>   while i &gt; 0 &amp; W.text_width(t) &gt; n do {
+<a name="843"/>      t := s[1:i] || "..."
+<a name="844"/>      i -:= 1
+<a name="845"/>   }
+<a name="846"/>   return t
+<a name="847"/>end
+<a name="848"/>
+<a name="849"/>#
+<a name="850"/># Given a string, font and width, return a `GridPaint` format string
+<a name="851"/># which splits the string up into multiple lines broken at the given
+<a name="852"/># width.
+<a name="853"/>#
+<a name="854"/>procedure split_string(W, s, f, n)
+<a name="855"/>   local w, l, r
+<a name="856"/>   use {
+<a name="857"/>      W := W.clone(),
+<a name="858"/>      {
+<a name="859"/>         W.set_font(f)
+<a name="860"/>         r := ".cell\n.x_ialign l\n"
+<a name="861"/>         l := ""
+<a name="862"/>         every w := words(s) do {
+<a name="863"/>            if *l &gt; 0 then
+<a name="864"/>               l ||:= " "
+<a name="865"/>            l ||:= w
+<a name="866"/>            if W.text_width(l) &gt; n then {
+<a name="867"/>               r ||:= l || "\n.br\n"
+<a name="868"/>               l := ""
+<a name="869"/>            }
+<a name="870"/>         }
+<a name="871"/>         if *l &gt; 0 then
+<a name="872"/>            r ||:= l || "\n.br\n"
+<a name="873"/>      }
+<a name="874"/>   }
+<a name="875"/>   return r
+<a name="876"/>end
+<a name="877"/>
+<a name="878"/>#
+<a name="879"/># Given a Window W, string/ucs s and pixel offset d, find the
+<a name="880"/># appropriate corresponding cursor position.
+<a name="881"/>#
+<a name="882"/>procedure find_cursor_pos(W, s, d)
+<a name="883"/>   local l, r, m, t1, t2, t3
+<a name="884"/>   l := 1
+<a name="885"/>   r := *s + 1
+<a name="886"/>   while l &lt;= r do {
+<a name="887"/>      m := (l + r) / 2
+<a name="888"/>      t2 := W.text_width(s[1:m])
+<a name="889"/>      if m &gt; 1 &amp;
+<a name="890"/>         t1 := W.text_width(s[1:m - 1]) &amp;
+<a name="891"/>         d &lt;= (t1 + t2) / 2
+<a name="892"/>      then
+<a name="893"/>         r := m - 1
+<a name="894"/>      else if m &lt; *s + 1 &amp;
+<a name="895"/>         t3 := W.text_width(s[1:m + 1]) &amp;
+<a name="896"/>         d &gt; (t2 + t3) / 2
+<a name="897"/>      then
+<a name="898"/>         l := m + 1
+<a name="899"/>      else
+<a name="900"/>         return m
+<a name="901"/>   }
+<a name="902"/>   syserr("Loop exit in find_cursor_pos()")
+<a name="903"/>end
+<a name="904"/>
+<a name="905"/>#
+<a name="906"/># Helpful mixin-style class for a `Component` which has a horizontal
+<a name="907"/># or vertical orientation.
+<a name="908"/>#
+<a name="909"/>abstract class HasOrientation()
+<a name="910"/>   public 
+<a name="911"/>      is_horizontal_flag
+<a name="912"/>
+<a name="913"/>   #
+<a name="914"/>   # Configure the orientation.
+<a name="915"/>   #
+<a name="916"/>   public set_is_horizontal(s)
+<a name="917"/>      self.is_horizontal_flag := need_flag(s)
+<a name="918"/>      link
+<a name="919"/>   end
+<a name="920"/>end
+<a name="921"/>
+<a name="922"/>#
+<a name="923"/># Helpful mixin-style class for a `Component` which has an optional
+<a name="924"/># wheel capability.
+<a name="925"/>#
+<a name="926"/>abstract class HasUseWheel(Connectable)
+<a name="927"/>   public
+<a name="928"/>      wheel_listeners
+<a name="929"/>
+<a name="930"/>   public abstract handle_wheel_up(e)
+<a name="931"/>
+<a name="932"/>   public abstract handle_wheel_down(e)
+<a name="933"/>
+<a name="934"/>   public handle_wheel_left(e)
+<a name="935"/>      handle_wheel_up(e)
+<a name="936"/>   end
+<a name="937"/>
+<a name="938"/>   public handle_wheel_right(e)
+<a name="939"/>      handle_wheel_down(e)
+<a name="940"/>   end
+<a name="941"/>   
+<a name="942"/>   public set_use_wheel(s)
+<a name="943"/>      need_flag(s)
+<a name="944"/>      every (!\wheel_listeners).disconnect()
+<a name="945"/>      wheel_listeners := if /s then
+<a name="946"/>         &amp;null
+<a name="947"/>      else
+<a name="948"/>         [connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener,
+<a name="949"/>          connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener,
+<a name="950"/>          connect(handle_wheel_left, Event.MOUSE_WHEEL_LEFT).last_listener,
+<a name="951"/>          connect(handle_wheel_right, Event.MOUSE_WHEEL_RIGHT).last_listener]
+<a name="952"/>      link
+<a name="953"/>   end
+<a name="954"/>end
+<a name="955"/>
+<a name="956"/>#
+<a name="957"/># This is a Dialog whose only purpose is to retrieve a given selection.
+<a name="958"/># For example :-
+<a name="959"/># ~
+<a name="960"/>#   d := GetSelection(Selection.CLIPBOARD).show_modal()
+<a name="961"/>#   ... the clipboard is now stored in d.result (which may be null).
+<a name="962"/># ~
+<a name="963"/>class GetSelection(Dialog)
+<a name="964"/>   private readable
+<a name="965"/>      # The data result, which may be &amp;null, indicating failure.
+<a name="966"/>      result,
+<a name="967"/>      # The type of the result.
+<a name="968"/>      type
+<a name="969"/>   private
+<a name="970"/>      selection,
+<a name="971"/>      target_types
+<a name="972"/>
+<a name="973"/>   # Set the target types (a list), which by default is :-
+<a name="974"/>   # ~
+<a name="975"/>   #   [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET]
+<a name="976"/>   # ~
+<a name="977"/>   public set_target_types(l)
+<a name="978"/>      self.target_types := l
+<a name="979"/>      link
+<a name="980"/>   end
+<a name="981"/>
+<a name="982"/>   # Set the target selection.  The default is Selection.CLIPBOARD.
+<a name="983"/>   #
+<a name="984"/>   public set_selection(sel)
+<a name="985"/>      self.selection := sel
+<a name="986"/>      link
+<a name="987"/>   end
+<a name="988"/>
+<a name="989"/>   private respond(target_type, data, e)
+<a name="990"/>      result := data
+<a name="991"/>      type := target_type
+<a name="992"/>      dispose()
+<a name="993"/>   end
+<a name="994"/>
+<a name="995"/>   public override show()
+<a name="996"/>      Dialog.show()
+<a name="997"/>      # Now we have an underlying window, we can request the selection.
+<a name="998"/>      request_selection(selection,
+<a name="999"/>                        target_types,
+<a name="1000"/>                        respond)
+<a name="1001"/>      link
+<a name="1002"/>   end
+<a name="1003"/>
+<a name="1004"/>   # Create an instance, optionally specifying selection and target types.
+<a name="1005"/>   #
+<a name="1006"/>   public override new(selection, target_types)
+<a name="1007"/>      Dialog.new()
+<a name="1008"/>      set_canvas("withdrawn")
+<a name="1009"/>      set_size(100, 100)
+<a name="1010"/>      /selection := Selection.CLIPBOARD
+<a name="1011"/>      /target_types := [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET]
+<a name="1012"/>      set_selection(selection)
+<a name="1013"/>      set_target_types(target_types)
+<a name="1014"/>      return
+<a name="1015"/>   end
+<a name="1016"/>end
+<a name="1017"/>
+<a name="1018"/>#
+<a name="1019"/># This standardizes a toolbar button.  If the button `b` is an
+<a name="1020"/># `IconButton` or a `MenuButton`, then this procedure will try to
+<a name="1021"/># replace its `Paint` in three ways :-
+<a name="1022"/>#   1. if `icon` is given, then with the matching Xdg icon with that
+<a name="1023"/>#      name, appropriately resized;
+<a name="1024"/>#   2. if `svg` is given (it should be an `ImageCache` key), then with
+<a name="1025"/>#      the corresponding svg image, appropriately scaled;
+<a name="1026"/>#   3. if the `Paint` has an `ImageCache` key, then with a resized
+<a name="1027"/>#      version of that image, if necessary.
+<a name="1028"/># Finally, `b`'s size is set to the standard toolbar icon size.
+<a name="1029"/>#
+<a name="1030"/>procedure theme_toolbar_button(b, icon, svg)
+<a name="1031"/>   local sz
+<a name="1032"/>   if is(b, IconButton) then
+<a name="1033"/>      b.set_paint(get_toolbar_theme_paint(b.paint, icon, svg))
+<a name="1034"/>   else if is(b, MenuButton) then
+<a name="1035"/>      b.menu.set_paint_mid(get_toolbar_theme_paint(b.menu.paint_mid, icon, svg))
+<a name="1036"/>   sz := Gui.TOOLBAR_ICON_SIZE + 2 * Gui.BORDER_WIDTH
+<a name="1037"/>   b.set_size(sz, sz)
+<a name="1038"/>   return b
+<a name="1039"/>end
+<a name="1040"/>
+<a name="1041"/>package procedure get_toolbar_theme_paint(paint, icon, svg)
+<a name="1042"/>   local k, sz
+<a name="1043"/>   sz := Gui.TOOLBAR_ICON_SIZE
+<a name="1044"/>   if k := (IconTheme.find_icon_and_cache(\icon, sz,, &amp;yes) |
+<a name="1045"/>            ImageCache.get_scaled_svg_key(\svg, sz, sz) |
+<a name="1046"/>            if is(paint, ImagePaint) then
+<a name="1047"/>               ImageCache.get_key_with_resize(\paint.image_cache, sz, sz))
+<a name="1048"/>   then
+<a name="1049"/>      return ImagePaint().set_cache(k)
+<a name="1050"/>end
+<a name="1051"/>
+<a name="1052"/>#
+<a name="1053"/># Return record for `range`.
+<a name="1054"/>#
+<a name="1055"/>record Range(lo, hi)
+<a name="1056"/>
+<a name="1057"/>#
+<a name="1058"/># Return the intersection of the range f1-t1 and f2-t2, or
+<a name="1059"/># fail if the ranges don't intersect, as a record
+<a name="1060"/># with lo and hi members.  Example:
+<a name="1061"/># range(2,20,10,30) = [10,20]
+<a name="1062"/># 
+<a name="1063"/>procedure range(f1, t1, f2, t2)
+<a name="1064"/>   if f1 &gt; t1 then f1 :=: t1
+<a name="1065"/>   if f2 &gt; t2 then f2 :=: t2
+<a name="1066"/>   if t1 &gt;= f2 &amp; f1 &lt;= t2 then {
+<a name="1067"/>      f1 &lt;:= f2
+<a name="1068"/>      t1 &gt;:= t2
+<a name="1069"/>      return Range(f1,t1)
+<a name="1070"/>   }
+<a name="1071"/>end
+<a name="1072"/>
+<a name="1073"/># Like `range` above, but require a result r where r.lo ~= r.hi.  This
+<a name="1074"/># is useful if the ranges represent a string slice and we want a
+<a name="1075"/># non-empty intersection.
+<a name="1076"/>#
+<a name="1077"/>procedure range1(f1, t1, f2, t2)
+<a name="1078"/>   local t
+<a name="1079"/>   if t := range(f1, t1, f2, t2) &amp; t.lo ~= t.hi then
+<a name="1080"/>      return t
+<a name="1081"/>end
+<a name="1082"/>
+<a name="1083"/>#
+<a name="1084"/># Succeed iff the range f1-t1 is wholly contained within f2-t2
+<a name="1085"/>#
+<a name="1086"/>procedure contained(f1, t1, f2, t2)
+<a name="1087"/>   if f2 &gt; t2 then f2 :=: t2
+<a name="1088"/>   succeed f2 &lt;= f1 &lt;= t2 &amp; f2 &lt;= t1 &lt;= t2
+<a name="1089"/>end
+<a name="1090"/>
+<a name="1091"/>#
+<a name="1092"/># Restrict i to be within the range f-t
+<a name="1093"/>#
+<a name="1094"/>procedure restrict(i, f, t)
+<a name="1095"/>   if f &gt; t then f :=: t
+<a name="1096"/>   i &lt;:= f
+<a name="1097"/>   i &gt;:= t
+<a name="1098"/>   return i
+<a name="1099"/>end
+<a name="1100"/>
+<a name="1101"/># This provides some logic to text components on whether or not their
+<a name="1102"/># cursor should blink, given that comp.should_draw_focus() has already
+<a name="1103"/># succeeded.
+<a name="1104"/>#
+<a name="1105"/>procedure dont_blink(comp)
+<a name="1106"/>   local c
+<a name="1107"/>   # If a drag is in progress, don't blink
+<a name="1108"/>   if comp.parent_dialog.get_curr_drag()  then
+<a name="1109"/>      return
+<a name="1110"/>   # If not in menu mode, blink
+<a name="1111"/>   c := comp.parent_dialog.get_menu_mode() | fail
+<a name="1112"/>   # If this component is the menu mode (eg SuggestField), blink
+<a name="1113"/>   if c === comp then
+<a name="1114"/>      fail
+<a name="1115"/>   # If this component is a child of the menu mode's popup (eg a textfield in
+<a name="1116"/>   # a DropDown's popup, such as Calendar), blink.
+<a name="1117"/>   if c.gen_popup_components() === comp.gen_parents() then
+<a name="1118"/>      fail
+<a name="1119"/>   # Otherwise, don't blink.
+<a name="1120"/>   return
+<a name="1121"/>end
+<a name="1122"/>
+<a name="1123"/>#
+<a name="1124"/># Try to run the imagemagick convert program with the given (optional)
+<a name="1125"/># standard input `Stream` and argument list.
+<a name="1126"/>#
+<a name="1127"/># On success, the standard output is collected and returned.
+<a name="1128"/>#
+<a name="1129"/>procedure run_convert(stdin, args)
+<a name="1130"/>   local p, r
+<a name="1131"/>   static ok
+<a name="1132"/>   initial {
+<a name="1133"/>$if _PNG &amp; _UNIX &amp; ~_CYGWIN
+<a name="1134"/>      ok := Yes{ Files.find_exe("convert") }
+<a name="1135"/>$endif
+<a name="1136"/>   }
+<a name="1137"/>   if /ok then
+<a name="1138"/>      return error("Convert not available")
+<a name="1139"/>   if r := use { 
+<a name="1140"/>      p := FilterInputStream(stdin,
+<a name="1141"/>                             "convert",
+<a name="1142"/>                             args),
+<a name="1143"/>      p.read_all()
+<a name="1144"/>   } &amp; p.succeeded() then
+<a name="1145"/>      return r
+<a name="1146"/>end
+<a name="1147"/>
+<a name="1148"/>#
+<a name="1149"/># Zoom (scale) the contents of `Pixels` `src` to an new window of size
+<a name="1150"/># `w` x `h`, and return that window.
+<a name="1151"/>#
+<a name="1152"/>procedure zoom_pix(src, w, h)
+<a name="1153"/>   local q
+<a name="1154"/>   need_Pixels(src)
+<a name="1155"/>   w := need_integer(w, 1)
+<a name="1156"/>   h := need_integer(h, 1)
+<a name="1157"/>   return if src.get_width() = w &amp; src.get_height() = h then
+<a name="1158"/>      open_image(src)
+<a name="1159"/>   else use {
+<a name="1160"/>      q := Pixels(w, h, Window.FORMAT),
+<a name="1161"/>      {
+<a name="1162"/>         src.scale_to(,,,, q)
+<a name="1163"/>         open_image(q)
+<a name="1164"/>      }
+<a name="1165"/>   }
+<a name="1166"/>end
+<a name="1167"/>
+<a name="1168"/>#
+<a name="1169"/># This calls `Window(d)`, but causes a runtime error on failure, in
+<a name="1170"/># order to simplify error handling in the caller.
+<a name="1171"/>#
+<a name="1172"/>procedure new_win(d)
+<a name="1173"/>   return Window(d) | runerr("Couldn't open window: " || &amp;why)
+<a name="1174"/>end
+<a name="1175"/>
+<a name="1176"/>#
+<a name="1177"/># Convenient method to open an image and return a hidden window with
+<a name="1178"/># its contents.  A runtime error occurs if the window couldn't be
+<a name="1179"/># opened.  Otherwise, failure occurs if `img` is a string which
+<a name="1180"/># couldn't be interpreted as an image.  If `img` is a `Pixels`, this
+<a name="1181"/># procedure should never fail.
+<a name="1182"/>#
+<a name="1183"/># :Parameters :
+<a name="1184"/># :  `img` - the image
+<a name="1185"/>#
+<a name="1186"/>procedure open_image(img)
+<a name="1187"/>   local w, t
+<a name="1188"/>   w := new_win()
+<a name="1189"/>   unless use {
+<a name="1190"/>      t := w.clone(),
+<a name="1191"/>      t.set_draw_op("source").set_image(img)
+<a name="1192"/>   } then {
+<a name="1193"/>      w.close()
+<a name="1194"/>      fail
+<a name="1195"/>   }
+<a name="1196"/>   return w
+<a name="1197"/>end
+<a name="1198"/>
+<a name="1199"/>#
+<a name="1200"/># A helper class for caching a cloned window.
+<a name="1201"/>#
+<a name="1202"/>abstract class CachedClone(HasClose)
+<a name="1203"/>   private
+<a name="1204"/>      cw,        # The current cloned window
+<a name="1205"/>      wt,        # The corresponding source window
+<a name="1206"/>      ct         # The corresponding clip rectangle (or &amp;null)
+<a name="1207"/>
+<a name="1208"/>   #
+<a name="1209"/>   # This method must be implemented to create the cloned window.
+<a name="1210"/>   # This method should not be invoked directly; rather `get_clone()`
+<a name="1211"/>   # should be used.
+<a name="1212"/>   #
+<a name="1213"/>   # :Parameters :
+<a name="1214"/>   # :  `W` - the base window to clone from
+<a name="1215"/>   #
+<a name="1216"/>   protected abstract make_clone(W)
+<a name="1217"/>
+<a name="1218"/>   #
+<a name="1219"/>   # Return a clone of `W`.  A fresh clone will only be created if
+<a name="1220"/>   # necessary.  If `ignore_clip` is set, then differences in the clip
+<a name="1221"/>   # regions of the cache and `W` won't cause a fresh clone to be made.
+<a name="1222"/>   #
+<a name="1223"/>   public get_clone(W, ignore_clip)
+<a name="1224"/>      local cc, f
+<a name="1225"/>      if W === wt then {
+<a name="1226"/>         if /ignore_clip then {
+<a name="1227"/>            cc := W.get_clip()
+<a name="1228"/>            equals(ct, cc) | (f := &amp;yes)
+<a name="1229"/>         }
+<a name="1230"/>      } else {
+<a name="1231"/>         cc := W.get_clip()
+<a name="1232"/>         f := &amp;yes
+<a name="1233"/>      }
+<a name="1234"/>      if \f then {
+<a name="1235"/>         wt := W
+<a name="1236"/>         ct := cc
+<a name="1237"/>         (\cw).close()
+<a name="1238"/>         cw := make_clone(W) | runerr("make_clone() failed unexpectedly")
+<a name="1239"/>      }
+<a name="1240"/>      return .cw
+<a name="1241"/>   end
+<a name="1242"/>
+<a name="1243"/>   #
+<a name="1244"/>   # This must be invoked to dispose of the cached clone window.
+<a name="1245"/>   #
+<a name="1246"/>   public override close()
+<a name="1247"/>      (\cw).close()
+<a name="1248"/>      wt := ct := cw := &amp;null
+<a name="1249"/>   end
+<a name="1250"/>end
+</pre></body></html>

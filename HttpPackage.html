@@ -26,7 +26,7 @@
 </nav>
 <h1 id="introduction">Introduction</h1>
 <p>This package contains a HTTP client class, and related other classes.</p>
-<p>The central class is <a href="http://objecticon.sourceforge.net/libref/index.html?http.HttpClient.html"><code>http.HttpClient</code></a>. Request objects are created (<a href="http://objecticon.sourceforge.net/libref/index.html?http.HttpRequest.html"><code>http.HttpRequest</code></a>), passed to the client, and responses received (<a href="http://objecticon.sourceforge.net/libref/index.html?http.HttpResponse.html"><code>http.HttpResponse</code></a>).</p>
+<p>The central class is <a href="libref/index.html?http.HttpClient.html"><code>http.HttpClient</code></a>. Request objects are created (<a href="libref/index.html?http.HttpRequest.html"><code>http.HttpRequest</code></a>), passed to the client, and responses received (<a href="libref/index.html?http.HttpResponse.html"><code>http.HttpResponse</code></a>).</p>
 <p>This is illustrated in the following simple program :-</p>
 <p><a href="http.icn">Download http.icn</a></p>
 <pre><code>import net, http, io, lang
@@ -90,7 +90,7 @@ object http.HttpResponse#2(
       )
 )</code></pre>
 <h1 id="example-programs">Example programs</h1>
-<p>The <code>examples</code> directory contains two programs which use <code>HttpClient</code>. The first is <code>geturl</code>, which is a command-line tool to retrieve URLs. The second is <code>browser</code>, which is a simple web browser. It makes use of <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.browser.Browser.html"><code>ipl.browser.Browser</code></a>, which uses multiple asynchronous <code>HttpClient</code>s (each running in an <a href="http://objecticon.sourceforge.net/libref/index.html?io.Task.html"><code>io.Task</code></a>) to download a particular web page and its images.</p>
+<p>The <code>examples</code> directory contains two programs which use <code>HttpClient</code>. The first is <code>geturl</code>, which is a command-line tool to retrieve URLs. The second is <code>browser</code>, which is a simple web browser. It makes use of <a href="libref/index.html?ipl.browser.Browser.html"><code>ipl.browser.Browser</code></a>, which uses multiple asynchronous <code>HttpClient</code>s (each running in an <a href="libref/index.html?io.Task.html"><code>io.Task</code></a>) to download a particular web page and its images.</p>
 <a href="index.html">Contents</a>
 </body>
 </html>

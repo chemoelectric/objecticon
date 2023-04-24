@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>EmptyBorder</title></head><body>
+<h1>EmptyBorder</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.ABorder.html" target="displayFrame">gui.ABorder</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A border with an arbitrary width, that is just empty space (ie
+nothing is drawn).  The default l/r insets are Gui.X_INSET and t/b
+insets Gui.Y_INSET.
+<p/><a href="gui-borders.icn.html#98" target="displayFrame">Source - borders.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Insets.html">gui.Insets</a>
+<a href="gui.ABorder.html">gui.ABorder</a>
+<a href="gui.EmptyBorder.html">gui.EmptyBorder</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Insets</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Insets.html#get_b_inset">get_b_inset()</a>
+<a href="gui.Insets.html#get_inner_rect">get_inner_rect()</a>
+<a href="gui.Insets.html#get_l_inset">get_l_inset()</a>
+<a href="gui.Insets.html#get_r_inset">get_r_inset()</a>
+<a href="gui.Insets.html#get_t_inset">get_t_inset()</a>
+<a href="gui.Insets.html#get_total_height">get_total_height()</a>
+<a href="gui.Insets.html#get_total_width">get_total_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Insets</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Insets.html#b_inset">b_inset</a>
+<a href="gui.Insets.html#l_inset">l_inset</a>
+<a href="gui.Insets.html#r_inset">r_inset</a>
+<a href="gui.Insets.html#t_inset">t_inset</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.ABorder</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ABorder.html#draw_dashed_rect">draw_dashed_rect()</a>
+<a href="gui.ABorder.html#draw_down">draw_down()</a>
+<a href="gui.ABorder.html#draw_down_rect">draw_down_rect()</a>
+<a href="gui.ABorder.html#draw_focus_rect">draw_focus_rect()</a>
+<a href="gui.ABorder.html#draw_highlight_rect">draw_highlight_rect()</a>
+<a href="gui.ABorder.html#draw_rect">draw_rect()</a>
+<a href="gui.ABorder.html#draw_rev">draw_rev()</a>
+<a href="gui.ABorder.html#draw_rev_rect">draw_rev_rect()</a>
+<a href="gui.ABorder.html#finally">finally()</a>
+<a href="gui.ABorder.html#float">float()</a>
+<a href="gui.ABorder.html#set_align">set_align()</a>
+<a href="gui.ABorder.html#set_x_align">set_x_align()</a>
+<a href="gui.ABorder.html#set_y_align">set_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#draw">draw()</a>
+<a href="#draw_dashed">draw_dashed()</a>
+<a href="#draw_focus">draw_focus()</a>
+<a href="#draw_highlight">draw_highlight()</a>
+<a href="#initially">initially()</a>
+<a href="#new">new()</a>
+<a href="#set_b_inset">set_b_inset()</a>
+<a href="#set_focus_inset">set_focus_inset()</a>
+<a href="#set_insets">set_insets()</a>
+<a href="#set_l_inset">set_l_inset()</a>
+<a href="#set_r_inset">set_r_inset()</a>
+<a href="#set_t_inset">set_t_inset()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#focus_inset">focus_inset</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="draw"/>
+<h3>draw(W, x, y, w, h)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ABorder.html#draw">draw()</a> in <a href="gui.ABorder.html" target="displayFrame">gui.ABorder</a></dd>
+<dd>
+<p/><a href="gui-borders.icn.html#109" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_dashed"/>
+<h3>draw_dashed(W, x, y, w, h, t)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ABorder.html#draw_dashed">draw_dashed()</a> in <a href="gui.ABorder.html" target="displayFrame">gui.ABorder</a></dd>
+<dd>
+<p/><a href="gui-borders.icn.html#154" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_focus"/>
+<h3>draw_focus(W, x, y, w, h, t)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ABorder.html#draw_focus">draw_focus()</a> in <a href="gui.ABorder.html" target="displayFrame">gui.ABorder</a></dd>
+<dd>
+<p/><a href="gui-borders.icn.html#148" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_highlight"/>
+<h3>draw_highlight(W, x, y, w, h, t)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ABorder.html#draw_highlight">draw_highlight()</a> in <a href="gui.ABorder.html" target="displayFrame">gui.ABorder</a></dd>
+<dd>
+<p/><a href="gui-borders.icn.html#160" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially(c)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ABorder.html#initially">initially()</a> in <a href="gui.ABorder.html" target="displayFrame">gui.ABorder</a></dd>
+<dd>
+<p/><a href="gui-borders.icn.html#106" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ABorder.html#new">new()</a> in <a href="gui.ABorder.html" target="displayFrame">gui.ABorder</a></dd>
+<dd>
+<p/><a href="gui-borders.icn.html#166" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_b_inset"/>
+<h3>set_b_inset(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#135" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_focus_inset"/>
+<h3>set_focus_inset(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the inset between the notional edge of the border and any
+drawn focus, dashed and highlight rectangles.  By default zero.
+<p/><a href="gui-borders.icn.html#140" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_insets"/>
+<h3>set_insets(l, r, t, b)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#112" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_l_inset"/>
+<h3>set_l_inset(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#120" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_r_inset"/>
+<h3>set_r_inset(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#125" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_t_inset"/>
+<h3>set_t_inset(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#130" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="focus_inset"/>
+<h3>focus_inset</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-borders.icn.html#103" target="displayFrame">Source - borders.icn </a>
+</dd>
+</dl><hr>
+</body></html>

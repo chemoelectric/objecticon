@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lmap</title></head><body>
+<h1>lmap(L1, L2, L3)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.lists-package.html" target="listFrame">ipl.lists</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+<u>About List Mapping</u>
+<p/>
+The procedure <code><a href="ipl.lists.lmap.html" target="displayFrame">lmap(L1,L2,L3)</a></code> maps elements of <code>L1</code> according to
+<code>L2</code> and <code>L3</code>.  This procedure is the analog for lists of the
+built-in string-mapping function <code>map(s1,s2,s3)</code>. Elements in <code>L1</code>
+that are the same as elements in <code>L2</code> are mapped into the
+corresponding elements of <code>L3</code>. For example, given the lists
+<pre>
+   L1 := [1,2,3,4]
+   L2 := [4,3,2,1]
+   L3 := ["a","b","c","d"]
+</pre>
+then
+<pre>
+   lmap(L1,L2,L3)
+</pre>
+produces a new list
+<pre>
+   ["d","c","b","a"]
+</pre>
+Lists that are mapped can have any kinds of elements. The
+operation
+<pre>
+   x === y
+</pre>
+is used to determine if elements <code>x</code> and <code>y</code> are equivalent.
+<p/>
+All cases in <code><a href="ipl.lists.lmap.html" target="displayFrame">lmap</a></code> are handled as they are in <code>map</code>, except
+that no defaults are provided for omitted arguments. As with <code>map</code>,
+<code><a href="ipl.lists.lmap.html" target="displayFrame">lmap</a></code> can be used for transposition as well as substitution.
+<p/>
+<b>Warning:</b>
+<p/>
+If <code><a href="ipl.lists.lmap.html" target="displayFrame">lmap</a></code> is called with the same lists <code>L2</code> and <code>L3</code> as in the
+immediately preceding call, the same mapping is performed, even if
+the values in <code>L2</code> and <code>L3</code> have been changed. This improves
+performance, but it may cause unexpected effects.
+<p/>
+This "caching" of the mapping table based on <code>L2</code> and <code>L3</code>
+can be easily removed to avoid this potential problem.
+<p/><a href="ipl.lists-lists.icn.html#428" target="displayFrame">Source - lists.icn </a>
+<p/>
+</body></html>

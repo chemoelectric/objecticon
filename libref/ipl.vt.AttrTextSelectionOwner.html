@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>AttrTextSelectionOwner</title></head><body>
+<h1>AttrTextSelectionOwner</h1>
+<dl>
+<dt>Type :</dt><dd>package abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.SelectionOwner.html" target="displayFrame">gui.SelectionOwner</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.vt.VtPrimarySelectionOwner.html">ipl.vt.VtPrimarySelectionOwner</a><br>
+<a href="ipl.vt.StaticAttrTextSelectionOwner.html">ipl.vt.StaticAttrTextSelectionOwner</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.vt-package.html" target="listFrame">ipl.vt</a></dd>
+</dl><p/>
+<p/><a href="ipl.vt-vt.icn.html#169" target="displayFrame">Source - vt.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.SelectionOwner.html">gui.SelectionOwner</a>
+<a href="ipl.vt.AttrTextSelectionOwner.html">ipl.vt.AttrTextSelectionOwner</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.SelectionOwner</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.SelectionOwner.html#get_timestamp">get_timestamp()</a>
+<a href="gui.SelectionOwner.html#lost_ownership">lost_ownership()</a>
+<a href="gui.SelectionOwner.html#set_timestamp">set_timestamp()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.SelectionOwner</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.SelectionOwner.html#timestamp">timestamp</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_content">get_content()</a>
+<a href="#get_html">get_html()</a>
+<a href="#get_list">get_list()</a>
+<a href="#get_targets">get_targets()</a>
+<a href="#get_text">get_text()</a>
+<a href="#html_colour">html_colour()</a>
+<a href="#html_segment">html_segment()</a>
+<a href="#note">note()</a>
+<a href="#pop_item">pop_item()</a>
+<a href="#pop_to">pop_to()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#attr">attr</a>
+<a href="#rs">rs</a>
+<a href="#stk">stk</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_content"/>
+<h3>get_content(target)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.SelectionOwner.html#get_content">get_content()</a> in <a href="gui.SelectionOwner.html" target="displayFrame">gui.SelectionOwner</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#307" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_html"/>
+<h3>get_html()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#282" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_list"/>
+<h3>get_list()</h3>
+protected abstract<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#175" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_targets"/>
+<h3>get_targets()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.SelectionOwner.html#get_targets">get_targets()</a> in <a href="gui.SelectionOwner.html" target="displayFrame">gui.SelectionOwner</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#303" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_text"/>
+<h3>get_text()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#177" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="html_colour"/>
+<h3>html_colour(s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#189" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="html_segment"/>
+<h3>html_segment(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#220" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="note"/>
+<h3>note(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#216" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="pop_item"/>
+<h3>pop_item()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#199" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="pop_to"/>
+<h3>pop_to(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#195" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="attr"/>
+<h3>attr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#171" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="rs"/>
+<h3>rs</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#172" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="stk"/>
+<h3>stk</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#173" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,1581 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>textflow.icn</title></head><body><pre>
+<a name="1"/>package ipl.browser
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   gui,
+<a name="5"/>   util,
+<a name="6"/>   net,
+<a name="7"/>   lang,
+<a name="8"/>   graphics(Key),
+<a name="9"/>   ipl.strings,
+<a name="10"/>   ipl.tables(inserts),
+<a name="11"/>   ipl.pdco(String)
+<a name="12"/>
+<a name="13"/>abstract class HasAscent()
+<a name="14"/>   public abstract get_ascent(dw, dh)
+<a name="15"/>end
+<a name="16"/>
+<a name="17"/>abstract class HasMaxWidth()
+<a name="18"/>   public abstract get_max_width()
+<a name="19"/>end
+<a name="20"/>
+<a name="21"/>abstract class TextFlowCmd()
+<a name="22"/>   public const attr
+<a name="23"/>   package blob_width
+<a name="24"/>
+<a name="25"/>   public new(attr)
+<a name="26"/>      self.attr := attr
+<a name="27"/>      return
+<a name="28"/>   end
+<a name="29"/>end
+<a name="30"/>
+<a name="31"/>class ComponentCmd(TextFlowCmd)
+<a name="32"/>   public const c, align
+<a name="33"/>
+<a name="34"/>   public override new(c, attr, align)
+<a name="35"/>      self.c := c
+<a name="36"/>      self.attr := attr
+<a name="37"/>      self.align := align
+<a name="38"/>      return
+<a name="39"/>   end
+<a name="40"/>end
+<a name="41"/>
+<a name="42"/>class TextCmd(TextFlowCmd)
+<a name="43"/>   public const s
+<a name="44"/>
+<a name="45"/>   public override new(s, attr)
+<a name="46"/>      self.s := s
+<a name="47"/>      self.attr := attr
+<a name="48"/>      return
+<a name="49"/>   end
+<a name="50"/>end
+<a name="51"/>
+<a name="52"/>class WbrCmd(TextFlowCmd)
+<a name="53"/>end
+<a name="54"/>
+<a name="55"/>class NamedAnchorCmd(TextFlowCmd)
+<a name="56"/>   public const
+<a name="57"/>      name
+<a name="58"/>
+<a name="59"/>   public override new(name, attr)
+<a name="60"/>      self.name := name
+<a name="61"/>      self.attr := attr
+<a name="62"/>      return
+<a name="63"/>   end
+<a name="64"/>end
+<a name="65"/>
+<a name="66"/>class NewRowCmd(TextFlowCmd) end
+<a name="67"/>class ParaCmd(TextFlowCmd) end
+<a name="68"/>class SupStartCmd(TextFlowCmd) end
+<a name="69"/>class SupEndCmd(TextFlowCmd) end
+<a name="70"/>class SubStartCmd(TextFlowCmd) end
+<a name="71"/>class SubEndCmd(TextFlowCmd) end
+<a name="72"/>
+<a name="73"/>class BreakCmd(TextFlowCmd)
+<a name="74"/>   public const clear
+<a name="75"/>
+<a name="76"/>   public override new(clear, attr)
+<a name="77"/>      self.clear := clear
+<a name="78"/>      self.attr := attr
+<a name="79"/>      return
+<a name="80"/>   end
+<a name="81"/>end
+<a name="82"/>
+<a name="83"/>class TextOut(Rect)
+<a name="84"/>   public const s, attr, ascent, descent
+<a name="85"/>   package l_s     # Cached value of map(s)
+<a name="86"/>
+<a name="87"/>   public override new(attr, s, ascent, descent, w, h)
+<a name="88"/>      self.attr := attr
+<a name="89"/>      self.s := s
+<a name="90"/>      self.ascent := ascent
+<a name="91"/>      self.descent := descent
+<a name="92"/>      self.w := w
+<a name="93"/>      self.h := h
+<a name="94"/>      return
+<a name="95"/>   end
+<a name="96"/>end
+<a name="97"/>
+<a name="98"/>class CompOut(Rect)
+<a name="99"/>   public const c, align, attr, pw, maxw
+<a name="100"/>   public ascent, descent
+<a name="101"/>
+<a name="102"/>   public set_height_from_width()
+<a name="103"/>      h := c.get_preferred_height(w)
+<a name="104"/>      h &lt;:= integer(c.get_constraint("fix_h"))
+<a name="105"/>      link
+<a name="106"/>   end
+<a name="107"/>
+<a name="108"/>   public override new(attr, c, align, pw, maxw)
+<a name="109"/>      self.attr := attr
+<a name="110"/>      self.c := c
+<a name="111"/>      self.align := align
+<a name="112"/>      self.pw := pw
+<a name="113"/>      self.maxw := maxw
+<a name="114"/>      return
+<a name="115"/>   end
+<a name="116"/>end
+<a name="117"/>
+<a name="118"/>class TextSelection()
+<a name="119"/>   public const textout, textflow, i, j, w_off, w_sub
+<a name="120"/>
+<a name="121"/>   public get_bounds()
+<a name="122"/>      return Rect(textflow.x + textflow.border.get_l_inset() + textout.x + w_off,
+<a name="123"/>                  textflow.y + textflow.border.get_t_inset() + textflow.y_off + textout.y,
+<a name="124"/>                  w_sub,
+<a name="125"/>                  textout.h)
+<a name="126"/>   end
+<a name="127"/>
+<a name="128"/>   public new(textout, textflow, i, j, w_off, w_sub)
+<a name="129"/>      self.textout := textout
+<a name="130"/>      self.textflow := textflow
+<a name="131"/>      self.i := i
+<a name="132"/>      self.j := j
+<a name="133"/>      self.w_off := w_off
+<a name="134"/>      self.w_sub := w_sub
+<a name="135"/>      return
+<a name="136"/>   end
+<a name="137"/>end
+<a name="138"/>
+<a name="139"/>#
+<a name="140"/># Intermediate results during a search
+<a name="141"/>#
+<a name="142"/>class SearchAhead()
+<a name="143"/>   public const textout, i, j
+<a name="144"/>
+<a name="145"/>   public new(textout, i, j)
+<a name="146"/>      self.textout := textout
+<a name="147"/>      self.i := i
+<a name="148"/>      self.j := j
+<a name="149"/>      return
+<a name="150"/>   end
+<a name="151"/>end
+<a name="152"/>
+<a name="153"/>#
+<a name="154"/># Represents one result of a search.  The Point element is for sorting
+<a name="155"/># the results into order.  The `memb` member is the set of
+<a name="156"/># `TextSelection`s, one for each word (or part of word) in the search.
+<a name="157"/>#
+<a name="158"/>class SearchMatch(Point)
+<a name="159"/>   public const
+<a name="160"/>      textflow,  # owning TextFlow; all members are also in the same TextFlow.
+<a name="161"/>      memb       # set of TextSelection
+<a name="162"/>
+<a name="163"/>   # Get the bounds of all the elements in the result.
+<a name="164"/>   public get_bounds()
+<a name="165"/>      local e, t, r
+<a name="166"/>      every e := !memb do {
+<a name="167"/>         t := e.get_bounds()
+<a name="168"/>         r := (\r).union(t) | t
+<a name="169"/>      }
+<a name="170"/>      return r
+<a name="171"/>   end
+<a name="172"/>
+<a name="173"/>   public override new(textflow, x, y, memb)
+<a name="174"/>      self.textflow := textflow
+<a name="175"/>      self.x := x
+<a name="176"/>      self.y := y
+<a name="177"/>      self.memb := memb
+<a name="178"/>      return
+<a name="179"/>   end
+<a name="180"/>end
+<a name="181"/>
+<a name="182"/>class OutputRow(Rect)
+<a name="183"/>   public const l
+<a name="184"/>
+<a name="185"/>   public override new()
+<a name="186"/>      l := []
+<a name="187"/>      return
+<a name="188"/>   end
+<a name="189"/>end
+<a name="190"/>
+<a name="191"/># A point and a string, used for sorting the text selection.
+<a name="192"/>#
+<a name="193"/>class PointResult(Point)
+<a name="194"/>   public const val
+<a name="195"/>
+<a name="196"/>   public override new(x, y, val)
+<a name="197"/>      self.x := x
+<a name="198"/>      self.y := y
+<a name="199"/>      self.val := val
+<a name="200"/>      return
+<a name="201"/>   end
+<a name="202"/>end
+<a name="203"/>
+<a name="204"/>class TextFlow(Component, HasLastHighlight)
+<a name="205"/>   public const
+<a name="206"/>      input
+<a name="207"/>
+<a name="208"/>   package
+<a name="209"/>      ascent_adj
+<a name="210"/>
+<a name="211"/>   private readable
+<a name="212"/>      v_align,
+<a name="213"/>      y_off
+<a name="214"/>
+<a name="215"/>   private const
+<a name="216"/>      browser
+<a name="217"/>
+<a name="218"/>   private
+<a name="219"/>      left_comps,
+<a name="220"/>      right_comps,
+<a name="221"/>      output_comps,
+<a name="222"/>      output_rows,
+<a name="223"/>      computed_output_rows,
+<a name="224"/>      row,
+<a name="225"/>      row_x,
+<a name="226"/>      row_y,
+<a name="227"/>      row_bottom,
+<a name="228"/>      row_width,
+<a name="229"/>      row_ascent,
+<a name="230"/>      first_row_ascent,
+<a name="231"/>      row_descent,
+<a name="232"/>      baseline_off,
+<a name="233"/>      row_abs_middle_height,
+<a name="234"/>      row_abs_top_height,
+<a name="235"/>      row_abs_bottom_height,
+<a name="236"/>      max_word_w,
+<a name="237"/>      max_ll,
+<a name="238"/>      calculating,
+<a name="239"/>      calculated,
+<a name="240"/>      need_spc,
+<a name="241"/>      right_margin,
+<a name="242"/>      compute_w,
+<a name="243"/>      deferred,
+<a name="244"/>      at_new_para,
+<a name="245"/>      trim_flag,
+<a name="246"/>      def_width,
+<a name="247"/>      max_width,
+<a name="248"/>      held,               # URL held during mouse press
+<a name="249"/>      over,               # URL the mouse is over; also written to the browser's msg area
+<a name="250"/>      highlight,          # URL highlighted with alink colour.
+<a name="251"/>      last_highlight,
+<a name="252"/>      dominant_width,
+<a name="253"/>      computed_named_anchors,
+<a name="254"/>      named_anchors,
+<a name="255"/>      blob_start,
+<a name="256"/>      row_blob
+<a name="257"/>
+<a name="258"/>   public static const 
+<a name="259"/>      WHITESPACE,
+<a name="260"/>      WHITESPACE_NB,
+<a name="261"/>      PREFERRED_WIDTH,
+<a name="262"/>      MAX_WIDTH,
+<a name="263"/>      SEARCHED_CURR_COLOR,
+<a name="264"/>      SEARCHED_OTHER_COLOR,
+<a name="265"/>      MARKED_COLOR
+<a name="266"/>
+<a name="267"/>   private static init()
+<a name="268"/>      WHITESPACE := ' \t\r\n\v\f'
+<a name="269"/>      WHITESPACE_NB := ' \t\r\n\v\f\xA0'
+<a name="270"/>      PREFERRED_WIDTH := 1
+<a name="271"/>      MAX_WIDTH := 2
+<a name="272"/>      SEARCHED_CURR_COLOR := env_color("OI_TEXTFLOW_SEARCHED_CURR_COLOR") | "red 33%"
+<a name="273"/>      SEARCHED_OTHER_COLOR := env_color("OI_TEXTFLOW_SEARCHED_OTHER_COLOR") | "purple 33%"
+<a name="274"/>      MARKED_COLOR := env_color("OI_TEXTFLOW_MARKED_COLOR") | "yellow"
+<a name="275"/>   end
+<a name="276"/>
+<a name="277"/>   private compute(width)
+<a name="278"/>      local c
+<a name="279"/>      # We must compute in calculating mode before computing with a particular width, in order to set the row blobs.
+<a name="280"/>      if \width &amp; /calculated then
+<a name="281"/>         compute()
+<a name="282"/>      /width := 16r7fffffff
+<a name="283"/>      if width === compute_w then 
+<a name="284"/>         return
+<a name="285"/>      compute_w := width
+<a name="286"/>      calculating := Yes{ width = 16r7fffffff }
+<a name="287"/>      output_comps := []
+<a name="288"/>      output_rows := []
+<a name="289"/>      left_comps := []
+<a name="290"/>      right_comps := []
+<a name="291"/>      named_anchors := table()
+<a name="292"/>      row := []
+<a name="293"/>      deferred := []
+<a name="294"/>      at_new_para := &amp;yes
+<a name="295"/>      row_width := row_y := row_bottom := row_x := max_word_w := max_ll :=
+<a name="296"/>         baseline_off := row_abs_middle_height := row_abs_top_height :=
+<a name="297"/>         row_abs_bottom_height := row_ascent := row_descent := row_blob := 0
+<a name="298"/>      right_margin := compute_w
+<a name="299"/>      need_spc := first_row_ascent := blob_start := &amp;null
+<a name="300"/>      compute1()
+<a name="301"/>      while *(row | deferred) &gt; 0 do
+<a name="302"/>         new_row()
+<a name="303"/>      if \calculating then {
+<a name="304"/>         # Ensure that we have cleared any left/right images, so that
+<a name="305"/>         # we calculate max_ll correctly (which we only need if
+<a name="306"/>         # calculating).
+<a name="307"/>         until have_max() do 
+<a name="308"/>            new_row()
+<a name="309"/>
+<a name="310"/>         # Calculate default (=minimum) and max widths.
+<a name="311"/>         def_width := 0
+<a name="312"/>         every c := !input do
+<a name="313"/>            def_width &lt;:= \c.blob_width
+<a name="314"/>         every c := !output_comps do
+<a name="315"/>            def_width &lt;:= c.pw
+<a name="316"/>         def_width &lt;:= max_word_w
+<a name="317"/>         def_width +:= border.get_total_width()
+<a name="318"/>         max_width := max_ll + border.get_total_width()
+<a name="319"/>
+<a name="320"/>         calculated := &amp;yes
+<a name="321"/>      }
+<a name="322"/>   end
+<a name="323"/>
+<a name="324"/>   public set_trim(s)
+<a name="325"/>      self.trim_flag := need_flag(s)
+<a name="326"/>      link
+<a name="327"/>   end
+<a name="328"/>
+<a name="329"/>   public set_v_align(v)
+<a name="330"/>      self.v_align := v
+<a name="331"/>      link
+<a name="332"/>   end
+<a name="333"/>
+<a name="334"/>   public override reset_layout()
+<a name="335"/>      max_width := def_width := output_rows := output_comps := left_comps :=
+<a name="336"/>         calculated := named_anchors := right_comps := compute_w := &amp;null
+<a name="337"/>      every (!input).blob_width := &amp;null
+<a name="338"/>   end
+<a name="339"/>
+<a name="340"/>   public set_dominant_width(x)
+<a name="341"/>      self.dominant_width := x
+<a name="342"/>      link
+<a name="343"/>   end
+<a name="344"/>
+<a name="345"/>   public override get_default_width()
+<a name="346"/>      if dominant_width === MAX_WIDTH then
+<a name="347"/>         return get_max_width()
+<a name="348"/>      if /calculated then
+<a name="349"/>         compute()
+<a name="350"/>      return def_width
+<a name="351"/>   end
+<a name="352"/>
+<a name="353"/>   public get_max_width()
+<a name="354"/>      if dominant_width === PREFERRED_WIDTH then
+<a name="355"/>         return get_preferred_width()
+<a name="356"/>      if /calculated then
+<a name="357"/>         compute()
+<a name="358"/>      return max_width
+<a name="359"/>   end
+<a name="360"/>
+<a name="361"/>   public override get_default_height(dw)
+<a name="362"/>      local mh, co
+<a name="363"/>      dw -:= border.get_total_width()
+<a name="364"/>      compute(dw)
+<a name="365"/>      mh := if /trim_flag then row_y else row_bottom
+<a name="366"/>      every co := !left_comps | !right_comps do
+<a name="367"/>        mh &lt;:= co.y + co.h
+<a name="368"/>      return mh + border.get_total_height()
+<a name="369"/>   end
+<a name="370"/>
+<a name="371"/>   public get_ascent(dw)
+<a name="372"/>      return get_first_row_ascent(dw) + border.t_inset
+<a name="373"/>   end
+<a name="374"/>
+<a name="375"/>   public get_first_row_ascent(dw)
+<a name="376"/>      dw -:= border.get_total_width()
+<a name="377"/>      compute(dw)
+<a name="378"/>      return \first_row_ascent | 0
+<a name="379"/>   end
+<a name="380"/>
+<a name="381"/>   private compute1()
+<a name="382"/>      local cmd, font, W
+<a name="383"/>      use {
+<a name="384"/>         W := cbwin.clone(),
+<a name="385"/>         {
+<a name="386"/>            every cmd := !input do {
+<a name="387"/>               W.set_font(font ~===:= cmd.attr.font)
+<a name="388"/>               case classof(cmd) of {
+<a name="389"/>                  ComponentCmd: 
+<a name="390"/>                     compute_component(W, cmd)
+<a name="391"/>                  NewRowCmd: {
+<a name="392"/>                     # Avoid 1-pixel gap, which would be added if *row=0
+<a name="393"/>                     if *row &gt; 0 then
+<a name="394"/>                        new_row()
+<a name="395"/>                  }
+<a name="396"/>                  ParaCmd: {
+<a name="397"/>                     if /at_new_para then {
+<a name="398"/>                        new_row(W.get_line_height() / 2)
+<a name="399"/>                        at_new_para := &amp;yes
+<a name="400"/>                     }
+<a name="401"/>                  }
+<a name="402"/>
+<a name="403"/>                  SupStartCmd: baseline_off +:= W.get_font_ascent() / 2
+<a name="404"/>                  SupEndCmd: baseline_off -:= W.get_font_ascent() / 2
+<a name="405"/>                  SubStartCmd: baseline_off -:= W.get_font_ascent() / 3
+<a name="406"/>                  SubEndCmd: baseline_off +:= W.get_font_ascent() / 3
+<a name="407"/>
+<a name="408"/>                  BreakCmd: {
+<a name="409"/>                     if *row &gt; 0 then
+<a name="410"/>                        new_row()
+<a name="411"/>                     else
+<a name="412"/>                        new_row(W.get_line_height())
+<a name="413"/>                     case \cmd.clear of {
+<a name="414"/>                        Align.L: 
+<a name="415"/>                           until row_x = 0 do new_row()
+<a name="416"/>                        Align.R:
+<a name="417"/>                           until right_margin = compute_w do new_row()
+<a name="418"/>                        "all":
+<a name="419"/>                           until have_max() do new_row()
+<a name="420"/>                     }
+<a name="421"/>                  }
+<a name="422"/>                  NamedAnchorCmd: {
+<a name="423"/>                     if /calculating then
+<a name="424"/>                        insert(named_anchors, string(cmd.name), row_y)
+<a name="425"/>                  }
+<a name="426"/>                  WbrCmd: {
+<a name="427"/>                     if /cmd.attr.nowrap &amp; /cmd.attr.pre then
+<a name="428"/>                        blob_start := &amp;null
+<a name="429"/>                  }
+<a name="430"/>                  TextCmd: {
+<a name="431"/>                     if /cmd.attr.pre then {
+<a name="432"/>                        if /cmd.attr.nowrap then
+<a name="433"/>                           compute_txt(W, cmd)
+<a name="434"/>                        else
+<a name="435"/>                           compute_nowrap_txt(W, cmd)
+<a name="436"/>                     } else
+<a name="437"/>                        compute_pre_txt(W, cmd)
+<a name="438"/>                  }
+<a name="439"/>               }
+<a name="440"/>            }
+<a name="441"/>         }
+<a name="442"/>      }
+<a name="443"/>   end
+<a name="444"/>
+<a name="445"/>   public lookup_named_anchor(name)
+<a name="446"/>      local yp
+<a name="447"/>      if yp := member(computed_named_anchors, string(name)) then
+<a name="448"/>         return yp + y + border.get_t_inset() + y_off
+<a name="449"/>   end
+<a name="450"/>
+<a name="451"/>   private rows_in_range(ry, rh)
+<a name="452"/>      local i, j, m, or
+<a name="453"/>      # Shortcut for very common case
+<a name="454"/>      if *computed_output_rows = 1 then {
+<a name="455"/>         or := computed_output_rows[1]
+<a name="456"/>         return if or.y + or.h &gt; ry  &amp;  or.y &lt; ry + rh then or
+<a name="457"/>      }
+<a name="458"/>      i := 1
+<a name="459"/>      j := *computed_output_rows
+<a name="460"/>      while i &lt;= j do {
+<a name="461"/>         m := (i + j) / 2
+<a name="462"/>         or := computed_output_rows[m]
+<a name="463"/>         if or.y + or.h &lt;= ry then
+<a name="464"/>            i := m + 1
+<a name="465"/>         else if or.y &gt;= ry + rh then
+<a name="466"/>            j := m - 1
+<a name="467"/>         else
+<a name="468"/>            break
+<a name="469"/>      }
+<a name="470"/>      if i &gt; j then
+<a name="471"/>         fail
+<a name="472"/>
+<a name="473"/>      # Now row m is in the sought range; but rows before may be too,
+<a name="474"/>      # so tab back as far as needed.
+<a name="475"/>      while or := computed_output_rows[m - 1] &amp;
+<a name="476"/>         or.y + or.h &gt; ry  &amp;  or.y &lt; ry + rh do
+<a name="477"/>         m -:= 1
+<a name="478"/>
+<a name="479"/>      # Now suspend all the rows in range from row m forwards.
+<a name="480"/>      while or := computed_output_rows[m] &amp;
+<a name="481"/>         or.y + or.h &gt; ry  &amp;  or.y &lt; ry + rh do
+<a name="482"/>      {
+<a name="483"/>         suspend or
+<a name="484"/>         m +:= 1
+<a name="485"/>      }
+<a name="486"/>   end
+<a name="487"/>
+<a name="488"/>   public override display()
+<a name="489"/>      local o, W, font, fg, x1, y1, r, t, ts, or, want_fg
+<a name="490"/>      border.draw(self.cbwin, x, y, w, h)
+<a name="491"/>      x1 := x + border.get_l_inset()
+<a name="492"/>      y1 := y + border.get_t_inset() + y_off
+<a name="493"/>      use { 
+<a name="494"/>         W := cbwin.clone(),
+<a name="495"/>         {
+<a name="496"/>            r := get_cbwin_clip()
+<a name="497"/>            every or := rows_in_range(r.y - y1, r.h) do {
+<a name="498"/>               every o := !or.l do {
+<a name="499"/>                  if is(o, TextOut) then {
+<a name="500"/>                     t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+<a name="501"/>                     if r.intersect(t) then {
+<a name="502"/>                        want_fg := if o.attr.url === \highlight then
+<a name="503"/>                           browser.page_alink_color
+<a name="504"/>                        else
+<a name="505"/>                           o.attr.fg
+<a name="506"/>                        W.set_font(font ~===:= o.attr.font)
+<a name="507"/>                        W.set_fg(fg ~===:= want_fg)
+<a name="508"/>                        if \o.attr.mark then
+<a name="509"/>                           text_bg(W, MARKED_COLOR, x1 + o.x, y1 + o.y, o.w, o.h)
+<a name="510"/>                        W.draw_string(x1 + o.x, y1 + o.y + W.get_line_ascent(), o.s)
+<a name="511"/>
+<a name="512"/>                        every ts := browser.is_searched(o) do {
+<a name="513"/>                           # Note that browser.highlighted_searched may be &amp;null, if we've done a redo_search and
+<a name="514"/>                           # cannot reset the highlight; a different split of WBR tags may have this effect.
+<a name="515"/>                           text_bg(W, 
+<a name="516"/>                                   if member((\browser.highlighted_searched).memb, ts) then SEARCHED_CURR_COLOR else SEARCHED_OTHER_COLOR,
+<a name="517"/>                                   x1 + o.x + ts.w_off,
+<a name="518"/>                                   y1 + o.y, 
+<a name="519"/>                                   ts.w_sub,
+<a name="520"/>                                   o.h)
+<a name="521"/>                        }
+<a name="522"/>
+<a name="523"/>                        if ts := browser.is_banded(o) then
+<a name="524"/>                           # NB - the rectangle used should be the same as that returned by ts.get_bounds()
+<a name="525"/>                           Gui.style.fill_selection_rectangle(W,
+<a name="526"/>                                                              x1 + o.x + ts.w_off,
+<a name="527"/>                                                              y1 + o.y, 
+<a name="528"/>                                                              ts.w_sub,
+<a name="529"/>                                                              o.h)
+<a name="530"/>                        if \o.attr.underline then
+<a name="531"/>                           text_line(W,
+<a name="532"/>                                     o.s, 
+<a name="533"/>                                     x1 + o.x, 
+<a name="534"/>                                     y1 + o.y + W.get_line_ascent() + Gui.UNIT)
+<a name="535"/>                        else if \o.attr.underdash | (o.attr.url === \last_highlight) then
+<a name="536"/>                           text_dash(W,
+<a name="537"/>                                     o.s, 
+<a name="538"/>                                     x1 + o.x, 
+<a name="539"/>                                     y1 + o.y + W.get_line_ascent() + Gui.UNIT)
+<a name="540"/>                        if \o.attr.strike then
+<a name="541"/>                           text_line(W,
+<a name="542"/>                                     o.s, 
+<a name="543"/>                                     x1 + o.x,
+<a name="544"/>                                     y1 + o.y + W.get_absolute_leading() + (2 * W.get_font_ascent()) / 3)
+<a name="545"/>                        if o.attr.url === \over then
+<a name="546"/>                           Gui.style.fill_over_rectangle(W, x1 + o.x, y1 + o.y, o.w, o.h)
+<a name="547"/>                     }
+<a name="548"/>                  }
+<a name="549"/>               }
+<a name="550"/>            }
+<a name="551"/>         }
+<a name="552"/>      }
+<a name="553"/>      Component.display()
+<a name="554"/>   end
+<a name="555"/>
+<a name="556"/>   private static text_bg(W, c, x, y, w, h)
+<a name="557"/>      local W2
+<a name="558"/>      use {
+<a name="559"/>         W2 := W.clone(),
+<a name="560"/>         {
+<a name="561"/>            W2.set_fg(c)
+<a name="562"/>            W2.fill_rectangle(x, y, w, h)
+<a name="563"/>         }
+<a name="564"/>      }
+<a name="565"/>   end
+<a name="566"/>
+<a name="567"/>   private static text_dash(W, s, x, y)
+<a name="568"/>      local W2
+<a name="569"/>      use {
+<a name="570"/>         W2 := W.clone(),
+<a name="571"/>         {
+<a name="572"/>            W2.set_masked_pattern("gray")
+<a name="573"/>            text_line(W2, s, x, y)
+<a name="574"/>         }
+<a name="575"/>      }
+<a name="576"/>   end
+<a name="577"/>
+<a name="578"/>   private static text_line(W, s, x, y)
+<a name="579"/>      local t, w1
+<a name="580"/>      s ? repeat {
+<a name="581"/>         if t := tab(many(WHITESPACE)) then
+<a name="582"/>            x +:= W.text_width(t)
+<a name="583"/>         if pos(0) then
+<a name="584"/>            break
+<a name="585"/>         t := tab(upto(WHITESPACE) | 0)
+<a name="586"/>         w1 := W.text_width(t)
+<a name="587"/>         W.fill_rectangle(x, y, w1, Gui.FINE_WIDTH)
+<a name="588"/>         x +:= w1
+<a name="589"/>      }
+<a name="590"/>   end
+<a name="591"/>
+<a name="592"/>   package calculate_banded(br, bs)
+<a name="593"/>      local i, j, or, o, W, font, x1, y1, t, first, last, first_r, last_r, l, ts
+<a name="594"/>      x1 := x + border.get_l_inset()
+<a name="595"/>      y1 := y + border.get_t_inset() + y_off
+<a name="596"/>      l := []
+<a name="597"/>      every or := rows_in_range(br.y - y1, br.h) do {
+<a name="598"/>         every o := !or.l do {
+<a name="599"/>            t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+<a name="600"/>            if t := br.intersect(t) then {
+<a name="601"/>               if /first := o then
+<a name="602"/>                  first_r := t
+<a name="603"/>               last := o
+<a name="604"/>               last_r := t
+<a name="605"/>            }
+<a name="606"/>            if \first then
+<a name="607"/>               put(l, o)
+<a name="608"/>         }
+<a name="609"/>      }
+<a name="610"/>      if /first then
+<a name="611"/>         fail
+<a name="612"/>      until l[-1] === last do
+<a name="613"/>         pull(l)
+<a name="614"/>
+<a name="615"/>      use { 
+<a name="616"/>         W := cbwin.clone(),
+<a name="617"/>         every o := !l do {
+<a name="618"/>            case classof(o) of {
+<a name="619"/>               TextOut: {
+<a name="620"/>                  W.set_font(font ~===:= o.attr.font)
+<a name="621"/>                  i := if o === first then
+<a name="622"/>                     find_cursor_pos(W, o.s, first_r.x - x1 - o.x)
+<a name="623"/>                  else
+<a name="624"/>                     1
+<a name="625"/>                  j := if o === last then
+<a name="626"/>                     find_cursor_pos(W, o.s, last_r.x - x1 - o.x + last_r.w)
+<a name="627"/>                  else
+<a name="628"/>                     *o.s + 1
+<a name="629"/>
+<a name="630"/>                  if i &lt; j then {
+<a name="631"/>                     ts := TextSelection(o, self, 
+<a name="632"/>                                         i, j, 
+<a name="633"/>                                         W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
+<a name="634"/>                     insert(bs, o, ts)
+<a name="635"/>                  }
+<a name="636"/>               }
+<a name="637"/>               CompOut: {
+<a name="638"/>                  # An image; add the Img to the banded map.  (It may be
+<a name="639"/>                  # inserted again by Browser.calculate_banded() if the
+<a name="640"/>                  # image actually intersects the band).
+<a name="641"/>                  insert(bs, o.c, o.c)
+<a name="642"/>               }
+<a name="643"/>            }
+<a name="644"/>         }
+<a name="645"/>      }
+<a name="646"/>   end
+<a name="647"/>
+<a name="648"/>   package search(sl, searched, sorted)
+<a name="649"/>      local or, o, o1, ts, i, j, k, sp, s, W, x1, y1, sal, font, e, w
+<a name="650"/>      s := sl[1]
+<a name="651"/>      use {
+<a name="652"/>         W := cbwin.clone(),
+<a name="653"/>         {
+<a name="654"/>            x1 := x + border.get_l_inset()
+<a name="655"/>            y1 := y + border.get_t_inset() + y_off
+<a name="656"/>            i := 1
+<a name="657"/>            every or := !computed_output_rows do {
+<a name="658"/>               j := 1
+<a name="659"/>               every o := !or.l do {
+<a name="660"/>                  if is(o, TextOut) then {
+<a name="661"/>                     /o.l_s := Text.lower(o.s)
+<a name="662"/>                     o.l_s ? every k := find(s[1]) do {
+<a name="663"/>                        # Get the word (or first part thereof) starting at k
+<a name="664"/>                        tab(k)
+<a name="665"/>                        w := tab(upto(WHITESPACE_NB) | 0)
+<a name="666"/>                        # Check for a simple one-word search match.
+<a name="667"/>                        # Otherwise, we do a quick check if w can be
+<a name="668"/>                        # the start of a match; if so we search ahead.
+<a name="669"/>                        if *sl = 1 &amp; match(s, w) then {
+<a name="670"/>                           W.set_font(font ~===:= o.attr.font)
+<a name="671"/>                           ts := TextSelection(o, self, 
+<a name="672"/>                                               k, k + *s,
+<a name="673"/>                                               W.text_width(o.s[1:k]),
+<a name="674"/>                                               W.text_width(o.s[k+:*s]))
+<a name="675"/>
+<a name="676"/>                           inserts(searched, o, ts)
+<a name="677"/>                           # Note we use or.y as the y sort co-ordinate so that all matches in the same row             
+<a name="678"/>                           # compare on their x position.                                                               
+<a name="679"/>                           sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set(ts))
+<a name="680"/>                           put(sorted, sp)
+<a name="681"/>                        } else if match(w, s) &amp; sal := search_ahead(or, o, i, j, k, sl) then {
+<a name="682"/>                           sp := &amp;null
+<a name="683"/>                           every e := !sal do {
+<a name="684"/>                              o1 := e.textout
+<a name="685"/>                              W.set_font(font ~===:= o1.attr.font)
+<a name="686"/>                              ts := TextSelection(o1, self, 
+<a name="687"/>                                                  e.i, e.j,
+<a name="688"/>                                                  W.text_width(o1.s[1:e.i]),
+<a name="689"/>                                                  W.text_width(o1.s[e.i:e.j]))
+<a name="690"/>                              inserts(searched, o1, ts)
+<a name="691"/>                              /sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set())
+<a name="692"/>                              insert(sp.memb, ts)
+<a name="693"/>                           }
+<a name="694"/>                           put(sorted, sp)
+<a name="695"/>                        }
+<a name="696"/>                     }
+<a name="697"/>                  }
+<a name="698"/>                  j +:= 1
+<a name="699"/>               }
+<a name="700"/>               i +:= 1
+<a name="701"/>            }
+<a name="702"/>         }
+<a name="703"/>      }
+<a name="704"/>   end
+<a name="705"/>
+<a name="706"/>   # Search forward from the given position, (OutputRow or, TextOut o,
+<a name="707"/>   # and position k in o.s).  The indices i, j are given such that :-
+<a name="708"/>   #     i = keyof(computed_output_rows, or)
+<a name="709"/>   #     j = keyof(or.l, o)
+<a name="710"/>   #
+<a name="711"/>   private search_ahead(or, o, i, j, k, sl)
+<a name="712"/>      local word, i1, i2, res, n, s
+<a name="713"/>      n := 1
+<a name="714"/>      res := []
+<a name="715"/>      while or := computed_output_rows[i] do {
+<a name="716"/>         while o := or.l[j] do {
+<a name="717"/>            # Don't allow any component to be a word separator.
+<a name="718"/>            is(o, TextOut) | fail
+<a name="719"/>            /o.l_s := Text.lower(o.s)
+<a name="720"/>            o.l_s ? {
+<a name="721"/>               tab(k)
+<a name="722"/>               repeat {
+<a name="723"/>                  if tab(many(WHITESPACE_NB)) then {
+<a name="724"/>                     # End of word, so any accumulated word must match
+<a name="725"/>                     # the current search word.
+<a name="726"/>                     if \word then {
+<a name="727"/>                        word == sl[n] | fail
+<a name="728"/>                        word := &amp;null
+<a name="729"/>                        n +:= 1
+<a name="730"/>                     }
+<a name="731"/>                  }
+<a name="732"/>                  if pos(0) then
+<a name="733"/>                     break
+<a name="734"/>                  i1 := &amp;pos
+<a name="735"/>                  s := tab(upto(WHITESPACE_NB) | 0)
+<a name="736"/>                  i2 := &amp;pos
+<a name="737"/>                  /word := ""
+<a name="738"/>                  word ||:= s
+<a name="739"/>                  # The last word just has to start with the sought
+<a name="740"/>                  # text; the others have to match exactly (the first
+<a name="741"/>                  # one starts at the given offset k, so can be in the
+<a name="742"/>                  # middle of a word).
+<a name="743"/>                  if n = *sl &amp; match(sl[n], word) then {
+<a name="744"/>                     # We have matched the last word, so succeed.  The
+<a name="745"/>                     # final SearchAhead is rather complicated; an
+<a name="746"/>                     # example :-
+<a name="747"/>                     #    sl[n] = "compute"  (the last search word)
+<a name="748"/>                     #    s = "uters"
+<a name="749"/>                     #    word =  "computers" (ie word was "comp" before)
+<a name="750"/>                     #    i1 = 1, i2 = 6 (o.l_s = "uters ....")
+<a name="751"/>                     # so the end index is 1 + 7 - 9 + 5 = 4
+<a name="752"/>                     # ie the first 3 chars of o.l_s, "ute".
+<a name="753"/>                     #
+<a name="754"/>                     put(res, SearchAhead(o, i1, i1 + *sl[n] - *word + *s))
+<a name="755"/>                     return res
+<a name="756"/>                  }
+<a name="757"/>                  # We do a quick check to ensure that word can
+<a name="758"/>                  # eventually match sl[n].  For example, if we are
+<a name="759"/>                  # looking for "compute" and we've got word = "comp"
+<a name="760"/>                  # so far, we're okay.
+<a name="761"/>                  match(word, sl[n]) | fail
+<a name="762"/>                  put(res, SearchAhead(o, i1, i2))
+<a name="763"/>               }
+<a name="764"/>            }
+<a name="765"/>            k := 1
+<a name="766"/>            j +:= 1
+<a name="767"/>         }
+<a name="768"/>         # End of row, which is the same as end of word above.
+<a name="769"/>         if \word then {
+<a name="770"/>            word == sl[n] | fail
+<a name="771"/>            word := &amp;null
+<a name="772"/>            n +:= 1
+<a name="773"/>         }
+<a name="774"/>         k := j := 1
+<a name="775"/>         i +:= 1
+<a name="776"/>      }
+<a name="777"/>   end
+<a name="778"/>
+<a name="779"/>   package get_selected_text(br, sorted)
+<a name="780"/>      local o, x1, y1, t, or, sr, x2
+<a name="781"/>      x1 := x + border.get_l_inset()
+<a name="782"/>      y1 := y + border.get_t_inset() + y_off
+<a name="783"/>      every or := rows_in_range(br.y - y1, br.h) do {
+<a name="784"/>         sr := u""     # The selected text on this row
+<a name="785"/>         x2 := &amp;null   # The x position of the start of the selected text on this row
+<a name="786"/>         every o := !or.l do {
+<a name="787"/>            case classof(o) of {
+<a name="788"/>               TextOut: {
+<a name="789"/>                  if t := browser.is_banded(o) then {
+<a name="790"/>                     sr ||:= o.s[t.i:t.j]
+<a name="791"/>                     /x2 := x1 + o.x + t.w_off 
+<a name="792"/>                  }
+<a name="793"/>               }
+<a name="794"/>               CompOut: {
+<a name="795"/>                  if browser.is_banded(o.c) then {
+<a name="796"/>                     sr ||:= \o.c.alt
+<a name="797"/>                     /x2 := o.c.x  # o.c.x = x1 + o.x
+<a name="798"/>                  }
+<a name="799"/>               }
+<a name="800"/>            }
+<a name="801"/>         }
+<a name="802"/>         if *sr &gt; 0 then
+<a name="803"/>            put(sorted, PointResult(x2, y1 + or.y, sr))
+<a name="804"/>      }
+<a name="805"/>   end
+<a name="806"/>
+<a name="807"/>   private invalidate_url(u)
+<a name="808"/>      local o, or, x1, y1, r
+<a name="809"/>      x1 := x + border.get_l_inset()
+<a name="810"/>      y1 := y + border.get_t_inset() + y_off
+<a name="811"/>      r := get_clip_rect() | fail
+<a name="812"/>      every or := rows_in_range(r.y - y1, r.h) do {
+<a name="813"/>         every o := !or.l do {
+<a name="814"/>            if is(o, TextOut) &amp; (u === \o.attr.url) then
+<a name="815"/>               invalidate(Rect(x1 + o.x, y1 + o.y, o.w, o.h))
+<a name="816"/>         }
+<a name="817"/>      }
+<a name="818"/>   end
+<a name="819"/>
+<a name="820"/>   package calculate_link_text(t)
+<a name="821"/>      local o, or, u, u2, or2
+<a name="822"/>      every or := !computed_output_rows do {
+<a name="823"/>         every o := !or.l do {
+<a name="824"/>            if is(o, TextOut) &amp; (u := \o.attr.url) then {
+<a name="825"/>               if u === u2 &amp; or ~=== or2 then
+<a name="826"/>                  t[u] ||:= u" "
+<a name="827"/>               t[u] ||:= o.s
+<a name="828"/>               u2 := u
+<a name="829"/>               or2 := or
+<a name="830"/>            }
+<a name="831"/>         }
+<a name="832"/>      }
+<a name="833"/>   end
+<a name="834"/>
+<a name="835"/>   public override layout()
+<a name="836"/>      local co, c, x1, y1
+<a name="837"/>      compute(self.w - border.get_total_width())
+<a name="838"/>      y_off := case v_align of {
+<a name="839"/>         "baseline": ascent_adj
+<a name="840"/>         Align.T: 0
+<a name="841"/>         Align.C: (h - get_default_height(w)) / 2
+<a name="842"/>         Align.B: h - get_default_height(w)
+<a name="843"/>         default: runerr("Invalid v_align", v_align)
+<a name="844"/>      }
+<a name="845"/>
+<a name="846"/>      x1 := x + border.get_l_inset()
+<a name="847"/>      y1 := y + border.get_t_inset() + y_off
+<a name="848"/>      every co := !output_comps do {
+<a name="849"/>         c := co.c
+<a name="850"/>         c.x := co.x + x1
+<a name="851"/>         c.y := co.y + y1
+<a name="852"/>         c.w := co.w
+<a name="853"/>         c.h := co.h
+<a name="854"/>         c.layout()
+<a name="855"/>      }
+<a name="856"/>      computed_output_rows := output_rows
+<a name="857"/>      computed_named_anchors := named_anchors 
+<a name="858"/>   end
+<a name="859"/>
+<a name="860"/>   private new_row(gap)
+<a name="861"/>      local x1, r, g, need, or, row_height
+<a name="862"/>      if *row &gt; 0 then {
+<a name="863"/>         x1 := row_x
+<a name="864"/>
+<a name="865"/>         # Expand space for comps relative to absolute top
+<a name="866"/>         row_descent &lt;:= row_abs_top_height - row_ascent
+<a name="867"/>
+<a name="868"/>         # and to absolute bottom
+<a name="869"/>         row_ascent &lt;:= row_abs_bottom_height - row_descent
+<a name="870"/>
+<a name="871"/>         # finally absolute middle
+<a name="872"/>         need := row_abs_middle_height - (row_ascent + row_descent)
+<a name="873"/>         if need &gt; 0 then {
+<a name="874"/>            row_ascent +:= need / 2
+<a name="875"/>            row_descent +:= need / 2 + need % 2
+<a name="876"/>         }
+<a name="877"/>
+<a name="878"/>         row_height := row_ascent + row_descent
+<a name="879"/>
+<a name="880"/>         if /calculating then {
+<a name="881"/>            put(output_rows, or := OutputRow())
+<a name="882"/>            or.x := row_x
+<a name="883"/>            or.y := row_y
+<a name="884"/>            or.h := row_height
+<a name="885"/>            or.w := row_width
+<a name="886"/>         }
+<a name="887"/>
+<a name="888"/>         row_bottom := row_y + row_height
+<a name="889"/>
+<a name="890"/>         /first_row_ascent := row_ascent      
+<a name="891"/>         while r := get(row) do {
+<a name="892"/>            if /calculating &amp; x1 = row_x then {
+<a name="893"/>               case r.attr.align of {
+<a name="894"/>                  Align.C:
+<a name="895"/>                     x1 +:= (right_margin - row_width - row_x) / 2
+<a name="896"/>                  Align.R:
+<a name="897"/>                     x1 +:= right_margin - row_width - row_x
+<a name="898"/>               }
+<a name="899"/>            }
+<a name="900"/>            case classof(r) of {
+<a name="901"/>               CompOut: {
+<a name="902"/>                  r.x := x1
+<a name="903"/>                  r.y := case r.align of {
+<a name="904"/>                     Align.C: row_y + row_ascent - r.h / 2
+<a name="905"/>                     Align.B: row_y + row_ascent - r.ascent
+<a name="906"/>                     Align.T: row_y
+<a name="907"/>                     "absbottom": row_y + row_height - r.h
+<a name="908"/>                     "absmiddle": row_y + (row_height - r.h) / 2
+<a name="909"/>                     default: runerr("Invalid alignment", r.align)
+<a name="910"/>                  }
+<a name="911"/>                  x1 +:= r.w
+<a name="912"/>                  # Save images in the row for banded selection.
+<a name="913"/>                  if is(r.c, Img) then
+<a name="914"/>                     put((\or).l, r)
+<a name="915"/>               }
+<a name="916"/>               TextOut: {
+<a name="917"/>                  r.x := x1
+<a name="918"/>                  r.y := row_y + row_ascent - r.ascent
+<a name="919"/>                  x1 +:= r.w
+<a name="920"/>                  put((\or).l, r)
+<a name="921"/>               }
+<a name="922"/>               default: syserr("Invalid type in row")
+<a name="923"/>            }
+<a name="924"/>         }
+<a name="925"/>         /gap := 0
+<a name="926"/>         row_y +:= row_height + gap
+<a name="927"/>      } else {
+<a name="928"/>         /gap := 1
+<a name="929"/>         row_y +:= gap
+<a name="930"/>      }
+<a name="931"/>
+<a name="932"/>      if \calculating then
+<a name="933"/>         max_ll &lt;:= compute_w - (right_margin - row_width - row_x)
+<a name="934"/>
+<a name="935"/>      row_blob := row_width := row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
+<a name="936"/>
+<a name="937"/>      row_x := 0
+<a name="938"/>      every g := !left_comps do
+<a name="939"/>         if g.y &lt;= row_y &lt; g.y + g.h then
+<a name="940"/>            row_x &lt;:= g.x + g.w
+<a name="941"/>
+<a name="942"/>      right_margin := compute_w
+<a name="943"/>      every g := !right_comps do
+<a name="944"/>         if g.y &lt;= row_y &lt; g.y + g.h then
+<a name="945"/>            right_margin &gt;:= g.x
+<a name="946"/>
+<a name="947"/>      while do_deferred(deferred[1]) do
+<a name="948"/>         pop(deferred)
+<a name="949"/>   end
+<a name="950"/>
+<a name="951"/>   # A special version of fits_in_row, used for determining if a
+<a name="952"/>   # left/right aligned component will fit in the row.  The problem
+<a name="953"/>   # arises in a case like :-
+<a name="954"/>   #
+<a name="955"/>   #    FIRST&lt;img src="j3.jpeg" align="right"/&gt;SECOND
+<a name="956"/>   #
+<a name="957"/>   # FIRST and SECOND form a blob, but row_width only includes
+<a name="958"/>   # FIRST after it has been output.  Therefore fits_in_row may
+<a name="959"/>   # wrongly indicate that the img would fit in the row, rather than
+<a name="960"/>   # be deferred.  The solution is to set row_blob to the end of the
+<a name="961"/>   # blob when FIRST is output, and use row_blob to see if the img
+<a name="962"/>   # would fit.
+<a name="963"/>   #
+<a name="964"/>   private fits_in_row_lr(w)
+<a name="965"/>      succeed have_max() | (row_x + w + max(row_blob, row_width) &lt;= right_margin)
+<a name="966"/>   end
+<a name="967"/>
+<a name="968"/>   private fits_in_row(w)
+<a name="969"/>      succeed have_max() | (row_x + w + row_width &lt;= right_margin)
+<a name="970"/>   end
+<a name="971"/>
+<a name="972"/>   private do_deferred(co)
+<a name="973"/>      # Note fits_in_row can be used since row_blob = 0.
+<a name="974"/>      case co.align of {
+<a name="975"/>         Align.L: {
+<a name="976"/>            if fits_in_row(co.maxw) then {
+<a name="977"/>               left_comp_out(co)
+<a name="978"/>               return
+<a name="979"/>            }
+<a name="980"/>         }
+<a name="981"/>         Align.R: {
+<a name="982"/>            if fits_in_row(co.maxw) then {
+<a name="983"/>               right_comp_out(co)
+<a name="984"/>               return
+<a name="985"/>            }
+<a name="986"/>         }
+<a name="987"/>      }
+<a name="988"/>   end
+<a name="989"/>
+<a name="990"/>   private left_comp_out(co)
+<a name="991"/>      co.x := row_x
+<a name="992"/>      co.y := row_y
+<a name="993"/>      # Since we only do left/right_comp_out if co.maxw
+<a name="994"/>      # fits_in_row_lr, we only need to reduce its width from maxw if
+<a name="995"/>      # it fit because of have_max, and the available width is less
+<a name="996"/>      # than maxw.
+<a name="997"/>      co.w := min(co.maxw, compute_w)
+<a name="998"/>      co.set_height_from_width()
+<a name="999"/>      row_x +:= co.w
+<a name="1000"/>      put(left_comps, co)
+<a name="1001"/>   end
+<a name="1002"/>
+<a name="1003"/>   private right_comp_out(co)
+<a name="1004"/>      co.w := min(co.maxw, compute_w)
+<a name="1005"/>      co.x := right_margin - co.w
+<a name="1006"/>      co.y := row_y
+<a name="1007"/>      co.set_height_from_width()
+<a name="1008"/>      right_margin -:= co.w
+<a name="1009"/>      put(right_comps, co)
+<a name="1010"/>   end
+<a name="1011"/>
+<a name="1012"/>   package is_top_level()
+<a name="1013"/>      succeed self === browser.view.inner
+<a name="1014"/>   end
+<a name="1015"/>
+<a name="1016"/>   private compute_component(W, cmd)
+<a name="1017"/>      local co, prefw, maxw, i
+<a name="1018"/>      prefw := cmd.c.get_preferred_width()
+<a name="1019"/>      maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
+<a name="1020"/>
+<a name="1021"/>      # Apply constraints
+<a name="1022"/>      if i := cmd.c.get_constraint("fix_w") then
+<a name="1023"/>         prefw := maxw := max(i, prefw)
+<a name="1024"/>      else if i := integer(cmd.c.get_constraint("pct_w")) then {
+<a name="1025"/>         case classof(cmd.c) of {
+<a name="1026"/>            Line: {
+<a name="1027"/>               if /calculating then
+<a name="1028"/>                  prefw := maxw := max(((right_margin - row_x - row_width) * i) / 100, prefw)
+<a name="1029"/>            }
+<a name="1030"/>            Img: {
+<a name="1031"/>               # For Img, specified widths refer to image width, excluding any border.
+<a name="1032"/>               if /calculating then
+<a name="1033"/>                  prefw := maxw := max((compute_w * i) / 100 + cmd.c.border.get_total_width(), prefw)
+<a name="1034"/>               else {
+<a name="1035"/>                  # Since prefw/maxw is set to 1 + the border width
+<a name="1036"/>                  # (see Img), we set it to the actual image size +
+<a name="1037"/>                  # the border, so the max width is calculated on that
+<a name="1038"/>                  # basis.
+<a name="1039"/>                  unless is_top_level() then
+<a name="1040"/>                     maxw := (\cmd.c.win).get_width() + cmd.c.border.get_total_width()
+<a name="1041"/>               }
+<a name="1042"/>            }
+<a name="1043"/>            Tbl: {
+<a name="1044"/>               if /calculating then
+<a name="1045"/>                  prefw := maxw := max((compute_w * i) / 100, prefw)
+<a name="1046"/>            }
+<a name="1047"/>            default: syserr("Invalid type with pct_w")
+<a name="1048"/>         }
+<a name="1049"/>      }
+<a name="1050"/>      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
+<a name="1051"/>      put(output_comps, co)
+<a name="1052"/>      case cmd.align of {
+<a name="1053"/>         Align.L: {
+<a name="1054"/>            # If already have deferred, then defer this too, otherwise they will be out of order. 
+<a name="1055"/>            if *deferred = 0 &amp; fits_in_row_lr(co.maxw) then
+<a name="1056"/>               left_comp_out(co)
+<a name="1057"/>            else
+<a name="1058"/>               put(deferred, co)
+<a name="1059"/>         }
+<a name="1060"/>         Align.R: {
+<a name="1061"/>            if *deferred = 0 &amp; fits_in_row_lr(co.maxw) then 
+<a name="1062"/>               right_comp_out(co)
+<a name="1063"/>            else
+<a name="1064"/>               put(deferred, co)
+<a name="1065"/>         }
+<a name="1066"/>         Align.B: {
+<a name="1067"/>            comp_out(cmd, co)
+<a name="1068"/>            row_ascent &lt;:= co.ascent
+<a name="1069"/>            row_descent &lt;:= co.descent
+<a name="1070"/>         }
+<a name="1071"/>         Align.T: {
+<a name="1072"/>            comp_out(cmd, co)
+<a name="1073"/>            row_abs_top_height &lt;:= co.h
+<a name="1074"/>         }
+<a name="1075"/>         Align.C: {
+<a name="1076"/>            comp_out(cmd, co)
+<a name="1077"/>            row_ascent &lt;:= co.h / 2
+<a name="1078"/>            row_descent &lt;:= co.h / 2 + co.h % 2
+<a name="1079"/>         }
+<a name="1080"/>         "absbottom": {
+<a name="1081"/>            comp_out(cmd, co)
+<a name="1082"/>            row_abs_bottom_height &lt;:= co.h
+<a name="1083"/>         }
+<a name="1084"/>         "absmiddle": {
+<a name="1085"/>            comp_out(cmd, co)
+<a name="1086"/>            row_abs_middle_height &lt;:= co.h
+<a name="1087"/>         }
+<a name="1088"/>         default: runerr("Invalid alignment", cmd.align)
+<a name="1089"/>      }
+<a name="1090"/>   end
+<a name="1091"/>
+<a name="1092"/>   private comp_out(cmd, co)
+<a name="1093"/>      local c, tw, rb
+<a name="1094"/>      c := co.c
+<a name="1095"/>      if \co.attr.pre | *row = 0 then
+<a name="1096"/>         need_spc := &amp;null
+<a name="1097"/>      if \co.attr.nowrap | \co.attr.pre then {
+<a name="1098"/>         if \calculating then {
+<a name="1099"/>            # In nowrap/pre mode we always either start a new blob, or
+<a name="1100"/>            # add to the existing one.
+<a name="1101"/>            if (*row = 0) | /blob_start then {
+<a name="1102"/>               blob_start := cmd
+<a name="1103"/>               cmd.blob_width := co.maxw
+<a name="1104"/>            } else
+<a name="1105"/>               blob_start.blob_width +:= co.maxw + get_pad()
+<a name="1106"/>         } else {
+<a name="1107"/>            if tw := \cmd.blob_width then {
+<a name="1108"/>               until fits_in_row(tw + get_pad()) do {
+<a name="1109"/>                  new_row()
+<a name="1110"/>                  need_spc := &amp;null
+<a name="1111"/>               }
+<a name="1112"/>               rb := row_width + tw + get_pad()
+<a name="1113"/>            }
+<a name="1114"/>         }
+<a name="1115"/>      } else {
+<a name="1116"/>         if \calculating then {
+<a name="1117"/>            # Outside of nowrap/pre mode; a component always cancels a
+<a name="1118"/>            # blob (so a break may occur to the left or right of an
+<a name="1119"/>            # image).
+<a name="1120"/>            blob_start := &amp;null
+<a name="1121"/>         } else {
+<a name="1122"/>            tw := co.maxw
+<a name="1123"/>            until fits_in_row(tw + get_pad()) do {
+<a name="1124"/>               new_row()
+<a name="1125"/>               need_spc := &amp;null
+<a name="1126"/>            }
+<a name="1127"/>         }
+<a name="1128"/>      }
+<a name="1129"/>
+<a name="1130"/>      if \need_spc then {
+<a name="1131"/>         put(row, need_spc)
+<a name="1132"/>         row_width +:= need_spc.w
+<a name="1133"/>         row_ascent &lt;:= need_spc.ascent
+<a name="1134"/>         row_descent &lt;:= need_spc.descent
+<a name="1135"/>      }
+<a name="1136"/>      co.w := min(co.maxw, right_margin - row_x - row_width)
+<a name="1137"/>      co.set_height_from_width()
+<a name="1138"/>      co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
+<a name="1139"/>      co.descent := co.h - co.ascent
+<a name="1140"/>      put(row,  co)
+<a name="1141"/>      row_width +:= co.w
+<a name="1142"/>      row_blob := \rb
+<a name="1143"/>      need_spc := at_new_para := &amp;null
+<a name="1144"/>   end
+<a name="1145"/>
+<a name="1146"/>   private txt_out(W, attr, s, rb)
+<a name="1147"/>      local xo
+<a name="1148"/>      if \need_spc then {
+<a name="1149"/>         put(row, need_spc)
+<a name="1150"/>         row_width +:= need_spc.w
+<a name="1151"/>         row_ascent &lt;:= need_spc.ascent
+<a name="1152"/>         row_descent &lt;:= need_spc.descent
+<a name="1153"/>      }
+<a name="1154"/>      xo := TextOut(attr, s, 
+<a name="1155"/>                    W.get_line_ascent() + baseline_off, 
+<a name="1156"/>                    W.get_line_descent() - baseline_off, 
+<a name="1157"/>                    W.text_width(s), W.get_line_height())
+<a name="1158"/>      put(row,  xo)
+<a name="1159"/>      row_width +:= xo.w
+<a name="1160"/>      row_ascent &lt;:= xo.ascent
+<a name="1161"/>      row_descent &lt;:= xo.descent
+<a name="1162"/>      row_blob := \rb
+<a name="1163"/>      at_new_para := &amp;null
+<a name="1164"/>   end
+<a name="1165"/>
+<a name="1166"/>   private have_max()
+<a name="1167"/>      succeed *row = 0 &amp; row_x = 0 &amp; right_margin = compute_w
+<a name="1168"/>   end
+<a name="1169"/>
+<a name="1170"/>   private make_pad(W, attr)
+<a name="1171"/>      return TextOut(attr, u" ",
+<a name="1172"/>                     W.get_line_ascent() + baseline_off, 
+<a name="1173"/>                     W.get_line_descent() - baseline_off, 
+<a name="1174"/>                     W.text_width(" "), W.get_line_height())
+<a name="1175"/>   end
+<a name="1176"/>
+<a name="1177"/>   private get_pad()
+<a name="1178"/>      return (\need_spc).w | 0
+<a name="1179"/>   end
+<a name="1180"/>
+<a name="1181"/>   private compute_txt(W, cmd)
+<a name="1182"/>      local ds, ds2, tw, attr, wd, l, i, rb
+<a name="1183"/>      attr := cmd.attr
+<a name="1184"/>
+<a name="1185"/>      l := []
+<a name="1186"/>      every put(l, words(cmd.s, WHITESPACE))
+<a name="1187"/>
+<a name="1188"/>      if *row = 0 | *l = 0 then
+<a name="1189"/>         need_spc := &amp;null
+<a name="1190"/>      else if any(WHITESPACE, cmd.s) then 
+<a name="1191"/>         /need_spc := make_pad(W, attr)
+<a name="1192"/>
+<a name="1193"/>      if \calculating then {
+<a name="1194"/>         # If we are at the start of a row, or start with whitespace,
+<a name="1195"/>         # then we cancel any existing blob; otherwise the first word
+<a name="1196"/>         # must be added to any existing blob.
+<a name="1197"/>         if (*row = 0) | any(WHITESPACE, cmd.s) then
+<a name="1198"/>            blob_start := &amp;null
+<a name="1199"/>         else if \blob_start then
+<a name="1200"/>            # We might have need_spc here if we've just left a nobr
+<a name="1201"/>            # section, for example :- "&lt;nobr&gt;Some text &lt;/nobr&gt;after"
+<a name="1202"/>            blob_start.blob_width +:= W.text_width(l[1]) + get_pad()
+<a name="1203"/>
+<a name="1204"/>         # If the input ends with whitespace, then we have no blob
+<a name="1205"/>         # since that can give a break.  Otherwise, the last word may
+<a name="1206"/>         # start a new blob.  If we have &gt;1 words, then it must since
+<a name="1207"/>         # that implies a space in the input.
+<a name="1208"/>         if any(WHITESPACE, cmd.s[-1]) then
+<a name="1209"/>            blob_start := &amp;null
+<a name="1210"/>         else if (*l &gt; 1) | /blob_start then {
+<a name="1211"/>            blob_start := cmd
+<a name="1212"/>            cmd.blob_width := W.text_width(l[-1])
+<a name="1213"/>         }
+<a name="1214"/>         every max_word_w &lt;:= W.text_width(!l)
+<a name="1215"/>         # The same effect as the loop below, with an infinite right
+<a name="1216"/>         # margin, but avoiding potentially numerous large ucs block
+<a name="1217"/>         # allocations.
+<a name="1218"/>         ds := ucs(String{ string(!l), " " })
+<a name="1219"/>      } else {
+<a name="1220"/>         ds := u""
+<a name="1221"/>         i := 1
+<a name="1222"/>         while wd := l[i] do {
+<a name="1223"/>            ds2 := if *ds = 0 then
+<a name="1224"/>               wd
+<a name="1225"/>            else
+<a name="1226"/>               ds || " " || wd
+<a name="1227"/>            tw := W.text_width(ds2) + get_pad()
+<a name="1228"/>            #
+<a name="1229"/>            # The width of the last word is given by the blob width, if any.  For example, if we have
+<a name="1230"/>            # &lt;u&gt;Fred Smith&lt;/u&gt;&lt;i&gt;Hello&lt;/i&gt;
+<a name="1231"/>            # and wd = Smith, then blob_width = len(Smith) + len(hello), tw = len(Fred Smith), and we
+<a name="1232"/>            # will adjust tw to = len(Fred Smith) - len(Smith) + bw = len(Fred Smith) + len(hello).
+<a name="1233"/>            # Thus, this corresponds to the sum of the strings we will output.
+<a name="1234"/>            #
+<a name="1235"/>            if (i = *l) &amp; \cmd.blob_width then {
+<a name="1236"/>               tw -:= W.text_width(wd) - cmd.blob_width
+<a name="1237"/>               rb := row_width + tw
+<a name="1238"/>            }
+<a name="1239"/>            if row_x + row_width + tw &gt; right_margin then {
+<a name="1240"/>               if *ds = 0 then {
+<a name="1241"/>                  if have_max() then {
+<a name="1242"/>                     txt_out(W, attr, wd)
+<a name="1243"/>                     i +:= 1
+<a name="1244"/>                  }
+<a name="1245"/>               } else {
+<a name="1246"/>                  txt_out(W, attr, ds)
+<a name="1247"/>                  ds := u""
+<a name="1248"/>               }
+<a name="1249"/>               new_row()
+<a name="1250"/>               need_spc := &amp;null
+<a name="1251"/>            } else {
+<a name="1252"/>               ds := ds2
+<a name="1253"/>               i +:= 1
+<a name="1254"/>            }
+<a name="1255"/>         }
+<a name="1256"/>      }
+<a name="1257"/>      if *ds &gt; 0 then
+<a name="1258"/>         txt_out(W, attr, ds, rb)
+<a name="1259"/>
+<a name="1260"/>      need_spc := if any(WHITESPACE, cmd.s[-1]) then
+<a name="1261"/>         make_pad(W, attr)
+<a name="1262"/>      else
+<a name="1263"/>         &amp;null
+<a name="1264"/>   end
+<a name="1265"/>
+<a name="1266"/>    private compute_nowrap_txt(W, cmd)
+<a name="1267"/>      local ds, wd, tw, attr, rb
+<a name="1268"/>      attr := cmd.attr
+<a name="1269"/>
+<a name="1270"/>      # Calculate ds being the catenation without leading space
+<a name="1271"/>      ds := u""
+<a name="1272"/>      every wd := words(cmd.s, WHITESPACE) do {
+<a name="1273"/>         if *ds = 0 then
+<a name="1274"/>            ds := wd
+<a name="1275"/>         else
+<a name="1276"/>            ds ||:= u" " || wd
+<a name="1277"/>      }
+<a name="1278"/>
+<a name="1279"/>      if *row = 0 | *ds = 0 then
+<a name="1280"/>         need_spc := &amp;null
+<a name="1281"/>      else if any(WHITESPACE, cmd.s) then 
+<a name="1282"/>         /need_spc := make_pad(W, attr)
+<a name="1283"/>
+<a name="1284"/>      if \calculating then {
+<a name="1285"/>         # If we are starting a new blob, then the width is ds, since
+<a name="1286"/>         # potentially we can break to a new row.  If adding to a
+<a name="1287"/>         # blob, then add any pad space, since we can't break and must
+<a name="1288"/>         # show the space.
+<a name="1289"/>         if (*row = 0) | /blob_start then {
+<a name="1290"/>            blob_start := cmd
+<a name="1291"/>            cmd.blob_width := W.text_width(ds)
+<a name="1292"/>         } else
+<a name="1293"/>            blob_start.blob_width +:= W.text_width(ds) + get_pad()
+<a name="1294"/>      } else {
+<a name="1295"/>         if tw := \cmd.blob_width then {
+<a name="1296"/>            # The blob width gives us the width excluding any leading
+<a name="1297"/>            # space, so unless at start of row we must ensure we have
+<a name="1298"/>            # the space too.
+<a name="1299"/>            until fits_in_row(tw + get_pad()) do {
+<a name="1300"/>               new_row()
+<a name="1301"/>               need_spc := &amp;null
+<a name="1302"/>            }
+<a name="1303"/>            rb := row_width + tw + get_pad()
+<a name="1304"/>         }
+<a name="1305"/>      }
+<a name="1306"/>
+<a name="1307"/>      if *ds &gt; 0 then
+<a name="1308"/>         txt_out(W, attr, ds, rb)
+<a name="1309"/>
+<a name="1310"/>      need_spc := if any(WHITESPACE, cmd.s[-1]) then
+<a name="1311"/>         make_pad(W, attr)
+<a name="1312"/>      else
+<a name="1313"/>         &amp;null
+<a name="1314"/>   end
+<a name="1315"/>
+<a name="1316"/>   private compute_pre_txt(W, cmd)
+<a name="1317"/>      local s, l, i, tw, rb
+<a name="1318"/>      l := ipl.pdco.List{ detab(separate_lines(cmd.s)) }
+<a name="1319"/>      need_spc := &amp;null
+<a name="1320"/>
+<a name="1321"/>      if \calculating then {
+<a name="1322"/>         # This follows similar logic to compute_txt above.  First,
+<a name="1323"/>         # cancel the current blob if we are starting a new line;
+<a name="1324"/>         # otherwise add the first line to any current blob.
+<a name="1325"/>         if *row = 0 then
+<a name="1326"/>            blob_start := &amp;null
+<a name="1327"/>         else
+<a name="1328"/>            (\blob_start).blob_width +:= W.text_width(l[1])
+<a name="1329"/>
+<a name="1330"/>         # Now see if we start a new blob.  If we end with a nl, then
+<a name="1331"/>         # no, since that starts a new row.  Otherwise start a new
+<a name="1332"/>         # blob, unless we have just one line and an existing blob (to
+<a name="1333"/>         # which the single line will have just been added).
+<a name="1334"/>         if cmd.s[-1] == "\n" then
+<a name="1335"/>            blob_start := &amp;null
+<a name="1336"/>         else if (*l &gt; 1) | /blob_start then {
+<a name="1337"/>            blob_start := cmd
+<a name="1338"/>            cmd.blob_width := W.text_width(l[-1])
+<a name="1339"/>         }
+<a name="1340"/>         every max_word_w &lt;:= W.text_width(!l)
+<a name="1341"/>      }
+<a name="1342"/>      every i := 1 to *l do {
+<a name="1343"/>         s := l[i]
+<a name="1344"/>         if /calculating then {
+<a name="1345"/>            if (i = *l) &amp; tw := \cmd.blob_width then {
+<a name="1346"/>               until fits_in_row(tw) do
+<a name="1347"/>                  new_row()
+<a name="1348"/>               rb := row_width + tw 
+<a name="1349"/>            } else {
+<a name="1350"/>               tw := W.text_width(s)
+<a name="1351"/>               until fits_in_row(tw) do
+<a name="1352"/>                  new_row()
+<a name="1353"/>            }
+<a name="1354"/>         }
+<a name="1355"/>
+<a name="1356"/>         txt_out(W, cmd.attr, s, rb)
+<a name="1357"/>         # Every element of l except the last ends in a new line
+<a name="1358"/>         # (recall that "abc\ndef\n" -&gt; l=["abc","def",""])
+<a name="1359"/>         if i &lt; *l then
+<a name="1360"/>            new_row()
+<a name="1361"/>      }
+<a name="1362"/>   end
+<a name="1363"/>
+<a name="1364"/>   private which_text_out(e)
+<a name="1365"/>      local or, o, x1, y1
+<a name="1366"/>      in_region(e) | fail
+<a name="1367"/>      x1 := x + border.get_l_inset()
+<a name="1368"/>      y1 := y + border.get_t_inset() + y_off
+<a name="1369"/>      every or := rows_in_range(e.y - y1, 1) do {
+<a name="1370"/>         every o := !or.l do {
+<a name="1371"/>            if is(o, TextOut) &amp; o.inside(e.x - x1, e.y - y1) then
+<a name="1372"/>               return o
+<a name="1373"/>         }
+<a name="1374"/>      }
+<a name="1375"/>   end
+<a name="1376"/>
+<a name="1377"/>   private handle_lrelease(e)
+<a name="1378"/>      \held | fail
+<a name="1379"/>      if \over then {
+<a name="1380"/>         set_highlight()
+<a name="1381"/>         self.browser.link_left_clicked(over)
+<a name="1382"/>      }
+<a name="1383"/>      held := &amp;null
+<a name="1384"/>   end
+<a name="1385"/>
+<a name="1386"/>   private handle_mrelease(e)
+<a name="1387"/>      \held | fail
+<a name="1388"/>      if \over then {
+<a name="1389"/>         set_highlight()
+<a name="1390"/>         self.browser.link_middle_clicked(over)
+<a name="1391"/>      }
+<a name="1392"/>      held := &amp;null
+<a name="1393"/>   end
+<a name="1394"/>
+<a name="1395"/>   private handle_lpress(e)
+<a name="1396"/>      local c, t
+<a name="1397"/>      parent_dialog.get_held_count() = 1 | fail
+<a name="1398"/>      if \over then {
+<a name="1399"/>         if /e.shift then {
+<a name="1400"/>            set_highlight(over)
+<a name="1401"/>            held := over
+<a name="1402"/>         } else
+<a name="1403"/>            browser.set_last_highlight(self, over)
+<a name="1404"/>      } else if t := which_text_out(e) then {
+<a name="1405"/>         if c := \ ( \ (t.attr.form_label)).comp &amp; not c.is_shaded() then {
+<a name="1406"/>            parent_dialog.set_focus(c.gen_focusable(e))
+<a name="1407"/>            if is(c, Toggle) then
+<a name="1408"/>               c.on_action(e)
+<a name="1409"/>         }
+<a name="1410"/>      }
+<a name="1411"/>   end
+<a name="1412"/>
+<a name="1413"/>   private handle_mpress(e)
+<a name="1414"/>      parent_dialog.get_held_count() = 1 | fail
+<a name="1415"/>      if \over then {
+<a name="1416"/>         set_highlight(over)
+<a name="1417"/>         held := over
+<a name="1418"/>      }
+<a name="1419"/>   end
+<a name="1420"/>
+<a name="1421"/>   package wants_rpress(e)
+<a name="1422"/>      # Also check highlight since we may have just opened a menu,
+<a name="1423"/>      # clearing over and setting highlight.
+<a name="1424"/>      succeed \over | \highlight
+<a name="1425"/>   end
+<a name="1426"/>
+<a name="1427"/>   package wants_lpress(e)
+<a name="1428"/>      succeed \over
+<a name="1429"/>   end
+<a name="1430"/>
+<a name="1431"/>   private handle_rpress(e)
+<a name="1432"/>      local pm, pm_menu
+<a name="1433"/>      parent_dialog.get_held_count() = 1 | fail
+<a name="1434"/>      if pm_menu := browser.create_link_menu(\over) then {
+<a name="1435"/>         set_highlight(over)
+<a name="1436"/>         set_over()
+<a name="1437"/>         pm := PopupMenu()
+<a name="1438"/>         pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+<a name="1439"/>         pm.popup(self, pm_menu, e.x, e.y)
+<a name="1440"/>      }
+<a name="1441"/>   end
+<a name="1442"/>
+<a name="1443"/>   private on_popup_closed()
+<a name="1444"/>      set_highlight()
+<a name="1445"/>   end
+<a name="1446"/>
+<a name="1447"/>   package handle_in_chain(e)
+<a name="1448"/>      local u, t, a, f
+<a name="1449"/>      parent_dialog.get_held_count() = 0 | fail
+<a name="1450"/>      if e.code === (Key.CONTROL_L | Key.CONTROL_R) then {
+<a name="1451"/>         if /e.release then
+<a name="1452"/>            f := &amp;yes
+<a name="1453"/>      } else f := \e.ctrl
+<a name="1454"/>      t := which_text_out(e)
+<a name="1455"/>      a := (\t).attr.title
+<a name="1456"/>      set_tooltip(a)
+<a name="1457"/>      if /f &amp; (u := \ (\t).attr.url) then
+<a name="1458"/>         set_over(u)
+<a name="1459"/>      else {
+<a name="1460"/>         set_over()
+<a name="1461"/>         if \t then
+<a name="1462"/>            set_pointer("xterm")
+<a name="1463"/>         else
+<a name="1464"/>            set_pointer()
+<a name="1465"/>      }
+<a name="1466"/>   end
+<a name="1467"/>
+<a name="1468"/>   private handle_lmdrag(e)
+<a name="1469"/>      if which_text_out(e).attr.url === \held then {
+<a name="1470"/>         set_over(held)
+<a name="1471"/>         set_highlight(held)
+<a name="1472"/>      } else {
+<a name="1473"/>         set_over()
+<a name="1474"/>         set_highlight()
+<a name="1475"/>      }
+<a name="1476"/>   end
+<a name="1477"/>
+<a name="1478"/>   private handle_exit(e)
+<a name="1479"/>      parent_dialog.get_held_count() = 0 | fail
+<a name="1480"/>      set_over()
+<a name="1481"/>   end
+<a name="1482"/>
+<a name="1483"/>   private handle_interrupted(e)
+<a name="1484"/>      set_highlight()
+<a name="1485"/>      set_over()
+<a name="1486"/>      held := &amp;null
+<a name="1487"/>   end
+<a name="1488"/>
+<a name="1489"/>   private set_over(u)
+<a name="1490"/>      if u ~=== over then {
+<a name="1491"/>         invalidate_url(\over)
+<a name="1492"/>         over := u
+<a name="1493"/>         invalidate_url(\over)
+<a name="1494"/>         if /over then {
+<a name="1495"/>            browser.msg()
+<a name="1496"/>            set_pointer()
+<a name="1497"/>         } else {
+<a name="1498"/>            browser.msg(over.str())
+<a name="1499"/>            set_pointer("hand1")
+<a name="1500"/>         }
+<a name="1501"/>      }
+<a name="1502"/>      link
+<a name="1503"/>   end
+<a name="1504"/>
+<a name="1505"/>   package override save_last_highlight(he)
+<a name="1506"/>      local or, o, n, u
+<a name="1507"/>      n := 0
+<a name="1508"/>      every or := !computed_output_rows do {
+<a name="1509"/>         every o := !or.l do {
+<a name="1510"/>            if u := \o.attr.url then {
+<a name="1511"/>               n +:= 1
+<a name="1512"/>               if last_highlight === u then {
+<a name="1513"/>                  he.last_highlight_index := n
+<a name="1514"/>                  he.last_highlight := u
+<a name="1515"/>                  link
+<a name="1516"/>               }
+<a name="1517"/>            }
+<a name="1518"/>         }
+<a name="1519"/>      }
+<a name="1520"/>   end
+<a name="1521"/>
+<a name="1522"/>   package override restore_last_highlight(n, url)
+<a name="1523"/>      local or, o, u
+<a name="1524"/>      every or := !computed_output_rows do {
+<a name="1525"/>         every o := !or.l do {
+<a name="1526"/>            if u := \o.attr.url then {
+<a name="1527"/>               n -:= 1
+<a name="1528"/>               if n = 0 then {
+<a name="1529"/>                  URL.equiv(url, u) | fail
+<a name="1530"/>                  last_highlight := u
+<a name="1531"/>                  link
+<a name="1532"/>               }
+<a name="1533"/>            }
+<a name="1534"/>         }
+<a name="1535"/>      }
+<a name="1536"/>   end
+<a name="1537"/>
+<a name="1538"/>   public override set_last_highlight(u)
+<a name="1539"/>      if u ~=== last_highlight then {
+<a name="1540"/>         invalidate_url(\last_highlight)
+<a name="1541"/>         last_highlight := u
+<a name="1542"/>         invalidate_url(\last_highlight)
+<a name="1543"/>      }
+<a name="1544"/>      link
+<a name="1545"/>   end
+<a name="1546"/>
+<a name="1547"/>   private set_highlight(u)
+<a name="1548"/>      if u ~=== highlight then {
+<a name="1549"/>         browser.set_last_highlight(self, \u)
+<a name="1550"/>         invalidate_url(\highlight)
+<a name="1551"/>         highlight := u
+<a name="1552"/>         invalidate_url(\highlight)
+<a name="1553"/>      }
+<a name="1554"/>      link
+<a name="1555"/>   end
+<a name="1556"/>
+<a name="1557"/>   public override new(browser)
+<a name="1558"/>      Component.new()
+<a name="1559"/>      self.browser := browser
+<a name="1560"/>      set_border(NullBorder())
+<a name="1561"/>      input := []
+<a name="1562"/>      ascent_adj := 0
+<a name="1563"/>      v_align := Align.T
+<a name="1564"/>      trim_flag := &amp;yes
+<a name="1565"/>      set_constraint("x_fill", &amp;yes)
+<a name="1566"/>      set_constraint("y_fill", &amp;yes)
+<a name="1567"/>      connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+<a name="1568"/>      connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+<a name="1569"/>      connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
+<a name="1570"/>      connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
+<a name="1571"/>      connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+<a name="1572"/>      connect(handle_exit, Event.MOUSE_EXIT)
+<a name="1573"/>      connect(handle_interrupted, Event.INTERRUPTED)
+<a name="1574"/>      connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
+<a name="1575"/>      connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+<a name="1576"/>      return
+<a name="1577"/>    end
+<a name="1578"/>end
+</pre></body></html>

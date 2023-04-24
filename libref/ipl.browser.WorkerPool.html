@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>WorkerPool</title></head><body>
+<h1>WorkerPool</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+A pool of <code><a href="ipl.browser.Worker.html" target="displayFrame">Worker</a></code>s.
+<p/><a href="ipl.browser-browser.icn.html#959" target="displayFrame">Source - browser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_scheme_handler">add_scheme_handler()</a>
+<a href="#cancel_all">cancel_all()</a>
+<a href="#cancel_req">cancel_req()</a>
+<a href="#count">count()</a>
+<a href="#enqueue">enqueue()</a>
+<a href="#finally">finally()</a>
+<a href="#get_status">get_status()</a>
+<a href="#get_worker">get_worker()</a>
+<a href="#initially">initially()</a>
+<a href="#length">length()</a>
+<a href="#new">new()</a>
+<a href="#queue_get">queue_get()</a>
+<a href="#queue_size">queue_size()</a>
+<a href="#read">read()</a>
+<a href="#set_authentications">set_authentications()</a>
+<a href="#set_cache">set_cache()</a>
+<a href="#set_cookies">set_cookies()</a>
+<a href="#set_log_file">set_log_file()</a>
+<a href="#set_scheme_handlers">set_scheme_handlers()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#active">active</a>
+<a href="#authentications">authentications</a>
+<a href="#cache">cache</a>
+<a href="#cookies">cookies</a>
+<a href="#log_file">log_file</a>
+<a href="#owner">owner</a>
+<a href="#queue">queue</a>
+<a href="#req_worker">req_worker</a>
+<a href="#scheme_handlers">scheme_handlers</a>
+<a href="#workers">workers</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_scheme_handler"/>
+<h3>add_scheme_handler(scheme, func)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1109" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cancel_all"/>
+<h3>cancel_all(client)</h3>
+public<p/>
+<dl>
+<dd>
+Cancel all requests for a given client
+<p/><a href="ipl.browser-browser.icn.html#994" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cancel_req"/>
+<h3>cancel_req(req)</h3>
+public<p/>
+<dl>
+<dd>
+Cancel an individual request
+<p/><a href="ipl.browser-browser.icn.html#1004" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="count"/>
+<h3>count(client)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1055" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="enqueue"/>
+<h3>enqueue(req)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1024" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#988" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_status"/>
+<h3>get_status()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1114" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_worker"/>
+<h3>get_worker(req)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1020" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#983" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="length"/>
+<h3>length(client)</h3>
+public<p/>
+<dl>
+<dd>
+Return a length giving the remaining data to be downloaded for
+this client; fails if that is unknown.
+<p/><a href="ipl.browser-browser.icn.html#1075" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(owner, n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1150" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="queue_get"/>
+<h3>queue_get()</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1046" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="queue_size"/>
+<h3>queue_size()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1042" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="read"/>
+<h3>read(client)</h3>
+public<p/>
+<dl>
+<dd>
+Return the amount read by this client's current requests.
+<p/><a href="ipl.browser-browser.icn.html#1064" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_authentications"/>
+<h3>set_authentications(m)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1094" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cache"/>
+<h3>set_cache(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1099" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cookies"/>
+<h3>set_cookies(cookies)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1089" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_log_file"/>
+<h3>set_log_file(f)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#978" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_scheme_handlers"/>
+<h3>set_scheme_handlers(m)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#1104" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="active"/>
+<h3>active</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#971" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="authentications"/>
+<h3>authentications</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#975" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cache"/>
+<h3>cache</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#974" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cookies"/>
+<h3>cookies</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#973" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="log_file"/>
+<h3>log_file</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#972" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="owner"/>
+<h3>owner</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#968" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="queue"/>
+<h3>queue</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#964" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="req_worker"/>
+<h3>req_worker</h3>
+package<p/>
+<dl>
+<dd>
+table mapping Req to Worker
+<p/><a href="ipl.browser-browser.icn.html#967" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="scheme_handlers"/>
+<h3>scheme_handlers</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#976" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="workers"/>
+<h3>workers</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#965" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

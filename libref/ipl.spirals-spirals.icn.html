@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>spirals.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     spirals.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce traces of fractal stars
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  Draw spiral with n segments and t rotations, starting at (x,y).
+<a name="18"/>#  The extent determines the size of the drawing.
+<a name="19"/>#
+<a name="20"/>#  The eccentricity is e (1 gives circle) and the reduction factor is r.
+<a name="21"/>#  The angular increment is incr and the y scaling factor is yfact.
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>#
+<a name="25"/>#  Links:  gobject, numbers
+<a name="26"/>#
+<a name="27"/>############################################################################
+<a name="28"/>
+<a name="29"/>package ipl.spirals
+<a name="30"/>
+<a name="31"/>import
+<a name="32"/>   ipl.gobject(Point),
+<a name="33"/>   ipl.numbers(realdiv),
+<a name="34"/>   util(Math)
+<a name="35"/>
+<a name="36"/>procedure spiral(x, y, extent, n, t, e, r, incr, yfact)
+<a name="37"/>   local i, c, s, angle, redrad, x1, y1
+<a name="38"/>
+<a name="39"/>   incr := Math.dtor(incr)
+<a name="40"/>
+<a name="41"/>   every i := 0 to n do {
+<a name="42"/>      redrad := r ^ realdiv(i, n)
+<a name="43"/>      angle := (incr * i) / n
+<a name="44"/>      x1 := redrad * Math.cos(t * angle)
+<a name="45"/>      y1 := redrad * e * Math.sin(t * angle)
+<a name="46"/>      c := Math.cos(angle)
+<a name="47"/>      s := Math.sin(angle)
+<a name="48"/>      suspend Point(x + extent / 2 * (1 + x1 * c - y1 * s),
+<a name="49"/>         y + extent / 2 * yfact * (1 + x1 * s + y1 * c))
+<a name="50"/>      }
+<a name="51"/>
+<a name="52"/>end
+</pre></body></html>

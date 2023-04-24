@@ -1,0 +1,379 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ObjectOutputStream</title></head><body>
+<h1>ObjectOutputStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.Stream.html" target="displayFrame">io.Stream</a><br>
+<a href="util.HasCloseUnderlying.html" target="displayFrame">util.HasCloseUnderlying</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+This class can be used to output a human-readable image of an
+arbitrary icon object.
+<p/>
+Example :-
+<pre>
+   oo := ObjectOutputStream(FileStream.stdout)
+   oo.show(my_object)
+   oo.show(another_object)
+</pre>
+<p/>
+Note that most of the public methods in this class are intended for
+use by other classes which implement custom output (by having an
+<code>object_output</code> method).  Only the setter and <code><a href="lang.ObjectOutputStream.html#show">show</a></code> methods should
+be used by a client.
+<p/>
+For simpler procedure interfaces to this class, see <code><a href="lang.to_string.html" target="displayFrame">to_string</a></code>,
+<code><a href="lang.to_stdout.html" target="displayFrame">to_stdout</a></code> and <code><a href="lang.to_stderr.html" target="displayFrame">to_stderr</a></code>.
+<p/><a href="lang-langprocs.icn.html#93" target="displayFrame">Source - langprocs.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="lang.ObjectOutputStream.html">lang.ObjectOutputStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#in">in()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#iminus">iminus()</a>
+<a href="#iplus">iplus()</a>
+<a href="#new">new()</a>
+<a href="#nl">nl()</a>
+<a href="#object_end">object_end()</a>
+<a href="#object_selected">object_selected()</a>
+<a href="#object_start">object_start()</a>
+<a href="#object_string">object_string()</a>
+<a href="#out">out()</a>
+<a href="#set_always_structure">set_always_structure()</a>
+<a href="#set_depth">set_depth()</a>
+<a href="#set_ignore_object_output">set_ignore_object_output()</a>
+<a href="#set_indent">set_indent()</a>
+<a href="#show">show()</a>
+<a href="#simple">simple()</a>
+<a href="#traverse">traverse()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#always_structure_flag">always_structure_flag</a>
+<a href="#depth">depth</a>
+<a href="#file">file</a>
+<a href="#ignore_object_output_flag">ignore_object_output_flag</a>
+<a href="#ilevel">ilevel</a>
+<a href="#indent">indent</a>
+<a href="#level">level</a>
+<a href="#seen">seen</a>
+<a href="#stuff">stuff</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="lang-langprocs.icn.html#519" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="lang-langprocs.icn.html#145" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="iminus"/>
+<h3>iminus()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#163" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="iplus"/>
+<h3>iplus()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#158" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(file)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#525" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="nl"/>
+<h3>nl()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#149" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="object_end"/>
+<h3>object_end(o)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#425" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="object_selected"/>
+<h3>object_selected(o, fields[])</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#436" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="object_start"/>
+<h3>object_start(o)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#421" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="object_string"/>
+<h3>object_string(o, s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#429" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="out"/>
+<h3>out(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#out">out()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="lang-langprocs.icn.html#140" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="set_always_structure"/>
+<h3>set_always_structure(s)</h3>
+public<p/>
+<dl>
+<dd>
+When indent is set (ie output is over many lines and indented to
+show structure), certain objects will still be written on one
+line if they just contain simple elements like integers and
+strings.  This flag forces even these objects to be written over
+many lines.
+<p/><a href="lang-langprocs.icn.html#508" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="set_depth"/>
+<h3>set_depth(i)</h3>
+public<p/>
+<dl>
+<dd>
+The maximum depth into which strucutures are recursed; if null
+then no limit.
+<p/><a href="lang-langprocs.icn.html#492" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ignore_object_output"/>
+<h3>set_ignore_object_output(s)</h3>
+public<p/>
+<dl>
+<dd>
+If set, then any custom <code>object_output</code> methods in objects are
+ignored, and the default object output format is used instead.
+<p/><a href="lang-langprocs.icn.html#500" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="set_indent"/>
+<h3>set_indent(i)</h3>
+public<p/>
+<dl>
+<dd>
+When set to an integer, output is structured over many lines,
+with the given value as an indent to show structure.  When null,
+all output is on one line.
+<p/><a href="lang-langprocs.icn.html#483" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="show"/>
+<h3>show(o)</h3>
+public<p/>
+<dl>
+<dd>
+Reset everything and output a new object.
+<p/><a href="lang-langprocs.icn.html#126" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="simple"/>
+<h3>simple(x)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#466" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse"/>
+<h3>traverse(o)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#168" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="always_structure_flag"/>
+<h3>always_structure_flag</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#124" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="depth"/>
+<h3>depth</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#114" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="file"/>
+<h3>file</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#118" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="ignore_object_output_flag"/>
+<h3>ignore_object_output_flag</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#123" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="ilevel"/>
+<h3>ilevel</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#117" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="indent"/>
+<h3>indent</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#115" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="level"/>
+<h3>level</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#116" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="seen"/>
+<h3>seen</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#122" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="stuff"/>
+<h3>stuff</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="lang-langprocs.icn.html#121" target="displayFrame">Source - langprocs.icn </a>
+</dd>
+</dl><hr>
+</body></html>

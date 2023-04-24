@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>jsonformatter.icn</title></head><body><pre>
+<a name="1"/>package json
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   util,
+<a name="5"/>   io,
+<a name="6"/>   exception
+<a name="7"/>
+<a name="8"/>#
+<a name="9"/># A class for outputting formatted output of a json structure.
+<a name="10"/>#
+<a name="11"/>class JSONFormatter(Stream, HasCloseUnderlying)
+<a name="12"/>   private const
+<a name="13"/>      file
+<a name="14"/>   private
+<a name="15"/>      indent,
+<a name="16"/>      level,
+<a name="17"/>      true,
+<a name="18"/>      false,
+<a name="19"/>      null
+<a name="20"/>
+<a name="21"/>   #
+<a name="22"/>   # Create a formatter which will output to the `Stream` `file`; by
+<a name="23"/>   # default standard output.
+<a name="24"/>   #
+<a name="25"/>   public new(file)
+<a name="26"/>      /file := FileStream.stdout
+<a name="27"/>      self.file := file
+<a name="28"/>      file.can(Stream.WRITE) | runerr("Stream not writable", file)
+<a name="29"/>      true := &amp;yes
+<a name="30"/>      false := &amp;no
+<a name="31"/>      return
+<a name="32"/>   end
+<a name="33"/>
+<a name="34"/>   #
+<a name="35"/>   # Set a value to represent json "true"; by default `&amp;yes`.
+<a name="36"/>   #
+<a name="37"/>   public set_true(x)
+<a name="38"/>      self.true := x
+<a name="39"/>      link
+<a name="40"/>   end
+<a name="41"/>
+<a name="42"/>   #
+<a name="43"/>   # Set a value to represent json "false"; by default `&amp;no`.
+<a name="44"/>   #
+<a name="45"/>   public set_false(x)
+<a name="46"/>      self.false := x
+<a name="47"/>      link
+<a name="48"/>   end
+<a name="49"/>
+<a name="50"/>   #
+<a name="51"/>   # Set a value to represent json "null"; by default `&amp;null`.  Note
+<a name="52"/>   # that, since this is the same as the default for "false", if
+<a name="53"/>   # neither default is changed then `&amp;null` values are always output
+<a name="54"/>   # as "false".
+<a name="55"/>   #
+<a name="56"/>   public set_null(x)
+<a name="57"/>      self.null := x
+<a name="58"/>      link
+<a name="59"/>   end
+<a name="60"/>
+<a name="61"/>   public override out(s)
+<a name="62"/>      return file.out(s) | throw(&amp;why)
+<a name="63"/>   end
+<a name="64"/>
+<a name="65"/>   public override get_mode()
+<a name="66"/>      return WRITE
+<a name="67"/>   end
+<a name="68"/>
+<a name="69"/>   public override close()
+<a name="70"/>      if \close_underlying_flag then
+<a name="71"/>         file.close() | fail
+<a name="72"/>      link
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   #
+<a name="76"/>   # Output the formatted version of `x`.
+<a name="77"/>   #
+<a name="78"/>   public format(x)
+<a name="79"/>      self.level := 0
+<a name="80"/>      link try1{ format1(x) }
+<a name="81"/>   end
+<a name="82"/>
+<a name="83"/>   private format1(x)
+<a name="84"/>      case x of {
+<a name="85"/>         true: writes1("true")
+<a name="86"/>         false: writes1("false")
+<a name="87"/>         null: writes1("null")
+<a name="88"/>         default : case type(x) of {
+<a name="89"/>            "table": format_object(x)
+<a name="90"/>            "list" : format_array(x)
+<a name="91"/>            "integer" |
+<a name="92"/>            "real" : writes1(x)
+<a name="93"/>            "ucs" |
+<a name="94"/>            "string" : writes("\"", json_escape(x), "\"")
+<a name="95"/>            default: runerr("Unknown type in json format", x)
+<a name="96"/>         }
+<a name="97"/>      }
+<a name="98"/>   end
+<a name="99"/>
+<a name="100"/>   private format_array(x)
+<a name="101"/>      local istr, e, fl
+<a name="102"/>
+<a name="103"/>      if \indent &amp; type(!x) == ("list" | "table") then {
+<a name="104"/>         level +:= 1
+<a name="105"/>         istr := repl(" ", indent * level)
+<a name="106"/>         write("[")
+<a name="107"/>         every e := !x do {
+<a name="108"/>            if \fl then
+<a name="109"/>               write(",")
+<a name="110"/>            writes1(istr)
+<a name="111"/>            format1(e)
+<a name="112"/>            fl := &amp;yes
+<a name="113"/>         }
+<a name="114"/>         if \fl then
+<a name="115"/>            write()
+<a name="116"/>         level -:= 1
+<a name="117"/>         writes(repl(" ", indent * level), "]")
+<a name="118"/>      } else {
+<a name="119"/>         writes1("[")
+<a name="120"/>         every e := !x do {
+<a name="121"/>            if \fl then
+<a name="122"/>               writes1(", ")
+<a name="123"/>            format1(e)
+<a name="124"/>            fl := &amp;yes
+<a name="125"/>         }
+<a name="126"/>         writes1("]")
+<a name="127"/>      }
+<a name="128"/>   end
+<a name="129"/>
+<a name="130"/>   private format_object(x)
+<a name="131"/>      local istr, fl, e
+<a name="132"/>      if \indent &amp; *x &gt; 0 then {
+<a name="133"/>         level +:= 1
+<a name="134"/>         istr := repl(" ", indent * level)
+<a name="135"/>         write("{")
+<a name="136"/>         every e := !sort(x) do {
+<a name="137"/>            if \fl then
+<a name="138"/>               write(",")
+<a name="139"/>            writes(istr, "\"", json_escape(e[1]), "\": ")
+<a name="140"/>            format1(e[2])
+<a name="141"/>            fl := &amp;yes
+<a name="142"/>         }
+<a name="143"/>         if \fl then
+<a name="144"/>            write()
+<a name="145"/>         level -:= 1
+<a name="146"/>         writes(repl(" ", indent * level), "}")
+<a name="147"/>      } else {
+<a name="148"/>         writes1("{")
+<a name="149"/>         every e := !sort(x) do {
+<a name="150"/>            if \fl then
+<a name="151"/>               writes1(", ")
+<a name="152"/>            writes("\"", json_escape(e[1]), "\": ")
+<a name="153"/>            format1(e[2])
+<a name="154"/>            fl := &amp;yes
+<a name="155"/>         }
+<a name="156"/>         writes1("}")
+<a name="157"/>      }
+<a name="158"/>   end
+<a name="159"/>
+<a name="160"/>   # Ensure that each object member appears on a new line with an
+<a name="161"/>   # indent of n chars.  Lists with nested structures are similarly
+<a name="162"/>   # indented.  Whitespace will be inserted as appropriate.  By
+<a name="163"/>   # default, no indentation is done.
+<a name="164"/>   #
+<a name="165"/>   public set_indent(n)
+<a name="166"/>      self.indent := n
+<a name="167"/>      link
+<a name="168"/>   end
+<a name="169"/>end
+<a name="170"/>
+<a name="171"/># Return a string equivalent to `s`, but with any necessary characters
+<a name="172"/># escaped so that the resulting string is suitable to form part of a
+<a name="173"/># json document.
+<a name="174"/>#
+<a name="175"/>procedure json_escape(s)
+<a name="176"/>   local ch, r
+<a name="177"/>
+<a name="178"/>   r := ""
+<a name="179"/>   s ? {
+<a name="180"/>      while r ||:= string(tab(upto(~JSONParser.UNESCAPED_CHAR))) do {
+<a name="181"/>         ch := move(1)
+<a name="182"/>         r ||:= case string(ch) of {
+<a name="183"/>            "\"": "\\\""
+<a name="184"/>            "\\": "\\\\"
+<a name="185"/>            "\b": "\\b"
+<a name="186"/>            "\f": "\\f"
+<a name="187"/>            "\n": "\\n"
+<a name="188"/>            "\r": "\\r"
+<a name="189"/>            "\t": "\\t"
+<a name="190"/>            default : "\\u" || Format.int_to_string(ord(ch),,4)
+<a name="191"/>         }
+<a name="192"/>      }
+<a name="193"/>      return r || tab(0)
+<a name="194"/>   }
+<a name="195"/>end
+</pre></body></html>

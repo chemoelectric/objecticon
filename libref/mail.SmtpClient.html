@@ -1,0 +1,311 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SmtpClient</title></head><body>
+<h1>SmtpClient</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="net.NetClient.html" target="displayFrame">net.NetClient</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="mail-package.html" target="listFrame">mail</a></dd>
+</dl><p/>
+<p/><a href="mail-smtpclient.icn.html#9" target="displayFrame">Source - smtpclient.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="net.NetClient.html">net.NetClient</a>
+<a href="mail.SmtpClient.html">mail.SmtpClient</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from net.NetClient</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="net.NetClient.html#avoid_addr">avoid_addr()</a>
+<a href="net.NetClient.html#choose_addr">choose_addr()</a>
+<a href="net.NetClient.html#close_connection">close_connection()</a>
+<a href="net.NetClient.html#dns_background_query">dns_background_query()</a>
+<a href="net.NetClient.html#dns_query">dns_query()</a>
+<a href="net.NetClient.html#dns_query_impl">dns_query_impl()</a>
+<a href="net.NetClient.html#do_poll">do_poll()</a>
+<a href="net.NetClient.html#error_dont_retry">error_dont_retry()</a>
+<a href="net.NetClient.html#establish_http_proxy_connection">establish_http_proxy_connection()</a>
+<a href="net.NetClient.html#establish_proxy_connection">establish_proxy_connection()</a>
+<a href="net.NetClient.html#establish_socks5_proxy_connection">establish_socks5_proxy_connection()</a>
+<a href="net.NetClient.html#exact_str">exact_str()</a>
+<a href="net.NetClient.html#expect_line">expect_line()</a>
+<a href="net.NetClient.html#expect_str">expect_str()</a>
+<a href="net.NetClient.html#improve_why">improve_why()</a>
+<a href="net.NetClient.html#ip_to_addr">ip_to_addr()</a>
+<a href="net.NetClient.html#is_connected">is_connected()</a>
+<a href="net.NetClient.html#open_connection">open_connection()</a>
+<a href="net.NetClient.html#quietly_close_connection">quietly_close_connection()</a>
+<a href="net.NetClient.html#read_line">read_line()</a>
+<a href="net.NetClient.html#read_str">read_str()</a>
+<a href="net.NetClient.html#recv">recv()</a>
+<a href="net.NetClient.html#reset_dont_retry">reset_dont_retry()</a>
+<a href="net.NetClient.html#send">send()</a>
+<a href="net.NetClient.html#set_ip_version">set_ip_version()</a>
+<a href="net.NetClient.html#set_path">set_path()</a>
+<a href="net.NetClient.html#set_port">set_port()</a>
+<a href="net.NetClient.html#set_proxy">set_proxy()</a>
+<a href="net.NetClient.html#set_proxy_auth">set_proxy_auth()</a>
+<a href="net.NetClient.html#set_proxy_type">set_proxy_type()</a>
+<a href="net.NetClient.html#set_server">set_server()</a>
+<a href="net.NetClient.html#set_ssl">set_ssl()</a>
+<a href="net.NetClient.html#set_ssl_verify">set_ssl_verify()</a>
+<a href="net.NetClient.html#set_timeout">set_timeout()</a>
+<a href="net.NetClient.html#socks5_string">socks5_string()</a>
+<a href="net.NetClient.html#ssl_maybe_poll">ssl_maybe_poll()</a>
+<a href="net.NetClient.html#valid_port">valid_port()</a>
+<a href="net.NetClient.html#validate_settings">validate_settings()</a>
+<a href="net.NetClient.html#whyf_dont_retry">whyf_dont_retry()</a>
+<a href="net.NetClient.html#write_line">write_line()</a>
+<a href="net.NetClient.html#write_lines">write_lines()</a>
+<a href="net.NetClient.html#write_str">write_str()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from net.NetClient</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="net.NetClient.html#avoid">avoid</a>
+<a href="net.NetClient.html#AVOID_TIMEOUT">AVOID_TIMEOUT</a>
+<a href="net.NetClient.html#CLOSED_EVENT">CLOSED_EVENT</a>
+<a href="net.NetClient.html#CONNECTED_EVENT">CONNECTED_EVENT</a>
+<a href="net.NetClient.html#CONNECTING_EVENT">CONNECTING_EVENT</a>
+<a href="net.NetClient.html#connection">connection</a>
+<a href="net.NetClient.html#dont_retry_flag">dont_retry_flag</a>
+<a href="net.NetClient.html#FOREGROUND_DNS">FOREGROUND_DNS</a>
+<a href="net.NetClient.html#ip_version">ip_version</a>
+<a href="net.NetClient.html#path">path</a>
+<a href="net.NetClient.html#port">port</a>
+<a href="net.NetClient.html#proxy">proxy</a>
+<a href="net.NetClient.html#proxy_auth">proxy_auth</a>
+<a href="net.NetClient.html#proxy_type">proxy_type</a>
+<a href="net.NetClient.html#READ_LINE_EVENT">READ_LINE_EVENT</a>
+<a href="net.NetClient.html#READ_STRING_EVENT">READ_STRING_EVENT</a>
+<a href="net.NetClient.html#sbuff">sbuff</a>
+<a href="net.NetClient.html#server">server</a>
+<a href="net.NetClient.html#ssl_connection">ssl_connection</a>
+<a href="net.NetClient.html#ssl_flag">ssl_flag</a>
+<a href="net.NetClient.html#ssl_verify_flag">ssl_verify_flag</a>
+<a href="net.NetClient.html#ssl_want_shutdown">ssl_want_shutdown</a>
+<a href="net.NetClient.html#timeout">timeout</a>
+<a href="net.NetClient.html#WRITING_LINE_EVENT">WRITING_LINE_EVENT</a>
+<a href="net.NetClient.html#WRITING_STRING_EVENT">WRITING_STRING_EVENT</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#open">open()</a>
+<a href="#read_response">read_response()</a>
+<a href="#send_catenated_header">send_catenated_header()</a>
+<a href="#send_command">send_command()</a>
+<a href="#send_first_header">send_first_header()</a>
+<a href="#send_headers">send_headers()</a>
+<a href="#send_headers_list">send_headers_list()</a>
+<a href="#send_message">send_message()</a>
+<a href="#set_hostname">set_hostname()</a>
+<a href="#smtp_address">smtp_address()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#hostname">hostname</a>
+<a href="#RFC822_HEADERS">RFC822_HEADERS</a>
+<a href="#sent_helo">sent_helo</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="net.NetClient.html#close">close()</a> in <a href="net.NetClient.html" target="displayFrame">net.NetClient</a></dd>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#49" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#13" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="net.NetClient.html#new">new()</a> in <a href="net.NetClient.html" target="displayFrame">net.NetClient</a></dd>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#174" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="open"/>
+<h3>open()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#34" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_response"/>
+<h3>read_response()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#113" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="send_catenated_header"/>
+<h3>send_catenated_header(l, m, key)</h3>
+private<p/>
+<dl>
+<dd>
+Output all the headers for the key catenated together
+<p/><a href="mail-smtpclient.icn.html#137" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="send_command"/>
+<h3>send_command(msg, reply)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#103" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="send_first_header"/>
+<h3>send_first_header(l, m, key)</h3>
+private<p/>
+<dl>
+<dd>
+Output the first header with the key only
+<p/><a href="mail-smtpclient.icn.html#127" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="send_headers"/>
+<h3>send_headers(m)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#142" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="send_headers_list"/>
+<h3>send_headers_list(l, m, key)</h3>
+private<p/>
+<dl>
+<dd>
+Output all the headers with the key only, as separate header lines
+<p/><a href="mail-smtpclient.icn.html#132" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="send_message"/>
+<h3>send_message(m)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#56" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_hostname"/>
+<h3>set_hostname(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the hostname to use with the EHLO command; by default <code>&amp;host</code>.
+<p/><a href="mail-smtpclient.icn.html#26" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="smtp_address"/>
+<h3>smtp_address(mb)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#99" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="hostname"/>
+<h3>hostname</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#23" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="RFC822_HEADERS"/>
+<h3>RFC822_HEADERS</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#10" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="sent_helo"/>
+<h3>sent_helo</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-smtpclient.icn.html#24" target="displayFrame">Source - smtpclient.icn </a>
+</dd>
+</dl><hr>
+</body></html>

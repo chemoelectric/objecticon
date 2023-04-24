@@ -1,0 +1,282 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>JSONFormatter</title></head><body>
+<h1>JSONFormatter</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.Stream.html" target="displayFrame">io.Stream</a><br>
+<a href="util.HasCloseUnderlying.html" target="displayFrame">util.HasCloseUnderlying</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="json-package.html" target="listFrame">json</a></dd>
+</dl><p/>
+A class for outputting formatted output of a json structure.
+<p/><a href="json-jsonformatter.icn.html#8" target="displayFrame">Source - jsonformatter.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="json.JSONFormatter.html">json.JSONFormatter</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#in">in()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#format">format()</a>
+<a href="#format1">format1()</a>
+<a href="#format_array">format_array()</a>
+<a href="#format_object">format_object()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#new">new()</a>
+<a href="#out">out()</a>
+<a href="#set_false">set_false()</a>
+<a href="#set_indent">set_indent()</a>
+<a href="#set_null">set_null()</a>
+<a href="#set_true">set_true()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#false">false</a>
+<a href="#file">file</a>
+<a href="#indent">indent</a>
+<a href="#level">level</a>
+<a href="#null">null</a>
+<a href="#true">true</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#69" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format"/>
+<h3>format(x)</h3>
+public<p/>
+<dl>
+<dd>
+Output the formatted version of <code>x</code>.
+<p/><a href="json-jsonformatter.icn.html#75" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format1"/>
+<h3>format1(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#83" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_array"/>
+<h3>format_array(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#100" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="format_object"/>
+<h3>format_object(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#130" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#65" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(file)</h3>
+public<p/>
+<dl>
+<dd>
+Create a formatter which will output to the <code><a href="io.Stream.html" target="displayFrame">Stream</a></code> <code>file</code>; by
+default standard output.
+<p/><a href="json-jsonformatter.icn.html#21" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="out"/>
+<h3>out(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#out">out()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#61" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="set_false"/>
+<h3>set_false(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a value to represent json "false"; by default <code>&amp;no</code>.
+<p/><a href="json-jsonformatter.icn.html#42" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="set_indent"/>
+<h3>set_indent(n)</h3>
+public<p/>
+<dl>
+<dd>
+Ensure that each object member appears on a new line with an
+indent of n chars.  Lists with nested structures are similarly
+indented.  Whitespace will be inserted as appropriate.  By
+default, no indentation is done.
+<p/><a href="json-jsonformatter.icn.html#160" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="set_null"/>
+<h3>set_null(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a value to represent json "null"; by default <code>&amp;null</code>.  Note
+that, since this is the same as the default for "false", if
+neither default is changed then <code>&amp;null</code> values are always output
+as "false".
+<p/><a href="json-jsonformatter.icn.html#50" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="set_true"/>
+<h3>set_true(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a value to represent json "true"; by default <code>&amp;yes</code>.
+<p/><a href="json-jsonformatter.icn.html#34" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="false"/>
+<h3>false</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#18" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="file"/>
+<h3>file</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#12" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="indent"/>
+<h3>indent</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#15" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="level"/>
+<h3>level</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#16" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="null"/>
+<h3>null</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#19" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+<a name="true"/>
+<h3>true</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="json-jsonformatter.icn.html#17" target="displayFrame">Source - jsonformatter.icn </a>
+</dd>
+</dl><hr>
+</body></html>

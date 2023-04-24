@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lstfncs.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     lstfncs.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to produce lists from sequences
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     April 23, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#  This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  Links:  genrfncs, numbers
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>
+<a name="21"/>package ipl.lstfncs
+<a name="22"/>
+<a name="23"/>import
+<a name="24"/>   ipl.genrfncs(fibseq, multiseq, primeseq),
+<a name="25"/>   ipl.numbers(mod1),
+<a name="26"/>   ipl.pdco(),
+<a name="27"/>   util(ce_param)
+<a name="28"/>
+<a name="29"/>
+<a name="30"/>procedure fiblist(l, m)
+<a name="31"/>   /l := 128
+<a name="32"/>   /m := 8
+<a name="33"/>
+<a name="34"/>   return ipl.pdco.List{ mod1(fibseq() \ l, m) }
+<a name="35"/>
+<a name="36"/>end
+<a name="37"/>
+<a name="38"/>procedure multilist(l, m)
+<a name="39"/>   /l := 128
+<a name="40"/>   /m := 8
+<a name="41"/>
+<a name="42"/>   return ipl.pdco.List{ mod1(multiseq() \ l, m) }
+<a name="43"/>
+<a name="44"/>end
+<a name="45"/>
+<a name="46"/>procedure primelist(l, m)
+<a name="47"/>   /l := 128
+<a name="48"/>   /m := 8
+<a name="49"/>
+<a name="50"/>   return ipl.pdco.List{ mod1(primeseq() \ l, m) }
+<a name="51"/>
+<a name="52"/>end
+<a name="53"/>
+<a name="54"/>procedure List(e, l, m)		
+<a name="55"/>   l := ce_param(l) | fail
+<a name="56"/>   m := ce_param(m) | fail
+<a name="57"/>
+<a name="58"/>   /l := 128	# length
+<a name="59"/>   /m := 8	# modulus
+<a name="60"/>
+<a name="61"/>   return ipl.pdco.List{ mod1(|@e, m) \ l }
+<a name="62"/>
+<a name="63"/>end
+</pre></body></html>

@@ -1,0 +1,339 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>XmlElement</title></head><body>
+<h1>XmlElement</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="xml.Element.html" target="displayFrame">xml.Element</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+This class represents an element in an XML document.  It has extra
+attributes and methods to deal with XML namespaces.
+<p/>
+For example, given the document
+<pre>
+  &lt;?xml version="1.0" ?&gt;
+  &lt;top xmlns:nsid="http://an.url.com"&gt;
+    &lt;nsid:inner nsid:attr="val"/&gt;
+  &lt;/top&gt;
+</pre>
+<p/>
+If n is the <code><a href="xml.XmlElement.html" target="displayFrame">XmlElement</a></code> representing the <code>&lt;top&gt;</code> element, then its
+global name is <code>GlobalName("top")</code> (ie the same as its local name).  The inner
+<code><a href="xml.XmlElement.html" target="displayFrame">XmlElement</a></code> however, has a global name of 
+<pre>
+   GlobalName("inner", "http://an.url.com"),
+</pre>
+and a single attribute with key 
+<pre>
+   GlobalName("attr", "http://an.url.com").
+</pre>
+<p/>
+The original parsed name and attribute table are still available
+via the methods in the superclass <code><a href="xml.Element.html" target="displayFrame">Element</a></code>.  For example, <code><a href="xml.Element.html#get_name">get_name()</a></code>
+for the inner <code><a href="xml.XmlElement.html" target="displayFrame">XmlElement</a></code> returns "nsid:inner".   <br>
+<p/><a href="xml-xmlelement.icn.html#13" target="displayFrame">Source - xmlelement.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html">xml.Node</a>
+<a href="xml.Element.html">xml.Element</a>
+<a href="xml.XmlElement.html">xml.XmlElement</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from xml.Node</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html#add">add()</a>
+<a href="xml.Node.html#add_string">add_string()</a>
+<a href="xml.Node.html#find_string">find_string()</a>
+<a href="xml.Node.html#find_trimmed_string">find_trimmed_string()</a>
+<a href="xml.Node.html#get_children">get_children()</a>
+<a href="xml.Node.html#get_children_no_whitespace">get_children_no_whitespace()</a>
+<a href="xml.Node.html#get_compacted_children">get_compacted_children()</a>
+<a href="xml.Node.html#get_nth_string">get_nth_string()</a>
+<a href="xml.Node.html#get_nth_trimmed_string">get_nth_trimmed_string()</a>
+<a href="xml.Node.html#get_parent">get_parent()</a>
+<a href="xml.Node.html#get_string_content">get_string_content()</a>
+<a href="xml.Node.html#get_string_content_with_cdata">get_string_content_with_cdata()</a>
+<a href="xml.Node.html#get_trimmed_children">get_trimmed_children()</a>
+<a href="xml.Node.html#get_trimmed_string_content">get_trimmed_string_content()</a>
+<a href="xml.Node.html#get_trimmed_string_content_with_cdata">get_trimmed_string_content_with_cdata()</a>
+<a href="xml.Node.html#has_string">has_string()</a>
+<a href="xml.Node.html#has_trimmed_string">has_trimmed_string()</a>
+<a href="xml.Node.html#traverse_all_postorder">traverse_all_postorder()</a>
+<a href="xml.Node.html#traverse_all_preorder">traverse_all_preorder()</a>
+<a href="xml.Node.html#traverse_nodes_postorder">traverse_nodes_postorder()</a>
+<a href="xml.Node.html#traverse_nodes_preorder">traverse_nodes_preorder()</a>
+<a href="xml.Node.html#xml_trim">xml_trim()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from xml.Node</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Node.html#children">children</a>
+<a href="xml.Node.html#parent">parent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from xml.Element</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Element.html#get_attribute">get_attribute()</a>
+<a href="xml.Element.html#get_attributes">get_attributes()</a>
+<a href="xml.Element.html#get_name">get_name()</a>
+<a href="xml.Element.html#get_nth_element">get_nth_element()</a>
+<a href="xml.Element.html#search_children">search_children()</a>
+<a href="xml.Element.html#search_tree">search_tree()</a>
+<a href="xml.Element.html#set_attribute">set_attribute()</a>
+<a href="xml.Element.html#set_name">set_name()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from xml.Element</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="xml.Element.html#attributes">attributes</a>
+<a href="xml.Element.html#name">name</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_attribute_global_name">get_attribute_global_name()</a>
+<a href="#get_attributes_global_name">get_attributes_global_name()</a>
+<a href="#get_global_name">get_global_name()</a>
+<a href="#get_namespace_declarations">get_namespace_declarations()</a>
+<a href="#get_whitespace_children">get_whitespace_children()</a>
+<a href="#new">new()</a>
+<a href="#print_structure">print_structure()</a>
+<a href="#search_children_global_name">search_children_global_name()</a>
+<a href="#search_tree_global_name">search_tree_global_name()</a>
+<a href="#set_global_name">set_global_name()</a>
+<a href="#xml_space_preserved">xml_space_preserved()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#attributes_global_name">attributes_global_name</a>
+<a href="#global_name">global_name</a>
+<a href="#namespace_declarations">namespace_declarations</a>
+<a href="#whitespace_children">whitespace_children</a>
+<a href="#xml_space_preserve">xml_space_preserve</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_attribute_global_name"/>
+<h3>get_attribute_global_name(gn)</h3>
+public<p/>
+<dl>
+<dd>
+Return the attribute for this tag, or fail if none found, based on
+the given <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>gn</code> - the <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code> instance representing the global name
+</dd>
+</dl>
+<p/><a href="xml-xmlelement.icn.html#105" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="get_attributes_global_name"/>
+<h3>get_attributes_global_name()</h3>
+public<p/>
+<dl>
+<dd>
+Return the global name attributes map for this tag.  This will
+be a table of <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code> instances to values.
+<p/><a href="xml-xmlelement.icn.html#97" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_name"/>
+<h3>get_global_name()</h3>
+public<p/>
+<dl>
+<dd>
+Get the global name, which will be a <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code> instance.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code> instance representing the global name.
+</dd>
+</dl>
+<p/><a href="xml-xmlelement.icn.html#87" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="get_namespace_declarations"/>
+<h3>get_namespace_declarations()</h3>
+public<p/>
+<dl>
+<dd>
+Return the table of namespace declarations for this element.  The table
+will be a map of prefixes to URI's.
+<p/><a href="xml-xmlelement.icn.html#78" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="get_whitespace_children"/>
+<h3>get_whitespace_children()</h3>
+public<p/>
+<dl>
+<dd>
+Get whitespace children.  During validation, the parser may remove insignificant
+whitespace from the children list.  This method will always give the original list
+including whitespace.  If no whitespace was removed, this list will be identical
+to the children list.
+<p/><a href="xml-xmlelement.icn.html#68" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(n)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="xml.Element.html#new">new()</a> in <a href="xml.Element.html" target="displayFrame">xml.Element</a></dd>
+<dd>
+<p/><a href="xml-xmlelement.icn.html#182" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="print_structure"/>
+<h3>print_structure(f, indent, flags)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="xml.Element.html#print_structure">print_structure()</a> in <a href="xml.Element.html" target="displayFrame">xml.Element</a></dd>
+<dd>
+<p/><a href="xml-xmlelement.icn.html#152" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="search_children_global_name"/>
+<h3>search_children_global_name(s)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the elements under this element, with the given name.  If name
+is omitted, generate all the elements.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - a <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code>, being the name of the sub-elements
+</dd>
+</dl>
+<p/><a href="xml-xmlelement.icn.html#138" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="search_tree_global_name"/>
+<h3>search_tree_global_name(s)</h3>
+public<p/>
+<dl>
+<dd>
+Search for all the <code><a href="xml.Element.html" target="displayFrame">Element</a></code>s with the given tag name, recursively
+traversing the entire tree based at this node.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - a <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code>, being the name of the sub-elements
+</dd>
+</dl>
+<p/><a href="xml-xmlelement.icn.html#124" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="set_global_name"/>
+<h3>set_global_name(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the global (namespace-aware) name.  The global
+name should be a <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code> instance.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - a <code><a href="xml.GlobalName.html" target="displayFrame">GlobalName</a></code> instance representing the global name.
+</dd>
+</dl>
+<p/><a href="xml-xmlelement.icn.html#48" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="xml_space_preserved"/>
+<h3>xml_space_preserved()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the parser applied the xml:space="preserve" feature
+when parsing this element.
+<p/><a href="xml-xmlelement.icn.html#60" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="attributes_global_name"/>
+<h3>attributes_global_name</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlelement.icn.html#44" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="global_name"/>
+<h3>global_name</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlelement.icn.html#43" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="namespace_declarations"/>
+<h3>namespace_declarations</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlelement.icn.html#45" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="whitespace_children"/>
+<h3>whitespace_children</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlelement.icn.html#42" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+<a name="xml_space_preserve"/>
+<h3>xml_space_preserve</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlelement.icn.html#46" target="displayFrame">Source - xmlelement.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>orbits.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     orbits.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to produce traces of orbits
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  These procedures produce traces of orbits.  See
+<a name="18"/>#
+<a name="19"/>#	Geometric and Artistic Graphics; Design Generation with
+<a name="20"/>#	Microcomputers, Jean-Paul Delahaye, Macmillan, 1987, pp. 65-73.
+<a name="21"/>#
+<a name="22"/>#  The arguments specify the starting positions, the extent of the
+<a name="23"/>#  drawing, the number of segments, and various parameters that
+<a name="24"/>#  control the orbit.
+<a name="25"/>#
+<a name="26"/>############################################################################
+<a name="27"/>#
+<a name="28"/>#  Links:  gobject
+<a name="29"/>#
+<a name="30"/>############################################################################
+<a name="31"/>
+<a name="32"/>package ipl.orbits
+<a name="33"/>
+<a name="34"/>import
+<a name="35"/>   ipl.gobject(Point),
+<a name="36"/>   util(Math)
+<a name="37"/>
+<a name="38"/>procedure orbit1(x, y, extent, n, t1, t2, k1, k2, radius1, sscale,
+<a name="39"/>   xfact, yfact)
+<a name="40"/>   local incr1, incr2, real_n, angle1, angle2, i, radius2, loff
+<a name="41"/>
+<a name="42"/>   radius1 *:= extent			#scaling
+<a name="43"/>   loff := 0.5 * extent
+<a name="44"/>   sscale *:= extent
+<a name="45"/>
+<a name="46"/>   real_n := real(n)
+<a name="47"/>   incr1 := 2 * Math.PI * t1 / n
+<a name="48"/>   incr2 := 2 * Math.PI * t2 / n
+<a name="49"/>   angle1 := angle2 := 0
+<a name="50"/>
+<a name="51"/>   every i := 1 to n do {
+<a name="52"/>      radius2 := sscale * (1 - i / real_n)
+<a name="53"/>      angle1 +:= incr1
+<a name="54"/>      angle2 +:= incr2
+<a name="55"/>      suspend Point(x + xfact * (loff + radius1 * Math.cos(k1 * angle1) +
+<a name="56"/>         radius2 * Math.cos(angle2)),
+<a name="57"/>         y + yfact * (loff + radius1 * Math.sin(k2 * angle1) +
+<a name="58"/>         radius2 * Math.sin(angle2)))
+<a name="59"/>      }
+<a name="60"/>
+<a name="61"/>end
+<a name="62"/>
+<a name="63"/>procedure orbit2(x, y, extent, n, t1, t2, k1, k2, radius1, sscale,
+<a name="64"/>   xfact, yfact, roff, rfact, rratio, div)
+<a name="65"/>   local incr1, incr2, rangle, angle1, angle2, i, radius2, loff
+<a name="66"/>
+<a name="67"/>   rangle := 2 * Math.PI / div * rratio
+<a name="68"/>   radius1 *:= extent			#scaling
+<a name="69"/>   loff  := 0.5 * extent
+<a name="70"/>   sscale *:= extent
+<a name="71"/>
+<a name="72"/>   incr1 := 2 * Math.PI * t1 / n
+<a name="73"/>   incr2 := 2 * Math.PI * t2 / n
+<a name="74"/>   angle1 := angle2 := 0
+<a name="75"/>
+<a name="76"/>   every i := 1 to n do {
+<a name="77"/>      radius2 := sscale * (roff + rfact * Math.cos(i * rangle))
+<a name="78"/>      angle1 +:= incr1
+<a name="79"/>      angle2 +:= incr2
+<a name="80"/>      suspend Point(x + xfact * (loff + radius1 * Math.cos(k1 * angle1) +
+<a name="81"/>         radius2 * Math.cos(angle2)),
+<a name="82"/>         y + yfact * (loff + radius1 * Math.sin(k2 * angle1) +
+<a name="83"/>         radius2 * Math.sin(angle2)))
+<a name="84"/>      }
+<a name="85"/>
+<a name="86"/>end
+</pre></body></html>

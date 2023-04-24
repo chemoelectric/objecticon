@@ -1,0 +1,622 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Proc</title></head><body>
+<h1>Proc</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+This class allows information about procedures, functions, etc, to
+be obtained.  The parameters named <code>p</code> to the methods may be any
+function or procedure or method pointer.
+<p/>
+Additionally, <code>p</code> may be a two-element list.  The first element
+should be a class or object, the second a field name or number
+referencing a method.  This enables information about instance,
+special or private methods to be obtained.  In order to ensure
+consistency in information about native methods, passing a class in
+this way will cause it to be initialized if it isn't already.
+<p/>
+Note that methods which are resolved to stub functions may not
+behave as expected.  These stub functions are used as placeholders
+for optional, abstract and (unresolved) native methods.  They are
+also used to replace methods which <code>oit</code> deems unreferenced
+("removed methods").
+<p/>
+Since these stub functions are shared by many methods, they do not
+link back to a particular class and field.  Thus, the <code><a href="lang.Proc.html#get_name">get_name</a></code>
+method, for example, will return the stub function's name rather
+than the name which one might otherwise expect.
+<p/><a href="lang-proc.icn.html#5" target="displayFrame">Source - proc.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#arg">arg()</a>
+<a href="#for_name">for_name()</a>
+<a href="#get_defining_class">get_defining_class()</a>
+<a href="#get_defining_class_impl">get_defining_class_impl()</a>
+<a href="#get_field_index">get_field_index()</a>
+<a href="#get_field_index_impl">get_field_index_impl()</a>
+<a href="#get_field_name">get_field_name()</a>
+<a href="#get_field_name_impl">get_field_name_impl()</a>
+<a href="#get_kind">get_kind()</a>
+<a href="#get_kind_impl">get_kind_impl()</a>
+<a href="#get_local_index">get_local_index()</a>
+<a href="#get_local_index_impl">get_local_index_impl()</a>
+<a href="#get_local_kind">get_local_kind()</a>
+<a href="#get_local_kind_impl">get_local_kind_impl()</a>
+<a href="#get_local_location">get_local_location()</a>
+<a href="#get_local_location_impl">get_local_location_impl()</a>
+<a href="#get_local_name">get_local_name()</a>
+<a href="#get_local_name_impl">get_local_name_impl()</a>
+<a href="#get_local_names">get_local_names()</a>
+<a href="#get_location">get_location()</a>
+<a href="#get_n_arguments">get_n_arguments()</a>
+<a href="#get_n_arguments_impl">get_n_arguments_impl()</a>
+<a href="#get_n_dynamics">get_n_dynamics()</a>
+<a href="#get_n_dynamics_impl">get_n_dynamics_impl()</a>
+<a href="#get_n_locals">get_n_locals()</a>
+<a href="#get_n_statics">get_n_statics()</a>
+<a href="#get_n_statics_impl">get_n_statics_impl()</a>
+<a href="#get_name">get_name()</a>
+<a href="#get_name_impl">get_name_impl()</a>
+<a href="#get_package">get_package()</a>
+<a href="#get_proc_field">get_proc_field()</a>
+<a href="#get_program">get_program()</a>
+<a href="#get_program_impl">get_program_impl()</a>
+<a href="#has_varargs">has_varargs()</a>
+<a href="#has_varargs_impl">has_varargs_impl()</a>
+<a href="#init">init()</a>
+<a href="#load">load()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#Argument">Argument</a>
+<a href="#Dynamic">Dynamic</a>
+<a href="#Function">Function</a>
+<a href="#Internal">Internal</a>
+<a href="#Keyword">Keyword</a>
+<a href="#Operator">Operator</a>
+<a href="#Procedure">Procedure</a>
+<a href="#Static">Static</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="arg"/>
+<h3>arg(p)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#252" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="for_name"/>
+<h3>for_name(s, n, ce)</h3>
+public static<p/>
+<dl>
+<dd>
+Lookup a procedure (or function) by name.  First the globals are
+searched for a matching procedure or function.  Failing that, the
+builtin function, operator and keyword tables are searched.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - a name to search for
+</dd>
+<dd>
+<code>n</code> - the arity of an operator
+</dd>
+<dd>
+<code>ce</code> - a coexpression, representing a loaded program, defaults
+to the main program
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a procedure
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if the name is unknown as a proc
+</dd>
+</dl>
+<p/><a href="lang-proc.icn.html#281" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_defining_class"/>
+<h3>get_defining_class(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the class in which this method is defined; fails if this
+is not a method.
+<p/><a href="lang-proc.icn.html#147" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_defining_class_impl"/>
+<h3>get_defining_class_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#264" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_field_index"/>
+<h3>get_field_index(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the field index of the method; fails if this is not a
+method.
+<p/><a href="lang-proc.icn.html#161" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_field_index_impl"/>
+<h3>get_field_index_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#266" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_field_name"/>
+<h3>get_field_name(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the field name of the method; fails if this is not a
+method.
+<p/><a href="lang-proc.icn.html#154" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_field_name_impl"/>
+<h3>get_field_name_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#265" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_kind"/>
+<h3>get_kind(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the kind of this procedure, which is one of the constants :-
+<ul>
+<li>
+<code><a href="lang.Proc.html#Procedure">Procedure</a></code> for a procedure or method defined in an icon source file
+</li>
+<li>
+<code><a href="lang.Proc.html#Function">Function</a></code> a builtin function like <code>upto</code>, or a native method
+</li>
+<li>
+<code><a href="lang.Proc.html#Keyword">Keyword</a></code> a keyword function, obtained via <code><a href="lang.Prog.html#get_keyword">Prog.get_keyword()</a></code>
+</li>
+<li>
+<code><a href="lang.Proc.html#Operator">Operator</a></code> an operator function, obtained via <code><a href="lang.Prog.html#get_operator">Prog.get_operator()</a></code>
+</li>
+<li>
+<code><a href="lang.Proc.html#Internal">Internal</a></code> an internally used block of VM instructions.
+</li>
+</ul>
+<p/><a href="lang-proc.icn.html#168" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_kind_impl"/>
+<h3>get_kind_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#267" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_index"/>
+<h3>get_local_index(p, id)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the local name with the given id (name or index number).
+<p/><a href="lang-proc.icn.html#215" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_index_impl"/>
+<h3>get_local_index_impl(p, id)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#272" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_kind"/>
+<h3>get_local_kind(p, id)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the type of the given local, which is one of the constants
+<ul>
+<li>
+<code><a href="lang.Proc.html#Argument">Argument</a></code>,
+</li>
+<li>
+<code><a href="lang.Proc.html#Dynamic">Dynamic</a></code> (ie, a variable declared "local") or
+</li>
+<li>
+<code><a href="lang.Proc.html#Static">Static</a></code>.
+</li>
+</ul>
+<p/><a href="lang-proc.icn.html#242" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_kind_impl"/>
+<h3>get_local_kind_impl(p, id)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#275" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_location"/>
+<h3>get_local_location(p, id)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the location of the local variable with the given id (name
+or index number).
+<p/><a href="lang-proc.icn.html#228" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_location_impl"/>
+<h3>get_local_location_impl(p, id)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#273" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_name"/>
+<h3>get_local_name(p, id)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the name of the local variable with the given id (name or
+index number).
+<p/><a href="lang-proc.icn.html#235" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_name_impl"/>
+<h3>get_local_name_impl(p, id)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#274" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local_names"/>
+<h3>get_local_names(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate the local names of the procedure.
+<p/><a href="lang-proc.icn.html#221" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_location"/>
+<h3>get_location(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the source location of the proc.  For a method, the
+location of the method declaration is returned.
+<p/>
+For example :-
+<pre>
+   # Native method
+   get_location(DescStream.poll)` -&gt; Location#1(...)
+</pre>
+<p/>
+Note that stub methods will always fail :-
+<pre>
+   # Optional method
+   get_location([Stream, "in"])` -&gt; fails
+</pre>
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="lang.Location.html" target="displayFrame">Location</a></code> instance
+</dd>
+</dl>
+<p/><a href="lang-proc.icn.html#115" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_arguments"/>
+<h3>get_n_arguments(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the number of arguments of the proc; fails if this is not
+an procedure.
+<p/><a href="lang-proc.icn.html#188" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_arguments_impl"/>
+<h3>get_n_arguments_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#268" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_dynamics"/>
+<h3>get_n_dynamics(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the number of dynamic locals of the proc; fails if this is
+not an procedure.
+<p/><a href="lang-proc.icn.html#201" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_dynamics_impl"/>
+<h3>get_n_dynamics_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#270" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_locals"/>
+<h3>get_n_locals(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the number of locals (arguments, dynamic locals and
+statics) of the proc; fails if this is not an procedure.
+<p/><a href="lang-proc.icn.html#180" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_statics"/>
+<h3>get_n_statics(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the number of static variables in the proc; fails if this
+is not an procedure.
+<p/><a href="lang-proc.icn.html#208" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_statics_impl"/>
+<h3>get_n_statics_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#271" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_name"/>
+<h3>get_name(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the name of the proc.  For a method, the name is
+return in the form <code>class.method</code>.
+<p/>
+For example :-
+<pre>
+   get_name(FileStream.pipe)` -&gt; "io.FileStream.pipe"
+</pre>
+<p/>
+Stub methods always return their stub name (since they
+aren't recognised as fields) :-
+<pre>
+   # Optional method
+   get_name([Stream, "in"]) -&gt; "optional_method_stub"
+</pre>
+<p/><a href="lang-proc.icn.html#52" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_name_impl"/>
+<h3>get_name_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#262" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_package"/>
+<h3>get_package(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the name of the package in which this proc resides; fails
+if the proc is not in a package.  For a method, the package of
+the declaring class is returned.
+<p/>
+For example :-
+<pre>
+   get_package(FileStream.pipe)` -&gt; "io"
+</pre>
+<p/>
+Note that stub methods will always fail :-
+<pre>
+   # Optional method
+   get_package([Stream, "in"])` -&gt; fails
+</pre>
+<p/><a href="lang-proc.icn.html#91" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_proc_field"/>
+<h3>get_proc_field(c, field)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#276" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_program"/>
+<h3>get_program(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the program this proc resides in, or fail if it is not in
+a program.  The program's &amp;main co-expression is returned.  For a
+method (including resolved native methods), the declaring class's
+program is returned.
+<p/>
+For example :-
+<pre>
+   get_program(DescStream.poll)` -&gt; co-expression#123
+</pre>
+<p/>
+Note that stub methods will always fail :-
+<pre>
+   # Optional method
+   get_program([Stream, "in"])` -&gt; fails
+</pre>
+<p/><a href="lang-proc.icn.html#71" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="get_program_impl"/>
+<h3>get_program_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#263" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="has_varargs"/>
+<h3>has_varargs(p)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeeds if this is a procedure with variable args.
+<p/><a href="lang-proc.icn.html#195" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="has_varargs_impl"/>
+<h3>has_varargs_impl(p)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#269" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="lang-proc.icn.html#39" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="load"/>
+<h3>load(filename, funcname)</h3>
+public static native<p/>
+<dl>
+<dd>
+load C function dynamically.
+<p/><a href="lang-proc.icn.html#278" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="Argument"/>
+<h3>Argument</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_local_kind">get_local_kind</a></code> indicating an argument
+<p/><a href="lang-proc.icn.html#35" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="Dynamic"/>
+<h3>Dynamic</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_local_kind">get_local_kind</a></code> indicating a dynamic variable
+<p/><a href="lang-proc.icn.html#36" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="Function"/>
+<h3>Function</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_kind">get_kind</a></code> indicating a native function or method
+<p/><a href="lang-proc.icn.html#31" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="Internal"/>
+<h3>Internal</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_kind">get_kind</a></code> indicating an internal block of VM instructions
+<p/><a href="lang-proc.icn.html#34" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="Keyword"/>
+<h3>Keyword</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_kind">get_kind</a></code> indicating a keyword function
+<p/><a href="lang-proc.icn.html#32" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="Operator"/>
+<h3>Operator</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_kind">get_kind</a></code> indicating an operator
+<p/><a href="lang-proc.icn.html#33" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="Procedure"/>
+<h3>Procedure</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_kind">get_kind</a></code> indicating an icon procedure
+<p/><a href="lang-proc.icn.html#30" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+<a name="Static"/>
+<h3>Static</h3>
+public static const<p/>
+<dl>
+<dd>
+Value from <code><a href="lang.Proc.html#get_local_kind">get_local_kind</a></code> indicating a static variable
+<p/><a href="lang-proc.icn.html#37" target="displayFrame">Source - proc.icn </a>
+</dd>
+</dl><hr>
+</body></html>

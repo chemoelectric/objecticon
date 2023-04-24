@@ -1,0 +1,430 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>GridPaint</title></head><body>
+<h1>GridPaint</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Paint.html" target="displayFrame">gui.Paint</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A <code><a href="gui.Paint.html" target="displayFrame">Paint</a></code> instance which draws its output using a <code><a href="gui.Grid.html" target="displayFrame">Grid</a></code>.  The input is a format
+string specifying the grid and its contents.
+<p/><a href="gui-paint.icn.html#238" target="displayFrame">Source - paint.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Paint.html">gui.Paint</a>
+<a href="gui.GridPaint.html">gui.GridPaint</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Paint</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Paint.html#draw_rect">draw_rect()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close_win">close_win()</a>
+<a href="#do_bg">do_bg()</a>
+<a href="#do_brk">do_brk()</a>
+<a href="#do_cell">do_cell()</a>
+<a href="#do_fg">do_fg()</a>
+<a href="#do_font">do_font()</a>
+<a href="#do_img">do_img()</a>
+<a href="#do_imgl">do_imgl()</a>
+<a href="#do_imgx_impl">do_imgx_impl()</a>
+<a href="#do_leading">do_leading()</a>
+<a href="#do_x_ialign">do_x_ialign()</a>
+<a href="#do_x_spc">do_x_spc()</a>
+<a href="#do_y_ialign">do_y_ialign()</a>
+<a href="#do_y_spc">do_y_spc()</a>
+<a href="#draw">draw()</a>
+<a href="#draw_grid">draw_grid()</a>
+<a href="#finally">finally()</a>
+<a href="#initially">initially()</a>
+<a href="#lines">lines()</a>
+<a href="#new">new()</a>
+<a href="#ready_to_output">ready_to_output()</a>
+<a href="#str">str()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#accel">accel</a>
+<a href="#curr_cell">curr_cell</a>
+<a href="#fmt">fmt</a>
+<a href="#g">g</a>
+<a href="#ii">ii</a>
+<a href="#lheight">lheight</a>
+<a href="#llen">llen</a>
+<a href="#lno">lno</a>
+<a href="#parent">parent</a>
+<a href="#pass">pass</a>
+<a href="#win">win</a>
+<a href="#x">x</a>
+<a href="#x_ialign">x_ialign</a>
+<a href="#y">y</a>
+<a href="#y_ialign">y_ialign</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close_win"/>
+<h3>close_win()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#504" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_bg"/>
+<h3>do_bg(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#439" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_brk"/>
+<h3>do_brk(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#422" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_cell"/>
+<h3>do_cell(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#362" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_fg"/>
+<h3>do_fg(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#435" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_font"/>
+<h3>do_font(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#443" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_img"/>
+<h3>do_img(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#477" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_imgl"/>
+<h3>do_imgl(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#481" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_imgx_impl"/>
+<h3>do_imgx_impl(W)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#459" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_leading"/>
+<h3>do_leading(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#447" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_x_ialign"/>
+<h3>do_x_ialign(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#451" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_x_spc"/>
+<h3>do_x_spc(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#343" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_y_ialign"/>
+<h3>do_y_ialign(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#455" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="do_y_spc"/>
+<h3>do_y_spc(args)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#354" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="draw"/>
+<h3>draw(W, x, y)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Paint.html#draw">draw()</a> in <a href="gui.Paint.html" target="displayFrame">gui.Paint</a></dd>
+<dd>
+<p/><a href="gui-paint.icn.html#260" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_grid"/>
+<h3>draw_grid()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#509" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Paint.html#finally">finally()</a> in <a href="gui.Paint.html" target="displayFrame">gui.Paint</a></dd>
+<dd>
+<p/><a href="gui-paint.icn.html#500" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially(c, accel)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Paint.html#initially">initially()</a> in <a href="gui.Paint.html" target="displayFrame">gui.Paint</a></dd>
+<dd>
+<p/><a href="gui-paint.icn.html#264" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="lines"/>
+<h3>lines(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#299" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Size.html#new">new()</a> in <a href="gui.Size.html" target="displayFrame">gui.Size</a></dd>
+<dd>
+Create a new instance.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - The format string
+</dd>
+</dl>
+<p/><a href="gui-paint.icn.html#531" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="ready_to_output"/>
+<h3>ready_to_output()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#489" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#402" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="accel"/>
+<h3>accel</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#258" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="curr_cell"/>
+<h3>curr_cell</h3>
+public<p/>
+<dl>
+<dd>
+Current cell being read
+<p/><a href="gui-paint.icn.html#249" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="fmt"/>
+<h3>fmt</h3>
+public<p/>
+<dl>
+<dd>
+Format string
+<p/><a href="gui-paint.icn.html#244" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="g"/>
+<h3>g</h3>
+public<p/>
+<dl>
+<dd>
+Grid object
+<p/><a href="gui-paint.icn.html#245" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="ii"/>
+<h3>ii</h3>
+public<p/>
+<dl>
+<dd>
+Cell index counter.
+<p/><a href="gui-paint.icn.html#257" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="lheight"/>
+<h3>lheight</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#255" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="llen"/>
+<h3>llen</h3>
+public<p/>
+<dl>
+<dd>
+Current line len, height
+<p/><a href="gui-paint.icn.html#254" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="lno"/>
+<h3>lno</h3>
+public<p/>
+<dl>
+<dd>
+Line no. in cell 
+<p/><a href="gui-paint.icn.html#256" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="parent"/>
+<h3>parent</h3>
+public<p/>
+<dl>
+<dd>
+Parent component
+<p/><a href="gui-paint.icn.html#246" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="pass"/>
+<h3>pass</h3>
+public<p/>
+<dl>
+<dd>
+Pass number
+<p/><a href="gui-paint.icn.html#248" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="win"/>
+<h3>win</h3>
+public<p/>
+<dl>
+<dd>
+Window buffer
+<p/><a href="gui-paint.icn.html#247" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="x"/>
+<h3>x</h3>
+public<p/>
+<dl>
+<dd>
+Text 'cursor' location in cell
+<p/><a href="gui-paint.icn.html#250" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="x_ialign"/>
+<h3>x_ialign</h3>
+public<p/>
+<dl>
+<dd>
+Alignment of lines in a cell
+<p/><a href="gui-paint.icn.html#252" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="y"/>
+<h3>y</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#251" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="y_ialign"/>
+<h3>y_ialign</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#253" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+</body></html>

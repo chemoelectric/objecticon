@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>exception.icn</title></head><body><pre>
+<a name="1"/>package exception
+<a name="2"/>
+<a name="3"/>import util(State,save_state,need_coexpression), ipl.printf(lsprintf)
+<a name="4"/>
+<a name="5"/>package readable global 
+<a name="6"/>   # The co-expression currently ready to handle an exception
+<a name="7"/>   throw_handler, 
+<a name="8"/>   # The last value thrown
+<a name="9"/>   thrown,
+<a name="10"/>   # The co-expression of the last thrower
+<a name="11"/>   thrower
+<a name="12"/>
+<a name="13"/># A `State` class for saving the `throw_handler` global variables.  An
+<a name="14"/># optional initial value may be specified.
+<a name="15"/>#
+<a name="16"/>class ThrowHandlerState(State)
+<a name="17"/>   private th
+<a name="18"/>
+<a name="19"/>   public override swap()
+<a name="20"/>      throw_handler :=: th
+<a name="21"/>   end
+<a name="22"/>
+<a name="23"/>   public new(i)
+<a name="24"/>      self.th := need_coexpression(\i)
+<a name="25"/>      return
+<a name="26"/>   end
+<a name="27"/>end
+<a name="28"/>
+<a name="29"/>#
+<a name="30"/># "throw" an exception, setting `thrown` to `x` and `thrower` to
+<a name="31"/># `&amp;current`, before invoking the `throw_handler` co-expression.
+<a name="32"/>#
+<a name="33"/>procedure throw(x)
+<a name="34"/>   if /throw_handler then {
+<a name="35"/>      # If no handler, convert to runerr.
+<a name="36"/>      x := string(x) | image(x)
+<a name="37"/>      runerr("throw() with no handler: " || x)      
+<a name="38"/>   }
+<a name="39"/>   thrown := x
+<a name="40"/>   thrower := &amp;current
+<a name="41"/>   cofail(throw_handler)
+<a name="42"/>   runerr("throw() code co-expression reactivated unexpectedly")
+<a name="43"/>end
+<a name="44"/>
+<a name="45"/># A convenient procedure to invoke `runerr` if there is no
+<a name="46"/># `throw_handler`, or `throw` otherwise.  This is useful if a
+<a name="47"/># procedure may legitimately be called both within and without the
+<a name="48"/># context of a `try`.
+<a name="49"/>#
+<a name="50"/>procedure rthrow(a[])
+<a name="51"/>   if /throw_handler then
+<a name="52"/>      runerr!a
+<a name="53"/>   else
+<a name="54"/>      throw!a
+<a name="55"/>end
+<a name="56"/>
+<a name="57"/># A convenient procedure to invoke `throw` using a `printf` format
+<a name="58"/># string and parameters.
+<a name="59"/>procedure throwf(format, args[])
+<a name="60"/>   throw(lsprintf(format, args))
+<a name="61"/>end
+<a name="62"/>
+<a name="63"/>#
+<a name="64"/># Re-throw an exception, by invoking `throw_handler` without changing
+<a name="65"/># `thrown` or `thrower`.
+<a name="66"/>#
+<a name="67"/>procedure rethrow()
+<a name="68"/>   \throw_handler | runerr("rethrow() with no handler set")
+<a name="69"/>   \thrower | runerr("rethrow() with no exception current")
+<a name="70"/>   cofail(throw_handler)
+<a name="71"/>   runerr("rethrow() code co-expression reactivated unexpectedly")
+<a name="72"/>end
+<a name="73"/>
+<a name="74"/>#
+<a name="75"/># Clear the exception global variables `thrower` and `thrown`.
+<a name="76"/>#
+<a name="77"/>procedure eclear()
+<a name="78"/>   thrower := thrown := &amp;null
+<a name="79"/>end
+<a name="80"/>
+<a name="81"/>#
+<a name="82"/># Generate the results of `e`, whilst "catching" any exceptions
+<a name="83"/># thrown.  On an exception, failure occurs, and the caller can check
+<a name="84"/># for an exception by testing the values of `thrown` and/or `thrower`.
+<a name="85"/>#
+<a name="86"/>procedure try(e)
+<a name="87"/>   suspend save_state(e, ThrowHandlerState(&amp;current))
+<a name="88"/>end
+<a name="89"/>
+<a name="90"/># A useful wrapper around `try`.  `try` is called with `e` to get its
+<a name="91"/># first result.  If no exception is thrown, then the result produced
+<a name="92"/># by `e` is returned.  If `e` fails, `&amp;null` is returned.  If an
+<a name="93"/># exception was thrown, `eclear` is called, `&amp;why` is set and the
+<a name="94"/># procedure fails.
+<a name="95"/>#
+<a name="96"/>procedure try1(e)
+<a name="97"/>   local v
+<a name="98"/>   v := try(e)
+<a name="99"/>   if /thrower then
+<a name="100"/>      return v
+<a name="101"/>   &amp;why := text(thrown) | ("thrown: " || image(thrown))
+<a name="102"/>   eclear()
+<a name="103"/>end
+</pre></body></html>

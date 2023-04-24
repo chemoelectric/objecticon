@@ -1,0 +1,756 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>paint.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   util,
+<a name="5"/>   lang,
+<a name="6"/>   ipl.graphics(GetShadowClone),
+<a name="7"/>   ipl.strings(separate_lines)
+<a name="8"/>
+<a name="9"/>#
+<a name="10"/># A `Paint` represents an arbitrary object which has a size and can be
+<a name="11"/># drawn.
+<a name="12"/>#
+<a name="13"/>abstract class Paint(Size)
+<a name="14"/>   #
+<a name="15"/>   # Initialize the instance.  This should set the size of the instance.
+<a name="16"/>   # :Parameters :
+<a name="17"/>   # :  `c` - The owning `Component`
+<a name="18"/>   # :  `accel` - The keyboard accelerator to be drawn
+<a name="19"/>   #
+<a name="20"/>   public abstract initially(c, accel)
+<a name="21"/>
+<a name="22"/>   #
+<a name="23"/>   # Draw the instance
+<a name="24"/>   # :Parameters :
+<a name="25"/>   # :  `W` - The window to draw into
+<a name="26"/>   # :  `x` - The x position
+<a name="27"/>   # :  `y` - The y position
+<a name="28"/>   # :  `w` - The available output width
+<a name="29"/>   # :  `h` - The available output height
+<a name="30"/>   #
+<a name="31"/>   public abstract draw(W, x, y, w, h)
+<a name="32"/>
+<a name="33"/>   #
+<a name="34"/>   # Cleanup any resources used by this instance.
+<a name="35"/>   public finally()
+<a name="36"/>   end
+<a name="37"/>
+<a name="38"/>   #
+<a name="39"/>   # Convenient method to draw at a given point with size limit; just calls `draw`.
+<a name="40"/>   # :Parameters :
+<a name="41"/>   # :  `W` - The window to draw into
+<a name="42"/>   # :  `p` - The `Rect`, giving the point to draw at, and the
+<a name="43"/>   #          height/width limitation.
+<a name="44"/>   #
+<a name="45"/>   public draw_rect(W, r)
+<a name="46"/>      self.draw(W, r.x, r.y, r.w, r.h)
+<a name="47"/>   end
+<a name="48"/>end
+<a name="49"/>
+<a name="50"/>#
+<a name="51"/># Helpful method to return either a `TextPaint` or a `GridPaint`,
+<a name="52"/># based on whether `s` starts with the string ".cell" (indicating a
+<a name="53"/># `GridPaint`).
+<a name="54"/>#
+<a name="55"/>procedure paint_for_string(s)
+<a name="56"/>   if /s then
+<a name="57"/>      return
+<a name="58"/>   if match(".cell", s) then
+<a name="59"/>      return GridPaint(s)
+<a name="60"/>   else
+<a name="61"/>      return TextPaint(s)
+<a name="62"/>end
+<a name="63"/>
+<a name="64"/>#
+<a name="65"/># A simple `Paint` instance which draws a string.
+<a name="66"/>#
+<a name="67"/>class TextPaint(Paint)
+<a name="68"/>   public
+<a name="69"/>      str, accel
+<a name="70"/>
+<a name="71"/>   public override initially(c, accel)
+<a name="72"/>      self.accel := accel
+<a name="73"/>      self.h := c.cbwin.get_line_height()
+<a name="74"/>      self.w := c.cbwin.text_width(str)
+<a name="75"/>   end
+<a name="76"/>
+<a name="77"/>   public override draw(W, x, y)
+<a name="78"/>      draw_string_ex(W, x, y + W.get_line_ascent(), str, accel)
+<a name="79"/>   end
+<a name="80"/>
+<a name="81"/>   #
+<a name="82"/>   # Create a new instance.
+<a name="83"/>   # :Parameters :
+<a name="84"/>   # :  `s` - The string to draw
+<a name="85"/>   #
+<a name="86"/>   public override new(s)
+<a name="87"/>      self.str := need_text(s)
+<a name="88"/>      return
+<a name="89"/>   end
+<a name="90"/>end
+<a name="91"/>
+<a name="92"/>#
+<a name="93"/># A simple `Paint` instance which draws a string.  If the string is
+<a name="94"/># limited when output, then a truncated string ending in "..." is
+<a name="95"/># output.
+<a name="96"/>#
+<a name="97"/>class AbbreviatedTextPaint(TextPaint)
+<a name="98"/>   public override draw(W, x, y, w)
+<a name="99"/>      draw_string_ex(W, x, y + W.get_line_ascent(), limit_text(W, str, w), accel)
+<a name="100"/>   end
+<a name="101"/>end
+<a name="102"/>
+<a name="103"/>#
+<a name="104"/># A `Paint` which wraps another `Paint`.  The window seen by the
+<a name="105"/># wrapped instance's `draw` method is a cloned window.  This is
+<a name="106"/># created by the `make_clone()` method, which must be provided by a
+<a name="107"/># subclass.
+<a name="108"/>#
+<a name="109"/># Note that the clone is not involved in the `initially` setup, so the
+<a name="110"/># clone should not be inconsistent with any measuring done there.
+<a name="111"/>#
+<a name="112"/>abstract class WithClonePaint(CachedClone, Paint)
+<a name="113"/>   public const
+<a name="114"/>      other
+<a name="115"/>
+<a name="116"/>   public override initially(c, accel)
+<a name="117"/>      other.initially(c, accel)
+<a name="118"/>      self.w := other.w
+<a name="119"/>      self.h := other.h
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   public override draw(W, x, y, w, h)
+<a name="123"/>      other.draw(get_clone(W), x, y, w, h)
+<a name="124"/>   end
+<a name="125"/>
+<a name="126"/>   public override finally()
+<a name="127"/>      other.finally()
+<a name="128"/>      close()
+<a name="129"/>   end
+<a name="130"/>
+<a name="131"/>   #
+<a name="132"/>   # Create a new instance with the given `Paint` to wrap.
+<a name="133"/>   #
+<a name="134"/>   public override new(other)
+<a name="135"/>      self.other := other
+<a name="136"/>      return
+<a name="137"/>   end
+<a name="138"/>end
+<a name="139"/>
+<a name="140"/>#
+<a name="141"/># A simple `Paint` instance which draws a `Pixels` instance.
+<a name="142"/>#
+<a name="143"/>class PixelsPaint(Paint)
+<a name="144"/>   public
+<a name="145"/>      src, pix
+<a name="146"/>
+<a name="147"/>   public override initially()
+<a name="148"/>      /pix | runerr("initially() called out of sequence")
+<a name="149"/>      pix := src.shared_copy()
+<a name="150"/>      self.w := pix.get_width()
+<a name="151"/>      self.h := pix.get_height()
+<a name="152"/>   end
+<a name="153"/>
+<a name="154"/>   public override draw(W, x, y)
+<a name="155"/>      W.draw_image(x, y, pix)
+<a name="156"/>   end
+<a name="157"/>
+<a name="158"/>   public override finally()
+<a name="159"/>      pix.close()
+<a name="160"/>      pix := &amp;null
+<a name="161"/>   end
+<a name="162"/>
+<a name="163"/>   #
+<a name="164"/>   # Create a new instance.
+<a name="165"/>   # :Parameters :
+<a name="166"/>   # :  `src` - The `Pixels` to draw
+<a name="167"/>   public override new(src)
+<a name="168"/>      self.src := src
+<a name="169"/>      return
+<a name="170"/>   end
+<a name="171"/>end
+<a name="172"/>
+<a name="173"/>#
+<a name="174"/># A simple `Paint` instance which has zero size and draws nothing.
+<a name="175"/>#
+<a name="176"/>class NullPaint(Paint)
+<a name="177"/>   public override initially()
+<a name="178"/>      self.w := self.h := 0
+<a name="179"/>   end
+<a name="180"/>
+<a name="181"/>   public override draw(W, x, y)
+<a name="182"/>   end
+<a name="183"/>end
+<a name="184"/>
+<a name="185"/>#
+<a name="186"/># A simple `Paint` instance which has the given size and draws nothing.
+<a name="187"/>#
+<a name="188"/>class EmptyPaint(Paint)
+<a name="189"/>   public override initially()
+<a name="190"/>   end
+<a name="191"/>
+<a name="192"/>   public override draw(W, x, y)
+<a name="193"/>   end
+<a name="194"/>
+<a name="195"/>   public override new(w, h)
+<a name="196"/>      self.w := need_integer(w, 0)
+<a name="197"/>      self.h := need_integer(h, 0)
+<a name="198"/>      return
+<a name="199"/>   end
+<a name="200"/>end
+<a name="201"/>
+<a name="202"/>#
+<a name="203"/># A `Paint` instance which paints one instance on top of another.  The
+<a name="204"/># width/height is taken as the maximum of the two inner `Paint`s.
+<a name="205"/>#
+<a name="206"/>class CompoundPaint(Paint)
+<a name="207"/>   public
+<a name="208"/>      top, bottom
+<a name="209"/>
+<a name="210"/>   public override initially(c, accel)
+<a name="211"/>      top.initially(c, accel)
+<a name="212"/>      bottom.initially(c, accel)
+<a name="213"/>      w := max(top.w, bottom.w)
+<a name="214"/>      h := max(top.h, bottom.h)
+<a name="215"/>   end
+<a name="216"/>
+<a name="217"/>   public override finally()
+<a name="218"/>      top.finally()
+<a name="219"/>      bottom.finally()
+<a name="220"/>   end
+<a name="221"/>
+<a name="222"/>   public override draw(W, x, y, w, h)
+<a name="223"/>      bottom.draw(W, x, y, w, h)
+<a name="224"/>      top.draw(W, x, y, w, h)
+<a name="225"/>   end
+<a name="226"/>
+<a name="227"/>   public set_top(top)
+<a name="228"/>      self.top := top
+<a name="229"/>      link
+<a name="230"/>   end
+<a name="231"/>
+<a name="232"/>   public set_bottom(bottom)
+<a name="233"/>      self.bottom := bottom
+<a name="234"/>      link
+<a name="235"/>   end
+<a name="236"/>end
+<a name="237"/>
+<a name="238"/>#
+<a name="239"/># A `Paint` instance which draws its output using a `Grid`.  The input is a format
+<a name="240"/># string specifying the grid and its contents.
+<a name="241"/>#
+<a name="242"/>class GridPaint(Paint)
+<a name="243"/>   public 
+<a name="244"/>      fmt,          # Format string
+<a name="245"/>      g,            # Grid object
+<a name="246"/>      parent,       # Parent component
+<a name="247"/>      win,          # Window buffer
+<a name="248"/>      pass,         # Pass number
+<a name="249"/>      curr_cell,    # Current cell being read
+<a name="250"/>      x,            # Text 'cursor' location in cell
+<a name="251"/>      y, 
+<a name="252"/>      x_ialign,     # Alignment of lines in a cell
+<a name="253"/>      y_ialign,
+<a name="254"/>      llen,         # Current line len, height
+<a name="255"/>      lheight, 
+<a name="256"/>      lno,          # Line no. in cell 
+<a name="257"/>      ii,           # Cell index counter.
+<a name="258"/>      accel
+<a name="259"/>
+<a name="260"/>   public override draw(W, x, y)
+<a name="261"/>      (\win).copy_to(,,,, W, x, y)
+<a name="262"/>   end
+<a name="263"/>
+<a name="264"/>   public override initially(c, accel)
+<a name="265"/>      local attribs
+<a name="266"/>
+<a name="267"/>      /win | runerr("initially() called out of sequence")
+<a name="268"/>      parent := c
+<a name="269"/>      attribs := copy(c.get_effective_wattribs()) | runerr("Couldn't get effective wattribs in GridPaint", c)
+<a name="270"/>      attribs[WAttrib.SIZE] := [1, 1]
+<a name="271"/>      attribs[WAttrib.CANVAS] := "hidden"
+<a name="272"/>      win := open_win_with(attribs)
+<a name="273"/>      g := Grid().set_extra(Grid.EXTRA_IGNORE)
+<a name="274"/>      pass := 1
+<a name="275"/>      x_ialign := y_ialign := Align.C
+<a name="276"/>      lines(fmt)
+<a name="277"/>      close_win()
+<a name="278"/>      g.dimension()
+<a name="279"/>      g.compute_preferred_col_widths()
+<a name="280"/>      g.compute_preferred_row_heights()
+<a name="281"/>      g.compute_actual_col_widths()
+<a name="282"/>      g.compute_actual_col_positions(0)
+<a name="283"/>      g.compute_actual_row_heights()
+<a name="284"/>      g.compute_actual_row_positions(0)
+<a name="285"/>      w := g.get_preferred_width()
+<a name="286"/>      h := g.get_preferred_height()
+<a name="287"/>      if (w &gt; 0) &amp; (h &gt; 0) then {
+<a name="288"/>         attribs["size"] := [w, h]
+<a name="289"/>         win := open_win_with(attribs)
+<a name="290"/>         pass := 2
+<a name="291"/>         curr_cell := &amp;null
+<a name="292"/>         ii := 0
+<a name="293"/>         x_ialign := y_ialign := Align.C
+<a name="294"/>         self.accel := accel
+<a name="295"/>         lines(fmt)
+<a name="296"/>      }
+<a name="297"/>   end
+<a name="298"/>
+<a name="299"/>   public lines(s)
+<a name="300"/>      local t, cmd, args, got_cell
+<a name="301"/>      every t := separate_lines(s) do t ? {
+<a name="302"/>         if ="." then {
+<a name="303"/>            if any('.') then {
+<a name="304"/>               t := tab(0)
+<a name="305"/>               if \got_cell then
+<a name="306"/>                  str(t)
+<a name="307"/>            } else {
+<a name="308"/>               cmd := tab(upto(' ') | 0)
+<a name="309"/>               args := []
+<a name="310"/>               repeat {
+<a name="311"/>                  tab(many(' '))
+<a name="312"/>                  if pos(0) then
+<a name="313"/>                     break
+<a name="314"/>                  if ="'" then {
+<a name="315"/>                     t := tab(upto('\'') | 0)
+<a name="316"/>                     move(1)
+<a name="317"/>                  } else
+<a name="318"/>                     t := tab(upto(' ') | 0)
+<a name="319"/>                  put(args, string(t))
+<a name="320"/>               }
+<a name="321"/>               if cmd == "cell" then {
+<a name="322"/>                  do_cell(args)
+<a name="323"/>                  got_cell := &amp;yes
+<a name="324"/>               } else if \got_cell then case string(cmd) of {
+<a name="325"/>                  "br" : do_brk(args)
+<a name="326"/>                  "img" : do_img(args)
+<a name="327"/>                  "imgl" : do_imgl(args)
+<a name="328"/>                  "x_spc" : do_x_spc(args)
+<a name="329"/>                  "y_spc" : do_y_spc(args)
+<a name="330"/>                  "fg": do_fg(args)
+<a name="331"/>                  "bg": do_bg(args)
+<a name="332"/>                  "font": do_font(args)
+<a name="333"/>                  "leading": do_leading(args)
+<a name="334"/>                  "x_ialign" : do_x_ialign(args)
+<a name="335"/>                  "y_ialign" : do_y_ialign(args)
+<a name="336"/>               }
+<a name="337"/>            }
+<a name="338"/>         } else if \got_cell then
+<a name="339"/>            str(t)
+<a name="340"/>      }
+<a name="341"/>   end
+<a name="342"/>
+<a name="343"/>   public do_x_spc(args)
+<a name="344"/>      local n
+<a name="345"/>      n := integer(args[1]) | 0
+<a name="346"/>      if pass = 1 then {
+<a name="347"/>         llen +:= n
+<a name="348"/>      } else {
+<a name="349"/>         ready_to_output() | fail
+<a name="350"/>         x +:= n
+<a name="351"/>      }
+<a name="352"/>   end
+<a name="353"/>
+<a name="354"/>   public do_y_spc(args)
+<a name="355"/>      local n
+<a name="356"/>      n := integer(args[1]) | 0
+<a name="357"/>      if pass = 1 then {
+<a name="358"/>         lheight &lt;:= n
+<a name="359"/>      }
+<a name="360"/>   end
+<a name="361"/>
+<a name="362"/>   public do_cell(args)
+<a name="363"/>      local t, key, val, a
+<a name="364"/>
+<a name="365"/>      if pass = 1 then {
+<a name="366"/>         t := table()
+<a name="367"/>         every a := !args do {
+<a name="368"/>            a ? {
+<a name="369"/>               key := tab(upto('=') | 0)
+<a name="370"/>               if ="=" then
+<a name="371"/>                  val := tab(0)
+<a name="372"/>               else
+<a name="373"/>                  val := ""
+<a name="374"/>               t[key] := case key of {
+<a name="375"/>                  Grid.X_TAB | Grid.Y_TAB | Grid.X | Grid.Y | Grid.W | Grid.H | 
+<a name="376"/>                     Grid.L_INSET | Grid.R_INSET | Grid.T_INSET | Grid.B_INSET:
+<a name="377"/>                     integer(val)
+<a name="378"/>                  Grid.X_ALIGN:
+<a name="379"/>                     val == (Align.L | Align.R | Align.C)
+<a name="380"/>                  Grid.Y_ALIGN:
+<a name="381"/>                     val == (Align.T | Align.B | Align.C)
+<a name="382"/>                  Grid.EOL | Grid.X_FILL | Grid.Y_FILL:
+<a name="383"/>                     if *val = 0 then &amp;yes else flag(val)
+<a name="384"/>                  Grid.X_WEIGHT | Grid.Y_WEIGHT:
+<a name="385"/>                     real(val)
+<a name="386"/>               }
+<a name="387"/>            }
+<a name="388"/>         }
+<a name="389"/>         curr_cell := g.create_cell(t)
+<a name="390"/>         curr_cell.pw := curr_cell.ph := 0
+<a name="391"/>         curr_cell.obj := []
+<a name="392"/>         llen := lheight := 0
+<a name="393"/>      } else {
+<a name="394"/>         ii +:= 1
+<a name="395"/>         curr_cell := g.info[ii]
+<a name="396"/>         lno := 1
+<a name="397"/>         x := &amp;null
+<a name="398"/>         y := curr_cell.ay
+<a name="399"/>      }
+<a name="400"/>   end
+<a name="401"/>
+<a name="402"/>   public str(s)
+<a name="403"/>      local y1
+<a name="404"/>      if pass = 1 then {
+<a name="405"/>         llen +:= win.text_width(s)
+<a name="406"/>         lheight &lt;:= win.get_line_height()
+<a name="407"/>      } else {
+<a name="408"/>         ready_to_output() | fail
+<a name="409"/>         y1 := case y_ialign of {
+<a name="410"/>            Align.T : y
+<a name="411"/>            Align.C : y + (curr_cell.obj[lno].h - win.get_font_height()) / 2
+<a name="412"/>            Align.B : y + curr_cell.obj[lno].h - win.get_font_height()
+<a name="413"/>         }
+<a name="414"/>         draw_string_ex(win, x, y1 + win.get_font_ascent(), s, accel)
+<a name="415"/>         # Just print the accelerator once.
+<a name="416"/>         if upto(\accel, Text.lower(s)) then
+<a name="417"/>            accel := &amp;null
+<a name="418"/>         x +:= win.text_width(s)
+<a name="419"/>      }
+<a name="420"/>   end
+<a name="421"/>
+<a name="422"/>   public do_brk(args)
+<a name="423"/>      if pass = 1 then {
+<a name="424"/>         curr_cell.pw &lt;:= llen
+<a name="425"/>         curr_cell.ph +:= lheight
+<a name="426"/>         put(curr_cell.obj, Size(llen, lheight))
+<a name="427"/>         llen := lheight := 0
+<a name="428"/>      } else {
+<a name="429"/>         x := &amp;null
+<a name="430"/>         y +:= curr_cell.obj[lno].h
+<a name="431"/>         lno +:= 1
+<a name="432"/>      }
+<a name="433"/>   end
+<a name="434"/>
+<a name="435"/>   public do_fg(args)
+<a name="436"/>      win.set_fg(if *args = 0 then parent.cbwin.get_fg() else args[1])
+<a name="437"/>   end
+<a name="438"/>
+<a name="439"/>   public do_bg(args)
+<a name="440"/>      win.set_bg(if *args = 0 then parent.cbwin.get_bg() else args[1])
+<a name="441"/>   end
+<a name="442"/>
+<a name="443"/>   public do_font(args)
+<a name="444"/>      win.set_font(if *args = 0 then parent.cbwin.get_font() else args[1])
+<a name="445"/>   end
+<a name="446"/>
+<a name="447"/>   public do_leading(args)
+<a name="448"/>      win.set_leading(if *args = 0 then parent.cbwin.get_leading() else real(args[1]))
+<a name="449"/>   end
+<a name="450"/>
+<a name="451"/>   public do_x_ialign(args)
+<a name="452"/>      x_ialign := (args[1] == (Align.L | Align.R | Align.C))
+<a name="453"/>   end
+<a name="454"/>
+<a name="455"/>   public do_y_ialign(args)
+<a name="456"/>      y_ialign := (args[1] == (Align.T | Align.B | Align.C))
+<a name="457"/>   end
+<a name="458"/>
+<a name="459"/>   private do_imgx_impl(W)
+<a name="460"/>      local y1
+<a name="461"/>      if pass = 1 then {
+<a name="462"/>         llen +:= W.get_width()
+<a name="463"/>         lheight &lt;:= W.get_height()
+<a name="464"/>      } else {
+<a name="465"/>         ready_to_output() | fail
+<a name="466"/>         y1 := case y_ialign of {
+<a name="467"/>            Align.T : y
+<a name="468"/>            Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
+<a name="469"/>            Align.B : y + curr_cell.obj[lno].h - W.get_height()
+<a name="470"/>         }
+<a name="471"/>         W.copy_to(,,,, win, x, y1)
+<a name="472"/>         x +:= W.get_width()
+<a name="473"/>      }
+<a name="474"/>      return
+<a name="475"/>   end
+<a name="476"/>
+<a name="477"/>   public do_img(args)
+<a name="478"/>      do_imgx_impl(ImageCache.get(args[1], win))
+<a name="479"/>   end
+<a name="480"/>
+<a name="481"/>   public do_imgl(args)
+<a name="482"/>      local W
+<a name="483"/>      use {
+<a name="484"/>         W := ImageCache.load(args[1], win),
+<a name="485"/>         do_imgx_impl(W)
+<a name="486"/>      }
+<a name="487"/>   end
+<a name="488"/>
+<a name="489"/>   public ready_to_output()
+<a name="490"/>      if lno &gt; *curr_cell.obj then
+<a name="491"/>         fail
+<a name="492"/>      /x :=  case x_ialign of {
+<a name="493"/>         Align.L : curr_cell.ax
+<a name="494"/>         Align.R : curr_cell.ax + curr_cell.aw - curr_cell.obj[lno].w
+<a name="495"/>         Align.C : curr_cell.ax + (curr_cell.aw - curr_cell.obj[lno].w) / 2
+<a name="496"/>      }
+<a name="497"/>      return
+<a name="498"/>   end
+<a name="499"/>
+<a name="500"/>   public override finally()
+<a name="501"/>      close_win()
+<a name="502"/>   end
+<a name="503"/>
+<a name="504"/>   public close_win()
+<a name="505"/>      (\win).close()
+<a name="506"/>      win := &amp;null
+<a name="507"/>   end
+<a name="508"/>
+<a name="509"/>   public draw_grid()
+<a name="510"/>      local i, cw
+<a name="511"/>
+<a name="512"/>      if /win then
+<a name="513"/>         return
+<a name="514"/>
+<a name="515"/>      use {
+<a name="516"/>         cw := GetShadowClone(win).set_masked_pattern("gray"),
+<a name="517"/>         {
+<a name="518"/>            cw.draw_rectangle(0, 0, w, h)
+<a name="519"/>
+<a name="520"/>            every i := !(\g).info do {
+<a name="521"/>               cw.draw_rectangle(g.a_col_x[i.x],
+<a name="522"/>                                 g.a_row_y[i.y],
+<a name="523"/>                                 Grid.slice(i.x, i.w, g.a_col_w),
+<a name="524"/>                                 Grid.slice(i.y, i.h, g.a_row_h),
+<a name="525"/>                                 Gui.FINE_WIDTH)
+<a name="526"/>            }
+<a name="527"/>         }
+<a name="528"/>      }
+<a name="529"/>   end
+<a name="530"/>
+<a name="531"/>   #
+<a name="532"/>   # Create a new instance.
+<a name="533"/>   # :Parameters :
+<a name="534"/>   # :  `s` - The format string
+<a name="535"/>   public override new(s)
+<a name="536"/>      self.fmt := need_text(s)
+<a name="537"/>      return
+<a name="538"/>   end
+<a name="539"/>end
+<a name="540"/>
+<a name="541"/>#
+<a name="542"/># A `Paint` instance which draws an image, which can come from a
+<a name="543"/># number of sources.  The image can also be scaled.
+<a name="544"/>#
+<a name="545"/>class ImagePaint(Paint)
+<a name="546"/>   public 
+<a name="547"/>      image_str,
+<a name="548"/>      image_window,
+<a name="549"/>      image_cache,
+<a name="550"/>      image_pixels,
+<a name="551"/>      win,
+<a name="552"/>      win_pix,
+<a name="553"/>      fill_dimensions,
+<a name="554"/>      max_w,
+<a name="555"/>      max_h
+<a name="556"/>
+<a name="557"/>   #
+<a name="558"/>   # Set an image to use; the parameter is passed to `ImageCache.get`
+<a name="559"/>   # to load the image.
+<a name="560"/>   #
+<a name="561"/>   public set_cache(x)
+<a name="562"/>      self.image_cache := x
+<a name="563"/>      link
+<a name="564"/>   end
+<a name="565"/>
+<a name="566"/>   #
+<a name="567"/>   # Set an image to use; the parameter is passed to `ImageCache.load`
+<a name="568"/>   # to load the image.
+<a name="569"/>   #
+<a name="570"/>   public set_image(x)
+<a name="571"/>      self.image_str := x
+<a name="572"/>      link
+<a name="573"/>   end
+<a name="574"/>
+<a name="575"/>   #
+<a name="576"/>   # Set a `Window` to use as the image source.  It will not be closed.
+<a name="577"/>   #
+<a name="578"/>   public set_window(x)
+<a name="579"/>      self.image_window := x
+<a name="580"/>      link
+<a name="581"/>   end
+<a name="582"/>
+<a name="583"/>   #
+<a name="584"/>   # Set a `Pixels` to use as the image source.  It will not be closed
+<a name="585"/>   # by this Component.
+<a name="586"/>   #
+<a name="587"/>   public set_pixels(x)
+<a name="588"/>      self.image_pixels := x
+<a name="589"/>      link
+<a name="590"/>   end
+<a name="591"/>
+<a name="592"/>   #
+<a name="593"/>   # Set the maximum allowed width; the image will be scaled if necessary.
+<a name="594"/>   #
+<a name="595"/>   public set_max_w(w)
+<a name="596"/>      self.max_w := /w | need_integer(w, 1)
+<a name="597"/>      link
+<a name="598"/>   end
+<a name="599"/>
+<a name="600"/>   #
+<a name="601"/>   # Set the maximum allowed height; the image will be scaled if necessary.
+<a name="602"/>   #
+<a name="603"/>   public set_max_h(h)
+<a name="604"/>      self.max_h := /h | need_integer(h, 1)
+<a name="605"/>      link
+<a name="606"/>   end
+<a name="607"/>
+<a name="608"/>   #
+<a name="609"/>   # Set the maximum allowed size; the image will be scaled if necessary.
+<a name="610"/>   #
+<a name="611"/>   public set_max_size(w, h)
+<a name="612"/>      set_max_w(w)
+<a name="613"/>      set_max_h(h)
+<a name="614"/>      link
+<a name="615"/>   end
+<a name="616"/>   
+<a name="617"/>   #
+<a name="618"/>   # This setting controls how the image will be expanded if its size
+<a name="619"/>   # is less than any specified maximum width and/or height (if none
+<a name="620"/>   # is specified it has no effect).  If set to 0, then the image will
+<a name="621"/>   # not be expanded; if 1 then the image will not be distorted, but
+<a name="622"/>   # will be expanded to fill one of the dimensions depending on its
+<a name="623"/>   # shape (if only one max dimension was specified, then the image
+<a name="624"/>   # expands to this dimension).  If 2, and both maximum dimensions
+<a name="625"/>   # were set, then the image will be distorted and expanded to fill
+<a name="626"/>   # both dimensions.
+<a name="627"/>   # 
+<a name="628"/>   # If the image is bigger than the specified maximum size then it
+<a name="629"/>   # will always be scaled down, but if this setting is 2, and a
+<a name="630"/>   # maximum size is set, then again the image is distorted to fill
+<a name="631"/>   # both those dimensions.
+<a name="632"/>   #
+<a name="633"/>   public set_fill_dimensions(n)
+<a name="634"/>      self.fill_dimensions := need_integer(n, 0, 2)
+<a name="635"/>      link
+<a name="636"/>   end
+<a name="637"/>
+<a name="638"/>   public override initially(c)
+<a name="639"/>      /win | runerr("initially() called out of sequence")
+<a name="640"/>      load_image(c)
+<a name="641"/>      zoom_image()
+<a name="642"/>      just_win()
+<a name="643"/>      if \win then {
+<a name="644"/>         self.w := win.get_width()
+<a name="645"/>         self.h := win.get_height()
+<a name="646"/>      } else
+<a name="647"/>         self.w := self.h := 0
+<a name="648"/>   end
+<a name="649"/>
+<a name="650"/>   public just_win()
+<a name="651"/>      if \win_pix then {
+<a name="652"/>         /win := open_image(win_pix)
+<a name="653"/>         win_pix.close()
+<a name="654"/>         win_pix := &amp;null
+<a name="655"/>      }
+<a name="656"/>   end
+<a name="657"/>
+<a name="658"/>   public override finally()
+<a name="659"/>      close_image()
+<a name="660"/>   end
+<a name="661"/>
+<a name="662"/>   public close_image()
+<a name="663"/>      (\win).close()
+<a name="664"/>      win := &amp;null
+<a name="665"/>   end
+<a name="666"/>
+<a name="667"/>   #
+<a name="668"/>   # Succeed if an image is currently loaded.
+<a name="669"/>   #
+<a name="670"/>   public has_image()
+<a name="671"/>      succeed \win
+<a name="672"/>   end
+<a name="673"/>
+<a name="674"/>   public load_image(c)
+<a name="675"/>      if \image_str then
+<a name="676"/>         win_pix := ImageCache.load_pixels(image_str, c.cbwin)
+<a name="677"/>      else if \image_pixels then
+<a name="678"/>         win_pix := image_pixels.shared_copy()
+<a name="679"/>      else if \image_cache then
+<a name="680"/>         win := ImageCache.get(image_cache, c.cbwin).shared_copy()
+<a name="681"/>      else if \image_window then
+<a name="682"/>         win := image_window.shared_copy()
+<a name="683"/>   end
+<a name="684"/>
+<a name="685"/>   public zoom_image()
+<a name="686"/>      local zoom_win, img_w, img_h,
+<a name="687"/>         asp_r, asp_max, zoom_w, zoom_h
+<a name="688"/>
+<a name="689"/>      if (/win &amp; /win_pix) | (/max_w &amp; /max_h) then
+<a name="690"/>         fail
+<a name="691"/>
+<a name="692"/>      if \win then {
+<a name="693"/>         img_w := win.get_width()
+<a name="694"/>         img_h := win.get_height()
+<a name="695"/>      } else {
+<a name="696"/>         img_w := win_pix.get_width()
+<a name="697"/>         img_h := win_pix.get_height()
+<a name="698"/>      }
+<a name="699"/>
+<a name="700"/>      if (fill_dimensions = 0) &amp;
+<a name="701"/>         (/max_w | img_w &lt;= max_w)\1 &amp; (/max_h | img_h &lt;= max_h)\1 then
+<a name="702"/>         fail
+<a name="703"/>
+<a name="704"/>      asp_r := real(img_w) / img_h
+<a name="705"/>      if \max_w then {
+<a name="706"/>         if \max_h then {
+<a name="707"/>            if fill_dimensions = 2 then { 
+<a name="708"/>               zoom_w := max_w
+<a name="709"/>               zoom_h := max_h
+<a name="710"/>            } else {
+<a name="711"/>               asp_max := real(max_w) / max_h
+<a name="712"/>               if asp_r &gt; asp_max then {
+<a name="713"/>                  zoom_w := max_w
+<a name="714"/>                  zoom_h := integer(max_w / asp_r)
+<a name="715"/>               } else {
+<a name="716"/>                  zoom_w := integer(max_h * asp_r)
+<a name="717"/>                  zoom_h := max_h
+<a name="718"/>               }
+<a name="719"/>            }
+<a name="720"/>         } else {
+<a name="721"/>            # \max_w &amp; /max_h
+<a name="722"/>            zoom_w := max_w
+<a name="723"/>            zoom_h := integer(max_w / asp_r)
+<a name="724"/>         }
+<a name="725"/>      } else {
+<a name="726"/>         # /max_w &amp; \max_h
+<a name="727"/>         zoom_w := integer(max_h * asp_r)
+<a name="728"/>         zoom_h := max_h
+<a name="729"/>      }
+<a name="730"/>
+<a name="731"/>      zoom_w &lt;:= 1
+<a name="732"/>      zoom_h &lt;:= 1
+<a name="733"/>
+<a name="734"/>      if img_w = zoom_w &amp; img_h = zoom_h then
+<a name="735"/>         fail
+<a name="736"/>
+<a name="737"/>      /win_pix := win.get_pixels()
+<a name="738"/>      zoom_win := zoom_pix(win_pix, zoom_w, zoom_h)
+<a name="739"/>
+<a name="740"/>      # Now swap the zoomed window into win.
+<a name="741"/>      close_image()
+<a name="742"/>      win := zoom_win
+<a name="743"/>   end
+<a name="744"/>
+<a name="745"/>   public override draw(W, x, y)
+<a name="746"/>      (\win).copy_to(,,,, W, x, y)
+<a name="747"/>   end
+<a name="748"/>
+<a name="749"/>   public override new()
+<a name="750"/>      fill_dimensions := 0
+<a name="751"/>      return
+<a name="752"/>   end
+<a name="753"/>end
+</pre></body></html>

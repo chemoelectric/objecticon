@@ -1,0 +1,1956 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>dialog.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: dialog.icn 9117 2021-05-22 20:56:44Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import 
+<a name="12"/>   graphics(Window,Mouse,Key,Selection,Canvas),
+<a name="13"/>   lang,
+<a name="14"/>   ipl.sets,
+<a name="15"/>   ipl.lists,
+<a name="16"/>   ipl.pdco,
+<a name="17"/>   util
+<a name="18"/>
+<a name="19"/>#
+<a name="20"/>#
+<a name="21"/># This is the parent class of a dialog window.
+<a name="22"/>#
+<a name="23"/>class Dialog(Component)
+<a name="24"/>   public static const
+<a name="25"/>      # Table of window attribs applied to all dialogs
+<a name="26"/>      ROOT_WATTRIBS, 
+<a name="27"/>      # Default top-level mouse pointer
+<a name="28"/>      POINTER,
+<a name="29"/>      # Default dnd negative pointer
+<a name="30"/>      DND_NEGATIVE_POINTER,
+<a name="31"/>      # Default dnd positive pointer
+<a name="32"/>      DND_POSITIVE_POINTER,
+<a name="33"/>      # Repeat event delays
+<a name="34"/>      DOUBLE_CLICK_DELAY,
+<a name="35"/>      # Mouse distance tolerance for double clicks
+<a name="36"/>      DOUBLE_CLICK_TOLERANCE,
+<a name="37"/>      # Distance before drag begins
+<a name="38"/>      DRAG_GESTURE_OFFSET,
+<a name="39"/>      # Default tooltip delays
+<a name="40"/>      TOOLTIP_START_DELAY,
+<a name="41"/>      TOOLTIP_END_DELAY,
+<a name="42"/>      TOOLTIP_CONTINUE_DELAY,
+<a name="43"/>      TOOLTIP_X_OFFSET,
+<a name="44"/>      TOOLTIP_Y_OFFSET,
+<a name="45"/>      # Set of additional events (other than shift-tab) to move focus up
+<a name="46"/>      FOCUS_UP,
+<a name="47"/>      # Set of additional events (other than tab) to move focus down
+<a name="48"/>      FOCUS_DOWN
+<a name="49"/>
+<a name="50"/>   private readable
+<a name="51"/>      # The dialog's window.
+<a name="52"/>      win,
+<a name="53"/>      # For a popup dialog, this points to the `Dialog` controlling events
+<a name="54"/>      # and other delegated things.  For normal dialogs, it is set to self.
+<a name="55"/>      popup_manager,
+<a name="56"/>      # The parent dialog, from the perspective of the windowing system.
+<a name="57"/>      owning_dialog,
+<a name="58"/>      # The child dialogs, from the perspective of the windowing system.
+<a name="59"/>      child_dialogs,
+<a name="60"/>      # Remember size on closing
+<a name="61"/>      remember_size_flag,
+<a name="62"/>      # Set if this dialog is currently blocked for input.
+<a name="63"/>      is_blocked_flag
+<a name="64"/>
+<a name="65"/>   private
+<a name="66"/>      # Table of mouse event codes to components held
+<a name="67"/>      # down for that code.
+<a name="68"/>      held,
+<a name="69"/>
+<a name="70"/>      # Do we have a menu open?  If so, this is the governing
+<a name="71"/>      # component.
+<a name="72"/>      menu_mode,
+<a name="73"/>      menu_mode_stack,
+<a name="74"/>
+<a name="75"/>      # Popup dialogs managed by this dialog
+<a name="76"/>      popups,
+<a name="77"/>      # Component with current focus
+<a name="78"/>      focus,
+<a name="79"/>
+<a name="80"/>      # Is the focus out of the window?
+<a name="81"/>      focus_out_flag,
+<a name="82"/>
+<a name="83"/>      # Mouse click count
+<a name="84"/>      click_count,
+<a name="85"/>      crossing,
+<a name="86"/>
+<a name="87"/>      # Rectangles that need validation
+<a name="88"/>      invalid_rects,
+<a name="89"/>
+<a name="90"/>      # Flag tracking whether mouse has entered the dialog window.
+<a name="91"/>      entered,
+<a name="92"/>
+<a name="93"/>      # Components containing current event
+<a name="94"/>      point_chain,
+<a name="95"/>      # Event used to create point_chain
+<a name="96"/>      point_chain_source,
+<a name="97"/>
+<a name="98"/>      # Various tooltip processing variables
+<a name="99"/>      tooltip_ticker,
+<a name="100"/>      tooltip_last_obj, 
+<a name="101"/>      tooltip_last_tip, 
+<a name="102"/>      tooltip_last_event, 
+<a name="103"/>      tooltip_state,
+<a name="104"/>      tooltip_start_time,
+<a name="105"/>      tooltip_end_time,
+<a name="106"/>      tooltip_continue_time,
+<a name="107"/>      tooltip_component,
+<a name="108"/>
+<a name="109"/>      # Start position of a drag gesture
+<a name="110"/>      drag_gesture_x,
+<a name="111"/>      drag_gesture_y,
+<a name="112"/>
+<a name="113"/>      # Drag and drop state variables.
+<a name="114"/>      curr_drag,
+<a name="115"/>      curr_drag_holder,
+<a name="116"/>      curr_drop,
+<a name="117"/>      tried_drag,
+<a name="118"/>
+<a name="119"/>      # Current pointer set in win.
+<a name="120"/>      curr_pointer,
+<a name="121"/>      # Previous event for tracking click counts.
+<a name="122"/>      click_event,
+<a name="123"/>      # Table of selections to `SelectionRequest`s
+<a name="124"/>      selection_requests,
+<a name="125"/>      # Table of selections to selection owners.
+<a name="126"/>      selections
+<a name="127"/>
+<a name="128"/>   public needs_validate()
+<a name="129"/>      succeed \invalid_rects
+<a name="130"/>   end
+<a name="131"/>
+<a name="132"/>   public validate()
+<a name="133"/>      local r, rs
+<a name="134"/>
+<a name="135"/>      # Copy invalid_rects just in case invoke_display invalidates something (and hence
+<a name="136"/>      # changes invalid_rects unexpectedly).
+<a name="137"/>      rs := invalid_rects
+<a name="138"/>      invalid_rects := &amp;null
+<a name="139"/>
+<a name="140"/>      every r := !\rs do {
+<a name="141"/>         win.hold()
+<a name="142"/>         self.invoke_display(r.x, r.y, r.w, r.h)
+<a name="143"/>         win.restore(r.x, r.y, r.w, r.h)
+<a name="144"/>      }
+<a name="145"/>
+<a name="146"/>      link
+<a name="147"/>   end
+<a name="148"/>
+<a name="149"/>   #
+<a name="150"/>   # Invalidate the given `Rect`, meaning that area will subsequently be redrawn.
+<a name="151"/>   #
+<a name="152"/>   public invalidate_rect(r)
+<a name="153"/>      local t, i
+<a name="154"/>      unless r.empty() then {
+<a name="155"/>         /invalid_rects := []
+<a name="156"/>         every t := invalid_rects[i := 1 to *invalid_rects] do {
+<a name="157"/>            if t.touches(r) then {
+<a name="158"/>               invalid_rects[i] := t.union(r)
+<a name="159"/>               link
+<a name="160"/>            }
+<a name="161"/>         }
+<a name="162"/>         put(invalid_rects, r)
+<a name="163"/>      }
+<a name="164"/>      link
+<a name="165"/>   end
+<a name="166"/>
+<a name="167"/>   # Succeed if the dialog is blocked.
+<a name="168"/>   #
+<a name="169"/>   public is_blocked()
+<a name="170"/>      succeed \self.is_blocked_flag
+<a name="171"/>   end
+<a name="172"/>
+<a name="173"/>   # Succeed if the dialog isn't blocked.
+<a name="174"/>   #
+<a name="175"/>   public is_unblocked()
+<a name="176"/>      succeed /self.is_blocked_flag
+<a name="177"/>   end
+<a name="178"/>
+<a name="179"/>   # Succeed if the dialog doesn't have the window system focus (see `is_focus_in()`).
+<a name="180"/>   #
+<a name="181"/>   public is_focus_out()
+<a name="182"/>      succeed \self.focus_out_flag
+<a name="183"/>   end
+<a name="184"/>
+<a name="185"/>   # Succeed if the dialog has the window system focus.  Note that
+<a name="186"/>   # this is assumed to be the case when a dialog is shown, and the
+<a name="187"/>   # state is thereafter monitored by focus in/out events.
+<a name="188"/>   #
+<a name="189"/>   public is_focus_in()
+<a name="190"/>      succeed /self.focus_out_flag
+<a name="191"/>   end
+<a name="192"/>
+<a name="193"/>   # Succeed if the dialog is a popup, managed by another dialog.
+<a name="194"/>   #
+<a name="195"/>   public is_popup()
+<a name="196"/>      succeed popup_manager ~=== self
+<a name="197"/>   end
+<a name="198"/>
+<a name="199"/>   # Return the menu mode component, if menu mode is active.
+<a name="200"/>   #
+<a name="201"/>   public get_menu_mode()
+<a name="202"/>      return \popup_manager.menu_mode
+<a name="203"/>   end
+<a name="204"/>
+<a name="205"/>   # Return the point chain
+<a name="206"/>   #
+<a name="207"/>   public get_point_chain()
+<a name="208"/>      return \popup_manager.point_chain
+<a name="209"/>   end
+<a name="210"/>
+<a name="211"/>   # Return the point chain source, namely the event used to create
+<a name="212"/>   # the point chain.
+<a name="213"/>   #
+<a name="214"/>   public get_point_chain_source()
+<a name="215"/>      return \popup_manager.point_chain_source
+<a name="216"/>   end
+<a name="217"/>
+<a name="218"/>   # If a drag is active, return the current drag.
+<a name="219"/>   #
+<a name="220"/>   public get_curr_drag()
+<a name="221"/>      return \popup_manager.curr_drag
+<a name="222"/>   end
+<a name="223"/>
+<a name="224"/>   # Succeed iff the sequence of events indicates the mouse is over the
+<a name="225"/>   # dialog.
+<a name="226"/>   public is_entered()
+<a name="227"/>      succeed \popup_manager.entered
+<a name="228"/>   end
+<a name="229"/>
+<a name="230"/>   # Set whether the dialog is blocked to mouse/keyboard events.
+<a name="231"/>   #
+<a name="232"/>   public set_is_blocked(s)
+<a name="233"/>      local c, e
+<a name="234"/>      need_flag(s)
+<a name="235"/>      if is_popup() then
+<a name="236"/>         runerr("Cannot use set_is_blocked() on a popup")
+<a name="237"/>      if is_blocked_flag ~===:= s then {
+<a name="238"/>         get_focus().focus_changed()
+<a name="239"/>         e := if /s then Event.RESUMED else Event.INTERRUPTED
+<a name="240"/>         every c := Seq{traverse_postorder()} do
+<a name="241"/>            c.fire(e)
+<a name="242"/>      }
+<a name="243"/>      link
+<a name="244"/>   end
+<a name="245"/>
+<a name="246"/>   public on_interrupted()
+<a name="247"/>      if popup_manager === self then {
+<a name="248"/>         exit_menu_mode()
+<a name="249"/>         point_chain := point_chain_source := &amp;null
+<a name="250"/>         clear(crossing)
+<a name="251"/>         clear(held)
+<a name="252"/>         exit_dnd()
+<a name="253"/>         change_pointer()
+<a name="254"/>      }
+<a name="255"/>   end
+<a name="256"/>
+<a name="257"/>   # Restore the window, meaning try to de-iconify it, raise it and
+<a name="258"/>   # give it focus all in one go.
+<a name="259"/>   #
+<a name="260"/>   public restore_win()
+<a name="261"/>      link if win.get_canvas() == "iconic" then
+<a name="262"/>         win.set_canvas("normal")
+<a name="263"/>      else
+<a name="264"/>         win.raise().focus()
+<a name="265"/>   end
+<a name="266"/>
+<a name="267"/>   #
+<a name="268"/>   # Raise the window
+<a name="269"/>   #
+<a name="270"/>   public raise_win()
+<a name="271"/>      link win.raise()
+<a name="272"/>   end
+<a name="273"/>
+<a name="274"/>   #
+<a name="275"/>   # Lower the window
+<a name="276"/>   #
+<a name="277"/>   public lower_win()
+<a name="278"/>      link win.lower()
+<a name="279"/>   end
+<a name="280"/>
+<a name="281"/>   #
+<a name="282"/>   # Focus the window
+<a name="283"/>   #
+<a name="284"/>   public focus_win()
+<a name="285"/>      link win.focus()
+<a name="286"/>   end
+<a name="287"/>
+<a name="288"/>   #
+<a name="289"/>   # Returns the number of mouse clicks that have occurred
+<a name="290"/>   # consecutively, with each click in the sequence being less
+<a name="291"/>   # than `DOUBLE_CLICK_DELAY` milliseconds apart.  That variable is by default 500
+<a name="292"/>   # milliseconds, but it may be altered by changing `DOUBLE_CLICK_DELAY`.
+<a name="293"/>   #
+<a name="294"/>   public get_click_count()
+<a name="295"/>      return \popup_manager.click_count
+<a name="296"/>   end
+<a name="297"/>
+<a name="298"/>   public override compute_absolutes()
+<a name="299"/>      self.x := -self.win.get_dx()
+<a name="300"/>      self.y := -self.win.get_dy()
+<a name="301"/>      self.w := self.win.get_width()
+<a name="302"/>      self.h := self.win.get_height()
+<a name="303"/>   end
+<a name="304"/>
+<a name="305"/>   #
+<a name="306"/>   # Change pointer to `s`, which defaults to `POINTER`.
+<a name="307"/>   #
+<a name="308"/>   public change_pointer(s)
+<a name="309"/>      # If we have a popup manager, then we are in mouse grab mode;
+<a name="310"/>      # this means that the pointer for the whole screen comes from
+<a name="311"/>      # the popup manager's window, so we must delegate.
+<a name="312"/>      if popup_manager ~=== self then
+<a name="313"/>         popup_manager.change_pointer(s)
+<a name="314"/>      else {
+<a name="315"/>         /s := POINTER
+<a name="316"/>         if curr_pointer ~===:= s then
+<a name="317"/>            win.set_pointer(curr_pointer)
+<a name="318"/>      }
+<a name="319"/>      link
+<a name="320"/>   end
+<a name="321"/>
+<a name="322"/>   #
+<a name="323"/>   # Displays the dialog as a modal dialog.  In other words, window
+<a name="324"/>   # events to any other open dialogs are blocked until the dialog is
+<a name="325"/>   # closed, although the actual dialogs to block is configurable.
+<a name="326"/>   # This method doesn't return until the dialog is closed.
+<a name="327"/>   #
+<a name="328"/>   # :Parameters :
+<a name="329"/>   # :  `d` - The parent dialog.
+<a name="330"/>   # :  `l` - A list of other dialogs to block; defaults to all
+<a name="331"/>   #            currently unblocked dialogs.
+<a name="332"/>   #
+<a name="333"/>   public show_modal(d, l)
+<a name="334"/>      local e
+<a name="335"/>      /l := Dispatcher.list_unblocked()
+<a name="336"/>      # Exit menu mode from all dialogs in l
+<a name="337"/>      every e := !l do {
+<a name="338"/>         if \e.win then
+<a name="339"/>            e.exit_menu_mode()
+<a name="340"/>      }
+<a name="341"/>      # Reduce l to any remaining open windows.
+<a name="342"/>      l := ipl.pdco.List{ ( e := !l, \e.win, e ) }
+<a name="343"/>      self.show(d)
+<a name="344"/>      every (!l).set_is_blocked(&amp;yes)
+<a name="345"/>      Dispatcher.message_loop(self)
+<a name="346"/>      every (!l).set_is_blocked(&amp;no)
+<a name="347"/>      link
+<a name="348"/>   end
+<a name="349"/>
+<a name="350"/>   #
+<a name="351"/>   # Called from a `Task`, this method calls `show`, and then
+<a name="352"/>   # waits until the dialog is closed before returning.
+<a name="353"/>   #
+<a name="354"/>   # :Parameters :
+<a name="355"/>   # :  `task` - The current task
+<a name="356"/>   # :  `d` - This optional parameter specifies the parent dialog.
+<a name="357"/>   #
+<a name="358"/>   public show_and_wait(task, d)
+<a name="359"/>      connect_n(create task.notify(), Event.DIALOG_DISPOSED)
+<a name="360"/>      show(d)
+<a name="361"/>      while \win do
+<a name="362"/>         task.sleep()
+<a name="363"/>      link
+<a name="364"/>   end
+<a name="365"/>
+<a name="366"/>   #
+<a name="367"/>   # Returns the Icon window associated with the dialog, or fail if unset.
+<a name="368"/>   #
+<a name="369"/>   public get_win()
+<a name="370"/>      return \self.win
+<a name="371"/>   end
+<a name="372"/>
+<a name="373"/>   # If this flag is set, then the dialog remembers its size when it
+<a name="374"/>   # is disposed; if it is shown again it will open using the
+<a name="375"/>   # remembered size.
+<a name="376"/>   #
+<a name="377"/>   public set_remember_size(s)
+<a name="378"/>      self.remember_size_flag := need_flag(s)
+<a name="379"/>      link
+<a name="380"/>   end
+<a name="381"/>
+<a name="382"/>   # Resize the dialog to the given dimensions.  No events are
+<a name="383"/>   # generated (unless the window system limits the size).
+<a name="384"/>   #
+<a name="385"/>   public resize_win(w, h)
+<a name="386"/>      win.set_size(w, h)
+<a name="387"/>      resize_win_impl()
+<a name="388"/>      link
+<a name="389"/>   end
+<a name="390"/>
+<a name="391"/>   public override initially()
+<a name="392"/>      local k
+<a name="393"/>      parent_dialog := self
+<a name="394"/>      effective_is_hidden_flag := is_hidden_flag
+<a name="395"/>      effective_is_shaded_flag := is_shaded_flag
+<a name="396"/>      Gui.style.polish(self)
+<a name="397"/>      held := table()
+<a name="398"/>      crossing := set()
+<a name="399"/>      selections := table()
+<a name="400"/>      selection_requests := table()
+<a name="401"/>      effective_wattribs := table()
+<a name="402"/>      every k := key(wattribs) do {
+<a name="403"/>         if Gui.is_context_attrib(k) then
+<a name="404"/>            effective_wattribs[k] := wattribs[k]
+<a name="405"/>      }
+<a name="406"/>      compute_z_order()
+<a name="407"/>      compute_tab_order()
+<a name="408"/>      cbwin := clone_win_with(win,
+<a name="409"/>                              effective_wattribs)
+<a name="410"/>      every (!children).initially()
+<a name="411"/>   end
+<a name="412"/>
+<a name="413"/>   public open_buffer_win()
+<a name="414"/>      local t, k
+<a name="415"/>      # Just set the bare minimum attributes.  dx and dy must be set
+<a name="416"/>      # so that they are propagated into the cbwins.  Drawing
+<a name="417"/>      # attributes like "bg" must not be set, since we may remove them
+<a name="418"/>      # later, and call reset().  We wouldn't then want "bg=blue" to
+<a name="419"/>      # still be stuck in the root buffer window's context.
+<a name="420"/>      t := table()
+<a name="421"/>      every k := WAttrib.DISPLAY | WAttrib.DX | WAttrib.DY do
+<a name="422"/>         t[k] := get_wattrib(k)
+<a name="423"/>      self.win := open_win_with(t)
+<a name="424"/>   end
+<a name="425"/>
+<a name="426"/>   #
+<a name="427"/>   # Ensure we have size attributes, setting from the preferred width/height if
+<a name="428"/>   # absent
+<a name="429"/>   # 
+<a name="430"/>   private ensure_size(t)
+<a name="431"/>      local tw
+<a name="432"/>      if member(t, WAttrib.SIZE | WAttrib.GEOMETRY) | (member(t, WAttrib.WIDTH) &amp; member(t, WAttrib.HEIGHT)) then
+<a name="433"/>         fail
+<a name="434"/>
+<a name="435"/>      if tw := member(t, WAttrib.WIDTH) then 
+<a name="436"/>         # Got width, need height
+<a name="437"/>         t[WAttrib.HEIGHT] := get_preferred_height(tw)
+<a name="438"/>      else if member(t, WAttrib.HEIGHT) then
+<a name="439"/>         # Got height, need width
+<a name="440"/>         t[WAttrib.WIDTH] :=  get_preferred_width()
+<a name="441"/>      else
+<a name="442"/>         # Need both
+<a name="443"/>         t[WAttrib.SIZE] := [tw := get_preferred_width(), get_preferred_height(tw)]
+<a name="444"/>   end
+<a name="445"/>
+<a name="446"/>   public open_visible_win()
+<a name="447"/>      local t, k, pw
+<a name="448"/>      # Apply other attributes to the window before making it visible,
+<a name="449"/>      # in particular the size.  Graphic attributes are excluded (see
+<a name="450"/>      # the comment in open_buffer_win() above).
+<a name="451"/>      t := table()
+<a name="452"/>      every k := key(wattribs) do
+<a name="453"/>         Gui.is_context_attrib(k) | (t[k] := wattribs[k])
+<a name="454"/>      ensure_size(t)
+<a name="455"/>      if pw := (\owning_dialog).win then
+<a name="456"/>         t[WAttrib.TRANSIENT_FOR] := pw
+<a name="457"/>      /t[WAttrib.CANVAS] := "normal"
+<a name="458"/>      apply_window_table(win, t)
+<a name="459"/>   end
+<a name="460"/>
+<a name="461"/>   public close_win()
+<a name="462"/>      local t
+<a name="463"/>      t := win.get_references()
+<a name="464"/>      if t[1] ~= 1 then
+<a name="465"/>         runerr("Dialog close_win(): canvas reference count not 1")
+<a name="466"/>      if t[2] ~= 1 then
+<a name="467"/>         runerr("Dialog close_win(): context reference count not 1")
+<a name="468"/>      if \remember_size_flag then
+<a name="469"/>         set_size!win.get_size()
+<a name="470"/>      self.win.close()
+<a name="471"/>      self.win := &amp;null
+<a name="472"/>   end
+<a name="473"/>
+<a name="474"/>   #
+<a name="475"/>   # Enter menu mode, with `c` as the controlling component, which
+<a name="476"/>   # must implement the `MenuMode` interface.
+<a name="477"/>   #
+<a name="478"/>   public enter_menu_mode(c)
+<a name="479"/>      if popup_manager ~=== self then
+<a name="480"/>         popup_manager.enter_menu_mode(c) | fail
+<a name="481"/>      else {
+<a name="482"/>         while \menu_mode &amp; not(menu_mode.allow_nested(c)) do
+<a name="483"/>            menu_mode.close_all()
+<a name="484"/>         if \menu_mode then
+<a name="485"/>            put(menu_mode_stack, menu_mode)
+<a name="486"/>         else {
+<a name="487"/>            win.grab_pointer() | fail
+<a name="488"/>            unless win.grab_keyboard() then {
+<a name="489"/>               win.ungrab_pointer()
+<a name="490"/>               fail
+<a name="491"/>            }
+<a name="492"/>            popups := []
+<a name="493"/>         }
+<a name="494"/>         self.menu_mode := c
+<a name="495"/>      }
+<a name="496"/>      link
+<a name="497"/>   end
+<a name="498"/>
+<a name="499"/>   # Exit the menu mode formerly begun with `MenuMode` instance `c`.
+<a name="500"/>   # If `c` is `&amp;null`, all menu_modes are exited.
+<a name="501"/>   #
+<a name="502"/>   public exit_menu_mode(c)
+<a name="503"/>      if popup_manager ~=== self then
+<a name="504"/>         popup_manager.exit_menu_mode(c)
+<a name="505"/>      else {
+<a name="506"/>         until c === menu_mode do {
+<a name="507"/>            \menu_mode | runerr("Inconsistent menu mode passed to exit_menu_mode", c)
+<a name="508"/>            menu_mode.close_all()
+<a name="509"/>         }
+<a name="510"/>         if c := pull(menu_mode_stack) then
+<a name="511"/>            menu_mode := c
+<a name="512"/>         else if \menu_mode then {
+<a name="513"/>            win.ungrab_pointer()
+<a name="514"/>            win.ungrab_keyboard()
+<a name="515"/>            menu_mode := popups := &amp;null
+<a name="516"/>         }
+<a name="517"/>      }
+<a name="518"/>      link
+<a name="519"/>   end
+<a name="520"/>
+<a name="521"/>   public add_popup(d)
+<a name="522"/>      if popup_manager ~=== self then
+<a name="523"/>         popup_manager.add_popup(d)
+<a name="524"/>      else {
+<a name="525"/>         \popups | runerr("add_popup(), but not  in menu mode.")
+<a name="526"/>         d.popup_manager := self
+<a name="527"/>         push(popups, d)
+<a name="528"/>      }
+<a name="529"/>      link
+<a name="530"/>   end
+<a name="531"/>
+<a name="532"/>   public remove_popup(d)
+<a name="533"/>      if popup_manager ~=== self then
+<a name="534"/>         popup_manager.remove_popup(d)
+<a name="535"/>      else {
+<a name="536"/>         \popups | runerr("remove_popup(), but not  in menu mode.")
+<a name="537"/>         d.popup_manager := d
+<a name="538"/>         ldel(popups, d)
+<a name="539"/>      }
+<a name="540"/>      link
+<a name="541"/>   end
+<a name="542"/>
+<a name="543"/>   #
+<a name="544"/>   # Return the current keyboard focus of the dialog, or fail if there is no
+<a name="545"/>   # current focus.
+<a name="546"/>   #
+<a name="547"/>   public get_focus()
+<a name="548"/>      return \popup_manager.focus
+<a name="549"/>   end
+<a name="550"/>
+<a name="551"/>   #
+<a name="552"/>   # Sets keyboard focus to the given component.
+<a name="553"/>   #
+<a name="554"/>   public set_focus(c, e)
+<a name="555"/>      if popup_manager ~=== self then
+<a name="556"/>         popup_manager.set_focus(c, e)
+<a name="557"/>      else if self.focus ~=== c then {
+<a name="558"/>         (\self.focus).lost_focus(e)
+<a name="559"/>         self.focus := c
+<a name="560"/>         (\self.focus).got_focus(e)
+<a name="561"/>      }
+<a name="562"/>      link
+<a name="563"/>   end
+<a name="564"/>
+<a name="565"/>   #
+<a name="566"/>   # Clear the keyboard focus.
+<a name="567"/>   #
+<a name="568"/>   public clear_focus(e)
+<a name="569"/>      return set_focus(, e)
+<a name="570"/>   end
+<a name="571"/>
+<a name="572"/>   #
+<a name="573"/>   # This empty method is invoked just after the dialog is displayed for the first time.
+<a name="574"/>   #
+<a name="575"/>   public init_dialog()
+<a name="576"/>   end
+<a name="577"/>
+<a name="578"/>   #
+<a name="579"/>   # This empty method may be overridden to add components to the
+<a name="580"/>   # dialog.  Alternatively, components may be added in the
+<a name="581"/>   # dialog's `initially` method.
+<a name="582"/>   #
+<a name="583"/>   public component_setup()
+<a name="584"/>   end
+<a name="585"/>
+<a name="586"/>   #
+<a name="587"/>   # This empty method may be overridden.  It is invoked just
+<a name="588"/>   # before the dialog window is closed.
+<a name="589"/>   #
+<a name="590"/>   public end_dialog()
+<a name="591"/>   end
+<a name="592"/>
+<a name="593"/>   #
+<a name="594"/>   # Opens the dialog and returns immediately.
+<a name="595"/>   #
+<a name="596"/>   # :Parameters :
+<a name="597"/>   # :  `d` - This optional parameter specifies the parent dialog.
+<a name="598"/>   #   When a parent dialog is closed, its child dialogs are automatically closed.
+<a name="599"/>   #
+<a name="600"/>   public show(d)
+<a name="601"/>      /win | runerr("show() called on open Dialog")
+<a name="602"/>      if \d then {
+<a name="603"/>         insert(d.child_dialogs, self)
+<a name="604"/>         self.owning_dialog := d
+<a name="605"/>      }
+<a name="606"/>      self.component_setup()
+<a name="607"/>      self.open_buffer_win()
+<a name="608"/>      self.initially()
+<a name="609"/>      self.open_visible_win()
+<a name="610"/>      self.resize()
+<a name="611"/>      self.invalidate()
+<a name="612"/>      self.tooltip_init()
+<a name="613"/>      self.init_dialog()
+<a name="614"/>      Dispatcher.add_dialog(self)
+<a name="615"/>      fire(Event.DIALOG_SHOWN)
+<a name="616"/>      link
+<a name="617"/>   end
+<a name="618"/>
+<a name="619"/>   public dispose()
+<a name="620"/>      \win | runerr("dispose() called on closed Dialog")
+<a name="621"/>      # If menu_mode is set, then we are the popup manager and a menu is active,
+<a name="622"/>      # so close all menus.
+<a name="623"/>      if \menu_mode then
+<a name="624"/>         exit_menu_mode()
+<a name="625"/>      exit_dnd()
+<a name="626"/>      self.end_dialog()
+<a name="627"/>      every (!child_dialogs).dispose()
+<a name="628"/>      self.dispose_selections()
+<a name="629"/>      self.tooltip_dispose()
+<a name="630"/>      self.finally()
+<a name="631"/>      self.close_win()
+<a name="632"/>      Dispatcher.remove_dialog(self)
+<a name="633"/>      if \self.owning_dialog then {
+<a name="634"/>         delete(self.owning_dialog.child_dialogs, self)
+<a name="635"/>         self.owning_dialog.restore_win()
+<a name="636"/>         self.owning_dialog := &amp;null
+<a name="637"/>      }
+<a name="638"/>      self.point_chain := self.point_chain_source := self.held := 
+<a name="639"/>         self.click_event := self.invalid_rects := self.crossing := 
+<a name="640"/>         self.selections := self.selection_requests := self.focus_out_flag :=
+<a name="641"/>         self.click_count := self.entered := &amp;null
+<a name="642"/>      fire(Event.DIALOG_DISPOSED)
+<a name="643"/>      link
+<a name="644"/>   end
+<a name="645"/>
+<a name="646"/>   # Refresh the point chain and pointer, using point_chain_source.
+<a name="647"/>   # This is useful, for example, if a component in the point chain
+<a name="648"/>   # has been removed.
+<a name="649"/>   #
+<a name="650"/>   public resynch_pointer() 
+<a name="651"/>      if popup_manager ~=== self then
+<a name="652"/>         popup_manager.resynch_pointer() | fail
+<a name="653"/>      else if \point_chain_source then {
+<a name="654"/>         # Fail if we have a button currently held down.
+<a name="655"/>         *held = 0 | fail
+<a name="656"/>         create_point_chain(point_chain_source)
+<a name="657"/>         generate_crossing_events(point_chain_source) 
+<a name="658"/>         synch_pointer(point_chain_source)
+<a name="659"/>      }
+<a name="660"/>      link
+<a name="661"/>   end
+<a name="662"/>
+<a name="663"/>   private create_point_chain(e)
+<a name="664"/>      local p
+<a name="665"/>
+<a name="666"/>      (popup_manager === self) | syserr("popup_manager wrong")
+<a name="667"/>
+<a name="668"/>      point_chain := []
+<a name="669"/>      point_chain_source := e
+<a name="670"/>      
+<a name="671"/>      # If we're not "entered" then we have an empty point chain,
+<a name="672"/>      # since the pointer is outside the window (or over an obscured
+<a name="673"/>      # part).
+<a name="674"/>      if /entered | is_hidden() then
+<a name="675"/>         fail
+<a name="676"/>
+<a name="677"/>      every p := !\popups do {
+<a name="678"/>         if p.inside(e.x, e.y) then {
+<a name="679"/>            p.build_point_chain(point_chain, e)
+<a name="680"/>            put(point_chain, p)
+<a name="681"/>            break
+<a name="682"/>         }
+<a name="683"/>      }
+<a name="684"/>
+<a name="685"/>      # If we have a popup in the point chain, then include the top
+<a name="686"/>      # dialog in the chain (so it is notionally always under the
+<a name="687"/>      # popup).  This ensures that the dialog's tooltips and pointer
+<a name="688"/>      # work consistently.
+<a name="689"/>      if inside(e.x, e.y) | (*point_chain &gt; 0) then {
+<a name="690"/>         if *point_chain = 0 then
+<a name="691"/>            build_point_chain(point_chain, e)
+<a name="692"/>         put(point_chain, self)
+<a name="693"/>      }
+<a name="694"/>   end
+<a name="695"/>
+<a name="696"/>   private dispose_selections()
+<a name="697"/>      every (!selections).lost_ownership()
+<a name="698"/>      clear(selections)
+<a name="699"/>   end
+<a name="700"/>
+<a name="701"/>   private process_selection_request(l)
+<a name="702"/>      local c, data, target
+<a name="703"/>      target := l[5]
+<a name="704"/>      if c := member(selections, l[4]) then {
+<a name="705"/>         data := case target of {
+<a name="706"/>            Selection.TARGETS_TARGET:
+<a name="707"/>               ipl.pdco.List{ c.get_targets() | Selection.TIMESTAMP_TARGET }
+<a name="708"/>            Selection.TIMESTAMP_TARGET:
+<a name="709"/>               c.get_timestamp()
+<a name="710"/>            default: {
+<a name="711"/>               if c.get_targets() == target then 
+<a name="712"/>                  c.get_content(target)
+<a name="713"/>            }
+<a name="714"/>         }
+<a name="715"/>      }
+<a name="716"/>      win.send_selection_response(l[2], l[3], l[4], l[5], l[6], data)
+<a name="717"/>   end
+<a name="718"/>
+<a name="719"/>   private process_selection_clear(l)
+<a name="720"/>      local c
+<a name="721"/>      if c := member(selections, l[2]) then {
+<a name="722"/>         c.lost_ownership()
+<a name="723"/>         delete(selections, l[2])
+<a name="724"/>      }
+<a name="725"/>   end
+<a name="726"/>
+<a name="727"/>   private process_selection_response(l)
+<a name="728"/>      local req
+<a name="729"/>      if req := member(selection_requests, l[2]) then {
+<a name="730"/>         if /l[4] | (l[3] ~== req.target_types[1]) then {
+<a name="731"/>            # Null data (indicating failure), or mismatch in type.  Pop off
+<a name="732"/>            # the last requested type.
+<a name="733"/>            pop(req.target_types)
+<a name="734"/>            if *req.target_types &gt; 0 then
+<a name="735"/>               # Try next type
+<a name="736"/>               win.request_selection(l[2], req.target_types[1])
+<a name="737"/>            else {
+<a name="738"/>               # Notify of failure by invoking callback with null data
+<a name="739"/>               delete(selection_requests, l[2])
+<a name="740"/>               req.proc(l[3], &amp;null)
+<a name="741"/>            }
+<a name="742"/>         } else {
+<a name="743"/>            # Success; invoke callback procedure
+<a name="744"/>            delete(selection_requests, l[2])
+<a name="745"/>            req.proc(l[3], l[4])
+<a name="746"/>         }
+<a name="747"/>      }
+<a name="748"/>   end
+<a name="749"/>
+<a name="750"/>   private process_invoke_later(l)
+<a name="751"/>      @l[2]
+<a name="752"/>   end
+<a name="753"/>
+<a name="754"/>   public own_selection(selection, obj)
+<a name="755"/>      local curr
+<a name="756"/>      if popup_manager ~=== self then
+<a name="757"/>         popup_manager.own_selection(selection, obj)
+<a name="758"/>      else {
+<a name="759"/>         if curr := member(selections, selection) then {
+<a name="760"/>            # Check if current owner is asserting selection.
+<a name="761"/>            if curr ~=== obj then {
+<a name="762"/>               curr.lost_ownership()
+<a name="763"/>               insert(selections, selection, obj)
+<a name="764"/>            }
+<a name="765"/>         } else
+<a name="766"/>            insert(selections, selection, obj)
+<a name="767"/>         obj.set_timestamp(win.own_selection(selection))
+<a name="768"/>      }
+<a name="769"/>      link
+<a name="770"/>   end
+<a name="771"/>
+<a name="772"/>   public request_selection(selection, target_types, proc)
+<a name="773"/>      # We copy target_types since process_selection_response() may edit that list.
+<a name="774"/>      insert(selection_requests, selection, SelectionRequest(copy(target_types), proc))
+<a name="775"/>      win.request_selection(selection, target_types[1])
+<a name="776"/>      link
+<a name="777"/>   end
+<a name="778"/>
+<a name="779"/>   private check_entered(e)
+<a name="780"/>      # Theoretically, we should only need Mouse.ENTER in the first
+<a name="781"/>      # list here; the others are backups in case the window system
+<a name="782"/>      # doesn't send the ENTER message.
+<a name="783"/>      #
+<a name="784"/>      # Note that we shouldn't get exit events if we have popups,
+<a name="785"/>      # since we are in grab mode, although that isn't the case in
+<a name="786"/>      # win32.
+<a name="787"/>      #
+<a name="788"/>      case e.code of {
+<a name="789"/>         Mouse.MOVEMENT |
+<a name="790"/>            Mouse.LEFT_PRESS |
+<a name="791"/>            Mouse.MIDDLE_PRESS |
+<a name="792"/>            Mouse.RIGHT_PRESS |
+<a name="793"/>            Mouse.ENTER :
+<a name="794"/>            entered := &amp;yes
+<a name="795"/>         Mouse.EXIT :
+<a name="796"/>            entered := &amp;no
+<a name="797"/>      }
+<a name="798"/>   end
+<a name="799"/>
+<a name="800"/>   private set_focus_out(f)
+<a name="801"/>      if focus_out_flag ~===:= f then
+<a name="802"/>         get_focus().focus_changed()
+<a name="803"/>      link
+<a name="804"/>   end
+<a name="805"/>
+<a name="806"/>   private process_focus_in(l)
+<a name="807"/>      set_focus_out(&amp;no)
+<a name="808"/>      fire(l[1])
+<a name="809"/>   end
+<a name="810"/>
+<a name="811"/>   private process_focus_out(l)
+<a name="812"/>      # X is too chatty with focus events for this to be used here.
+<a name="813"/>$if ~ _X_WINDOW_SYSTEM
+<a name="814"/>      exit_menu_mode()
+<a name="815"/>$endif
+<a name="816"/>      set_focus_out(&amp;yes)
+<a name="817"/>      fire(l[1])
+<a name="818"/>   end
+<a name="819"/>
+<a name="820"/>   public process_event(l)
+<a name="821"/>      local e
+<a name="822"/>      case l[1] of {
+<a name="823"/>         Selection.REQUEST: process_selection_request(l)
+<a name="824"/>         Selection.CLEAR: process_selection_clear(l)
+<a name="825"/>         Selection.RESPONSE: process_selection_response(l)
+<a name="826"/>         Window.INVOKE_LATER: process_invoke_later(l)
+<a name="827"/>         Window.RESIZE: process_resize(l)
+<a name="828"/>         Window.CLOSE_BUTTON |
+<a name="829"/>            Window.MOVE |
+<a name="830"/>            Window.STATE : fire(l[1])
+<a name="831"/>         Window.FOCUS_IN : process_focus_in(l)
+<a name="832"/>         Window.FOCUS_OUT: process_focus_out(l)
+<a name="833"/>
+<a name="834"/>         default: {
+<a name="835"/>            # A popup shouldn't normally get events, but if it does
+<a name="836"/>            # forward the event to the manager.
+<a name="837"/>            (popup_manager === self) |
+<a name="838"/>               return popup_manager.process_event(l)
+<a name="839"/>            e := WinEvent!l
+<a name="840"/>            check_entered(e)
+<a name="841"/>            check_click_count(e)
+<a name="842"/>            create_point_chain(e)
+<a name="843"/>
+<a name="844"/>            while \menu_mode do {
+<a name="845"/>               if menu_mode.should_close(e) then {
+<a name="846"/>                  menu_mode.close_all()
+<a name="847"/>                  create_point_chain(e)
+<a name="848"/>               } else
+<a name="849"/>                  break
+<a name="850"/>            }
+<a name="851"/>
+<a name="852"/>            if /self.curr_drag then 
+<a name="853"/>               check_dnd(e)
+<a name="854"/>            if \self.curr_drag then
+<a name="855"/>               process_dnd(e)
+<a name="856"/>            else
+<a name="857"/>               process_normal(e)
+<a name="858"/>         }
+<a name="859"/>      }
+<a name="860"/>   end
+<a name="861"/>
+<a name="862"/>   #
+<a name="863"/>   # Normal event processing - not dnd
+<a name="864"/>   # 
+<a name="865"/>   private process_normal(e)
+<a name="866"/>      local c, ec, old_n_held
+<a name="867"/>
+<a name="868"/>      ec := e.code
+<a name="869"/>
+<a name="870"/>      old_n_held := *held
+<a name="871"/>      if member(Mouse.PRESS, ec) then {
+<a name="872"/>         set_focus_out(&amp;no)
+<a name="873"/>         # Note the position of the start of a potential drag
+<a name="874"/>         drag_gesture_x := e.x
+<a name="875"/>         drag_gesture_y := e.y
+<a name="876"/>         if c := (!point_chain).find_focus(e) then
+<a name="877"/>            set_focus(c, e)
+<a name="878"/>      }
+<a name="879"/>      else if /e.release &amp; type(ec) == ("string" | "ucs") then {
+<a name="880"/>         set_focus_out(&amp;no)
+<a name="881"/>         if \e.meta then {
+<a name="882"/>            if c := (!\popups | self).find_accel(ec) then {
+<a name="883"/>               c.handle_accel(e)
+<a name="884"/>               # The handler may have called dispose() or blocked the dialog.
+<a name="885"/>               if /point_chain then
+<a name="886"/>                  fail
+<a name="887"/>            }
+<a name="888"/>         }
+<a name="889"/>      }
+<a name="890"/>
+<a name="891"/>      generate_crossing_events(e) 
+<a name="892"/>
+<a name="893"/>      #
+<a name="894"/>      # Set the processing flag and re-create the point chain.  This
+<a name="895"/>      # gives fine control to a component that wishes to filter out
+<a name="896"/>      # particular types of events at this stage of processing; for
+<a name="897"/>      # example ComponentScrollArea filters out wheel events under
+<a name="898"/>      # certain circumstances.
+<a name="899"/>      #
+<a name="900"/>      e.processing := &amp;yes
+<a name="901"/>      create_point_chain(e)
+<a name="902"/>      generate_events(e)
+<a name="903"/>      e.processing := &amp;no
+<a name="904"/>
+<a name="905"/>      fire(Event.ICON, e)
+<a name="906"/>
+<a name="907"/>      #
+<a name="908"/>      # If a handler closed or blocked this dialog, do no more.
+<a name="909"/>      #
+<a name="910"/>      if /point_chain then
+<a name="911"/>         fail
+<a name="912"/>
+<a name="913"/>      #
+<a name="914"/>      # Check for focus keyboard movement, but not in menu mode; this would get muddled up
+<a name="915"/>      # with the menu's cursor movement.
+<a name="916"/>      #
+<a name="917"/>      if /e.release &amp; /menu_mode then {
+<a name="918"/>         if ((ec === "\t" &amp; /e.shift) | member(FOCUS_DOWN, ec)) &amp;
+<a name="919"/>            (/focus | 
+<a name="920"/>             focus.is_hidden() |
+<a name="921"/>             focus.is_shaded() | 
+<a name="922"/>             not(focus.keeps(e)))
+<a name="923"/>         then 
+<a name="924"/>            set_focus(find_next_focus(e), e)
+<a name="925"/>         else if ((ec === "\t" &amp; \e.shift) | member(FOCUS_UP, ec)) &amp;
+<a name="926"/>            (/focus | 
+<a name="927"/>             focus.is_hidden() |
+<a name="928"/>             focus.is_shaded() | 
+<a name="929"/>             not(focus.keeps(e)))
+<a name="930"/>         then 
+<a name="931"/>            set_focus(find_previous_focus(e), e)
+<a name="932"/>      }
+<a name="933"/>
+<a name="934"/>      #
+<a name="935"/>      # The event may have changed what's above the cursor, eg a menu may have
+<a name="936"/>      # closed revealing something below, so re-create the point chain.
+<a name="937"/>      #
+<a name="938"/>      create_point_chain(e)
+<a name="939"/>      generate_crossing_events(e)
+<a name="940"/>      process_tooltip_event(e)
+<a name="941"/>
+<a name="942"/>      #
+<a name="943"/>      # Synch the pointer if either there were no buttons down before or after
+<a name="944"/>      # this event.  This means we synch at the start and end of a drag, but not
+<a name="945"/>      # during a drag.
+<a name="946"/>      #
+<a name="947"/>      if (old_n_held | *held) = 0 then
+<a name="948"/>         synch_pointer(e)
+<a name="949"/>   end
+<a name="950"/>
+<a name="951"/>   #
+<a name="952"/>   # Artificially "hold" a component down.
+<a name="953"/>   # :Parameters :
+<a name="954"/>   # :  `c` - The component
+<a name="955"/>   # :  `ec` - The simulated mouse event code
+<a name="956"/>   #
+<a name="957"/>   public hold(c, ec)
+<a name="958"/>      if popup_manager ~=== self then
+<a name="959"/>         popup_manager.hold(c, ec) | fail
+<a name="960"/>      else {
+<a name="961"/>         held[ec] := copy(member(held, ec)) | fail
+<a name="962"/>         put(held[ec], c)
+<a name="963"/>      }
+<a name="964"/>      link
+<a name="965"/>   end
+<a name="966"/>
+<a name="967"/>   #
+<a name="968"/>   # Artificially "release" a component which is held.
+<a name="969"/>   # :Parameters :
+<a name="970"/>   # :  `c` - The component
+<a name="971"/>   # :  `ec` - The simulated mouse event code
+<a name="972"/>   #
+<a name="973"/>   public release(c, ec)
+<a name="974"/>      if popup_manager ~=== self then
+<a name="975"/>         popup_manager.release(c, ec) | fail
+<a name="976"/>      else {
+<a name="977"/>         held[ec] := copy(member(held, ec)) | fail
+<a name="978"/>         ldel(held[ec], c)
+<a name="979"/>      }
+<a name="980"/>      link
+<a name="981"/>   end
+<a name="982"/>
+<a name="983"/>   #
+<a name="984"/>   # Return the number of buttons presently held down.
+<a name="985"/>   #
+<a name="986"/>   public get_held_count()
+<a name="987"/>      return *popup_manager.held
+<a name="988"/>   end
+<a name="989"/>
+<a name="990"/>   #
+<a name="991"/>   # Return the list of components held for the given mouse event.
+<a name="992"/>   #
+<a name="993"/>   public get_held(e)
+<a name="994"/>      return member(popup_manager.held, e)
+<a name="995"/>   end
+<a name="996"/>
+<a name="997"/>   private generate_crossing_events(e) 
+<a name="998"/>      local t
+<a name="999"/>      t := crossing
+<a name="1000"/>      crossing := elementset(point_chain)
+<a name="1001"/>      fire_list(t -- crossing, Event.MOUSE_EXIT, e)
+<a name="1002"/>      fire_list(crossing -- t, Event.MOUSE_ENTER, e)
+<a name="1003"/>      fire_list(point_chain, Event.IN_POINT_CHAIN, e)      
+<a name="1004"/>   end
+<a name="1005"/>
+<a name="1006"/>   private generate_events(e)
+<a name="1007"/>      local ec, t
+<a name="1008"/>      ec := e.code
+<a name="1009"/>      if integer(ec) &lt; 0 then {
+<a name="1010"/>         # Mouse event
+<a name="1011"/>         if member(Mouse.WHEEL, ec) then {
+<a name="1012"/>            fire_list(point_chain, ec, e)
+<a name="1013"/>         } else if member(Mouse.PRESS, ec) then {
+<a name="1014"/>            held[ec] := point_chain
+<a name="1015"/>            fire_list(point_chain, ec, e)
+<a name="1016"/>         } else if ec === Mouse.DRAG then {
+<a name="1017"/>            every t := key(held) do {
+<a name="1018"/>               fire_list(point_chain, 200 - t, e)
+<a name="1019"/>               fire_list(held[t], 10 - t, e)
+<a name="1020"/>            }
+<a name="1021"/>         } else if ec === Mouse.MOVEMENT then {
+<a name="1022"/>            fire_list(point_chain, ec, e)
+<a name="1023"/>         } else if member(Mouse.RELEASE, ec) then {
+<a name="1024"/>            if t := member(held, ec + 3) then {
+<a name="1025"/>               delete(held, ec + 3)
+<a name="1026"/>               fire_list(point_chain, 200 - ec, e)
+<a name="1027"/>               fire_list(t, ec, e)
+<a name="1028"/>            }
+<a name="1029"/>         }
+<a name="1030"/>      } else {
+<a name="1031"/>         # Keyboard event
+<a name="1032"/>         fire_list([\menu_mode | \focus] \ 1,
+<a name="1033"/>                   if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS,
+<a name="1034"/>                   e)
+<a name="1035"/>      }
+<a name="1036"/>   end
+<a name="1037"/>
+<a name="1038"/>   private fire_list(l, t, p)
+<a name="1039"/>      local c
+<a name="1040"/>      every c := !l do {
+<a name="1041"/>         if c.is_initialized() &amp; c.is_unshaded() &amp; c.is_unhidden() then
+<a name="1042"/>            c.fire(t, p)
+<a name="1043"/>      }
+<a name="1044"/>   end
+<a name="1045"/>
+<a name="1046"/>   #
+<a name="1047"/>   # Initialize the tooltip state and ticker.
+<a name="1048"/>   # 
+<a name="1049"/>   private tooltip_init()
+<a name="1050"/>      if popup_manager === self then
+<a name="1051"/>         tooltip_ticker.start()
+<a name="1052"/>   end
+<a name="1053"/>
+<a name="1054"/>   #
+<a name="1055"/>   # Cleanup the tooltip settings.
+<a name="1056"/>   # 
+<a name="1057"/>   private tooltip_dispose()
+<a name="1058"/>      self.tooltip_ticker.stop()
+<a name="1059"/>      reset_tooltip_state()
+<a name="1060"/>   end
+<a name="1061"/>
+<a name="1062"/>   #
+<a name="1063"/>   # Show the tooltip at the given event position.  If e is null, then we update
+<a name="1064"/>   # the current tooltip based on its current location.
+<a name="1065"/>   # 
+<a name="1066"/>   private show_tooltip(obj, tip, e)
+<a name="1067"/>      local d, dim, ox, oy, rs
+<a name="1068"/>      if \self.tooltip_component then {
+<a name="1069"/>         ox := tooltip_component.x
+<a name="1070"/>         oy := tooltip_component.y
+<a name="1071"/>         hide_tooltip()
+<a name="1072"/>      }
+<a name="1073"/>      self.tooltip_component := obj.create_tooltip_component(tip)
+<a name="1074"/>      if /e then  
+<a name="1075"/>         self.tooltip_component.set_pos(ox + win.get_dx(),
+<a name="1076"/>                                        oy + win.get_dy())
+<a name="1077"/>      else
+<a name="1078"/>         self.tooltip_component.set_pos(e.x + win.get_dx() + TOOLTIP_X_OFFSET, 
+<a name="1079"/>                                        e.y + win.get_dy() + TOOLTIP_Y_OFFSET)
+<a name="1080"/>      self.tooltip_component.set_z(get_top_z())
+<a name="1081"/>      self.add(self.tooltip_component)
+<a name="1082"/>      self.tooltip_component.resize()
+<a name="1083"/>
+<a name="1084"/>      dim := win.get_display_size()
+<a name="1085"/>      # Screen rectangle, in adjusted co-ordinates
+<a name="1086"/>      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
+<a name="1087"/>
+<a name="1088"/>      #
+<a name="1089"/>      # Ensure it's in area; adjust and resize again if not.
+<a name="1090"/>      #
+<a name="1091"/>      if self.tooltip_component.x + self.tooltip_component.w &gt; rs.x + rs.w then {
+<a name="1092"/>         tooltip_component.set_x(if /e then win.get_dx() + max(rs.x, rs.x + rs.w - self.tooltip_component.w)
+<a name="1093"/>                                 else win.get_dx() + max(rs.x, e.x - TOOLTIP_X_OFFSET - self.tooltip_component.w)).
+<a name="1094"/>                           resize()
+<a name="1095"/>      }
+<a name="1096"/>      if self.tooltip_component.y + self.tooltip_component.h &gt; rs.y + rs.h then {
+<a name="1097"/>         tooltip_component.set_y(if /e then win.get_dy() + max(rs.y, rs.y + rs.h - self.tooltip_component.h)
+<a name="1098"/>                                 else win.get_dy() + max(rs.y, e.y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)).
+<a name="1099"/>                           resize()
+<a name="1100"/>      }
+<a name="1101"/>
+<a name="1102"/>      # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
+<a name="1103"/>      # below the other popup window.
+<a name="1104"/>      if Gui.allow_internal_popups() &amp;
+<a name="1105"/>         contains(tooltip_component) &amp; (/popups | *popups = 0) then {
+<a name="1106"/>         self.tooltip_component.invalidate()
+<a name="1107"/>      } else {
+<a name="1108"/>         self.remove(self.tooltip_component)
+<a name="1109"/>         d := PureDialog().
+<a name="1110"/>            set_canvas(Canvas.POPUP).
+<a name="1111"/>            set_width( self.tooltip_component.w).
+<a name="1112"/>            set_height(self.tooltip_component.h).
+<a name="1113"/>            set_dx(-self.tooltip_component.x).
+<a name="1114"/>            set_dy(-self.tooltip_component.y).
+<a name="1115"/>            set_x(win.get_x() + win.get_dx() + self.tooltip_component.x).
+<a name="1116"/>            set_y(win.get_y() + win.get_dy() + self.tooltip_component.y).
+<a name="1117"/>            copy_wattrib(WAttrib.DISPLAY, self).
+<a name="1118"/>            add(self.tooltip_component)
+<a name="1119"/>         self.tooltip_component.set_pos(0, 0)
+<a name="1120"/>         d.show()
+<a name="1121"/>      }
+<a name="1122"/>   end
+<a name="1123"/>
+<a name="1124"/>   #
+<a name="1125"/>   # Hide the tooltip label.
+<a name="1126"/>   # 
+<a name="1127"/>   private hide_tooltip()
+<a name="1128"/>      if self.tooltip_component.parent_dialog === self then {
+<a name="1129"/>         self.tooltip_component.invalidate()
+<a name="1130"/>         self.remove(self.tooltip_component)
+<a name="1131"/>      } else {
+<a name="1132"/>         self.tooltip_component.parent_dialog.dispose()
+<a name="1133"/>      }
+<a name="1134"/>      self.tooltip_component := &amp;null
+<a name="1135"/>   end
+<a name="1136"/>
+<a name="1137"/>   #
+<a name="1138"/>   # Reset the tooltip state, hiding the tooltip if necessary.
+<a name="1139"/>   #
+<a name="1140"/>   private reset_tooltip_state()
+<a name="1141"/>      if tooltip_state = 2 then
+<a name="1142"/>         hide_tooltip()
+<a name="1143"/>      tooltip_state := 0
+<a name="1144"/>      tooltip_last_obj := tooltip_last_tip := tooltip_last_event := &amp;null
+<a name="1145"/>   end
+<a name="1146"/>
+<a name="1147"/>   #
+<a name="1148"/>   # Tooltip processing on a tick.
+<a name="1149"/>   # 
+<a name="1150"/>   private process_tooltip_tick()
+<a name="1151"/>      local t
+<a name="1152"/>      repeat {
+<a name="1153"/>         (popup_manager === self) | syserr("Shouldn't have a tooltip ticker in a popup")
+<a name="1154"/>
+<a name="1155"/>         if \is_blocked_flag then
+<a name="1156"/>            # See notes as to why this is better than just hiding &amp; setting state to 0.
+<a name="1157"/>            reset_tooltip_state()
+<a name="1158"/>         else {
+<a name="1159"/>            t := Prog.get_runtime_millis()
+<a name="1160"/>            case self.tooltip_state of {
+<a name="1161"/>               1 : 
+<a name="1162"/>                  if t &gt;= self.tooltip_start_time then {
+<a name="1163"/>                     show_tooltip(self.tooltip_last_obj, self.tooltip_last_tip, self.tooltip_last_event)
+<a name="1164"/>                     self.tooltip_state := 2
+<a name="1165"/>                     self.tooltip_end_time := (t + \self.tooltip_last_obj.get_tooltip_end_delay()) | &amp;null
+<a name="1166"/>                  }
+<a name="1167"/>
+<a name="1168"/>               2 :
+<a name="1169"/>                  if t &gt;= \self.tooltip_end_time then {
+<a name="1170"/>                     hide_tooltip()
+<a name="1171"/>                     self.tooltip_state := 0
+<a name="1172"/>                     self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
+<a name="1173"/>                  }
+<a name="1174"/>
+<a name="1175"/>               3 : 
+<a name="1176"/>                  if t &gt;= self.tooltip_continue_time then
+<a name="1177"/>                     self.tooltip_state := 0
+<a name="1178"/>            }
+<a name="1179"/>         }
+<a name="1180"/>         tooltip_ticker.sleep(200)
+<a name="1181"/>      }
+<a name="1182"/>   end
+<a name="1183"/>
+<a name="1184"/>   #
+<a name="1185"/>   # Tooltip processing during an event.
+<a name="1186"/>   # 
+<a name="1187"/>   private process_tooltip_event(e)
+<a name="1188"/>      local obj, c, tip, t
+<a name="1189"/>
+<a name="1190"/>      # We should in fact not get events in the blocked state.
+<a name="1191"/>      if \is_blocked_flag then
+<a name="1192"/>         fail
+<a name="1193"/>      unless (e.code === Mouse.MOVEMENT) | (*held = 0 &amp; member(Mouse.CROSSING, e.code)) then {
+<a name="1194"/>         if tooltip_state = 2 then
+<a name="1195"/>            hide_tooltip()
+<a name="1196"/>         tooltip_state := 0
+<a name="1197"/>         fail
+<a name="1198"/>      }
+<a name="1199"/>
+<a name="1200"/>      # Get current tip/object, if any.  If mouse over current tip
+<a name="1201"/>      # component, retain current object and tip.
+<a name="1202"/>      #
+<a name="1203"/>      if (\tooltip_component).in_region(e) then {
+<a name="1204"/>         tip := tooltip_last_tip
+<a name="1205"/>         obj := tooltip_last_obj
+<a name="1206"/>      } else {
+<a name="1207"/>         every c := !point_chain do {
+<a name="1208"/>            if tip := c.get_tooltip(e) then {
+<a name="1209"/>               obj := c
+<a name="1210"/>               break
+<a name="1211"/>            }
+<a name="1212"/>         }
+<a name="1213"/>      }
+<a name="1214"/>
+<a name="1215"/>      t := Prog.get_runtime_millis()
+<a name="1216"/>      case self.tooltip_state of {
+<a name="1217"/>         0 : {
+<a name="1218"/>            if (\obj ~=== self.tooltip_last_obj) |
+<a name="1219"/>               (\tip ~=== self.tooltip_last_tip) then {
+<a name="1220"/>               self.tooltip_start_time := t + obj.get_tooltip_start_delay()
+<a name="1221"/>               self.tooltip_state := 1
+<a name="1222"/>            }
+<a name="1223"/>         }
+<a name="1224"/>         1 : {
+<a name="1225"/>            if (obj ~=== self.tooltip_last_obj) | 
+<a name="1226"/>               (tip ~=== self.tooltip_last_tip) then {
+<a name="1227"/>               if /obj then
+<a name="1228"/>                  self.tooltip_state := 0
+<a name="1229"/>               else
+<a name="1230"/>                  self.tooltip_start_time := t + obj.get_tooltip_start_delay()
+<a name="1231"/>            }
+<a name="1232"/>         }
+<a name="1233"/>         2 : {
+<a name="1234"/>            if obj ~=== self.tooltip_last_obj then {
+<a name="1235"/>               if /obj then {
+<a name="1236"/>                  hide_tooltip()
+<a name="1237"/>                  self.tooltip_state := 3
+<a name="1238"/>                  self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
+<a name="1239"/>               } else {
+<a name="1240"/>                  show_tooltip(obj, tip, e)
+<a name="1241"/>                  self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &amp;null
+<a name="1242"/>               }
+<a name="1243"/>            } else if tip ~=== self.tooltip_last_tip then {
+<a name="1244"/>               show_tooltip(obj, tip, e)
+<a name="1245"/>               self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &amp;null
+<a name="1246"/>            }
+<a name="1247"/>         }
+<a name="1248"/>         3 : {
+<a name="1249"/>            if \obj ~=== self.tooltip_last_obj then {
+<a name="1250"/>               show_tooltip(obj, tip, e)
+<a name="1251"/>               self.tooltip_state := 2
+<a name="1252"/>               self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &amp;null
+<a name="1253"/>            }
+<a name="1254"/>         }
+<a name="1255"/>      }
+<a name="1256"/>
+<a name="1257"/>      self.tooltip_last_obj := obj
+<a name="1258"/>      self.tooltip_last_tip := tip
+<a name="1259"/>      self.tooltip_last_event := e
+<a name="1260"/>   end
+<a name="1261"/>
+<a name="1262"/>   #
+<a name="1263"/>   # Synch the mouse cursor pointer with the component it's over.
+<a name="1264"/>   #
+<a name="1265"/>   public synch_pointer(e)
+<a name="1266"/>      local c, ptr
+<a name="1267"/>      if popup_manager ~=== self then
+<a name="1268"/>         popup_manager.synch_pointer(e)
+<a name="1269"/>      else {
+<a name="1270"/>         every c := !\point_chain do {
+<a name="1271"/>            if c.is_unshaded() &amp; (ptr := c.get_pointer(e)) then
+<a name="1272"/>               break
+<a name="1273"/>         }
+<a name="1274"/>         # ptr may now be null, in which case it defaults to POINTER
+<a name="1275"/>         change_pointer(ptr)
+<a name="1276"/>      }
+<a name="1277"/>      link
+<a name="1278"/>   end
+<a name="1279"/>
+<a name="1280"/>   #
+<a name="1281"/>   # Exit dnd mode.
+<a name="1282"/>   #
+<a name="1283"/>   private exit_dnd(e)
+<a name="1284"/>      \curr_drag | fail
+<a name="1285"/>      (\curr_drag_holder).drag_reset(e)
+<a name="1286"/>      curr_drag_holder := curr_drop := curr_drag := &amp;null
+<a name="1287"/>      if \e then {
+<a name="1288"/>         generate_crossing_events(e)
+<a name="1289"/>         if member(held, -1) then
+<a name="1290"/>            change_pointer()
+<a name="1291"/>         else
+<a name="1292"/>            synch_pointer(e)
+<a name="1293"/>      }
+<a name="1294"/>   end
+<a name="1295"/>
+<a name="1296"/>   #
+<a name="1297"/>   # Drag &amp; drop mode processing
+<a name="1298"/>   # 
+<a name="1299"/>   private process_dnd(e)
+<a name="1300"/>      local ec
+<a name="1301"/>
+<a name="1302"/>      ec := e.code
+<a name="1303"/>      #
+<a name="1304"/>      # Wheel events are treated normally and then passed on as though
+<a name="1305"/>      # they were a drag event, in order to keep the drag holder
+<a name="1306"/>      # display in synch.
+<a name="1307"/>      #
+<a name="1308"/>      if member(Mouse.WHEEL, ec) then {
+<a name="1309"/>         # For consistency, mimic what happens in process_normal()
+<a name="1310"/>         e.processing := &amp;yes
+<a name="1311"/>         create_point_chain(e)
+<a name="1312"/>         fire_list(point_chain, ec, e)
+<a name="1313"/>         e.processing := &amp;no
+<a name="1314"/>         create_point_chain(e)
+<a name="1315"/>      }
+<a name="1316"/>
+<a name="1317"/>      if (ec === Mouse.DRAG) | member(Mouse.WHEEL, ec) then {
+<a name="1318"/>         # Try the drag holder's drag_event method first...
+<a name="1319"/>         unless (\curr_drag_holder).drag_event(curr_drag, e) then {
+<a name="1320"/>            # No luck with the drag holder, so try to search for a new drag holder.
+<a name="1321"/>            curr_drag_holder := invoke_drag_event(curr_drag, e) | &amp;null
+<a name="1322"/>         }
+<a name="1323"/>         update_drop(e)
+<a name="1324"/>      } else if ec === curr_drag.button - 3 then {
+<a name="1325"/>         # If we have a prospective drop from can_drop, try to perform it.
+<a name="1326"/>         if (\curr_drop).get_source().perform_drop(curr_drag, curr_drop, e) then
+<a name="1327"/>            curr_drag.get_source().end_drag(curr_drag, curr_drop, e)
+<a name="1328"/>         delete(held, ec + 3)
+<a name="1329"/>         exit_dnd(e)
+<a name="1330"/>      } else if /e.release &amp; (ec === "\e") then {
+<a name="1331"/>         held[curr_drag.button] := []            # Replace held entry for current drag button
+<a name="1332"/>         exit_dnd(e)
+<a name="1333"/>      } else if member(Mouse.PRESS, ec) then          # Keep held consistent if other mouse
+<a name="1334"/>         held[ec] := []                               # buttons are pressed/released during the drag
+<a name="1335"/>      else if member(Mouse.RELEASE, ec) then
+<a name="1336"/>         delete(held, ec + 3)
+<a name="1337"/>
+<a name="1338"/>      fire(Event.ICON, e)
+<a name="1339"/>   end
+<a name="1340"/>
+<a name="1341"/>   #
+<a name="1342"/>   # This method can be invoked to update the current drag in respect
+<a name="1343"/>   # of whether or not there is a current drop.  The mouse pointer is
+<a name="1344"/>   # updated accordingly.  This may be necessary if a component
+<a name="1345"/>   # changes whether a drop is available independent of an drag event
+<a name="1346"/>   # (eg on a scrolling ticker).
+<a name="1347"/>   #
+<a name="1348"/>   # :Parameters :
+<a name="1349"/>   # :  `e` - The event concerned, if any.
+<a name="1350"/>   #
+<a name="1351"/>   public update_drop(e)
+<a name="1352"/>      local o
+<a name="1353"/>      if popup_manager ~=== self then
+<a name="1354"/>         popup_manager.update_drop(e)
+<a name="1355"/>      else {
+<a name="1356"/>         # If we have a drag holder, see if it can drop here.
+<a name="1357"/>         if o := (\curr_drag_holder).can_drop(curr_drag, e) then {
+<a name="1358"/>            change_pointer("dnd positive")
+<a name="1359"/>            curr_drop := Drag(curr_drag_holder, o, e, curr_drag.button)
+<a name="1360"/>         } else {
+<a name="1361"/>            change_pointer("dnd negative")
+<a name="1362"/>            curr_drop := &amp;null
+<a name="1363"/>         }
+<a name="1364"/>      }
+<a name="1365"/>      link
+<a name="1366"/>   end
+<a name="1367"/>
+<a name="1368"/>   #
+<a name="1369"/>   # Check whether we should start a dnd (by setting curr_drag)
+<a name="1370"/>   # 
+<a name="1371"/>   private check_dnd(e)
+<a name="1372"/>      \self.win | fail
+<a name="1373"/>      #
+<a name="1374"/>      # There must be only one button held, and the event must be
+<a name="1375"/>      # a drag.
+<a name="1376"/>      #
+<a name="1377"/>      if (*self.held = 1) &amp; (e.code === Mouse.DRAG) then {
+<a name="1378"/>         if /self.tried_drag &amp;
+<a name="1379"/>            (abs(e.x - \drag_gesture_x) &gt; DRAG_GESTURE_OFFSET |
+<a name="1380"/>             abs(e.y - \drag_gesture_y) &gt; DRAG_GESTURE_OFFSET ) then {
+<a name="1381"/>                # Try to begin a drag.
+<a name="1382"/>                self.curr_drag := self.invoke_can_drag(e) 
+<a name="1383"/>                self.tried_drag := &amp;yes
+<a name="1384"/>                if \self.curr_drag then
+<a name="1385"/>                   self.curr_drag.get_source().define_dnd_pointers(self.curr_drag)
+<a name="1386"/>             }
+<a name="1387"/>      } else
+<a name="1388"/>         self.tried_drag := &amp;null
+<a name="1389"/>   end
+<a name="1390"/>
+<a name="1391"/>   private invoke_can_drag(ev)
+<a name="1392"/>      local c, o, kc
+<a name="1393"/>      kc := key(held)   # The only button pressed
+<a name="1394"/>      every c := !held[kc] do
+<a name="1395"/>         if c.is_unshaded() &amp; \c.allow_drag_flag &amp; o := c.can_drag(ev) then
+<a name="1396"/>            return Drag(c, o, ev, kc)
+<a name="1397"/>   end
+<a name="1398"/>
+<a name="1399"/>   private invoke_drag_event(d, ev)
+<a name="1400"/>      local c
+<a name="1401"/>      every c := !self.point_chain do
+<a name="1402"/>         if c.is_unshaded() &amp; \c.allow_drop_flag &amp; c.drag_event(d, ev) then
+<a name="1403"/>            return c
+<a name="1404"/>   end
+<a name="1405"/>
+<a name="1406"/>   private resize_win_impl()
+<a name="1407"/>      resize()
+<a name="1408"/>      invalidate()
+<a name="1409"/>   end
+<a name="1410"/>
+<a name="1411"/>   #
+<a name="1412"/>   # Process a resize 
+<a name="1413"/>   # 
+<a name="1414"/>   private process_resize(l)
+<a name="1415"/>      resize_win_impl()
+<a name="1416"/>      fire(l[1])
+<a name="1417"/>   end
+<a name="1418"/>
+<a name="1419"/>   #
+<a name="1420"/>   # Maybe increment or clear the click count
+<a name="1421"/>   # 
+<a name="1422"/>   private check_click_count(e)
+<a name="1423"/>      if member(Mouse.PRESS, e.code) then {
+<a name="1424"/>         if e.code = (\click_event).code &amp; 
+<a name="1425"/>            abs(click_event.x - e.x) &lt; DOUBLE_CLICK_TOLERANCE &amp;
+<a name="1426"/>            abs(click_event.y - e.y) &lt; DOUBLE_CLICK_TOLERANCE &amp; 
+<a name="1427"/>            e.time - click_event.time &lt; DOUBLE_CLICK_DELAY then
+<a name="1428"/>            click_count +:= 1
+<a name="1429"/>         else
+<a name="1430"/>            click_count := 1
+<a name="1431"/>         click_event := e
+<a name="1432"/>      } else if e.code ~=== Mouse.MOVEMENT &amp; *held = 0 then
+<a name="1433"/>         click_count := click_event := &amp;null
+<a name="1434"/>   end
+<a name="1435"/>
+<a name="1436"/>   private get_focus_list(e)
+<a name="1437"/>      local l, c
+<a name="1438"/>      l := []
+<a name="1439"/>      every c := Seq{traverse_tab_order()} do {
+<a name="1440"/>         if c === self.focus | (c.accepts_focus(e) &amp; c.is_unhidden() &amp; c.is_unshaded()) then
+<a name="1441"/>            put(l, c)
+<a name="1442"/>      }
+<a name="1443"/>      return l
+<a name="1444"/>   end
+<a name="1445"/>
+<a name="1446"/>   private find_next_focus(e)
+<a name="1447"/>      local l, i
+<a name="1448"/>      l := get_focus_list(e)
+<a name="1449"/>      every i := 1 to *l - 1 do {
+<a name="1450"/>         if l[i] === self.focus then
+<a name="1451"/>            return l[i + 1]
+<a name="1452"/>      }
+<a name="1453"/>      return l[1]
+<a name="1454"/>   end
+<a name="1455"/>
+<a name="1456"/>   private find_previous_focus(e)
+<a name="1457"/>      local l, i
+<a name="1458"/>      l := get_focus_list(e)
+<a name="1459"/>      every i := 2 to *l do {
+<a name="1460"/>         if l[i] === self.focus then
+<a name="1461"/>            return l[i - 1]
+<a name="1462"/>      }
+<a name="1463"/>      return l[-1]
+<a name="1464"/>   end
+<a name="1465"/>
+<a name="1466"/>   #
+<a name="1467"/>   # This method adds an otherwise meaningless event to the window's event
+<a name="1468"/>   # queue.  When that event comes to be processed, the given co-expression
+<a name="1469"/>   # is activated.
+<a name="1470"/>   #
+<a name="1471"/>   # This is useful if you need to take some action from within an event
+<a name="1472"/>   # handler method, but that action has to take place after the current
+<a name="1473"/>   # event has completed processing.
+<a name="1474"/>   #
+<a name="1475"/>   # :Parameters :
+<a name="1476"/>   # :  `coex` - The co-expression to activate
+<a name="1477"/>   #
+<a name="1478"/>   public invoke_later(coex)
+<a name="1479"/>      put_n(win.pending(), Window.INVOKE_LATER, coex)
+<a name="1480"/>      link
+<a name="1481"/>   end
+<a name="1482"/>
+<a name="1483"/>   #
+<a name="1484"/>   # This is like `invoke_later`, except that the event is pushed on
+<a name="1485"/>   # the front of the event queue, rather than at the back.  Thus, the
+<a name="1486"/>   # event will be processed before, rather than after, any other
+<a name="1487"/>   # events currently on the queue.
+<a name="1488"/>   #
+<a name="1489"/>   # :Parameters :
+<a name="1490"/>   # :  `coex` - The co-expression to activate
+<a name="1491"/>   #
+<a name="1492"/>   public invoke_sooner(coex)
+<a name="1493"/>      push_n(win.pending(), Window.INVOKE_LATER, coex)
+<a name="1494"/>      link
+<a name="1495"/>   end
+<a name="1496"/>
+<a name="1497"/>   #
+<a name="1498"/>   # Set the `WAttrib.LABEL` attribute; see `set_wattrib()`.
+<a name="1499"/>   #
+<a name="1500"/>   public set_label(v)
+<a name="1501"/>      return set_wattrib(WAttrib.LABEL, v)
+<a name="1502"/>   end
+<a name="1503"/>
+<a name="1504"/>   #
+<a name="1505"/>   # Set the `WAttrib.CANVAS` attribute; see `set_wattrib()`.
+<a name="1506"/>   #
+<a name="1507"/>   public set_canvas(v)
+<a name="1508"/>      return set_wattrib(WAttrib.CANVAS, v)
+<a name="1509"/>   end
+<a name="1510"/>
+<a name="1511"/>   #
+<a name="1512"/>   # Set the `WAttrib.X` attribute; see `set_wattrib()`.
+<a name="1513"/>   #
+<a name="1514"/>   public override set_x(v)
+<a name="1515"/>      return set_wattrib(WAttrib.X, v)
+<a name="1516"/>   end
+<a name="1517"/>
+<a name="1518"/>   #
+<a name="1519"/>   # Set the `WAttrib.POS` attribute; see `set_wattrib()`.
+<a name="1520"/>   #
+<a name="1521"/>   public override set_pos(v1, v2)
+<a name="1522"/>      return set_wattrib(WAttrib.POS, [v1, v2])
+<a name="1523"/>   end
+<a name="1524"/>
+<a name="1525"/>   #
+<a name="1526"/>   # Set the `WAttrib.Y` attribute; see `set_wattrib()`.
+<a name="1527"/>   #
+<a name="1528"/>   public override set_y(v)
+<a name="1529"/>      return set_wattrib(WAttrib.Y, v)
+<a name="1530"/>   end
+<a name="1531"/>
+<a name="1532"/>   #
+<a name="1533"/>   # Set the `WAttrib.RESIZE` attribute; see `set_wattrib()`.
+<a name="1534"/>   #
+<a name="1535"/>   public set_resize(v)
+<a name="1536"/>      return set_wattrib(WAttrib.RESIZE, v)
+<a name="1537"/>   end
+<a name="1538"/>
+<a name="1539"/>   #
+<a name="1540"/>   # Set the `WAttrib.SIZE` attribute; see `set_wattrib()`.
+<a name="1541"/>   #
+<a name="1542"/>   public override set_size(v1, v2)
+<a name="1543"/>      return set_wattrib(WAttrib.SIZE, [v1, v2])
+<a name="1544"/>   end
+<a name="1545"/>
+<a name="1546"/>   #
+<a name="1547"/>   # Set the `WAttrib.HEIGHT` attribute; see `set_wattrib()`.
+<a name="1548"/>   #
+<a name="1549"/>   public override set_height(v)
+<a name="1550"/>      return set_wattrib(WAttrib.HEIGHT, v)
+<a name="1551"/>   end
+<a name="1552"/>
+<a name="1553"/>   #
+<a name="1554"/>   # Set the `WAttrib.WIDTH` attribute; see `set_wattrib()`.
+<a name="1555"/>   #
+<a name="1556"/>   public override set_width(v)
+<a name="1557"/>      return set_wattrib(WAttrib.WIDTH, v)
+<a name="1558"/>   end
+<a name="1559"/>
+<a name="1560"/>   #
+<a name="1561"/>   # Set the `WAttrib.DISPLAY` attribute; see `set_wattrib()`.
+<a name="1562"/>   #
+<a name="1563"/>   public set_display(v)
+<a name="1564"/>      return set_wattrib(WAttrib.DISPLAY, v)
+<a name="1565"/>   end
+<a name="1566"/>
+<a name="1567"/>   #
+<a name="1568"/>   # Set the `WAttrib.ICON` attribute; see `set_wattrib()`.
+<a name="1569"/>   #
+<a name="1570"/>   public set_icon(v)
+<a name="1571"/>      return set_wattrib(WAttrib.ICON, v)
+<a name="1572"/>   end
+<a name="1573"/>
+<a name="1574"/>   #
+<a name="1575"/>   # Set the `WAttrib.GEOMETRY` attribute; see `set_wattrib()`.
+<a name="1576"/>   #
+<a name="1577"/>   public override set_geometry(v1, v2, v3, v4)
+<a name="1578"/>      return set_wattrib(WAttrib.GEOMETRY, [v1, v2, v3, v4])
+<a name="1579"/>   end
+<a name="1580"/>
+<a name="1581"/>   #
+<a name="1582"/>   # Set the `WAttrib.DX` attribute; see `set_wattrib()`.
+<a name="1583"/>   #
+<a name="1584"/>   public set_dx(v)
+<a name="1585"/>      return set_wattrib(WAttrib.DX, v)
+<a name="1586"/>   end
+<a name="1587"/>
+<a name="1588"/>   #
+<a name="1589"/>   # Set the `WAttrib.DY` attribute; see `set_wattrib()`.
+<a name="1590"/>   #
+<a name="1591"/>   public set_dy(v)
+<a name="1592"/>      return set_wattrib(WAttrib.DY, v)
+<a name="1593"/>   end
+<a name="1594"/>
+<a name="1595"/>   #
+<a name="1596"/>   # Set the `WAttrib.MIN_WIDTH` attribute; see `set_wattrib()`.
+<a name="1597"/>   #
+<a name="1598"/>   public set_min_width(v)
+<a name="1599"/>      return set_wattrib(WAttrib.MIN_WIDTH, v)
+<a name="1600"/>   end
+<a name="1601"/>
+<a name="1602"/>   #
+<a name="1603"/>   # Set the `WAttrib.MIN_HEIGHT` attribute; see `set_wattrib()`.
+<a name="1604"/>   #
+<a name="1605"/>   public set_min_height(v)
+<a name="1606"/>      return set_wattrib(WAttrib.MIN_HEIGHT, v)
+<a name="1607"/>   end
+<a name="1608"/>
+<a name="1609"/>   #
+<a name="1610"/>   # Set the `WAttrib.MIN_SIZE` attribute; see `set_wattrib()`.
+<a name="1611"/>   #
+<a name="1612"/>   public set_min_size(v1, v2)
+<a name="1613"/>      return set_wattrib(WAttrib.MIN_SIZE, [v1, v2])
+<a name="1614"/>   end
+<a name="1615"/>
+<a name="1616"/>   #
+<a name="1617"/>   # Set the `WAttrib.MAX_WIDTH` attribute; see `set_wattrib()`.
+<a name="1618"/>   #
+<a name="1619"/>   public set_max_width(v)
+<a name="1620"/>      return set_wattrib(WAttrib.MAX_WIDTH, v)
+<a name="1621"/>   end
+<a name="1622"/>
+<a name="1623"/>   #
+<a name="1624"/>   # Set the `WAttrib.MAX_HEIGHT` attribute; see `set_wattrib()`.
+<a name="1625"/>   #
+<a name="1626"/>   public set_max_height(v)
+<a name="1627"/>      return set_wattrib(WAttrib.MAX_HEIGHT, v)
+<a name="1628"/>   end
+<a name="1629"/>
+<a name="1630"/>   #
+<a name="1631"/>   # Set the `WAttrib.MAX_SIZE` attribute; see `set_wattrib()`.
+<a name="1632"/>   #
+<a name="1633"/>   public set_max_size(v1, v2)
+<a name="1634"/>      return set_wattrib(WAttrib.MAX_SIZE, [v1, v2])
+<a name="1635"/>   end
+<a name="1636"/>
+<a name="1637"/>   #
+<a name="1638"/>   # Set the `WAttrib.BASE_WIDTH` attribute; see `set_wattrib()`.
+<a name="1639"/>   #
+<a name="1640"/>   public set_base_width(v)
+<a name="1641"/>      return set_wattrib(WAttrib.BASE_WIDTH, v)
+<a name="1642"/>   end
+<a name="1643"/>
+<a name="1644"/>   #
+<a name="1645"/>   # Set the `WAttrib.BASE_HEIGHT` attribute; see `set_wattrib()`.
+<a name="1646"/>   #
+<a name="1647"/>   public set_base_height(v)
+<a name="1648"/>      return set_wattrib(WAttrib.BASE_HEIGHT, v)
+<a name="1649"/>   end
+<a name="1650"/>
+<a name="1651"/>   #
+<a name="1652"/>   # Set the `WAttrib.BASE_SIZE` attribute; see `set_wattrib()`.
+<a name="1653"/>   #
+<a name="1654"/>   public set_base_size(v1, v2)
+<a name="1655"/>      return set_wattrib(WAttrib.BASE_SIZE, [v1, v2])
+<a name="1656"/>   end
+<a name="1657"/>
+<a name="1658"/>   #
+<a name="1659"/>   # Set the `WAttrib.INCREMENT_WIDTH` attribute; see `set_wattrib()`.
+<a name="1660"/>   #
+<a name="1661"/>   public set_increment_width(v)
+<a name="1662"/>      return set_wattrib(WAttrib.INCREMENT_WIDTH, v)
+<a name="1663"/>   end
+<a name="1664"/>
+<a name="1665"/>   #
+<a name="1666"/>   # Set the `WAttrib.INCREMENT_HEIGHT` attribute; see `set_wattrib()`.
+<a name="1667"/>   #
+<a name="1668"/>   public set_increment_height(v)
+<a name="1669"/>      return set_wattrib(WAttrib.INCREMENT_HEIGHT, v)
+<a name="1670"/>   end
+<a name="1671"/>
+<a name="1672"/>   #
+<a name="1673"/>   # Set the `WAttrib.INCREMENT_SIZE` attribute; see `set_wattrib()`.
+<a name="1674"/>   #
+<a name="1675"/>   public set_increment_size(v1, v2)
+<a name="1676"/>      return set_wattrib(WAttrib.INCREMENT_SIZE, [v1, v2])
+<a name="1677"/>   end
+<a name="1678"/>
+<a name="1679"/>   #
+<a name="1680"/>   # Set the `WAttrib.MAX_ASPECT_RATIO` attribute; see `set_wattrib()`.
+<a name="1681"/>   #
+<a name="1682"/>   public set_max_aspect_ratio(v)
+<a name="1683"/>      return set_wattrib(WAttrib.MAX_ASPECT_RATIO, v)
+<a name="1684"/>   end
+<a name="1685"/>
+<a name="1686"/>   #
+<a name="1687"/>   # Set the `WAttrib.MIN_ASPECT_RATIO` attribute; see `set_wattrib()`.
+<a name="1688"/>   #
+<a name="1689"/>   public set_min_aspect_ratio(v)
+<a name="1690"/>      return set_wattrib(WAttrib.MIN_ASPECT_RATIO, v)
+<a name="1691"/>   end
+<a name="1692"/>
+<a name="1693"/>   private static init()
+<a name="1694"/>      ROOT_WATTRIBS := table()
+<a name="1695"/>      insert(ROOT_WATTRIBS, WAttrib.BG,  env_color("OI_DIALOG_ROOT_BG"))
+<a name="1696"/>      insert(ROOT_WATTRIBS, WAttrib.FG,  env_color("OI_DIALOG_ROOT_FG"))
+<a name="1697"/>      insert(ROOT_WATTRIBS, WAttrib.FONT,  env_font("OI_DIALOG_ROOT_FONT"))
+<a name="1698"/>      insert(ROOT_WATTRIBS, WAttrib.LEADING,  env_real("OI_DIALOG_ROOT_LEADING", 0.0))
+<a name="1699"/>      DOUBLE_CLICK_DELAY := env_int("OI_DIALOG_DOUBLE_CLICK_DELAY", 1) | 500
+<a name="1700"/>      DOUBLE_CLICK_TOLERANCE := env_scale("OI_DIALOG_DOUBLE_CLICK_TOLERANCE") | Gui.UNIT
+<a name="1701"/>      TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000
+<a name="1702"/>      TOOLTIP_END_DELAY := env_int("OI_DIALOG_TOOLTIP_END_DELAY", 1) | 4000
+<a name="1703"/>      TOOLTIP_CONTINUE_DELAY := env_int("OI_DIALOG_TOOLTIP_CONTINUE_DELAY", 1) | 1500
+<a name="1704"/>      TOOLTIP_X_OFFSET := env_scale("OI_DIALOG_TOOLTIP_X_OFFSET") | scale(5)
+<a name="1705"/>      TOOLTIP_Y_OFFSET := env_scale("OI_DIALOG_TOOLTIP_Y_OFFSET") | scale(25)
+<a name="1706"/>      DRAG_GESTURE_OFFSET := env_scale("OI_DIALOG_DRAG_GESTURE_OFFSET") | scale(4)
+<a name="1707"/>      POINTER := env_pointer("OI_DIALOG_POINTER") | "left ptr"
+<a name="1708"/>      DND_NEGATIVE_POINTER := env_pointer("OI_DIALOG_DND_NEGATIVE_POINTER") | "circle"
+<a name="1709"/>      DND_POSITIVE_POINTER := env_pointer("OI_DIALOG_DND_POSITIVE_POINTER") | "hand2"
+<a name="1710"/>      FOCUS_UP := set(Key.LEFT, Key.UP)
+<a name="1711"/>      FOCUS_DOWN := set(Key.RIGHT, Key.DOWN)
+<a name="1712"/>   end
+<a name="1713"/>
+<a name="1714"/>   public override new()
+<a name="1715"/>      Component.new()
+<a name="1716"/>      self.set_all_wattribs(ROOT_WATTRIBS)
+<a name="1717"/>      self.child_dialogs := set()
+<a name="1718"/>      self.menu_mode_stack := []
+<a name="1719"/>      self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
+<a name="1720"/>      self.tooltip_state := 0
+<a name="1721"/>      self.popup_manager := self
+<a name="1722"/>      connect(on_interrupted, Event.INTERRUPTED)
+<a name="1723"/>      return
+<a name="1724"/>   end
+<a name="1725"/>end
+<a name="1726"/>
+<a name="1727"/>#
+<a name="1728"/># This is just a `Dialog` which doesn't have its set of window attribs
+<a name="1729"/># initialized to `Dialog.ROOT_WATTRIBS`; rather it starts with an
+<a name="1730"/># empty set of attribs.
+<a name="1731"/>#
+<a name="1732"/>class PureDialog(Dialog)
+<a name="1733"/>   public override new()
+<a name="1734"/>      Dialog.new()
+<a name="1735"/>      self.clear_wattribs()
+<a name="1736"/>      return
+<a name="1737"/>   end
+<a name="1738"/>end
+<a name="1739"/>
+<a name="1740"/>class WinEvent(Point)
+<a name="1741"/>   public
+<a name="1742"/>      code,
+<a name="1743"/>      shift,
+<a name="1744"/>      lock,
+<a name="1745"/>      ctrl,
+<a name="1746"/>      meta,
+<a name="1747"/>      meta2,
+<a name="1748"/>      meta3,
+<a name="1749"/>      meta4,
+<a name="1750"/>      meta5,
+<a name="1751"/>      release,
+<a name="1752"/>      time,
+<a name="1753"/>      processing
+<a name="1754"/>
+<a name="1755"/>   public override new(code, x, y, time, mod)
+<a name="1756"/>      self.code := code
+<a name="1757"/>      self.x := x
+<a name="1758"/>      self.y := y
+<a name="1759"/>      self.time := time
+<a name="1760"/>      if mod ~= 0 then {
+<a name="1761"/>         self.shift := if iand(mod, Key.MOD_SHIFT) = Key.MOD_SHIFT then &amp;yes
+<a name="1762"/>         self.lock := if iand(mod, Key.MOD_LOCK) = Key.MOD_LOCK then &amp;yes
+<a name="1763"/>         self.ctrl := if iand(mod, Key.MOD_CTRL) = Key.MOD_CTRL then &amp;yes
+<a name="1764"/>         self.meta := if iand(mod, Key.MOD_META) = Key.MOD_META then &amp;yes
+<a name="1765"/>         self.meta2 := if iand(mod, Key.MOD_META2) = Key.MOD_META2 then &amp;yes
+<a name="1766"/>         self.meta3 := if iand(mod, Key.MOD_META3) = Key.MOD_META3 then &amp;yes
+<a name="1767"/>         self.meta4 := if iand(mod, Key.MOD_META4) = Key.MOD_META4 then &amp;yes
+<a name="1768"/>         self.meta5 := if iand(mod, Key.MOD_META5) = Key.MOD_META5 then &amp;yes
+<a name="1769"/>         self.release := if iand(mod, Key.MOD_RELEASE) = Key.MOD_RELEASE then &amp;yes
+<a name="1770"/>      }
+<a name="1771"/>      return
+<a name="1772"/>   end
+<a name="1773"/>end
+<a name="1774"/>
+<a name="1775"/>class SelectionRequest()
+<a name="1776"/>   public const
+<a name="1777"/>      proc,
+<a name="1778"/>      target_types
+<a name="1779"/>
+<a name="1780"/>   public new(target_types, proc)
+<a name="1781"/>      self.proc := proc
+<a name="1782"/>      self.target_types := target_types
+<a name="1783"/>      return
+<a name="1784"/>   end
+<a name="1785"/>end
+<a name="1786"/>
+<a name="1787"/>abstract class SelectionOwner()
+<a name="1788"/>   private timestamp
+<a name="1789"/>
+<a name="1790"/>   public get_timestamp()
+<a name="1791"/>      return .timestamp
+<a name="1792"/>   end
+<a name="1793"/>
+<a name="1794"/>   public set_timestamp(t)
+<a name="1795"/>      timestamp := need_integer(t)
+<a name="1796"/>      link
+<a name="1797"/>   end
+<a name="1798"/>
+<a name="1799"/>   public abstract get_content(target)
+<a name="1800"/>   public abstract lost_ownership()
+<a name="1801"/>   public abstract get_targets()
+<a name="1802"/>end
+<a name="1803"/>
+<a name="1804"/>abstract class TextSelectionOwner(SelectionOwner)
+<a name="1805"/>   protected abstract get_text()
+<a name="1806"/>
+<a name="1807"/>   public override get_targets()
+<a name="1808"/>      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
+<a name="1809"/>   end
+<a name="1810"/>
+<a name="1811"/>   public override get_content(target)
+<a name="1812"/>      return case target of {
+<a name="1813"/>         Selection.STRING_TARGET: text_convert(get_text(), "string")
+<a name="1814"/>         Selection.UTF8_STRING_TARGET: text_convert(get_text(), "ucs")
+<a name="1815"/>      }
+<a name="1816"/>   end
+<a name="1817"/>end
+<a name="1818"/>
+<a name="1819"/>class StaticTextSelectionOwner(TextSelectionOwner)
+<a name="1820"/>   private const s
+<a name="1821"/>
+<a name="1822"/>   protected override get_text()
+<a name="1823"/>      return s
+<a name="1824"/>   end
+<a name="1825"/>
+<a name="1826"/>   public override lost_ownership()
+<a name="1827"/>   end
+<a name="1828"/>
+<a name="1829"/>   public new(s)
+<a name="1830"/>      self.s := need_text(s)
+<a name="1831"/>      return
+<a name="1832"/>   end
+<a name="1833"/>end
+<a name="1834"/>
+<a name="1835"/>class URLSelectionOwner(SelectionOwner)
+<a name="1836"/>   private const
+<a name="1837"/>      urls
+<a name="1838"/>
+<a name="1839"/>   public override get_content(target)
+<a name="1840"/>      return case target of {
+<a name="1841"/>         Selection.URI_LIST_TARGET :
+<a name="1842"/>            text_guess_convert(String{ (!urls).str() || "\r\n" }, "ucs")
+<a name="1843"/>         Selection.STRING_TARGET :
+<a name="1844"/>            text_guess_convert(String{ (!urls).str(), "\N" }, "string")
+<a name="1845"/>         Selection.UTF8_STRING_TARGET:
+<a name="1846"/>            text_guess_convert(String{ (!urls).str(), "\N" }, "ucs")
+<a name="1847"/>      }
+<a name="1848"/>   end
+<a name="1849"/>
+<a name="1850"/>   public override lost_ownership()
+<a name="1851"/>   end
+<a name="1852"/>
+<a name="1853"/>   public override get_targets()
+<a name="1854"/>      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | Selection.URI_LIST_TARGET
+<a name="1855"/>   end
+<a name="1856"/>
+<a name="1857"/>   public new(urls)
+<a name="1858"/>      self.urls := urls
+<a name="1859"/>      return
+<a name="1860"/>   end
+<a name="1861"/>end
+<a name="1862"/>
+<a name="1863"/>#
+<a name="1864"/># This is a helpful component which has zero size, but reacts to accelerator keys
+<a name="1865"/># by firing an action event.
+<a name="1866"/>#
+<a name="1867"/># Example :-
+<a name="1868"/># ~
+<a name="1869"/>#    # dispose on alt-x
+<a name="1870"/>#    add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
+<a name="1871"/># ~
+<a name="1872"/>class Accelerator(Component)
+<a name="1873"/>   public override handle_accel(e)
+<a name="1874"/>      fire(Event.ACTION, e)
+<a name="1875"/>   end
+<a name="1876"/>
+<a name="1877"/>   public override new()
+<a name="1878"/>      Component.new()
+<a name="1879"/>      self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
+<a name="1880"/>      return
+<a name="1881"/>   end
+<a name="1882"/>end
+<a name="1883"/>
+<a name="1884"/>#
+<a name="1885"/># This component provides window control buttons (close and iconify) for
+<a name="1886"/># systems that don't provide such controls themselves.
+<a name="1887"/>#
+<a name="1888"/>class WindowControl(Component)
+<a name="1889"/>   private static init()
+<a name="1890"/>      local sz
+<a name="1891"/>      sz := scale(16)
+<a name="1892"/>      ImageCache.copy_key_with_resize("gui.WINDOW_ICONIFY", "gui.WINDOW_ICONIFY_16", sz, sz)
+<a name="1893"/>      ImageCache.copy_key_with_resize("gui.WINDOW_CLOSE", "gui.WINDOW_CLOSE_16", sz, sz)
+<a name="1894"/>   end
+<a name="1895"/>
+<a name="1896"/>   private close_window()
+<a name="1897"/>      push(parent_dialog.win.pending(), Window.CLOSE_BUTTON)
+<a name="1898"/>   end
+<a name="1899"/>
+<a name="1900"/>   private iconify_window()
+<a name="1901"/>      parent_dialog.win.set_canvas("iconic")
+<a name="1902"/>   end
+<a name="1903"/>
+<a name="1904"/>   public override new()
+<a name="1905"/>      Component.new()
+<a name="1906"/>      set_layout(GridLayout().set_doi(0).set_dii(0))
+<a name="1907"/>      set_pos("100%","0")
+<a name="1908"/>      set_align("r","t")
+<a name="1909"/>      add(IconButton().
+<a name="1910"/>          set_paint(ImagePaint().set_cache("gui.WINDOW_ICONIFY")).
+<a name="1911"/>          set_border(NullBorder()).
+<a name="1912"/>          set_accepts_focus(&amp;no).
+<a name="1913"/>          set_tooltip("Iconify").
+<a name="1914"/>          connect(iconify_window, Event.ACTION))
+<a name="1915"/>      add(IconButton().
+<a name="1916"/>          set_paint(ImagePaint().set_cache("gui.WINDOW_CLOSE")).
+<a name="1917"/>          set_border(NullBorder()).
+<a name="1918"/>          set_accepts_focus(&amp;no).
+<a name="1919"/>          set_tooltip("Close").
+<a name="1920"/>          connect(close_window, Event.ACTION))
+<a name="1921"/>      return
+<a name="1922"/>   end
+<a name="1923"/>end
+<a name="1924"/>
+<a name="1925"/>#
+<a name="1926"/># This class is implemented by all components which popup a menu or
+<a name="1927"/># similar object.
+<a name="1928"/>#
+<a name="1929"/>abstract class MenuMode()
+<a name="1930"/>   # Succeed if the given `WinEvent` `e` should cause this menu to
+<a name="1931"/>   # close; for example a mouse press outside of a popup menu's
+<a name="1932"/>   # region.
+<a name="1933"/>   public abstract should_close(e)
+<a name="1934"/>
+<a name="1935"/>   # Close this menu.  This should close the menu component, and then
+<a name="1936"/>   # call `Dialog.exit_menu_mode`.
+<a name="1937"/>   public abstract close_all()
+<a name="1938"/>
+<a name="1939"/>   # Generate the `Component`s which make up the transient visible
+<a name="1940"/>   # parts of the popup (if any).
+<a name="1941"/>   public abstract gen_popup_components()
+<a name="1942"/>
+<a name="1943"/>   # Return the `Component` which this popup notionally appears on.
+<a name="1944"/>   # For example, a text field's popup menu would return the text
+<a name="1945"/>   # field.  This is used by some components to determine whether or
+<a name="1946"/>   # not to allow a nested popup.
+<a name="1947"/>   public abstract get_nesting_component()
+<a name="1948"/>
+<a name="1949"/>   # Given another `MenuMode` `c`, which wishes to enter menu mode,
+<a name="1950"/>   # succeed if we allow `c` to appear "on top" of this menu mode.
+<a name="1951"/>   # Otherwise, this menu mode is closed before `c` is entered.
+<a name="1952"/>   public abstract allow_nested(c)
+<a name="1953"/>end
+</pre></body></html>

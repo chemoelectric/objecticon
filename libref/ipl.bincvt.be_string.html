@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>be_string</title></head><body>
+<h1>be_string(i, size)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.bincvt-package.html" target="listFrame">ipl.bincvt</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Returns a string from the low order <code>size</code> bytes of integer <code>i</code>,
+assuming big-endian ordering.  If <code>i</code> is negative, then a two's
+complement representation is the result.  For example :-
+<pre>
+ be_string(1234, 4) == "\x00\x00\x04\xd2"
+ be_string(-1234, 4) == "\xff\xff\xfb."
+</pre>
+For all <code>i</code> in the range <code>0 &lt;= i &lt;= 2^(8*size) - 1</code>,
+<pre>
+ be_unsigned(be_string(i, size)) = i
+</pre>
+and in the range <code>-(2^((8*size)-1)) &lt;= i &lt;= 2^((8*size)-1) - 1</code>
+<pre>
+ be_signed(be_string(i, size)) = i
+</pre>
+<p/><a href="ipl.bincvt-bincvt.icn.html#85" target="displayFrame">Source - bincvt.icn </a>
+<p/>
+</body></html>

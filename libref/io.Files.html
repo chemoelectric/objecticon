@@ -1,0 +1,944 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Files</title></head><body>
+<h1>Files</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+This class has several static methods which provide
+system-independent access to the file system.
+<p/><a href="io-files.icn.html#13" target="displayFrame">Source - files.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#access">access()</a>
+<a href="#append">append()</a>
+<a href="#begin_link">begin_link()</a>
+<a href="#bulk_close">bulk_close()</a>
+<a href="#chdir">chdir()</a>
+<a href="#copy">copy()</a>
+<a href="#date_cmp">date_cmp()</a>
+<a href="#end_link">end_link()</a>
+<a href="#ensure_unique_filename">ensure_unique_filename()</a>
+<a href="#equal_files">equal_files()</a>
+<a href="#equal_files1">equal_files1()</a>
+<a href="#file_to_string">file_to_string()</a>
+<a href="#file_to_url">file_to_url()</a>
+<a href="#find_exe">find_exe()</a>
+<a href="#find_native_lib">find_native_lib()</a>
+<a href="#get_extension">get_extension()</a>
+<a href="#get_home">get_home()</a>
+<a href="#get_program_name">get_program_name()</a>
+<a href="#get_roots">get_roots()</a>
+<a href="#get_temp">get_temp()</a>
+<a href="#getcwd">getcwd()</a>
+<a href="#hardlink">hardlink()</a>
+<a href="#init">init()</a>
+<a href="#is_directory">is_directory()</a>
+<a href="#is_hidden">is_hidden()</a>
+<a href="#is_relative_dir">is_relative_dir()</a>
+<a href="#list">list()</a>
+<a href="#list1">list1()</a>
+<a href="#lstat">lstat()</a>
+<a href="#lstat_impl">lstat_impl()</a>
+<a href="#make_temp_filename">make_temp_filename()</a>
+<a href="#mkdir">mkdir()</a>
+<a href="#move">move()</a>
+<a href="#name_cmp">name_cmp()</a>
+<a href="#path_find">path_find()</a>
+<a href="#readlink">readlink()</a>
+<a href="#realpath">realpath()</a>
+<a href="#remove">remove()</a>
+<a href="#rename">rename()</a>
+<a href="#rmdir">rmdir()</a>
+<a href="#size_cmp">size_cmp()</a>
+<a href="#split_paths">split_paths()</a>
+<a href="#standard_case">standard_case()</a>
+<a href="#standard_case_cmp">standard_case_cmp()</a>
+<a href="#stat">stat()</a>
+<a href="#stat_impl">stat_impl()</a>
+<a href="#string_to_file">string_to_file()</a>
+<a href="#symlink">symlink()</a>
+<a href="#truncate">truncate()</a>
+<a href="#ucs_list">ucs_list()</a>
+<a href="#url_to_file">url_to_file()</a>
+<a href="#wstat">wstat()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#CURRENT_DIR">CURRENT_DIR</a>
+<a href="#FS">FS</a>
+<a href="#LIB_SUFFIX">LIB_SUFFIX</a>
+<a href="#NULL_FILE">NULL_FILE</a>
+<a href="#PARENT_DIR">PARENT_DIR</a>
+<a href="#PATH_SEPARATOR">PATH_SEPARATOR</a>
+<a href="#PATH_SPECIALS">PATH_SPECIALS</a>
+<a href="#PATHS_SEPARATOR">PATHS_SEPARATOR</a>
+<a href="#PROG_SUFFIX">PROG_SUFFIX</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="access"/>
+<h3>access(s, mode)</h3>
+public static native<p/>
+<dl>
+<dd>
+Check whether the given file can be accessed in the given mode.
+<p/><a href="io-files.icn.html#432" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="append"/>
+<h3>append(s1, s2)</h3>
+public static<p/>
+<dl>
+<dd>
+Append file <code>s1</code> onto <code>s2</code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s1</code> - the source filename
+</dd>
+<dd>
+<code>s2</code> - the target filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#470" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="begin_link"/>
+<h3>begin_link(f, line, col)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the opening escape sequence for an embedded link.  File f
+must be a <code><a href="net.URL.html" target="displayFrame">URL</a></code> (properly url-encoded), or an absolute path.
+<p/><a href="io-files.icn.html#586" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="bulk_close"/>
+<h3>bulk_close(gap, start)</h3>
+public static native<p/>
+<dl>
+<dd>
+This method can be used after a <code><a href="posix.System.html#fork">posix.System.fork</a></code> and before a
+<code><a href="posix.System.html#exec">posix.System.exec</a></code> to close unnecessary duplicated file
+descriptors.  The algorithm used is not perfect, but should be
+effective in almost all cases.  Starting at descriptor number
+<code>start</code>, descriptors are closed in sequence until <code>gap</code>
+descriptors in succession are found to be absent from the file
+descriptor table (in other words, attempting to close them
+returns an error).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>gap</code> - the gap (default 512)
+</dd>
+<dd>
+<code>start</code> - the starting descriptor number (default 3)
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#437" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="chdir"/>
+<h3>chdir(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Changes the current directory to that specified in s.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the directory
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#339" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="copy"/>
+<h3>copy(s1, s2)</h3>
+public static<p/>
+<dl>
+<dd>
+Copy a file.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s1</code> - the source filename
+</dd>
+<dd>
+<code>s2</code> - the target filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#453" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="date_cmp"/>
+<h3>date_cmp(d1, d2)</h3>
+public static<p/>
+<dl>
+<dd>
+A useful function to help sort the result of the various list
+functions.  Sorts by modification time, newest first, with name
+resolving ties.
+<p/><a href="io-files.icn.html#138" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="end_link"/>
+<h3>end_link()</h3>
+public static<p/>
+<dl>
+<dd>
+Return the closing escape sequence for an embedded link
+<p/><a href="io-files.icn.html#606" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="ensure_unique_filename"/>
+<h3>ensure_unique_filename(stem)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a stem filename, return another unique filename based upon it.
+<p/><a href="io-files.icn.html#487" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="equal_files"/>
+<h3>equal_files(s1, s2)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed iff the two given files have the same content.
+<p/><a href="io-files.icn.html#247" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="equal_files1"/>
+<h3>equal_files1(f1, f2)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-files.icn.html#262" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="file_to_string"/>
+<h3>file_to_string(fn)</h3>
+public static<p/>
+<dl>
+<dd>
+Load a file into a string
+<p/><a href="io-files.icn.html#198" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="file_to_url"/>
+<h3>file_to_url(f)</h3>
+public static<p/>
+<dl>
+<dd>
+Given an absolute file name, return an equivalent "file" URL (as
+a string), using the local file system's conversion rules.
+<p/><a href="io-files.icn.html#632" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="find_exe"/>
+<h3>find_exe(f, n)</h3>
+public static<p/>
+<dl>
+<dd>
+Find executable on the given path.  Details vary by platform, but
+on Unix, the method is similar to <code><a href="io.Files.html#path_find">path_find</a></code> above, but a little
+more strict.  In particular, the cd isn't tried before the
+directories on the path.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> - the file to look for
+</dd>
+<dd>
+<code>n</code> - the name of the environment variable holding the path,
+by default (on Unix) "PATH"
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#555" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="find_native_lib"/>
+<h3>find_native_lib(f)</h3>
+public static<p/>
+<dl>
+<dd>
+Search for a native library on the OI_NATIVE path.
+<p/><a href="io-files.icn.html#570" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_extension"/>
+<h3>get_extension(f)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the extension of a filename, or fail if there is none.
+<p/><a href="io-files.icn.html#503" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_home"/>
+<h3>get_home()</h3>
+public static<p/>
+<dl>
+<dd>
+Return the home directory.
+<p/><a href="io-files.icn.html#154" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_program_name"/>
+<h3>get_program_name()</h3>
+public static<p/>
+<dl>
+<dd>
+Return the program name, based on the last path element of <code>&amp;progname</code>
+<p/><a href="io-files.icn.html#613" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_roots"/>
+<h3>get_roots()</h3>
+public static<p/>
+<dl>
+<dd>
+Get the roots of the file system.
+<p/><a href="io-files.icn.html#183" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="get_temp"/>
+<h3>get_temp()</h3>
+public static<p/>
+<dl>
+<dd>
+Return the temporary directory.
+<p/><a href="io-files.icn.html#161" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="getcwd"/>
+<h3>getcwd()</h3>
+public static native<p/>
+<dl>
+<dd>
+Get current working directory
+<p/><a href="io-files.icn.html#347" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="hardlink"/>
+<h3>hardlink(s1, s2)</h3>
+public static native<p/>
+<dl>
+<dd>
+Create a (hard) link to a file.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s1</code> - the source filename
+</dd>
+<dd>
+<code>s2</code> - the target filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#304" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-files.icn.html#40" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_directory"/>
+<h3>is_directory(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed iff the given file is a directory.
+<p/><a href="io-files.icn.html#274" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_hidden"/>
+<h3>is_hidden(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed iff the given file is hidden.
+<p/><a href="io-files.icn.html#168" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="is_relative_dir"/>
+<h3>is_relative_dir(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed iff the given file is a relative directory name (on Unix,
+"." or "..").
+<p/><a href="io-files.icn.html#175" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="list"/>
+<h3>list(s, f)</h3>
+public static<p/>
+<dl>
+<dd>
+Read the given directory returning a list of <code><a href="io.ListEntry.html" target="displayFrame">ListEntry</a></code> objects,
+each containing the name, lstat and stat values for each entry.
+<p/>
+<code>f</code> is an optional parameter, providing an alternative constructor for
+the returned objects; by default it is <code><a href="io.ListEntry.html" target="displayFrame">ListEntry</a></code>.
+<p/><a href="io-files.icn.html#66" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="list1"/>
+<h3>list1(path, p, f, g)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-files.icn.html#93" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="lstat"/>
+<h3>lstat(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Obtain information about the given file without following
+symlinks.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the file
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="io.Stat.html" target="displayFrame">Stat</a></code> object
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#400" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="lstat_impl"/>
+<h3>lstat_impl(s)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="io-files.icn.html#413" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="make_temp_filename"/>
+<h3>make_temp_filename(prefix, suffix, path, len)</h3>
+public static<p/>
+<dl>
+<dd>
+Make a temporary filename.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>prefix</code> - by default empty
+</dd>
+<dd>
+<code>suffix</code> - by default empty
+</dd>
+<dd>
+<code>path</code> - the directory, by default <code><a href="io.Files.html#get_temp">get_temp()</a></code>
+</dd>
+<dd>
+<code>len</code> - the number of digits in the result, default 8
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#220" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="mkdir"/>
+<h3>mkdir(s, perm)</h3>
+public static native<p/>
+<dl>
+<dd>
+Make a new directory
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the directory path
+</dd>
+<dd>
+<code>perm</code> - the permission bits, defaults to rwxr-xr-x
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#368" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="move"/>
+<h3>move(s1, s2)</h3>
+public static<p/>
+<dl>
+<dd>
+Move a file.  First, try to move it by renaming it.  If that
+fails, try to copy the file then delete the original, or if that
+fails, fail.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s1</code> - the source filename
+</dd>
+<dd>
+<code>s2</code> - the target filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#281" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="name_cmp"/>
+<h3>name_cmp(d1, d2)</h3>
+public static<p/>
+<dl>
+<dd>
+A useful function to help sort the result of the various list
+functions.  Sorts by ascending case-insensitive name.
+<p/><a href="io-files.icn.html#111" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="path_find"/>
+<h3>path_find(f, n, cd)</h3>
+public static<p/>
+<dl>
+<dd>
+This procedure searches for a file on a environment-defined path.
+It follows the same logic as the C function pathfind() in
+mlocal.c, except that the cd check is optional.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> - the file to look for
+</dd>
+<dd>
+<code>n</code> - the name of the environment variable holding the path;
+if &amp;null then no path is searched
+</dd>
+<dd>
+<code>cd</code> - the notional current directory to check before the path;
+may be &amp;null, in which case no current directory
+test is done
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#514" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="readlink"/>
+<h3>readlink(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Read a symbolic link
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the source filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#322" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="realpath"/>
+<h3>realpath(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the canonicalized absolute pathname as produced by the
+POSIX realpath function.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - a filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#330" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="remove"/>
+<h3>remove(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Remove a regular file
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the file
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#352" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="rename"/>
+<h3>rename(s1, s2)</h3>
+public static native<p/>
+<dl>
+<dd>
+Rename a file.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s1</code> - the source filename
+</dd>
+<dd>
+<code>s2</code> - the target filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#295" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="rmdir"/>
+<h3>rmdir(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Remove an empty directory
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the empty directory
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#360" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="size_cmp"/>
+<h3>size_cmp(d1, d2)</h3>
+public static<p/>
+<dl>
+<dd>
+A useful function to help sort the result of the various list
+functions.  Sorts by size in bytes, biggest first, with name
+resolving ties.
+<p/><a href="io-files.icn.html#125" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="split_paths"/>
+<h3>split_paths(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Split a list of paths (such as the $PATH variable) into its
+constituent elements.
+<p/><a href="io-files.icn.html#190" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="standard_case"/>
+<h3>standard_case(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Given an arbitrary filename, return an equivalent filename in a
+standard case.  For case-sensitive file systems, this does
+nothing and returns self.
+<p/><a href="io-files.icn.html#640" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="standard_case_cmp"/>
+<h3>standard_case_cmp(s1, s2)</h3>
+public static<p/>
+<dl>
+<dd>
+A comparator function for comparing two filename strings, taking
+into account the case-sensitivity of the underlying file system.
+<p/><a href="io-files.icn.html#649" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="stat"/>
+<h3>stat(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Obtain information about the given file
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the file
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="io.Stat.html" target="displayFrame">Stat</a></code> object
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#386" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="stat_impl"/>
+<h3>stat_impl(s)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="io-files.icn.html#398" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="string_to_file"/>
+<h3>string_to_file(fn, s)</h3>
+public static<p/>
+<dl>
+<dd>
+Write a string to a file.
+<p/><a href="io-files.icn.html#209" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="symlink"/>
+<h3>symlink(s1, s2)</h3>
+public static native<p/>
+<dl>
+<dd>
+Create a symlink to a file.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s1</code> - the source filename
+</dd>
+<dd>
+<code>s2</code> - the target filename
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#313" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="truncate"/>
+<h3>truncate(s, len)</h3>
+public static native<p/>
+<dl>
+<dd>
+Truncate the given file to <code>len</code> bytes.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s1</code> - the source filename
+</dd>
+<dd>
+<code>len</code> - the desired length
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#377" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="ucs_list"/>
+<h3>ucs_list(s, f)</h3>
+public static<p/>
+<dl>
+<dd>
+Like <code><a href="io.Files.html#list">list</a></code>, but the filenames are converted to <code>ucs</code>; any that
+can't be converted are skipped.
+<p/><a href="io-files.icn.html#81" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="url_to_file"/>
+<h3>url_to_file(u)</h3>
+public static<p/>
+<dl>
+<dd>
+Given a <code><a href="net.URL.html" target="displayFrame">URL</a></code> instance, return an equivalent file name, using the
+local file system's conversion rules.  This method fails if the
+URL is not a "file" URL, or if the host is not local and the file
+system cannot represent a remote file (this is true in Unix, but
+not in Windows).
+<p/><a href="io-files.icn.html#620" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="wstat"/>
+<h3>wstat(s, mode, uid, gid, atime, mtime, atime_ns, mtime_ns)</h3>
+public static native<p/>
+<dl>
+<dd>
+Write selected attributes about a file.  If any of the parameters
+are <code>&amp;null</code>, they are left unchanged.  The nanosecond parameters
+are ignored unless their corresponding time fields are being set.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the file
+</dd>
+<dd>
+<code>mode</code> - the mode (an integer)
+</dd>
+<dd>
+<code>uid</code> - the owner id
+</dd>
+<dd>
+<code>gid</code> - the group id
+</dd>
+<dd>
+<code>atime</code> - the access time (an integer)
+</dd>
+<dd>
+<code>mtime</code> - the modification time (an integer)
+</dd>
+<dd>
+<code>atime_ns</code> - the access time nanosecond part (an integer, default 0)
+</dd>
+<dd>
+<code>mtime_ns</code> - the modification time nanosecond part (an integer, default 0)
+</dd>
+</dl>
+<p/><a href="io-files.icn.html#415" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="CURRENT_DIR"/>
+<h3>CURRENT_DIR</h3>
+public static const<p/>
+<dl>
+<dd>
+Relative filename of current directory
+<p/><a href="io-files.icn.html#35" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="FS"/>
+<h3>FS</h3>
+package static const<p/>
+<dl>
+<dd>
+<p/><a href="io-files.icn.html#18" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="LIB_SUFFIX"/>
+<h3>LIB_SUFFIX</h3>
+public static const<p/>
+<dl>
+<dd>
+Suffix for dynamic library
+<p/><a href="io-files.icn.html#29" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="NULL_FILE"/>
+<h3>NULL_FILE</h3>
+public static const<p/>
+<dl>
+<dd>
+Name of null file
+<p/><a href="io-files.icn.html#33" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="PARENT_DIR"/>
+<h3>PARENT_DIR</h3>
+public static const<p/>
+<dl>
+<dd>
+Relative filename of parent directory
+<p/><a href="io-files.icn.html#37" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="PATH_SEPARATOR"/>
+<h3>PATH_SEPARATOR</h3>
+public static const<p/>
+<dl>
+<dd>
+The separator for elements of a path
+<p/><a href="io-files.icn.html#22" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="PATH_SPECIALS"/>
+<h3>PATH_SPECIALS</h3>
+public static const<p/>
+<dl>
+<dd>
+A cset, being the non-filename characters which may appear in a path
+<p/><a href="io-files.icn.html#24" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="PATHS_SEPARATOR"/>
+<h3>PATHS_SEPARATOR</h3>
+public static const<p/>
+<dl>
+<dd>
+The separator for individual paths in a list of paths (such as the PATH
+environment variable).
+<p/><a href="io-files.icn.html#26" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+<a name="PROG_SUFFIX"/>
+<h3>PROG_SUFFIX</h3>
+public static const<p/>
+<dl>
+<dd>
+Suffix for executable
+<p/><a href="io-files.icn.html#31" target="displayFrame">Source - files.icn </a>
+</dd>
+</dl><hr>
+</body></html>

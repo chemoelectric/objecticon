@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gridlayout.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   util, ipl.graphics
+<a name="5"/>
+<a name="6"/>class GridLayout(Layout)
+<a name="7"/>   public 
+<a name="8"/>      g,
+<a name="9"/>      dii,          # Default inner padding, ie not at edge of grid
+<a name="10"/>      doi,          # Default outer padding
+<a name="11"/>      extra,        # Flag indicating how to allocate extra space
+<a name="12"/>      debug
+<a name="13"/>
+<a name="14"/>   # Default insets between components in a GridLayout.
+<a name="15"/>   public static const
+<a name="16"/>      DEFAULT_OUTER_INSET,
+<a name="17"/>      DEFAULT_INNER_INSET
+<a name="18"/>
+<a name="19"/>   private static init()
+<a name="20"/>      DEFAULT_OUTER_INSET := env_scale("OI_GRIDLAYOUT_DEFAULT_OUTER_INSET") | scale(10)
+<a name="21"/>      DEFAULT_INNER_INSET := env_scale("OI_GRIDLAYOUT_DEFAULT_INNER_INSET") | scale(5)
+<a name="22"/>   end
+<a name="23"/>
+<a name="24"/>   public override reset()
+<a name="25"/>      g := &amp;null
+<a name="26"/>   end
+<a name="27"/>
+<a name="28"/>   public ensure_grid()
+<a name="29"/>      local c, ci
+<a name="30"/>
+<a name="31"/>      if \g then
+<a name="32"/>         return
+<a name="33"/>
+<a name="34"/>      g := Grid().
+<a name="35"/>         set_dii(dii).
+<a name="36"/>         set_doi(doi).
+<a name="37"/>         set_extra(extra)
+<a name="38"/>
+<a name="39"/>      every c := !parent.children do {
+<a name="40"/>         if /c.x_spec then {
+<a name="41"/>            ci := g.create_cell(c.constraints)
+<a name="42"/>            ci.pw := c.get_preferred_width()
+<a name="43"/>            ci.obj := c
+<a name="44"/>         }
+<a name="45"/>      }
+<a name="46"/>      g.dimension()
+<a name="47"/>      g.compute_preferred_col_widths()
+<a name="48"/>   end
+<a name="49"/>
+<a name="50"/>   public override get_preferred_width()
+<a name="51"/>      ensure_grid()
+<a name="52"/>      return g.get_preferred_width()
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   public compute_preferred_heights()
+<a name="56"/>     local i, adj
+<a name="57"/>     every i := !g.info do {
+<a name="58"/>        if i.ph_calc_w ~=== i.aw then {
+<a name="59"/>           i.ph_calc_w := i.aw
+<a name="60"/>           i.ph := i.obj.get_preferred_height(i.ph_calc_w)
+<a name="61"/>           adj := 1
+<a name="62"/>        }
+<a name="63"/>     }
+<a name="64"/>     if \adj | /i then
+<a name="65"/>        g.compute_preferred_row_heights()
+<a name="66"/>   end
+<a name="67"/>
+<a name="68"/>   public override get_preferred_height(pw)
+<a name="69"/>      ensure_grid()
+<a name="70"/>      g.compute_actual_col_widths(pw)
+<a name="71"/>      compute_preferred_heights()
+<a name="72"/>      return g.get_preferred_height()
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   public override display()
+<a name="76"/>      local i, cw
+<a name="77"/>      use {
+<a name="78"/>         cw := GetShadowClone(self.parent.cbwin).set_masked_pattern("gray"),
+<a name="79"/>         {
+<a name="80"/>            cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h, Gui.FINE_WIDTH)
+<a name="81"/>
+<a name="82"/>            every i := !g.info do {
+<a name="83"/>               cw.draw_rectangle(g.a_col_x[i.x],
+<a name="84"/>                                 g.a_row_y[i.y],
+<a name="85"/>                                 Grid.slice(i.x, i.w, g.a_col_w),
+<a name="86"/>                                 Grid.slice(i.y, i.h, g.a_row_h),
+<a name="87"/>                                 Gui.FINE_WIDTH)
+<a name="88"/>            }
+<a name="89"/>         }
+<a name="90"/>      }
+<a name="91"/>   end
+<a name="92"/>
+<a name="93"/>   public override layout()
+<a name="94"/>      local c, i
+<a name="95"/>
+<a name="96"/>      every c := !parent.children do {
+<a name="97"/>         if \c.x_spec then
+<a name="98"/>            c.compute_absolutes()
+<a name="99"/>      }
+<a name="100"/>
+<a name="101"/>      ensure_grid()
+<a name="102"/>
+<a name="103"/>      g.compute_actual_col_widths(parent.w)
+<a name="104"/>      g.compute_actual_col_positions(parent.x)
+<a name="105"/>      compute_preferred_heights()
+<a name="106"/>      g.compute_actual_row_heights(parent.h)
+<a name="107"/>      g.compute_actual_row_positions(parent.y)
+<a name="108"/>
+<a name="109"/>      every i := !g.info do {
+<a name="110"/>         i.obj.x := i.ax
+<a name="111"/>         i.obj.y := i.ay
+<a name="112"/>         i.obj.w := i.aw
+<a name="113"/>         i.obj.h := i.ah
+<a name="114"/>      }
+<a name="115"/>
+<a name="116"/>      if \debug then
+<a name="117"/>         g.print_layout()
+<a name="118"/>   end
+<a name="119"/>
+<a name="120"/>   public set_debug(s)
+<a name="121"/>      self.debug := need_flag(s)
+<a name="122"/>      link
+<a name="123"/>   end
+<a name="124"/>
+<a name="125"/>   public set_dii(n)
+<a name="126"/>      self.dii := need_integer(n, 0)
+<a name="127"/>      link
+<a name="128"/>   end
+<a name="129"/>
+<a name="130"/>   public set_doi(n)
+<a name="131"/>      self.doi := need_integer(n, 0)
+<a name="132"/>      link
+<a name="133"/>   end
+<a name="134"/>
+<a name="135"/>   public set_extra(s)
+<a name="136"/>      self.extra := s
+<a name="137"/>      link
+<a name="138"/>   end
+<a name="139"/>
+<a name="140"/>   public new()
+<a name="141"/>      self.dii := DEFAULT_INNER_INSET
+<a name="142"/>      self.doi := DEFAULT_OUTER_INSET
+<a name="143"/>      self.extra := Grid.EXTRA_CELLS
+<a name="144"/>      return
+<a name="145"/>   end
+<a name="146"/>end
+<a name="147"/>
+<a name="148"/>
+</pre></body></html>

@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>abk_weekly</title></head><body>
+<h1>abk_weekly(alarmEnable, dayOfWeek, startTime, startYear, startMonth, startDay, endTime, endYear, endMonth, endDay, leadTime, apptText, noteText)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.abkform-package.html" target="listFrame">ipl.abkform</a></dd>
+<dt>Type :</dt><dd>record</dd>
+</dl><p/>
+<p/>
+HP 95LX Appointment Book Weekly Data Record:
+<p/>
+Byte Offset      Name            Type     Contents
+<p/>
+0                RecordType      char     2 (02h)
+1                RecordLength    int      Number of bytes in remainder
+of this data record, see note 1
+below.
+3                ApptState       char     See note 2 below.
+4                DayOfWeek       char     Day of week, 1=Sun, ..., 7=Sat.
+5                StartTime       swpint   Start time in minutes since midnight.
+7                StartYear       char     Start year counting from 1900.
+8                StartMonth      char     Start month, 1 - 12.
+9                StartDay        char     Start day, 1 - 31.
+10               EndTime         int      End time in minutes since midnight.
+12               EndYear         char     End year counting from 1900.
+13               EndMonth        char     End month, 1 - 12.
+14               EndDay          char     End day, 1 - 31.
+15               LeadTime        char     Alarm lead time in minutes, 0 - 30.
+16               ApptLength      char     Length of appointment text in bytes.
+17               NoteLength      int      Length of note text in bytes.
+19               ApptText        ASCII    Appointment text - see note 4 below.
+19+ApptLength    NoteText        ASCII    Note text where the null character 
+is used as the line terminator -
+see note 5 below.
+<p/><a href="ipl.abkform-abkform.icn.html#177" target="displayFrame">Source - abkform.icn </a>
+<p/>
+</body></html>

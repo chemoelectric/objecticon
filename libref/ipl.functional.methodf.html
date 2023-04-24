@@ -1,0 +1,19 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>methodf</title></head><body>
+<h1>methodf(field)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Returns a function that takes its first argument, obtains the given
+field from it, and then applies the remaining arguments to the
+resulting method.
+<p/>
+Example :-
+<pre>
+  f := methodf("abc")
+  f(obj, 1, 2, 3)   # invokes obj.abc(1, 2, 3)
+</pre>
+<p/><a href="ipl.functional-highorder.icn.html#185" target="displayFrame">Source - highorder.icn </a>
+<p/>
+</body></html>

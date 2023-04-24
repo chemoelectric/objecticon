@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>options</title></head><body>
+<h1>options(arg, opts, usage, errproc, ignoreproc)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.options-package.html" target="listFrame">ipl.options</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This procedure separates and interprets command options included in 
+the main program argument list.  Option names and values are removed
+from the argument list and returned in a table.
+<p/>
+On the command line, options are introduced by a <code>-</code> character.
+An option name is either a single printable character, as in <code>-n</code>
+or <code>-?</code>, or a string of letters, numbers, and underscores, as in
+<code>-geometry</code>.  Single-character options which don't take a parameter
+may appear in combination, for example as <code>-qtv</code>.  If an option
+string is ambiguous, in that it may either be interpreted as a
+single multi-character option, or as several single-character
+options, then the former always has precedence.
+<p/>
+Some options require values.  Generally, the option name is one
+argument and the value appears as the next argument, for example
+<code>-F file.txt</code>.  However, with a single-character argument name (as
+in that example), the value may be concatenated: <code>-Ffile.txt</code> is
+accepted as equivalent.
+<p/>
+Options may be specified using an alternative format, starting
+with <code>--</code>.  In this case, no combination of single character
+options is recognised, and a parameter may follow an <code>=</code> sign, eg
+<code>--width=100</code>.
+<p/>
+Options may be freely interspersed with non-option arguments.
+An argument of <code>-</code> is treated as a non-option.  The special argument
+<code>--</code> terminates option processing.  Non-option arguments are returned
+in the original argument list for interpretation by the caller.
+<p/>
+Two special options exist.  The first is "?" (alias "help"),
+described below with the <code>usage</code> parameter.  The second is "clear",
+which takes a string argument.  Its effect is to remove that key
+from the results table.  If the key is "all", then the results
+table is cleared entirely.  This can be useful if an unwanted
+option defined in a shell alias needs to be deleted.  Thus
+<pre>
+     prog -a -b -clear a -c
+</pre>
+is equivalent to
+<pre>
+     prog -b -c
+</pre>
+(assuming a, b and c are valid no-argument options).
+<p/>
+An argument of the form <code>@filename</code> (a <code>@</code> immediately followed
+by a file name) causes options() to replace that argument with
+arguments retrieved from the file <code>filename</code>.  Each line of the file
+is taken as a separate argument, exactly as it appears in the file.
+Arguments beginning with - are processed as options, and those
+starting with <code>@</code> are processed as nested argument files.  An argument
+of <code>--</code> causes all remaining arguments IN THAT FILE ONLY to be
+treated as non-options (including <code>@filename</code> arguments).
+<p/>
+<dl>
+<dt>
+The parameters of <code><a href="ipl.options.options.html" target="displayFrame">options</a></code> are:
+<p/>
+</dt>
+<dd>
+<code>arg</code> -     the argument list as passed to the main procedure.
+<p/>
+</dd>
+<dd>
+<code>optstring</code> - a string specifying the allowable options.  This is
+a concatenation, with optional spaces between, of
+one or more option specs of the form <code>-name%</code>, where
+<ul>
+<li>
+<code>-</code>     introduces the option
+</li>
+<li>
+<code>name</code>  is either a string of alphanumerics
+(any of <code>a-z</code>, <code>A-Z</code>, <code>0-9</code>, and <code>_</code>)
+or any single printable character
+</li>
+<li>
+<code>%</code>     is one of the following flag characters:  <br>
+<code>!</code>       No value is required or allowed  <br>
+<code>:</code>       A string value is required  <br>
+<code>+</code>       An integer value is required  <br>
+<code>.</code>       A real value is required
+<p/>
+</li>
+</ul>
+If the string is followed by a <code>*</code> character, then
+the option may be specified multiple times.
+<p/>
+The leading <code>-</code> may be omitted for a single-character
+option.  The <code>!</code> flag may be omitted except when
+needed to terminate a multi-character name.
+Thus, the following optstrings are equivalent:
+<pre>
+    -n+ -t -v -q -F: -geometry: -silent
+    n+tvqF:-geometry:-silent
+    -silent!n+tvqF:-geometry:
+</pre>
+<p/>
+</dd>
+<dd>
+<code>usage</code>  -  a procedure which will be called, with the list of
+<code><a href="ipl.options.Opt.html" target="displayFrame">Opt</a></code> objects (see below), if the special <code>-help</code>
+or <code>-?</code> option is given; by default the options
+are listed and <code>exit(0)</code> called.  A string may be
+given, which is printed before the options.
+<p/>
+</dd>
+<dd>
+<code>errproc</code> - a procedure which will be called if an error is
+is detected in the command line options.  The
+procedure is called with one argument:  a string
+describing the error that occurred.  After <code>errproc()</code>
+is called, <code><a href="ipl.options.options.html" target="displayFrame">options()</a></code> immediately returns the outcome
+of <code>errproc()</code>, without processing further arguments.
+Already processed arguments will have been removed
+from <code>arg</code>.  If <code>errproc</code> is omitted, stop() is
+called if an error is detected.
+<p/>
+</dd>
+<dd>
+<code>ignoreproc</code> - a procedure invoked for every argument, if it
+succeeds then the argument is added to the argument
+result list without option processing.
+</dd>
+</dl>
+<p/>
+Instead of an option string, a list of <code><a href="ipl.options.Opt.html" target="displayFrame">Opt</a></code> objects may be given
+instead.  This allows a descriptive help string to be given for
+each option.
+<p/>
+Using an <code><a href="ipl.options.Opt.html" target="displayFrame">Opt</a></code> also allows other conversion procedures to be
+specified.  For example, an integer option might be specified as:
+<pre>
+       Opt("t", integer, "Timeout in seconds")
+</pre>
+This would allow <code>-t 3</code>, <code>--t=4</code>, etc.
+<p/>
+The list of <code><a href="ipl.options.Opt.html" target="displayFrame">Opt</a></code>s may also contain strings; these are interspersed
+with the formatted option output when help is produced with the <code>-help</code>
+option (or by calling <code><a href="ipl.options.options_help.html" target="displayFrame">options_help()</a></code>).
+<p/>
+A table is returned containing the options that were specified.
+The keys are the specified option names.  The assigned values are the
+data values following the options converted to the specified type.  For
+an option allowing multiple usages, a the assigned value is a list.
+A value of <code>&amp;yes</code> is stored for options that accept no values.
+The table's default value is <code>&amp;null</code>.
+<p/>
+Upon return, the option arguments are removed from arg, leaving
+only the non-option arguments.
+<p/><a href="ipl.options-options.icn.html#199" target="displayFrame">Source - options.icn </a>
+<p/>
+</body></html>

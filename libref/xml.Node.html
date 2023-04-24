@@ -1,0 +1,389 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Node</title></head><body>
+<h1>Node</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="xml.ProcessingInstruction.html">xml.ProcessingInstruction</a><br>
+<a href="xml.Document.html">xml.Document</a><br>
+<a href="xml.XmlDecl.html">xml.XmlDecl</a><br>
+<a href="xml.Comment.html">xml.Comment</a><br>
+<a href="xml.DocType.html">xml.DocType</a><br>
+<a href="xml.CData.html">xml.CData</a><br>
+<a href="xml.Element.html">xml.Element</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+This is the base class for all objects in the document, including
+the document itself.
+<p/><a href="xml-node.icn.html#13" target="displayFrame">Source - node.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#add_string">add_string()</a>
+<a href="#find_string">find_string()</a>
+<a href="#find_trimmed_string">find_trimmed_string()</a>
+<a href="#get_children">get_children()</a>
+<a href="#get_children_no_whitespace">get_children_no_whitespace()</a>
+<a href="#get_compacted_children">get_compacted_children()</a>
+<a href="#get_nth_string">get_nth_string()</a>
+<a href="#get_nth_trimmed_string">get_nth_trimmed_string()</a>
+<a href="#get_parent">get_parent()</a>
+<a href="#get_string_content">get_string_content()</a>
+<a href="#get_string_content_with_cdata">get_string_content_with_cdata()</a>
+<a href="#get_trimmed_children">get_trimmed_children()</a>
+<a href="#get_trimmed_string_content">get_trimmed_string_content()</a>
+<a href="#get_trimmed_string_content_with_cdata">get_trimmed_string_content_with_cdata()</a>
+<a href="#has_string">has_string()</a>
+<a href="#has_trimmed_string">has_trimmed_string()</a>
+<a href="#new">new()</a>
+<a href="#print_structure">print_structure()</a>
+<a href="#traverse_all_postorder">traverse_all_postorder()</a>
+<a href="#traverse_all_preorder">traverse_all_preorder()</a>
+<a href="#traverse_nodes_postorder">traverse_nodes_postorder()</a>
+<a href="#traverse_nodes_preorder">traverse_nodes_preorder()</a>
+<a href="#xml_trim">xml_trim()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#children">children</a>
+<a href="#parent">parent</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(obj, pos)</h3>
+public<p/>
+<dl>
+<dd>
+Add a child at the given pos.  If pos is not specified, the
+child is appended to the end.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>obj</code> - either a string/ucs or a Node subclass
+</dd>
+<dd>
+<code>pos</code> - the pos to insert
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If pos is out of range
+</dd>
+</dl>
+<p/><a href="xml-node.icn.html#36" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="add_string"/>
+<h3>add_string(s, pos)</h3>
+public<p/>
+<dl>
+<dd>
+Add a string at the given pos.  If pos is not specified, the
+child is appended to the end.
+<p/>
+This differs from the above <code><a href="xml.Node.html#add">add()</a></code> method in that adjacent
+strings will be compacted together to form one longer string.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - a string/ucs
+</dd>
+<dd>
+<code>pos</code> - the pos to insert
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If pos is out of range
+</dd>
+</dl>
+<p/><a href="xml-node.icn.html#57" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="find_string"/>
+<h3>find_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+Search recursively for the given string in the node tree.  Any
+nodes with the string as a child are produced.
+<p/><a href="xml-node.icn.html#225" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="find_trimmed_string"/>
+<h3>find_trimmed_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+As above, but uses trimmed child strings for comparison.
+<p/><a href="xml-node.icn.html#236" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_children"/>
+<h3>get_children()</h3>
+public<p/>
+<dl>
+<dd>
+Return the children of this node.
+<p/><a href="xml-node.icn.html#29" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_children_no_whitespace"/>
+<h3>get_children_no_whitespace()</h3>
+public<p/>
+<dl>
+<dd>
+Get a copy list of the children elements, but with any whitespace-only string elements
+removed.  This leaves the children list intact.
+<p/><a href="xml-node.icn.html#155" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_compacted_children"/>
+<h3>get_compacted_children()</h3>
+public<p/>
+<dl>
+<dd>
+Returns a copy of the children of this <code><a href="xml.Node.html" target="displayFrame">Node</a></code>, in which adjacent
+text children are combined together.
+<p/><a href="xml-node.icn.html#81" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_nth_string"/>
+<h3>get_nth_string(n)</h3>
+public<p/>
+<dl>
+<dd>
+Return the nth child which is a string/ucs.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - the index to look for; 1 being the first.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if there is no such element.
+</dd>
+</dl>
+<p/><a href="xml-node.icn.html#246" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_nth_trimmed_string"/>
+<h3>get_nth_trimmed_string(n)</h3>
+public<p/>
+<dl>
+<dd>
+Return the nth child which is a string, after
+trimming it.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - the index to look for; 1 being the first.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if there is no such element.
+</dd>
+</dl>
+<p/><a href="xml-node.icn.html#258" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parent"/>
+<h3>get_parent()</h3>
+public<p/>
+<dl>
+<dd>
+Return the parent Node of this Node
+<p/><a href="xml-node.icn.html#22" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_string_content"/>
+<h3>get_string_content()</h3>
+public<p/>
+<dl>
+<dd>
+Get the string content of the node, which is the catenation of
+all the string children.
+<p/><a href="xml-node.icn.html#175" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_string_content_with_cdata"/>
+<h3>get_string_content_with_cdata()</h3>
+public<p/>
+<dl>
+<dd>
+Like <code><a href="xml.Node.html#get_string_content">get_string_content()</a></code>, but includes CDATA sections too.
+<p/><a href="xml-node.icn.html#191" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_trimmed_children"/>
+<h3>get_trimmed_children()</h3>
+public<p/>
+<dl>
+<dd>
+Just like <code><a href="xml.Node.html#get_children_no_whitespace">get_children_no_whitespace()</a></code>, but this trims any string children
+left in the list.
+<p/><a href="xml-node.icn.html#165" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_trimmed_string_content"/>
+<h3>get_trimmed_string_content()</h3>
+public<p/>
+<dl>
+<dd>
+Get the trimmed string content of the node, which is the catenation of
+all the trimmed string children.
+<p/><a href="xml-node.icn.html#183" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="get_trimmed_string_content_with_cdata"/>
+<h3>get_trimmed_string_content_with_cdata()</h3>
+public<p/>
+<dl>
+<dd>
+Like <code><a href="xml.Node.html#get_trimmed_string_content">get_trimmed_string_content()</a></code>, but includes CDATA sections
+too (which are not trimmed).
+<p/><a href="xml-node.icn.html#200" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="has_string"/>
+<h3>has_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if this node has string <code>s</code> as a child.
+<p/><a href="xml-node.icn.html#210" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="has_trimmed_string"/>
+<h3>has_trimmed_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+As <code><a href="xml.Node.html#has_string">has_string()</a></code> above, but trims the child strings before
+comparison.
+<p/><a href="xml-node.icn.html#217" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-node.icn.html#300" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="print_structure"/>
+<h3>print_structure(f, indent, flags)</h3>
+public<p/>
+<dl>
+<dd>
+Print the structure to the given file, for debugging.
+<p/><a href="xml-node.icn.html#271" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_all_postorder"/>
+<h3>traverse_all_postorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the nodes and strings in this <code><a href="xml.Node.html" target="displayFrame">Node</a></code> with a postorder traversal.
+<p/><a href="xml-node.icn.html#141" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_all_preorder"/>
+<h3>traverse_all_preorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the nodes and strings in this <code><a href="xml.Node.html" target="displayFrame">Node</a></code> with a preorder traversal.
+<p/><a href="xml-node.icn.html#127" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_nodes_postorder"/>
+<h3>traverse_nodes_postorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the nodes in this <code><a href="xml.Node.html" target="displayFrame">Node</a></code> with a postorder traversal.
+<p/><a href="xml-node.icn.html#117" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_nodes_preorder"/>
+<h3>traverse_nodes_preorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the nodes in this <code><a href="xml.Node.html" target="displayFrame">Node</a></code> with a preorder traversal.
+<p/><a href="xml-node.icn.html#107" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="xml_trim"/>
+<h3>xml_trim(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Trim whitespace characters from both ends of the given string.
+Whitespace is <code><a href="xml.XmlParser.html#SPACE">XmlParser.SPACE</a></code> plus formfeed, which is an
+illegal character in XML, but not HTML.
+<p/><a href="xml-node.icn.html#291" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="children"/>
+<h3>children</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-node.icn.html#20" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+<a name="parent"/>
+<h3>parent</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-node.icn.html#19" target="displayFrame">Source - node.icn </a>
+</dd>
+</dl><hr>
+</body></html>

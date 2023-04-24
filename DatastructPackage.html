@@ -42,13 +42,13 @@
 </ul>
 </nav>
 <h1 id="introduction">Introduction</h1>
-<p>Object Icon inherits builtin lists, tables and sets from Icon. These are suitable for almost all purposes, but occasionally something different is needed. The <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct-package.html"><code>datastruct</code></a> package provides some object-oriented abstractions which can help.</p>
+<p>Object Icon inherits builtin lists, tables and sets from Icon. These are suitable for almost all purposes, but occasionally something different is needed. The <a href="libref/index.html?datastruct-package.html"><code>datastruct</code></a> package provides some object-oriented abstractions which can help.</p>
 <h1 id="fundamental-classes">Fundamental classes</h1>
-<p>The three most important classes are <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.List.html">List</a>, <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.Table.html">Table</a> and <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.Set.html">Set</a>. Each is an abstract class with methods which reflect the operations of its builtin counterpart.</p>
+<p>The three most important classes are <a href="libref/index.html?datastruct.List.html">List</a>, <a href="libref/index.html?datastruct.Table.html">Table</a> and <a href="libref/index.html?datastruct.Set.html">Set</a>. Each is an abstract class with methods which reflect the operations of its builtin counterpart.</p>
 <h2 id="capabilities">Capabilities</h2>
-<p>Each data structure instance has zero or more of several capabilities, reflected by an integer flag value returned by a <code>get_mode()</code> method. This is the same technique used by <a href="http://objecticon.sourceforge.net/libref/index.html?io.Stream.html"><code>io.Stream</code></a> to report whether a Stream is readable, writable, etc. But in this case the capabilities reflect how (if at all) the particular data structure may be altered. Sets and tables (but not lists) additionally have an <code>ORDER</code> capability, meaning entries are stored in order, and thus will be generated ready-sorted during iteration.</p>
+<p>Each data structure instance has zero or more of several capabilities, reflected by an integer flag value returned by a <code>get_mode()</code> method. This is the same technique used by <a href="libref/index.html?io.Stream.html"><code>io.Stream</code></a> to report whether a Stream is readable, writable, etc. But in this case the capabilities reflect how (if at all) the particular data structure may be altered. Sets and tables (but not lists) additionally have an <code>ORDER</code> capability, meaning entries are stored in order, and thus will be generated ready-sorted during iteration.</p>
 <h2 id="wrapping-builtin-instances">Wrapping builtin instances</h2>
-<p>Each of the three types of builtin datastructure has two corresponding <code>datastruct</code> wrapper classes. One is a general purpose wrapper providing full access to the underlying data via the particular class’s methods. The other is rather more useful, and provides just a read-only view of the underlying data. For lists, the classes are <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.BuiltinList.html"><code>datastruct.BuiltinList</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.UnmodifiableBuiltinList.html"><code>datastruct.UnmodifiableBuiltinList</code></a> respectively, with the other classes being similarly named.</p>
+<p>Each of the three types of builtin datastructure has two corresponding <code>datastruct</code> wrapper classes. One is a general purpose wrapper providing full access to the underlying data via the particular class’s methods. The other is rather more useful, and provides just a read-only view of the underlying data. For lists, the classes are <a href="libref/index.html?datastruct.BuiltinList.html"><code>datastruct.BuiltinList</code></a> and <a href="libref/index.html?datastruct.UnmodifiableBuiltinList.html"><code>datastruct.UnmodifiableBuiltinList</code></a> respectively, with the other classes being similarly named.</p>
 <p>To see how the read-only wrapper could be useful, consider a class which has a private builtin list member variable, and wishes to expose its content to callers. Exposing the private variable would of course allow the list’s content to be changed by the caller. Providing a copy of the list might be expensive. Returning a read-only wrapper avoids these problems. For example :-</p>
 <pre><code>class Something()
    private l     # A list.
@@ -88,7 +88,7 @@ end</code></pre>
 <p>Note that the use of <code>const</code> ensures that <code>ul</code> and <code>l</code> cannot get out of synch after the instance is instantiated.</p>
 <h1 id="lists">Lists</h1>
 <h2 id="linked-lists">Linked lists</h2>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.LinkedList.html"><code>datastruct.LinkedList</code></a>, implements a Lisp-style singly linked list, so that distinct lists can share tail portions of their data :-</p>
+<p><a href="libref/index.html?datastruct.LinkedList.html"><code>datastruct.LinkedList</code></a>, implements a Lisp-style singly linked list, so that distinct lists can share tail portions of their data :-</p>
 <pre><code>l1 := LinkedList(5, 4, 57, 12, 14)
 # The tail list from element 4
 l2 := l1.from(4)
@@ -98,7 +98,7 @@ l2.push(1000)
 l2.put(99)
 # Now l2 is LinkedList(1000,12,14,99)
 # and l1 is LinkedList(5,4,57,12,14,99)</code></pre>
-<p>More useful is <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.DoublyLinkedList.html"><code>datastruct.DoublyLinkedList</code></a>, with several operations possible in constant time, which would take linear time using other types of list. For example, given two lists of arbitrary length, the following splices all of the nodes of the second list onto the end of the first, in constant time, leaving the second list empty :-</p>
+<p>More useful is <a href="libref/index.html?datastruct.DoublyLinkedList.html"><code>datastruct.DoublyLinkedList</code></a>, with several operations possible in constant time, which would take linear time using other types of list. For example, given two lists of arbitrary length, the following splices all of the nodes of the second list onto the end of the first, in constant time, leaving the second list empty :-</p>
 <pre><code>l1 := DoublyLinkedList( ... )
 l2 := DoublyLinkedList( ... )
 l1.splice(0, l2)</code></pre>
@@ -106,10 +106,10 @@ l1.splice(0, l2)</code></pre>
 <pre><code>l1 := DoublyLinkedList( ... )
 n1 := l1.node(100); n2 := l1.node(-100)
 l2 := DoublyLinkedList.unsafe_extract_nodes(n1, n2)</code></pre>
-<p>The last operation is again constant time. Note that the caller has to ensure that the <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.DoublyLinkedListNode.html">nodes</a> form a valid sub-list, with <code>n2</code> coming after <code>n1</code>, otherwise both source and output lists will be nonsensical; hence the name of the method. Note also that this is a static method (rather than an instance method of the list); list nodes can in fact be manipulated independently of their enclosing list structure.</p>
+<p>The last operation is again constant time. Note that the caller has to ensure that the <a href="libref/index.html?datastruct.DoublyLinkedListNode.html">nodes</a> form a valid sub-list, with <code>n2</code> coming after <code>n1</code>, otherwise both source and output lists will be nonsensical; hence the name of the method. Note also that this is a static method (rather than an instance method of the list); list nodes can in fact be manipulated independently of their enclosing list structure.</p>
 <p>One final point to mention about <code>DoublyLinkedList</code> is that, like <code>LinkedList</code>, getting the size is an “O(n)” operation.</p>
 <h2 id="sub-list-views">Sub-list views</h2>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.SubList.html"><code>datastruct.SubList</code></a> is a view of part of another list; it stores no data itself :-</p>
+<p><a href="libref/index.html?datastruct.SubList.html"><code>datastruct.SubList</code></a> is a view of part of another list; it stores no data itself :-</p>
 <pre><code>l1 := BuiltinList( [5,4,57,12,14,99,200] )
 # A view of l1[4:7]
 l2 := SubList(l1, 4, 7)
@@ -124,7 +124,7 @@ l2.at(1) := 300
 # l2 is now SubList(300,101,14)</code></pre>
 <h1 id="tables">Tables</h1>
 <h2 id="sorttable">SortTable</h2>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.SortTable.html"><code>datastruct.SortTable</code></a> is a <code>Table</code> which implements the <code>ORDER</code> capability described above, using a red-black binary tree :-</p>
+<p><a href="libref/index.html?datastruct.SortTable.html"><code>datastruct.SortTable</code></a> is a <code>Table</code> which implements the <code>ORDER</code> capability described above, using a red-black binary tree :-</p>
 <pre><code>t := SortTable()
 t.insert(&quot;Zebra&quot;, 120)
 t.insert(&quot;Human&quot;, 10)
@@ -138,8 +138,8 @@ t.insert(&quot;Aardvark&quot;, 34)
 <p>gives “Human”. <code>select</code> uses standard Icon indexing, so <code>t.select(-1)</code> will give the highest ordered key (“Zebra”).</p>
 <h3 id="tree-nodes">Tree nodes</h3>
 <p><code>SortTable</code> has several methods which return references to the nodes in the red-black tree. Each node contains a (read-only) key and a value, which may be freely edited at any time to update the table entry’s value.</p>
-<p>A node may be obtained when a new entry is added to the table (<a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.SortTable.html%23new_node"><code>datastruct.SortTable.new_node()</code></a>), by key <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.SortTable.html%23find_node"><code>datastruct.SortTable.find_node()</code></a>, or by rank <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.SortTable.html%23node"><code>datastruct.SortTable.node()</code></a>.</p>
-<p>The node may be removed from the tree with <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.SortTableNode.html%23unlink"><code>datastruct.SortTableNode.unlink()</code></a>.</p>
+<p>A node may be obtained when a new entry is added to the table (<a href="libref/index.html?datastruct.SortTable.html%23new_node"><code>datastruct.SortTable.new_node()</code></a>), by key <a href="libref/index.html?datastruct.SortTable.html%23find_node"><code>datastruct.SortTable.find_node()</code></a>, or by rank <a href="libref/index.html?datastruct.SortTable.html%23node"><code>datastruct.SortTable.node()</code></a>.</p>
+<p>The node may be removed from the tree with <a href="libref/index.html?datastruct.SortTableNode.html%23unlink"><code>datastruct.SortTableNode.unlink()</code></a>.</p>
 <h3 id="iteration">Iteration</h3>
 <p><code>SortTable</code> and <code>SortTableNode</code> provide methods to iterate forward or backward over keys, values and nodes. These iterators are robust against any changes to the underlying tree structure may change, with one exception: the last entry returned must not be deleted before the next entry is generated. For example, this is not allowed :-</p>
 <pre><code>   t := SortTable(,, &quot;Cat&quot;, 12, &quot;Mouse&quot;, 2, &quot;Gerbil&quot;, 1)
@@ -150,7 +150,7 @@ t.insert(&quot;Aardvark&quot;, 34)
    n.unlink()
    # t now has two remaining elements
    n := @e       # Runtime error: Node has been unlinked</code></pre>
-<p>Since it is often useful to iterate and remove elements in the same loop, the method <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.SortTableNode.html%23move_unlink"><code>datastruct.SortTableNode.move_unlink()</code></a> may be used instead, together with a <code>while</code> loop. For example, the following procedure will iterate over a table and delete even-numbered keys :-</p>
+<p>Since it is often useful to iterate and remove elements in the same loop, the method <a href="libref/index.html?datastruct.SortTableNode.html%23move_unlink"><code>datastruct.SortTableNode.move_unlink()</code></a> may be used instead, together with a <code>while</code> loop. For example, the following procedure will iterate over a table and delete even-numbered keys :-</p>
 <pre><code>procedure del(t)
    local n
    # Get the first node by rank
@@ -162,7 +162,7 @@ t.insert(&quot;Aardvark&quot;, 34)
          n.get_next()
 end</code></pre>
 <h2 id="eqtable">EqTable</h2>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.EqTable.html"><code>datastruct.EqTable</code></a> uses the <a href="http://objecticon.sourceforge.net/libref/index.html?lang.equals.html"><code>lang.equals</code></a> procedure (and its cousin, <a href="http://objecticon.sourceforge.net/libref/index.html?lang.hash.html"><code>lang.hash</code></a>) to determine table membership rather than the usual identity operator (<code>===</code>), which is quite often useful. For example :-</p>
+<p><a href="libref/index.html?datastruct.EqTable.html"><code>datastruct.EqTable</code></a> uses the <a href="libref/index.html?lang.equals.html"><code>lang.equals</code></a> procedure (and its cousin, <a href="libref/index.html?lang.hash.html"><code>lang.hash</code></a>) to determine table membership rather than the usual identity operator (<code>===</code>), which is quite often useful. For example :-</p>
 <pre><code># A table with two entries.
 t := EqTable(,
              [1], 1,
@@ -172,7 +172,7 @@ t.insert([2], 200)
 # Now we still have two entries ( [1]-&gt;1 and [2]-&gt;200 )
 # (with a regular table we would have 3).</code></pre>
 <h2 id="weakreftable">WeakrefTable</h2>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.WeakrefTable.html"><code>datastruct.WeakrefTable</code></a> wraps its keys in weak references. Thus on a garbage collection, the keys may “disappear”, and the size of the table reduce :-</p>
+<p><a href="libref/index.html?datastruct.WeakrefTable.html"><code>datastruct.WeakrefTable</code></a> wraps its keys in weak references. Thus on a garbage collection, the keys may “disappear”, and the size of the table reduce :-</p>
 <pre><code># Set up some keys.
 k1 := []; k2 := []; k3 := []; k4 := []
 # Create a table with four entries.
@@ -187,7 +187,7 @@ collect()
 # Now t is reduced
 t.size()     # 2 (k1-&gt;1 and k3-&gt;3)</code></pre>
 <h1 id="sets">Sets</h1>
-<p>The functionality of any <code>Table</code> can easily be extended into <code>Set</code> form using <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.TableSet.html"><code>datastruct.TableSet</code></a>, which provides a set view of the keys. <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.EqSet.html"><code>datastruct.EqSet</code></a> is a particularly convenient subclass of <code>TableSet</code> which wraps the <code>EqTable</code> described above :-</p>
+<p>The functionality of any <code>Table</code> can easily be extended into <code>Set</code> form using <a href="libref/index.html?datastruct.TableSet.html"><code>datastruct.TableSet</code></a>, which provides a set view of the keys. <a href="libref/index.html?datastruct.EqSet.html"><code>datastruct.EqSet</code></a> is a particularly convenient subclass of <code>TableSet</code> which wraps the <code>EqTable</code> described above :-</p>
 <pre><code># A three-element set
 s := EqSet( [1], [2], [3] )
 # Insert an element

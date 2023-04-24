@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>morse.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     morse.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to convert string to Morse code
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold, modified by Rich Morin
+<a name="8"/>#
+<a name="9"/>#	Date:     June 26, 1990
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#     This procedure converts the string s to its Morse code equivalent.
+<a name="18"/>#
+<a name="19"/>#     The version used is known both as International Morse Code and as
+<a name="20"/>#     Continental Code, and is used by radio amateurs (hams).
+<a name="21"/>#
+<a name="22"/>############################################################################
+<a name="23"/>
+<a name="24"/>package ipl.morse
+<a name="25"/>
+<a name="26"/>procedure morse(s)
+<a name="27"/>   local i, c, t, x
+<a name="28"/>   static code, key1, key2
+<a name="29"/>
+<a name="30"/>   initial {
+<a name="31"/>      code := "....------.----..---.-.---...--.--._
+<a name="32"/>               -..--..-.--....-.-.-...-..-....."
+<a name="33"/>      key1 := "tmot09ttt1t8tt2gqtttjtz7t3nky(tcttt_
+<a name="34"/>               tdx/twptb64earttltvtiuftsh5"
+<a name="35"/>      key2 := "tttttttttt'tt,ttttttttt:tttttt)tttt_
+<a name="36"/>               t?tttttttt-ttt.;tttttt\"tttt"
+<a name="37"/>   }
+<a name="38"/>
+<a name="39"/>   x := ""
+<a name="40"/>   every c := !map(s) do
+<a name="41"/>      if i := upto(c, key1) then {
+<a name="42"/>         t := code[i+:6]
+<a name="43"/>         x ||:= t[ upto('-',t)+1 : 0 ] || " "
+<a name="44"/>      }
+<a name="45"/>      else if i := upto(c, key2) then
+<a name="46"/>         x ||:= code[i+:6] || " "
+<a name="47"/>      else if c == " " then
+<a name="48"/>         x ||:= "    "
+<a name="49"/>      else
+<a name="50"/>         x ||:= "&lt;" || c || "&gt; "
+<a name="51"/>   return x
+<a name="52"/>end
+</pre></body></html>

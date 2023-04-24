@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>use</title></head><body>
+<h1>use(e1, e2, e3)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This procedure is used to automatically close a <code>Stream</code> or other
+resource.  The first expression <code>e1</code> produces the resource, the
+second <code>e2</code> uses it, and the third expression <code>e3</code> then closes it.
+The result of <code>e2</code> is returned, if all three expressions succeed,
+otherwise the procedure fails.
+<p/>
+Each co-expression is optional, but if <code>e1</code> is omitted <code>e3</code> must be
+provided; otherwise <code>e3</code> defaults to calling <code>close</code> on the
+resource.
+<p/>
+Example :-
+<pre>
+    s := use { f := open("some.txt"),
+               do_something_with(f) }
+</pre>
+<p/>
+See also <code><a href="util.clean.html" target="displayFrame">clean()</a></code> below.
+<p/><a href="util-misc.icn.html#282" target="displayFrame">Source - misc.icn </a>
+<p/>
+</body></html>

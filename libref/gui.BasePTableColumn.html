@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>BasePTableColumn</title></head><body>
+<h1>BasePTableColumn</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.ItemPaintPTableColumn.html">gui.ItemPaintPTableColumn</a><br>
+<a href="gui.PTableColumn.html">gui.PTableColumn</a><br>
+<a href="gui.CheckBoxPTableColumn.html">gui.CheckBoxPTableColumn</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A column in a <code><a href="gui.PTable.html" target="displayFrame">PTable</a></code>.
+<p/><a href="gui-ptable.icn.html#5" target="displayFrame">Source - ptable.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#calculate_column_width">calculate_column_width()</a>
+<a href="#calculate_line_height">calculate_line_height()</a>
+<a href="#draw_cell">draw_cell()</a>
+<a href="#finally">finally()</a>
+<a href="#get_column_index">get_column_index()</a>
+<a href="#initially">initially()</a>
+<a href="#new">new()</a>
+<a href="#set_fixed_width">set_fixed_width()</a>
+<a href="#set_weight">set_weight()</a>
+<a href="#slice">slice()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#calc_width">calc_width</a>
+<a href="#fixed_width">fixed_width</a>
+<a href="#ptable">ptable</a>
+<a href="#weight">weight</a>
+<a href="#width">width</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="calculate_column_width"/>
+<h3>calculate_column_width(W)</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#67" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_line_height"/>
+<h3>calculate_line_height(W)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return the desired height of the lines for the cells in this
+column.  This should return an integer if the heights are all the
+same, or a list containing the different heights for each line.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>W</code> - the cloned window to draw into
+</dd>
+</dl>
+<p/><a href="gui-ptable.icn.html#57" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_cell"/>
+<h3>draw_cell(W, data, line, col, cx, cy, ch)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Draw an individual cell for this column.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>W</code> - the cloned window to draw into
+</dd>
+<dd>
+<code>data</code> - the data to draw
+</dd>
+<dd>
+<code>line</code> - the line number of the data
+</dd>
+<dd>
+<code>col</code> - the column number of the data
+</dd>
+<dd>
+<code>cx</code> - the x position of the cell
+</dd>
+<dd>
+<code>cy</code> - the y position of the cell
+</dd>
+<dd>
+<code>ch</code> - the height of the cell
+</dd>
+</dl>
+<p/><a href="gui-ptable.icn.html#69" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#19" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="get_column_index"/>
+<h3>get_column_index()</h3>
+public<p/>
+<dl>
+<dd>
+The column's index
+<p/><a href="gui-ptable.icn.html#43" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#16" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#83" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fixed_width"/>
+<h3>set_fixed_width(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the initial width of the column, in pixels.  If this is
+not provided, then the width will be set automatically.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - The width
+</dd>
+</dl>
+<p/><a href="gui-ptable.icn.html#32" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="set_weight"/>
+<h3>set_weight(w)</h3>
+public<p/>
+<dl>
+<dd>
+Set the weight of the column.  Additional horizontal space in the
+table is distributed among the columns in proportion to column
+weights.
+<p/><a href="gui-ptable.icn.html#22" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="slice"/>
+<h3>slice()</h3>
+public<p/>
+<dl>
+<dd>
+Generate the column's data, as a slice of the contents list.
+<p/><a href="gui-ptable.icn.html#50" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="calc_width"/>
+<h3>calc_width</h3>
+public<p/>
+<dl>
+<dd>
+Width set from calculate_column_width
+<p/><a href="gui-ptable.icn.html#12" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="fixed_width"/>
+<h3>fixed_width</h3>
+public<p/>
+<dl>
+<dd>
+Optional fixed width
+<p/><a href="gui-ptable.icn.html#11" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="ptable"/>
+<h3>ptable</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#10" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="weight"/>
+<h3>weight</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#14" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="width"/>
+<h3>width</h3>
+public<p/>
+<dl>
+<dd>
+Width after allocation of extra space
+<p/><a href="gui-ptable.icn.html#13" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+</body></html>

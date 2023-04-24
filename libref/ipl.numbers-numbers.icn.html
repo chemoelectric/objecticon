@@ -1,0 +1,656 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>numbers.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     numbers.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures related to numbers
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     June 10, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Contributors:  Robert J. Alexander, Richard Goerwitz
+<a name="18"/>#	   Tim Korb, and Gregg M. Townsend
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>
+<a name="22"/>package ipl.numbers
+<a name="23"/>
+<a name="24"/>import
+<a name="25"/>   ipl.strings(palins),
+<a name="26"/>   ipl.pdco(Sum,Product),
+<a name="27"/>   util(Format, Math, need_integer, need_real, need_numeric, need_string)
+<a name="28"/>
+<a name="29"/># additive digital persistence of i
+<a name="30"/>procedure adp(i)		
+<a name="31"/>   local j
+<a name="32"/>
+<a name="33"/>   j := 0
+<a name="34"/>
+<a name="35"/>   until *i = 1 do {
+<a name="36"/>      i := digsum(i)
+<a name="37"/>      j +:= 1
+<a name="38"/>      }
+<a name="39"/>
+<a name="40"/>   return j
+<a name="41"/>
+<a name="42"/>end
+<a name="43"/>
+<a name="44"/># additive digital root of i (same as digred())
+<a name="45"/>procedure adr(i)		
+<a name="46"/>
+<a name="47"/>   until *i = 1 do
+<a name="48"/>      i := digsum(i)
+<a name="49"/>
+<a name="50"/>   return i
+<a name="51"/>
+<a name="52"/>end
+<a name="53"/>
+<a name="54"/># returns arithmetic mean of numbers in L.
+<a name="55"/>procedure amean(L[])		
+<a name="56"/>   local m
+<a name="57"/>
+<a name="58"/>   if *L = 0 then fail
+<a name="59"/>
+<a name="60"/>   m := 0.0
+<a name="61"/>   every m +:= !L
+<a name="62"/>
+<a name="63"/>   return m / *L
+<a name="64"/>
+<a name="65"/>end
+<a name="66"/>
+<a name="67"/># Given a number x, round away from zero.
+<a name="68"/>procedure up(x)
+<a name="69"/>   local i
+<a name="70"/>   x := need_numeric(x)
+<a name="71"/>   i := integer(x)
+<a name="72"/>   return if x = i then i else if x &gt;= 0 then i + 1 else i - 1
+<a name="73"/>end
+<a name="74"/>
+<a name="75"/># Given integers x and y, return the value of x ÷ y rounded away from
+<a name="76"/># zero.
+<a name="77"/>procedure up2(x, y)
+<a name="78"/>   local i
+<a name="79"/>   x := need_integer(x)
+<a name="80"/>   y := need_integer(y)
+<a name="81"/>   i := x / y
+<a name="82"/>   return if x % y = 0 then i else if (sign(x) * sign(y) &gt;= 0) then i + 1 else i - 1
+<a name="83"/>end
+<a name="84"/>
+<a name="85"/># Given a number x, round towards negative infinity.
+<a name="86"/>procedure floor(x) 
+<a name="87"/>   local i
+<a name="88"/>   x := need_numeric(x)
+<a name="89"/>   i := integer(x)
+<a name="90"/>   return if x = i | x &gt;= 0 then i else i - 1
+<a name="91"/>end
+<a name="92"/>
+<a name="93"/># Given integers x and y, return the value of x ÷ y rounded towards
+<a name="94"/># negative infinity.
+<a name="95"/>procedure floor2(x, y) 
+<a name="96"/>   local i
+<a name="97"/>   x := need_integer(x)
+<a name="98"/>   y := need_integer(y)
+<a name="99"/>   i := x / y
+<a name="100"/>   return if (x % y = 0) | (sign(x) * sign(y) &gt;= 0) then i else i - 1
+<a name="101"/>end
+<a name="102"/>
+<a name="103"/># Given a number x, round towards positive infinity.
+<a name="104"/>procedure ceil(x) 
+<a name="105"/>   local i
+<a name="106"/>   x := need_numeric(x)
+<a name="107"/>   i := integer(x)
+<a name="108"/>   return if x = i | x &lt; 0 then i else i + 1
+<a name="109"/>end
+<a name="110"/>
+<a name="111"/># Given integers x and y, return the value of x ÷ y rounded towards
+<a name="112"/># positive infinity.
+<a name="113"/>procedure ceil2(x, y) 
+<a name="114"/>   local i
+<a name="115"/>   x := need_integer(x)
+<a name="116"/>   y := need_integer(y)
+<a name="117"/>   i := x / y
+<a name="118"/>   return if (x % y = 0) | (sign(x) * sign(y) &lt; 0) then i else i + 1
+<a name="119"/>end
+<a name="120"/>
+<a name="121"/># inserts commas in s to separate digits into groups of
+<a name="122"/># three.
+<a name="123"/>procedure commas(s)		
+<a name="124"/>
+<a name="125"/>   local s2, sign
+<a name="126"/>
+<a name="127"/>   # Don't bother if s is already comma-ized.
+<a name="128"/>   if type(s) == "string" &amp; find(",",  s) then fail
+<a name="129"/>
+<a name="130"/>   # Take sign.  Save chars after the decimal point (if present).
+<a name="131"/>   if s := abs(0 &gt; s)
+<a name="132"/>   then sign := "-" else sign := ""
+<a name="133"/>   s ? {
+<a name="134"/>      s := tab(find(".")) &amp; ="." &amp;
+<a name="135"/>      not pos(0) &amp; s2 := "." || tab(0)
+<a name="136"/>      }
+<a name="137"/>
+<a name="138"/>   /s2 := ""
+<a name="139"/>   integer(s) ? {
+<a name="140"/>      tab(0)
+<a name="141"/>      while s2 := "," || move(-3) || s2
+<a name="142"/>      if pos(1)
+<a name="143"/>      then s2 ?:= (move(1), tab(0))
+<a name="144"/>      else s2 := tab(1) || s2
+<a name="145"/>      }
+<a name="146"/>
+<a name="147"/>   return sign || s2
+<a name="148"/>
+<a name="149"/>end
+<a name="150"/>
+<a name="151"/># decimal expansion of i / j; terminates when expansion
+<a name="152"/># terminates or the end of a recurring period is reached.
+<a name="153"/># The format of the returned value is &lt;integer&gt;.&lt;seq&gt;,
+<a name="154"/># where &lt;seq&gt; is a string a decimal digits if the
+<a name="155"/># expansion is finite but &lt;pre&gt;[&lt;recurr&gt;] if it
+<a name="156"/># is not, where &lt;pre&gt; is a string of decimal digits
+<a name="157"/># (possibly empty) before the recurring part.
+<a name="158"/>#
+<a name="159"/>procedure decimal(i, j)		
+<a name="160"/>   local head, tail, numers, count
+<a name="161"/>
+<a name="162"/>   i := need_integer(i)
+<a name="163"/>   j := need_integer(j)
+<a name="164"/>
+<a name="165"/>   head := (i / j) || "."
+<a name="166"/>   tail := ""
+<a name="167"/>   numers := table()
+<a name="168"/>
+<a name="169"/>   i %:= j
+<a name="170"/>   count := 0
+<a name="171"/>
+<a name="172"/>   while i &gt; 0 do {
+<a name="173"/>      numers[i] := count
+<a name="174"/>      i *:= 10
+<a name="175"/>      tail ||:= i / j
+<a name="176"/>      i %:= j
+<a name="177"/>      if \numers[i] then	# been here; done that
+<a name="178"/>	 return head || (tail ? (move(numers[i]) || "[" || tab(0) || "]"))
+<a name="179"/>      count +:= 1
+<a name="180"/>      }
+<a name="181"/>
+<a name="182"/>   return head || tail
+<a name="183"/>
+<a name="184"/>end
+<a name="185"/>
+<a name="186"/># positions decimal point at i in real number r in field of width j.
+<a name="187"/>procedure decipos(r, i, j)	
+<a name="188"/>   local head, tail
+<a name="189"/>
+<a name="190"/>   /i := 3
+<a name="191"/>   /j := 5
+<a name="192"/>
+<a name="193"/>   r := need_real(r)
+<a name="194"/>
+<a name="195"/>   if i &lt; 1 then fail
+<a name="196"/>
+<a name="197"/>   r ? {
+<a name="198"/>      head := tab(upto('.eE')) | fail
+<a name="199"/>      move(1)
+<a name="200"/>      tail := tab(0)
+<a name="201"/>      return left(right(head, i - 1) || "." || tail, j)
+<a name="202"/>      }
+<a name="203"/>
+<a name="204"/>end
+<a name="205"/>
+<a name="206"/># reduction of number by adding digits until one digit is
+<a name="207"/># reached.
+<a name="208"/>procedure digred(i)		
+<a name="209"/>
+<a name="210"/>   return digroot(i)
+<a name="211"/>
+<a name="212"/>end
+<a name="213"/>
+<a name="214"/># reduction of number by adding digits until one digit is
+<a name="215"/># reached.
+<a name="216"/>procedure digroot(i)		
+<a name="217"/>
+<a name="218"/>   i := need_integer(i)
+<a name="219"/>
+<a name="220"/>   if i = 0 then return 1
+<a name="221"/>
+<a name="222"/>   i %:= 9
+<a name="223"/>   
+<a name="224"/>   return if i = 0 then 9 else i
+<a name="225"/>
+<a name="226"/>end
+<a name="227"/>
+<a name="228"/># product of digits of i
+<a name="229"/>procedure digprod(i)		
+<a name="230"/>   i := need_integer(i)
+<a name="231"/>
+<a name="232"/>   return if upto('0', i) then 0 else Product{ !i }
+<a name="233"/>end
+<a name="234"/>
+<a name="235"/># sum of digits in i
+<a name="236"/>procedure digsum(i)		
+<a name="237"/>   i := need_integer(i)
+<a name="238"/>
+<a name="239"/>   return Sum{ !i }
+<a name="240"/>end
+<a name="241"/>
+<a name="242"/>#  distseq() generates a range of integers in a deterministic order that is
+<a name="243"/>#  "most uniformly distributed" in Knuth's terminology (vol3, 1/e, p. 511).
+<a name="244"/>#  Each integer in the range is produced exactly once.
+<a name="245"/>
+<a name="246"/># generate low to high nonsequentially
+<a name="247"/>procedure distseq(low, high)		
+<a name="248"/>   local n, start, incr, range
+<a name="249"/>
+<a name="250"/>   low := need_integer(low)
+<a name="251"/>   high := need_integer(high)
+<a name="252"/>   if low &gt; high then fail
+<a name="253"/>   range := high - low + 1
+<a name="254"/>   start := n := range / 2
+<a name="255"/>
+<a name="256"/>   suspend low + n
+<a name="257"/>
+<a name="258"/>   incr := integer(range / Math.PHI ^ 2 + 0.5)
+<a name="259"/>   if incr &lt;= 1 then 
+<a name="260"/>      incr := 1
+<a name="261"/>   else while gcd(incr, range) &gt; 1 do
+<a name="262"/>      incr +:= 1
+<a name="263"/>
+<a name="264"/>   repeat {
+<a name="265"/>      n := (n + incr) % range
+<a name="266"/>      if n = start then fail
+<a name="267"/>      suspend low + n
+<a name="268"/>      }
+<a name="269"/>
+<a name="270"/>end
+<a name="271"/>
+<a name="272"/># produces the result of real division of i by j.
+<a name="273"/>procedure realdiv(i, j)		
+<a name="274"/>
+<a name="275"/>   return i / need_real(j)
+<a name="276"/>
+<a name="277"/>end
+<a name="278"/>
+<a name="279"/># formats i / j as a real (floating-point) number in
+<a name="280"/># a field of width w with d digits to the right of
+<a name="281"/># the decimal point, if possible. j defaults to 1,
+<a name="282"/># w to 8, and d to 3. If w is less than 3 it is set
+<a name="283"/># to 3. If d is less than 1, it is set to 1. The
+<a name="284"/># function fails if j is 0 or if the number cannot
+<a name="285"/># be formatted.
+<a name="286"/>procedure fix(i, j, w, d)	
+<a name="287"/>   local r
+<a name="288"/>
+<a name="289"/>   /j := 1
+<a name="290"/>   /w := 8
+<a name="291"/>   /d := 3
+<a name="292"/>   if j = 0 then fail
+<a name="293"/>   w &lt;:= 3
+<a name="294"/>   d &lt;:= 1
+<a name="295"/>   r := need_real(i) / j
+<a name="296"/>
+<a name="297"/>   return frn(r, w, d)
+<a name="298"/>end
+<a name="299"/>
+<a name="300"/># format real number r into a string with d digits
+<a name="301"/># after the decimal point; a result narrower than w
+<a name="302"/># characters is padded on the left with spaces.
+<a name="303"/># Fixed format is always used; there is no exponential
+<a name="304"/># notation.  Defaults:  w 0, d  0
+<a name="305"/>procedure frn(r, w, d)		
+<a name="306"/>   local s
+<a name="307"/>   r := need_real(r)
+<a name="308"/>   /d := 0
+<a name="309"/>   s := Format.numeric_to_string(r, d)
+<a name="310"/>   s := right(s, *s &lt; \w)
+<a name="311"/>   return s
+<a name="312"/>end
+<a name="313"/>
+<a name="314"/># returns greatest common divisor of i and j.
+<a name="315"/>procedure gcd(i,j)		
+<a name="316"/>   local r
+<a name="317"/>
+<a name="318"/>   i := abs(need_integer(i))
+<a name="319"/>   j := abs(need_integer(j))
+<a name="320"/>   if (i | j) = 0 then
+<a name="321"/>      return max(i, j)
+<a name="322"/>
+<a name="323"/>   repeat {
+<a name="324"/>      r := i % j
+<a name="325"/>      if r = 0 then return j
+<a name="326"/>      i := j
+<a name="327"/>      j := r
+<a name="328"/>      }
+<a name="329"/>end
+<a name="330"/>
+<a name="331"/># returns the greatest common division of the integers in
+<a name="332"/># list L.
+<a name="333"/>procedure gcdl(L[])		
+<a name="334"/>   local i, j
+<a name="335"/>
+<a name="336"/>   i := get(L) | fail
+<a name="337"/>
+<a name="338"/>   while j := get(L) do
+<a name="339"/>      i := gcd(i, j)
+<a name="340"/>
+<a name="341"/>   return i
+<a name="342"/>
+<a name="343"/>end
+<a name="344"/>   
+<a name="345"/># returns geometric mean of numbers in L.
+<a name="346"/>procedure gmean(L[])		
+<a name="347"/>   local m
+<a name="348"/>
+<a name="349"/>   if *L = 0 then fail
+<a name="350"/>
+<a name="351"/>   m := 1.0
+<a name="352"/>   every m *:= !L
+<a name="353"/>   m := abs(m)
+<a name="354"/>   if m &gt; 0.0 then
+<a name="355"/>      return Math.exp (Math.log(m) / *L)
+<a name="356"/>   else
+<a name="357"/>      fail
+<a name="358"/>end
+<a name="359"/>   
+<a name="360"/># returns harmonic mean of numbers in L.
+<a name="361"/>procedure hmean(L[])		
+<a name="362"/>   local m, r
+<a name="363"/>
+<a name="364"/>   if *L = 0 then fail
+<a name="365"/>
+<a name="366"/>   m := 0.0
+<a name="367"/>
+<a name="368"/>   every r := !L do {
+<a name="369"/>      if r = 0.0 then fail
+<a name="370"/>      else m +:= 1.0 / r
+<a name="371"/>      }
+<a name="372"/>
+<a name="373"/>   return *L / m
+<a name="374"/>
+<a name="375"/>end
+<a name="376"/>
+<a name="377"/># returns the least common multiple of i and j.
+<a name="378"/>procedure lcm(i, j)		
+<a name="379"/>
+<a name="380"/>   i := need_integer(i)
+<a name="381"/>   j := need_integer(j)
+<a name="382"/>
+<a name="383"/>   if (i =  0) | (j = 0) then return 0	# ???
+<a name="384"/>
+<a name="385"/>   return abs(i * j) / gcd(i, j)
+<a name="386"/>
+<a name="387"/>end
+<a name="388"/>
+<a name="389"/># returns the least common multiple of the integers in the list L.
+<a name="390"/>procedure lcml(L[])		
+<a name="391"/>   local i, j
+<a name="392"/>
+<a name="393"/>   i := get(L) | fail
+<a name="394"/>
+<a name="395"/>   while j := get(L) do
+<a name="396"/>      i := lcm(i, j)
+<a name="397"/>
+<a name="398"/>   return i
+<a name="399"/>
+<a name="400"/>end
+<a name="401"/>
+<a name="402"/># mantissa (fractional part) of r.
+<a name="403"/>procedure mantissa(r)		
+<a name="404"/>   local fpart
+<a name="405"/>
+<a name="406"/>   r := need_real(r)
+<a name="407"/>
+<a name="408"/>   fpart := r - integer(r)
+<a name="409"/>
+<a name="410"/>   fpart ?:= {
+<a name="411"/>      tab(upto('.') + 1)
+<a name="412"/>      tab(0)
+<a name="413"/>      }
+<a name="414"/>
+<a name="415"/>   fpart ? {
+<a name="416"/>      if fpart := tab(upto('Ee')) then {
+<a name="417"/>         move(1)
+<a name="418"/>         if = "+" then fpart := "0"
+<a name="419"/>         else {
+<a name="420"/>            move(1)
+<a name="421"/>            fpart := repl("0", tab(0) - 1) || fpart
+<a name="422"/>            }
+<a name="423"/>         }
+<a name="424"/>      }
+<a name="425"/>
+<a name="426"/>   return "." || fpart
+<a name="427"/>
+<a name="428"/>end
+<a name="429"/>
+<a name="430"/># multiplicative digital persistence of i
+<a name="431"/>procedure mdp(i)		
+<a name="432"/>   local j
+<a name="433"/>
+<a name="434"/>   j := 0
+<a name="435"/>
+<a name="436"/>   until *i = 1 do {
+<a name="437"/>      i := digprod(i)
+<a name="438"/>      j +:= 1
+<a name="439"/>      }
+<a name="440"/>
+<a name="441"/>   return j
+<a name="442"/>
+<a name="443"/>end
+<a name="444"/>
+<a name="445"/># multiplicative digital root of i
+<a name="446"/>procedure mdr(i)		
+<a name="447"/>
+<a name="448"/>   until *i = 1 do
+<a name="449"/>      i := digprod(i)
+<a name="450"/>
+<a name="451"/>   return i
+<a name="452"/>
+<a name="453"/>end
+<a name="454"/>
+<a name="455"/># residue for 1-based indexing.
+<a name="456"/>procedure mod1(i, m)		
+<a name="457"/>
+<a name="458"/>   i %:= m
+<a name="459"/>
+<a name="460"/>   if i &lt; 1 then i +:= m
+<a name="461"/>
+<a name="462"/>   return i
+<a name="463"/>
+<a name="464"/>end
+<a name="465"/>
+<a name="466"/># return i (mod m).
+<a name="467"/>procedure mod(i, m)		
+<a name="468"/>
+<a name="469"/>   i %:= m
+<a name="470"/>
+<a name="471"/>   if i &lt; 0 then i +:= m
+<a name="472"/>
+<a name="473"/>   return i
+<a name="474"/>
+<a name="475"/>end
+<a name="476"/>
+<a name="477"/>
+<a name="478"/># generates palindromic n-digit numbers.
+<a name="479"/>procedure npalins(n)		
+<a name="480"/>   local i
+<a name="481"/>
+<a name="482"/>   every i := palins(&amp;digits, n) do
+<a name="483"/>      if i[1] ~== "0" then suspend i	# can't start with zero
+<a name="484"/>
+<a name="485"/>end
+<a name="486"/>
+<a name="487"/>
+<a name="488"/>#  This procedure is based on a SNOBOL4 function written by Jim Gimpel.
+<a name="489"/>#
+<a name="490"/># convert integer n to Roman numerals.
+<a name="491"/>procedure roman(n)		
+<a name="492"/>   local arabic, result
+<a name="493"/>   static equiv
+<a name="494"/>
+<a name="495"/>   initial equiv := ["","I","II","III","IV","V","VI","VII","VIII","IX"]
+<a name="496"/>
+<a name="497"/>   n := need_integer(n)
+<a name="498"/>   (0 &lt; n &lt; 4000) | fail
+<a name="499"/>   result := ""
+<a name="500"/>   every arabic := !n do
+<a name="501"/>      result := map(result,"IVXLCDM","XLCDM**") || equiv[arabic + 1]
+<a name="502"/>   return result
+<a name="503"/>
+<a name="504"/>end
+<a name="505"/>
+<a name="506"/># Return the nth element of the sequence
+<a name="507"/>#       A,B,C,...Z,AA,AB,...,AZ,BA,... etc
+<a name="508"/>#
+<a name="509"/>procedure alphaseq(n)
+<a name="510"/>   local r
+<a name="511"/>   n := (0 &lt; need_integer(n)) | fail
+<a name="512"/>   r := ""
+<a name="513"/>   while n &gt; 0 do {
+<a name="514"/>      r := &amp;ucase[(n - 1) % 26 + 1] || r
+<a name="515"/>      n := (n - 1) / 26
+<a name="516"/>   }
+<a name="517"/>   return r
+<a name="518"/>end
+<a name="519"/>
+<a name="520"/># returns nearest integer to r.
+<a name="521"/>procedure round(r)		
+<a name="522"/>
+<a name="523"/>   return if r &gt; 0 then integer(r + 0.5) else -integer(0.5 - r)
+<a name="524"/>
+<a name="525"/>end
+<a name="526"/>
+<a name="527"/># synonym for digroot(i)
+<a name="528"/>procedure sigma(i)		
+<a name="529"/>
+<a name="530"/>   sigma := digroot
+<a name="531"/>
+<a name="532"/>   return sigma(i)
+<a name="533"/>
+<a name="534"/>end
+<a name="535"/>
+<a name="536"/># returns sign of r.
+<a name="537"/>procedure sign(r)		
+<a name="538"/>
+<a name="539"/>   return if r = 0 then 0
+<a name="540"/>   else if r &lt; 0 then -1
+<a name="541"/>   else 1
+<a name="542"/>
+<a name="543"/>end
+<a name="544"/>
+<a name="545"/># sum of numbers
+<a name="546"/>procedure sum(values[])		
+<a name="547"/>   local result
+<a name="548"/>
+<a name="549"/>   result := 0
+<a name="550"/>
+<a name="551"/>   every result +:= !values
+<a name="552"/>
+<a name="553"/>   return result
+<a name="554"/>
+<a name="555"/>end
+<a name="556"/>
+<a name="557"/># returns nearest integer to r toward 0
+<a name="558"/>procedure trunc(r)		
+<a name="559"/>
+<a name="560"/>   return integer(r)
+<a name="561"/>
+<a name="562"/>end
+<a name="563"/>
+<a name="564"/># convert Roman numeral to integers.
+<a name="565"/>procedure unroman(s)		
+<a name="566"/>   local nbr,lastVal,val,c
+<a name="567"/>
+<a name="568"/>   s := map(need_string(s))
+<a name="569"/>   nbr := lastVal := 0
+<a name="570"/>
+<a name="571"/>   every c := !s do {
+<a name="572"/>      val := case c of {
+<a name="573"/>	 "m": 1000
+<a name="574"/>	 "d": 500
+<a name="575"/>	 "c": 100
+<a name="576"/>	 "l": 50
+<a name="577"/>	 "x": 10
+<a name="578"/>	 "v": 5
+<a name="579"/>	 "i": 1
+<a name="580"/>         default: fail
+<a name="581"/>	 }
+<a name="582"/>      nbr +:= if val &lt;= lastVal then val else val - 2 * lastVal
+<a name="583"/>      lastVal := val
+<a name="584"/>      }
+<a name="585"/>   return nbr
+<a name="586"/>
+<a name="587"/>end
+<a name="588"/>
+<a name="589"/># Result record for `extended_euclid`.
+<a name="590"/>record euclid_result(u1, v1, u2, v2, gcd)
+<a name="591"/>
+<a name="592"/># Calculate the gcd and coefficients of Bézout's identity for positive
+<a name="593"/># integers `u` and `v`, using the extended Euclidean algorithm, adapted
+<a name="594"/># from Knuth vol.2, 2nd ed., p325.
+<a name="595"/>#
+<a name="596"/># Returns a record `r` with fields `u1, v1, u2, v2, gcd`, giving
+<a name="597"/># the two minimal pairs of coefficients :-
+<a name="598"/># ~
+<a name="599"/>#     u * r.u1 + v * r.v1 = r.gcd, r.u1 &gt; 0, r.v1 &lt;= 0
+<a name="600"/>#     u * r.u2 + v * r.v2 = r.gcd, r.u2 &lt;= 0, r.v2 &gt; 0
+<a name="601"/># ~
+<a name="602"/>#
+<a name="603"/>procedure extended_euclid(u, v)
+<a name="604"/>   local u2, v1, v2, v3, t1, t2, t3, u1, u3, q
+<a name="605"/>
+<a name="606"/>   u := need_integer(u, 1)
+<a name="607"/>   v := need_integer(v, 1)
+<a name="608"/>
+<a name="609"/>   u1 := 1; u2 := 0; u3 := u
+<a name="610"/>   v1 := 0; v2 := 1; v3 := v
+<a name="611"/>   
+<a name="612"/>   repeat {
+<a name="613"/>      if v3 = 0 then {
+<a name="614"/>         return if u1 &gt; 0 then
+<a name="615"/>            euclid_result(u1, u2,
+<a name="616"/>                          u1 - v/u3, u2 + u/u3,
+<a name="617"/>                          u3)
+<a name="618"/>         else
+<a name="619"/>            euclid_result(u1 + v/u3, u2 - u/u3,
+<a name="620"/>                          u1, u2,
+<a name="621"/>                          u3)
+<a name="622"/>      }
+<a name="623"/>      q := u3 / v3
+<a name="624"/>      t1 := u1 - q * v1; t2 := u2 - q * v2; t3 := u3 - q * v3
+<a name="625"/>      u1 := v1 ; u2 := v2 ; u3 := v3
+<a name="626"/>      v1 := t1 ; v2 := t2 ; v3 := t3
+<a name="627"/>   }
+<a name="628"/>end
+<a name="629"/>
+<a name="630"/>#
+<a name="631"/># Return (x ^ y) % m, for integers x, y &gt;= 0, m &gt; 1.
+<a name="632"/>#
+<a name="633"/>procedure exp_modulo(x, y, m)
+<a name="634"/>   local s
+<a name="635"/>
+<a name="636"/>   x := need_integer(x, 0)
+<a name="637"/>   y := need_integer(y, 0)
+<a name="638"/>   m := need_integer(m, 2)
+<a name="639"/>
+<a name="640"/>   x %:= m
+<a name="641"/>   s := 1
+<a name="642"/>   while y &gt; 0 do {
+<a name="643"/>      if y % 2 = 1 then {
+<a name="644"/>         s := (s * x) % m
+<a name="645"/>         y -:= 1
+<a name="646"/>      } else {
+<a name="647"/>         x := (x * x) % m
+<a name="648"/>         y /:= 2
+<a name="649"/>      }
+<a name="650"/>   }
+<a name="651"/>
+<a name="652"/>   return s
+<a name="653"/>end
+</pre></body></html>

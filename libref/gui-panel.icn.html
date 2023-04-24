@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>panel.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: panel.icn 7355 2019-01-07 18:29:40Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>
+<a name="12"/>#
+<a name="13"/># A Panel of components.
+<a name="14"/>#
+<a name="15"/>class Panel(Component)
+<a name="16"/>   public override new()
+<a name="17"/>      Component.new()
+<a name="18"/>      self.set_constraint("x_fill", &amp;yes)
+<a name="19"/>      self.set_constraint("y_fill", &amp;yes)
+<a name="20"/>      self.set_constraint("x_weight", 1.0)
+<a name="21"/>      self.set_constraint("y_weight",  1.0)
+<a name="22"/>      return
+<a name="23"/>   end
+<a name="24"/>end
+<a name="25"/>
+</pre></body></html>

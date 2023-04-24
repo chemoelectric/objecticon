@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>readtbl.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     readtbl.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to read user-created stripsgml table
+<a name="6"/>#
+<a name="7"/>#	Author:   Richard L. Goerwitz
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Version:  1.1
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#  
+<a name="21"/>#  This file is part of the strpsgml package.  It does the job of read-
+<a name="22"/>#  ing option user-created mapping information from a file.  The purpose
+<a name="23"/>#  of this file is to specify how each code in a given input text should
+<a name="24"/>#  be translated.  Each line has the form:
+<a name="25"/>#
+<a name="26"/>#      SGML-designator	start_code	end_code
+<a name="27"/>#
+<a name="28"/>#  where the SGML designator is something like "quote" (without the quota-
+<a name="29"/>#  tion marks), and the start and end codes are the way in which you want
+<a name="30"/>#  the beginning and end of a &lt;quote&gt;...&lt;\quote&gt; sequence to be transla-
+<a name="31"/>#  ted.  Presumably, in this instance, your codes would indicate some set
+<a name="32"/>#  level of indentation, and perhaps a font change.  If you don't have an
+<a name="33"/>#  end code for a particular SGML designator, just leave it blank.
+<a name="34"/>#
+<a name="35"/>############################################################################
+<a name="36"/>#
+<a name="37"/>#  Links: stripunb
+<a name="38"/>#
+<a name="39"/>############################################################################
+<a name="40"/>
+<a name="41"/>package ipl.readtbl
+<a name="42"/>
+<a name="43"/>import
+<a name="44"/>   io(stop),
+<a name="45"/>   ipl.stripunb(outstr)
+<a name="46"/>
+<a name="47"/>procedure readtbl(f)
+<a name="48"/>
+<a name="49"/>    local t, line, k, on_sequence, off_sequence
+<a name="50"/>
+<a name="51"/>    /f &amp; stop("readtbl:  Arg must be a valid open file.")
+<a name="52"/>
+<a name="53"/>    t := table()
+<a name="54"/>
+<a name="55"/>    every line := trim(!f,'\t ') do {
+<a name="56"/>	line ? {
+<a name="57"/>	    k := tabslashupto('\t:') &amp;
+<a name="58"/>	    tab(many('\t:')) &amp;
+<a name="59"/>	    on_sequence := tabslashupto('\t:') | tab(0)
+<a name="60"/>	    tab(many('\t:'))
+<a name="61"/>	    off_sequence := tab(0)
+<a name="62"/>	} | stop("readtbl:  Bad map file format.")
+<a name="63"/>	insert(t, k, outstr(on_sequence, off_sequence))
+<a name="64"/>    }
+<a name="65"/>
+<a name="66"/>    return t
+<a name="67"/>
+<a name="68"/>end
+<a name="69"/>
+<a name="70"/>
+<a name="71"/>
+<a name="72"/>procedure tabslashupto(c,s)
+<a name="73"/>    local POS
+<a name="74"/>
+<a name="75"/>    POS := &amp;pos
+<a name="76"/>
+<a name="77"/>    while tab(upto('\\' ++ c)) do {
+<a name="78"/>	if ="\\" then {
+<a name="79"/>	    move(1)
+<a name="80"/>	    next
+<a name="81"/>	}
+<a name="82"/>	else {
+<a name="83"/>	    if any(c) then {
+<a name="84"/>		suspend &amp;subject[POS:.&amp;pos]
+<a name="85"/>	    }
+<a name="86"/>	}
+<a name="87"/>    }
+<a name="88"/>
+<a name="89"/>    &amp;pos := POS
+<a name="90"/>    fail
+<a name="91"/>
+<a name="92"/>end
+</pre></body></html>

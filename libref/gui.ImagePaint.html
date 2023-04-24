@@ -1,0 +1,336 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ImagePaint</title></head><body>
+<h1>ImagePaint</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Paint.html" target="displayFrame">gui.Paint</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A <code><a href="gui.Paint.html" target="displayFrame">Paint</a></code> instance which draws an image, which can come from a
+number of sources.  The image can also be scaled.
+<p/><a href="gui-paint.icn.html#541" target="displayFrame">Source - paint.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Paint.html">gui.Paint</a>
+<a href="gui.ImagePaint.html">gui.ImagePaint</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Paint</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Paint.html#draw_rect">draw_rect()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close_image">close_image()</a>
+<a href="#draw">draw()</a>
+<a href="#finally">finally()</a>
+<a href="#has_image">has_image()</a>
+<a href="#initially">initially()</a>
+<a href="#just_win">just_win()</a>
+<a href="#load_image">load_image()</a>
+<a href="#new">new()</a>
+<a href="#set_cache">set_cache()</a>
+<a href="#set_fill_dimensions">set_fill_dimensions()</a>
+<a href="#set_image">set_image()</a>
+<a href="#set_max_h">set_max_h()</a>
+<a href="#set_max_size">set_max_size()</a>
+<a href="#set_max_w">set_max_w()</a>
+<a href="#set_pixels">set_pixels()</a>
+<a href="#set_window">set_window()</a>
+<a href="#zoom_image">zoom_image()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#fill_dimensions">fill_dimensions</a>
+<a href="#image_cache">image_cache</a>
+<a href="#image_pixels">image_pixels</a>
+<a href="#image_str">image_str</a>
+<a href="#image_window">image_window</a>
+<a href="#max_h">max_h</a>
+<a href="#max_w">max_w</a>
+<a href="#win">win</a>
+<a href="#win_pix">win_pix</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close_image"/>
+<h3>close_image()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#662" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="draw"/>
+<h3>draw(W, x, y)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Paint.html#draw">draw()</a> in <a href="gui.Paint.html" target="displayFrame">gui.Paint</a></dd>
+<dd>
+<p/><a href="gui-paint.icn.html#745" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Paint.html#finally">finally()</a> in <a href="gui.Paint.html" target="displayFrame">gui.Paint</a></dd>
+<dd>
+<p/><a href="gui-paint.icn.html#658" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="has_image"/>
+<h3>has_image()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if an image is currently loaded.
+<p/><a href="gui-paint.icn.html#667" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially(c)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Paint.html#initially">initially()</a> in <a href="gui.Paint.html" target="displayFrame">gui.Paint</a></dd>
+<dd>
+<p/><a href="gui-paint.icn.html#638" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="just_win"/>
+<h3>just_win()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#650" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="load_image"/>
+<h3>load_image(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#674" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Size.html#new">new()</a> in <a href="gui.Size.html" target="displayFrame">gui.Size</a></dd>
+<dd>
+<p/><a href="gui-paint.icn.html#749" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cache"/>
+<h3>set_cache(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set an image to use; the parameter is passed to <code><a href="gui.ImageCache.html#get">ImageCache.get</a></code>
+to load the image.
+<p/><a href="gui-paint.icn.html#557" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fill_dimensions"/>
+<h3>set_fill_dimensions(n)</h3>
+public<p/>
+<dl>
+<dd>
+This setting controls how the image will be expanded if its size
+is less than any specified maximum width and/or height (if none
+is specified it has no effect).  If set to 0, then the image will
+not be expanded; if 1 then the image will not be distorted, but
+will be expanded to fill one of the dimensions depending on its
+shape (if only one max dimension was specified, then the image
+expands to this dimension).  If 2, and both maximum dimensions
+were set, then the image will be distorted and expanded to fill
+both dimensions.
+<p/>
+If the image is bigger than the specified maximum size then it
+will always be scaled down, but if this setting is 2, and a
+maximum size is set, then again the image is distorted to fill
+both those dimensions.
+<p/><a href="gui-paint.icn.html#617" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_image"/>
+<h3>set_image(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set an image to use; the parameter is passed to <code><a href="gui.ImageCache.html#load">ImageCache.load</a></code>
+to load the image.
+<p/><a href="gui-paint.icn.html#566" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_max_h"/>
+<h3>set_max_h(h)</h3>
+public<p/>
+<dl>
+<dd>
+Set the maximum allowed height; the image will be scaled if necessary.
+<p/><a href="gui-paint.icn.html#600" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_max_size"/>
+<h3>set_max_size(w, h)</h3>
+public<p/>
+<dl>
+<dd>
+Set the maximum allowed size; the image will be scaled if necessary.
+<p/><a href="gui-paint.icn.html#608" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_max_w"/>
+<h3>set_max_w(w)</h3>
+public<p/>
+<dl>
+<dd>
+Set the maximum allowed width; the image will be scaled if necessary.
+<p/><a href="gui-paint.icn.html#592" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pixels"/>
+<h3>set_pixels(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a <code>Pixels</code> to use as the image source.  It will not be closed
+by this Component.
+<p/><a href="gui-paint.icn.html#583" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="set_window"/>
+<h3>set_window(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set a <code>Window</code> to use as the image source.  It will not be closed.
+<p/><a href="gui-paint.icn.html#575" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="zoom_image"/>
+<h3>zoom_image()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#685" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="fill_dimensions"/>
+<h3>fill_dimensions</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#553" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="image_cache"/>
+<h3>image_cache</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#549" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="image_pixels"/>
+<h3>image_pixels</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#550" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="image_str"/>
+<h3>image_str</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#547" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="image_window"/>
+<h3>image_window</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#548" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="max_h"/>
+<h3>max_h</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#555" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="max_w"/>
+<h3>max_w</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#554" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="win"/>
+<h3>win</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#551" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+<a name="win_pix"/>
+<h3>win_pix</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-paint.icn.html#552" target="displayFrame">Source - paint.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Rect</title></head><body>
+<h1>Rect</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Point.html" target="displayFrame">gui.Point</a><br>
+<a href="gui.Size.html" target="displayFrame">gui.Size</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.browser.TextOut.html">ipl.browser.TextOut</a><br>
+<a href="ipl.browser.CompOut.html">ipl.browser.CompOut</a><br>
+<a href="ipl.browser.OutputRow.html">ipl.browser.OutputRow</a><br>
+<a href="gui.MenuComponent.html">gui.MenuComponent</a><br>
+<a href="gui.Component.html">gui.Component</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This class combines <code><a href="gui.Point.html" target="displayFrame">Point</a></code> and <code><a href="gui.Size.html" target="displayFrame">Size</a></code> to represent a rectangle.
+<p/><a href="gui-geometry.icn.html#62" target="displayFrame">Source - geometry.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#center">center()</a>
+<a href="#contains">contains()</a>
+<a href="#float">float()</a>
+<a href="#inside">inside()</a>
+<a href="#intersect">intersect()</a>
+<a href="#new">new()</a>
+<a href="#pad">pad()</a>
+<a href="#str">str()</a>
+<a href="#touches">touches()</a>
+<a href="#union">union()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="center"/>
+<h3>center()</h3>
+public<p/>
+<dl>
+<dd>
+Return the center <code><a href="gui.Point.html" target="displayFrame">Point</a></code> of this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>, which is assumed to be
+non-empty.
+<p/><a href="gui-geometry.icn.html#96" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="contains"/>
+<h3>contains(r)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> contains <code>r</code>.  An empty <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> can
+neither contain, or be contained by, another <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>.
+<p/><a href="gui-geometry.icn.html#77" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="float"/>
+<h3>float(s, a)</h3>
+public<p/>
+<dl>
+<dd>
+Float the given <code><a href="gui.Size.html" target="displayFrame">Size</a></code> within this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>, according to the given
+<code><a href="gui.XYAlign.html" target="displayFrame">XYAlign</a></code>, but limit the result so that it lies within this
+<code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>.  A <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> is returned, with width and height set to the
+input values, or this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>'s values, depending on whether the
+result was so limited.
+<p/><a href="gui-geometry.icn.html#167" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="inside"/>
+<h3>inside(x1, y1)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the given point is inside this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>.
+<p/><a href="gui-geometry.icn.html#70" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="intersect"/>
+<h3>intersect(r)</h3>
+public<p/>
+<dl>
+<dd>
+Return the intersection of this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> and another, or fail if
+there is no intersection.  A new non-empty <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> is returned.
+<p/><a href="gui-geometry.icn.html#137" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(x, y, w, h)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Point.html#new">new()</a> in <a href="gui.Point.html" target="displayFrame">gui.Point</a></dd>
+<dd>
+<p/><a href="gui-geometry.icn.html#213" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="pad"/>
+<h3>pad(xa, ya)</h3>
+public<p/>
+<dl>
+<dd>
+Return a new <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>, being this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> surrounded by the given
+padding in the x and y directions.
+<p/><a href="gui-geometry.icn.html#205" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-geometry.icn.html#66" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="touches"/>
+<h3>touches(r)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> touches <code>r</code>, ie intersects or abuts it.
+An empty <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> can neither touch, or be touched by, another
+<code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>.
+<p/><a href="gui-geometry.icn.html#86" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+<a name="union"/>
+<h3>union(r)</h3>
+public<p/>
+<dl>
+<dd>
+Return the union of this <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> and another.  A new <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> is
+returned.  Note that the union of a non-empty <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> and an empty
+<code><a href="gui.Rect.html" target="displayFrame">Rect</a></code> is equal to the former.
+<p/><a href="gui-geometry.icn.html#104" target="displayFrame">Source - geometry.icn </a>
+</dd>
+</dl><hr>
+</body></html>

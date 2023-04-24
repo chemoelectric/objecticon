@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>HttpSubWorker</title></head><body>
+<h1>HttpSubWorker</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="ipl.browser.SubWorker.html" target="displayFrame">ipl.browser.SubWorker</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-browser.icn.html#478" target="displayFrame">Source - browser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.SubWorker.html">ipl.browser.SubWorker</a>
+<a href="ipl.browser.HttpSubWorker.html">ipl.browser.HttpSubWorker</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#adjust_fragment">adjust_fragment()</a>
+<a href="#cancel">cancel()</a>
+<a href="#get_control">get_control()</a>
+<a href="#get_data">get_data()</a>
+<a href="#get_expiry">get_expiry()</a>
+<a href="#get_length">get_length()</a>
+<a href="#get_read">get_read()</a>
+<a href="#rm_tmp">rm_tmp()</a>
+<a href="#update_aliases">update_aliases()</a>
+<a href="#update_cache_with_data">update_cache_with_data()</a>
+<a href="#update_cache_with_entry">update_cache_with_entry()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#httpc">httpc</a>
+<a href="#tmp_file">tmp_file</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="adjust_fragment"/>
+<h3>adjust_fragment(url1, url2)</h3>
+private static<p/>
+<dl>
+<dd>
+Copy the fragment part of url1 to url2, unless url2 has its own fragment.
+See s4.1 at http://www.w3.org/TR/cuap#uri
+<p/><a href="ipl.browser-browser.icn.html#541" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cancel"/>
+<h3>cancel()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.SubWorker.html#cancel">cancel()</a> in <a href="ipl.browser.SubWorker.html" target="displayFrame">ipl.browser.SubWorker</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#482" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_control"/>
+<h3>get_control(hres)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#511" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_data"/>
+<h3>get_data(worker)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.SubWorker.html#get_data">get_data()</a> in <a href="ipl.browser.SubWorker.html" target="displayFrame">ipl.browser.SubWorker</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#583" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_expiry"/>
+<h3>get_expiry(hres)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#537" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_length"/>
+<h3>get_length()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.SubWorker.html#get_length">get_length()</a> in <a href="ipl.browser.SubWorker.html" target="displayFrame">ipl.browser.SubWorker</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#503" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_read"/>
+<h3>get_read()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.SubWorker.html#get_read">get_read()</a> in <a href="ipl.browser.SubWorker.html" target="displayFrame">ipl.browser.SubWorker</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#507" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="rm_tmp"/>
+<h3>rm_tmp()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#491" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="update_aliases"/>
+<h3>update_aliases(pool, hres, url)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#552" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="update_cache_with_data"/>
+<h3>update_cache_with_data(pool, hres, data, fname, ct, cd)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#576" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="update_cache_with_entry"/>
+<h3>update_cache_with_entry(pool, hres, ce)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#566" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="httpc"/>
+<h3>httpc</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#480" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="tmp_file"/>
+<h3>tmp_file</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#480" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

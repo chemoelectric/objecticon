@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>shquote.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     shquote.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to quote word for UNIX-like shells
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     December 30, 1993
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  The following procedures are useful for writing Icon programs that
+<a name="18"/>#  generate shell commands.  Certain characters cannot appear in the
+<a name="19"/>#  open in strings that are to be interpreted as "words" by command
+<a name="20"/>#  shells.  This family of procedures assists in quoting such strings so
+<a name="21"/>#  that they will be interpreted as single words.  Quoting characters
+<a name="22"/>#  are applied only if necessary -- if strings need no quoting they are
+<a name="23"/>#  returned unchanged.
+<a name="24"/>#
+<a name="25"/>#  shquote(s1, s2, ..., sN) :  s -- Produces a string of words s1, s2,
+<a name="26"/>#  ..., sN that are properly separated and quoted for the Bourne Shell
+<a name="27"/>#  (sh).
+<a name="28"/>#
+<a name="29"/>#  cshquote(s1, s2, ..., sN) :  s -- Produces a string of words s1, s2, ..., sN 
+<a name="30"/>#  that are properly separated and quoted for the C-Shell (csh).
+<a name="31"/>#
+<a name="32"/>#  mpwquote(s1, s2, ..., sN) :  s -- Produces a string of words s1, s2,
+<a name="33"/>#  ..., sN that are properly separated and quoted for the Macintosh
+<a name="34"/>#  Programmer's Workshop shell (MPW Shell).
+<a name="35"/>#
+<a name="36"/>#  dequote(s1,s2) : s3 -- Produces the UNIX-style command line word s1
+<a name="37"/>#  with any quoting characters removed. s2 is the escape character
+<a name="38"/>#  required by the shell (s2 defaults the the usual UNIX escape
+<a name="39"/>#  character, the backslash "\\").
+<a name="40"/>#
+<a name="41"/>############################################################################
+<a name="42"/>
+<a name="43"/>package ipl.shquote
+<a name="44"/>
+<a name="45"/>procedure shquote(s[])
+<a name="46"/>   return shquote_words(s)
+<a name="47"/>end
+<a name="48"/>
+<a name="49"/>procedure cshquote(s[])
+<a name="50"/>   s := shquote_words(s,'\t\n $"#&amp;\'()*;&lt;&gt;?[\\`|~')
+<a name="51"/>   #
+<a name="52"/>   #  But backslashes before any bangs (!).
+<a name="53"/>   #
+<a name="54"/>   s ? {
+<a name="55"/>      s := ""
+<a name="56"/>      while s ||:= tab(find("!")) do {
+<a name="57"/>     s ||:= "\\" || move(1)
+<a name="58"/>     }
+<a name="59"/>      s ||:= tab(0)
+<a name="60"/>      }
+<a name="61"/>   return s
+<a name="62"/>end
+<a name="63"/>
+<a name="64"/>procedure mpwquote(s[])
+<a name="65"/>   #
+<a name="66"/>   #  The following are Macintosh Option- characters that have special
+<a name="67"/>   #  meaning to the MPW Shell.  They are represented here as Icon
+<a name="68"/>   #  escape sequences rather than as themselves since some
+<a name="69"/>   #  ASCII-oriented mailers change characters that have their
+<a name="70"/>   #  high-order bits set.
+<a name="71"/>   #
+<a name="72"/>   #  \xa8  circled r
+<a name="73"/>   #  \xb3  &gt;= (I/O redirection)
+<a name="74"/>   #  \xb6  lower case delta (escape character)
+<a name="75"/>   #  \xb7  upper case sigma
+<a name="76"/>   #  \xc5  lower case phi
+<a name="77"/>   #  \xc7  &lt;&lt; (I/O redirection)
+<a name="78"/>   #  \xc8  &gt;&gt; (I/O redirection)
+<a name="79"/>   #  \xc9  ...
+<a name="80"/>   #
+<a name="81"/>   local result
+<a name="82"/>   result := ""
+<a name="83"/>   #
+<a name="84"/>   # If there is a "return" in the string, it must be replaced by an
+<a name="85"/>   # escape sequence outside of the single quotes.
+<a name="86"/>   #
+<a name="87"/>   shquote_words(s,
+<a name="88"/>     '\0\t\n\r "#&amp;\'()*+/;&lt;&gt;?[\\]`{|}\xa8\xb3\xb6\xb7\xc5\xc7\xc8\xc9',
+<a name="89"/>     "\xb6") ? {
+<a name="90"/>      while result ||:= tab(find("\x0d")) do {
+<a name="91"/>     result ||:= "'\xb6n'"
+<a name="92"/>     move (1)
+<a name="93"/>     }
+<a name="94"/>      result ||:= tab(0)
+<a name="95"/>      }
+<a name="96"/>   return result
+<a name="97"/>end
+<a name="98"/>
+<a name="99"/>procedure shquote_words(wordList,quotedChars,escapeString,sepString)
+<a name="100"/>   local s, result, sep
+<a name="101"/>   /quotedChars := '\t\n\r $"#&amp;\'()*;&lt;&gt;?[\\^`|'
+<a name="102"/>   /escapeString := "\\"
+<a name="103"/>   /sepString := " "
+<a name="104"/>   result := sep := ""
+<a name="105"/>   every s := !wordList do {
+<a name="106"/>      if s == "" | upto(quotedChars,s) then {
+<a name="107"/>     s ? {
+<a name="108"/>        s := "'"
+<a name="109"/>        while s ||:= tab(find("'")) || "'" || escapeString || "''" &amp; move(1)
+<a name="110"/>        s ||:= tab(0) || "'"
+<a name="111"/>        }
+<a name="112"/>     }
+<a name="113"/>      result ||:= sep || s
+<a name="114"/>      sep := sepString
+<a name="115"/>      }
+<a name="116"/>   return result 
+<a name="117"/>end
+<a name="118"/>
+<a name="119"/>procedure dequote(s,escapeString,escapeProc)
+<a name="120"/>   local quoteChars,c,d
+<a name="121"/>   /escapeString := "\\"
+<a name="122"/>   /escapeProc := 1
+<a name="123"/>   quoteChars := '"\'' ++ escapeString[1]
+<a name="124"/>   s ? {
+<a name="125"/>      s := ""
+<a name="126"/>      while s ||:= tab(upto(quoteChars)) do {
+<a name="127"/>     if =escapeString then s ||:= (if d === "'" then escapeString else 
+<a name="128"/>escapeProc(move(1)))
+<a name="129"/>     else {
+<a name="130"/>        c := move(1)
+<a name="131"/>        (/d := c) | (s ||:= d ~== c) | (d := &amp;null)
+<a name="132"/>        }
+<a name="133"/>     }
+<a name="134"/>      return s || tab(0)
+<a name="135"/>      }
+<a name="136"/>end
+<a name="137"/>
+<a name="138"/>procedure mpwdequote(s)
+<a name="139"/>   return dequote(s,"\xb6",mpw_escape_proc)
+<a name="140"/>end
+<a name="141"/>
+<a name="142"/>procedure mpw_escape_proc(ch)
+<a name="143"/>   return case ch of {
+<a name="144"/>      "n": "\n"
+<a name="145"/>      "t": "\t"
+<a name="146"/>      "f": "\f"
+<a name="147"/>      default: ch
+<a name="148"/>      }
+<a name="149"/>end
+</pre></body></html>

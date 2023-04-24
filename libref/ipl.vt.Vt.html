@@ -1,0 +1,3377 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Vt</title></head><body>
+<h1>Vt</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a><br>
+<a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.vt-package.html" target="listFrame">ipl.vt</a></dd>
+</dl><p/>
+A VT emulator.
+<p/><a href="ipl.vt-vt.icn.html#382" target="displayFrame">Source - vt.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.MenuMode.html">gui.MenuMode</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.HasUseWheel.html">gui.HasUseWheel</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="gui.ScrollArea.html">gui.ScrollArea</a>
+<a href="gui.DrawScrollArea.html">gui.DrawScrollArea</a>
+<a href="gui.LineBasedScrollArea.html">gui.LineBasedScrollArea</a>
+<a href="ipl.vt.Vt.html">ipl.vt.Vt</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#set_use_wheel">set_use_wheel()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#wheel_listeners">wheel_listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#add">add()</a>
+<a href="gui.Component.html#add_list">add_list()</a>
+<a href="gui.Component.html#build_point_chain">build_point_chain()</a>
+<a href="gui.Component.html#can_drag">can_drag()</a>
+<a href="gui.Component.html#can_drop">can_drop()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#drag_event">drag_event()</a>
+<a href="gui.Component.html#drag_reset">drag_reset()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_index">get_index()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip">get_tooltip()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#handle_accel">handle_accel()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#match_accel">match_accel()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove">remove()</a>
+<a href="gui.Component.html#remove_all">remove_all()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_index">remove_index()</a>
+<a href="gui.Component.html#remove_list">remove_list()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reposition">reposition()</a>
+<a href="gui.Component.html#reposition_index">reposition_index()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout">reset_layout()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_geometry">set_geometry()</a>
+<a href="gui.Component.html#set_height">set_height()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_pos">set_pos()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_size">set_size()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_width">set_width()</a>
+<a href="gui.Component.html#set_x">set_x()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y">set_y()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#shift">shift()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#at_bottom">at_bottom()</a>
+<a href="gui.ScrollArea.html#at_top">at_top()</a>
+<a href="gui.ScrollArea.html#center_region_horizontally">center_region_horizontally()</a>
+<a href="gui.ScrollArea.html#center_region_vertically">center_region_vertically()</a>
+<a href="gui.ScrollArea.html#compute_and_invalidate">compute_and_invalidate()</a>
+<a href="gui.ScrollArea.html#display">display()</a>
+<a href="gui.ScrollArea.html#ensure_region_visible">ensure_region_visible()</a>
+<a href="gui.ScrollArea.html#get_area_x">get_area_x()</a>
+<a href="gui.ScrollArea.html#get_area_y">get_area_y()</a>
+<a href="gui.ScrollArea.html#get_default_subject_height">get_default_subject_height()</a>
+<a href="gui.ScrollArea.html#get_default_subject_width">get_default_subject_width()</a>
+<a href="gui.ScrollArea.html#get_subject_height">get_subject_height()</a>
+<a href="gui.ScrollArea.html#get_subject_width">get_subject_width()</a>
+<a href="gui.ScrollArea.html#get_subject_x">get_subject_x()</a>
+<a href="gui.ScrollArea.html#get_subject_y">get_subject_y()</a>
+<a href="gui.ScrollArea.html#goto_bottom">goto_bottom()</a>
+<a href="gui.ScrollArea.html#goto_top">goto_top()</a>
+<a href="gui.ScrollArea.html#handle_wheel_down">handle_wheel_down()</a>
+<a href="gui.ScrollArea.html#handle_wheel_left">handle_wheel_left()</a>
+<a href="gui.ScrollArea.html#handle_wheel_right">handle_wheel_right()</a>
+<a href="gui.ScrollArea.html#handle_wheel_up">handle_wheel_up()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_height">invalidate_subject_height()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_width">invalidate_subject_width()</a>
+<a href="gui.ScrollArea.html#on_default_key">on_default_key()</a>
+<a href="gui.ScrollArea.html#on_hsb">on_hsb()</a>
+<a href="gui.ScrollArea.html#on_vsb">on_vsb()</a>
+<a href="gui.ScrollArea.html#predict_total_height">predict_total_height()</a>
+<a href="gui.ScrollArea.html#predict_total_width">predict_total_width()</a>
+<a href="gui.ScrollArea.html#predict_view_height">predict_view_height()</a>
+<a href="gui.ScrollArea.html#predict_view_width">predict_view_width()</a>
+<a href="gui.ScrollArea.html#refresh">refresh()</a>
+<a href="gui.ScrollArea.html#remove_hsb">remove_hsb()</a>
+<a href="gui.ScrollArea.html#remove_vsb">remove_vsb()</a>
+<a href="gui.ScrollArea.html#set_area_x">set_area_x()</a>
+<a href="gui.ScrollArea.html#set_area_y">set_area_y()</a>
+<a href="gui.ScrollArea.html#set_ideal_size">set_ideal_size()</a>
+<a href="gui.ScrollArea.html#set_use_default_keys">set_use_default_keys()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#default_key_listener">default_key_listener</a>
+<a href="gui.ScrollArea.html#hsb">hsb</a>
+<a href="gui.ScrollArea.html#SCROLLBAR_SIZE">SCROLLBAR_SIZE</a>
+<a href="gui.ScrollArea.html#subject_height">subject_height</a>
+<a href="gui.ScrollArea.html#subject_width">subject_width</a>
+<a href="gui.ScrollArea.html#view">view</a>
+<a href="gui.ScrollArea.html#vsb">vsb</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.LineBasedScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.LineBasedScrollArea.html#calculate_subject_height">calculate_subject_height()</a>
+<a href="gui.LineBasedScrollArea.html#center_line">center_line()</a>
+<a href="gui.LineBasedScrollArea.html#create_hsb">create_hsb()</a>
+<a href="gui.LineBasedScrollArea.html#dump">dump()</a>
+<a href="gui.LineBasedScrollArea.html#ensure_line_visible">ensure_line_visible()</a>
+<a href="gui.LineBasedScrollArea.html#get_area_line_rect">get_area_line_rect()</a>
+<a href="gui.LineBasedScrollArea.html#get_cum_line_height">get_cum_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#get_height_for_line">get_height_for_line()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_count">get_line_count()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_height">get_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_info">get_line_info()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_rect">get_line_rect()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_under_pointer">get_line_under_pointer()</a>
+<a href="gui.LineBasedScrollArea.html#get_nearest_line_to_pointer">get_nearest_line_to_pointer()</a>
+<a href="gui.LineBasedScrollArea.html#get_page_movement">get_page_movement()</a>
+<a href="gui.LineBasedScrollArea.html#goto_first">goto_first()</a>
+<a href="gui.LineBasedScrollArea.html#goto_last">goto_last()</a>
+<a href="gui.LineBasedScrollArea.html#goto_pos">goto_pos()</a>
+<a href="gui.LineBasedScrollArea.html#has_lines">has_lines()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line">invalidate_line()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line_count">invalidate_line_count()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line_height">invalidate_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_lines">invalidate_lines()</a>
+<a href="gui.LineBasedScrollArea.html#pointer_to_line">pointer_to_line()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.LineBasedScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.LineBasedScrollArea.html#cum_line_height">cum_line_height</a>
+<a href="gui.LineBasedScrollArea.html#line_count">line_count</a>
+<a href="gui.LineBasedScrollArea.html#line_height">line_height</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_cursor_key">add_cursor_key()</a>
+<a href="#add_custom_key">add_custom_key()</a>
+<a href="#add_std_key">add_std_key()</a>
+<a href="#add_std_mods">add_std_mods()</a>
+<a href="#allow_nested">allow_nested()</a>
+<a href="#apply_charset">apply_charset()</a>
+<a href="#calc_size">calc_size()</a>
+<a href="#calculate_line_count">calculate_line_count()</a>
+<a href="#calculate_line_height">calculate_line_height()</a>
+<a href="#calculate_links_selection">calculate_links_selection()</a>
+<a href="#calculate_subject_width">calculate_subject_width()</a>
+<a href="#calculate_text_selection">calculate_text_selection()</a>
+<a href="#check_changed_size">check_changed_size()</a>
+<a href="#check_font">check_font()</a>
+<a href="#check_font1">check_font1()</a>
+<a href="#check_scroll_ticker">check_scroll_ticker()</a>
+<a href="#clear_mark">clear_mark()</a>
+<a href="#close_all">close_all()</a>
+<a href="#close_popup">close_popup()</a>
+<a href="#col_for_x">col_for_x()</a>
+<a href="#content_delete">content_delete()</a>
+<a href="#content_edit">content_edit()</a>
+<a href="#content_insert">content_insert()</a>
+<a href="#contents_str">contents_str()</a>
+<a href="#create_view">create_view()</a>
+<a href="#create_vsb">create_vsb()</a>
+<a href="#cursor_tick">cursor_tick()</a>
+<a href="#cy_to_index">cy_to_index()</a>
+<a href="#decode_list">decode_list()</a>
+<a href="#delete_lines">delete_lines()</a>
+<a href="#do_allow_80_132_mode">do_allow_80_132_mode()</a>
+<a href="#do_apc">do_apc()</a>
+<a href="#do_application_cursor_keys_mode">do_application_cursor_keys_mode()</a>
+<a href="#do_application_keypad_mode">do_application_keypad_mode()</a>
+<a href="#do_backspace">do_backspace()</a>
+<a href="#do_cr">do_cr()</a>
+<a href="#do_crnl">do_crnl()</a>
+<a href="#do_csi">do_csi()</a>
+<a href="#do_cursor_down">do_cursor_down()</a>
+<a href="#do_cursor_left">do_cursor_left()</a>
+<a href="#do_cursor_right">do_cursor_right()</a>
+<a href="#do_cursor_up">do_cursor_up()</a>
+<a href="#do_custom_erase_right">do_custom_erase_right()</a>
+<a href="#do_custom_key">do_custom_key()</a>
+<a href="#do_dcs">do_dcs()</a>
+<a href="#do_dec_reset">do_dec_reset()</a>
+<a href="#do_dec_set">do_dec_set()</a>
+<a href="#do_decaln">do_decaln()</a>
+<a href="#do_default_str">do_default_str()</a>
+<a href="#do_delete_chars">do_delete_chars()</a>
+<a href="#do_delete_lines">do_delete_lines()</a>
+<a href="#do_designate_charset">do_designate_charset()</a>
+<a href="#do_device_status_report">do_device_status_report()</a>
+<a href="#do_erase_above">do_erase_above()</a>
+<a href="#do_erase_all">do_erase_all()</a>
+<a href="#do_erase_below">do_erase_below()</a>
+<a href="#do_erase_characters">do_erase_characters()</a>
+<a href="#do_erase_history">do_erase_history()</a>
+<a href="#do_erase_in_display">do_erase_in_display()</a>
+<a href="#do_erase_in_line">do_erase_in_line()</a>
+<a href="#do_erase_left">do_erase_left()</a>
+<a href="#do_erase_line">do_erase_line()</a>
+<a href="#do_erase_right">do_erase_right()</a>
+<a href="#do_esc">do_esc()</a>
+<a href="#do_esc_hash">do_esc_hash()</a>
+<a href="#do_full_reset">do_full_reset()</a>
+<a href="#do_hide_cursor">do_hide_cursor()</a>
+<a href="#do_index">do_index()</a>
+<a href="#do_insert">do_insert()</a>
+<a href="#do_insert_blanks">do_insert_blanks()</a>
+<a href="#do_insert_lines">do_insert_lines()</a>
+<a href="#do_insert_or_put">do_insert_or_put()</a>
+<a href="#do_move_cursor">do_move_cursor()</a>
+<a href="#do_move_cursor_x">do_move_cursor_x()</a>
+<a href="#do_next_line">do_next_line()</a>
+<a href="#do_nl">do_nl()</a>
+<a href="#do_origin_mode">do_origin_mode()</a>
+<a href="#do_osc">do_osc()</a>
+<a href="#do_popup">do_popup()</a>
+<a href="#do_privacy_message">do_privacy_message()</a>
+<a href="#do_put">do_put()</a>
+<a href="#do_reset_mode">do_reset_mode()</a>
+<a href="#do_restore_cursor">do_restore_cursor()</a>
+<a href="#do_reverse_index">do_reverse_index()</a>
+<a href="#do_reverse_video">do_reverse_video()</a>
+<a href="#do_save_cursor">do_save_cursor()</a>
+<a href="#do_scroll_up">do_scroll_up()</a>
+<a href="#do_search">do_search()</a>
+<a href="#do_search_next">do_search_next()</a>
+<a href="#do_search_prev">do_search_prev()</a>
+<a href="#do_send_primary_device_attrs">do_send_primary_device_attrs()</a>
+<a href="#do_send_secondary_device_attrs">do_send_secondary_device_attrs()</a>
+<a href="#do_set_attr">do_set_attr()</a>
+<a href="#do_set_charset">do_set_charset()</a>
+<a href="#do_set_link">do_set_link()</a>
+<a href="#do_set_margins">do_set_margins()</a>
+<a href="#do_set_mode">do_set_mode()</a>
+<a href="#do_single_shift">do_single_shift()</a>
+<a href="#do_soft_reset">do_soft_reset()</a>
+<a href="#do_sos">do_sos()</a>
+<a href="#do_tab">do_tab()</a>
+<a href="#do_tab_clear">do_tab_clear()</a>
+<a href="#do_tab_set">do_tab_set()</a>
+<a href="#do_use_alternate_buffer">do_use_alternate_buffer()</a>
+<a href="#do_use_normal_buffer">do_use_normal_buffer()</a>
+<a href="#do_vertical_and_horizontal_pos">do_vertical_and_horizontal_pos()</a>
+<a href="#do_vertical_pos_absolute">do_vertical_pos_absolute()</a>
+<a href="#do_vertical_pos_relative">do_vertical_pos_relative()</a>
+<a href="#do_wraparound_mode">do_wraparound_mode()</a>
+<a href="#done_search">done_search()</a>
+<a href="#draw">draw()</a>
+<a href="#draw_line">draw_line()</a>
+<a href="#ensure_pointer_line_visible">ensure_pointer_line_visible()</a>
+<a href="#finally">finally()</a>
+<a href="#focus_changed">focus_changed()</a>
+<a href="#gen_custom_key_codes">gen_custom_key_codes()</a>
+<a href="#gen_custom_key_entries">gen_custom_key_entries()</a>
+<a href="#gen_popup_components">gen_popup_components()</a>
+<a href="#get_actual_history_size">get_actual_history_size()</a>
+<a href="#get_ch">get_ch()</a>
+<a href="#get_chs">get_chs()</a>
+<a href="#get_current_links_selection">get_current_links_selection()</a>
+<a href="#get_current_text_selection">get_current_text_selection()</a>
+<a href="#get_default_height">get_default_height()</a>
+<a href="#get_default_width">get_default_width()</a>
+<a href="#get_key_flags">get_key_flags()</a>
+<a href="#get_nesting_component">get_nesting_component()</a>
+<a href="#get_segment_for_pos">get_segment_for_pos()</a>
+<a href="#handle_copy">handle_copy()</a>
+<a href="#handle_copy_links">handle_copy_links()</a>
+<a href="#handle_default_key">handle_default_key()</a>
+<a href="#handle_double_click">handle_double_click()</a>
+<a href="#handle_exit">handle_exit()</a>
+<a href="#handle_in_chain">handle_in_chain()</a>
+<a href="#handle_interrupted">handle_interrupted()</a>
+<a href="#handle_key">handle_key()</a>
+<a href="#handle_ldrag">handle_ldrag()</a>
+<a href="#handle_lpress">handle_lpress()</a>
+<a href="#handle_lpress1">handle_lpress1()</a>
+<a href="#handle_lrelease">handle_lrelease()</a>
+<a href="#handle_mdrag">handle_mdrag()</a>
+<a href="#handle_move">handle_move()</a>
+<a href="#handle_mpress">handle_mpress()</a>
+<a href="#handle_mpress_response">handle_mpress_response()</a>
+<a href="#handle_mrelease">handle_mrelease()</a>
+<a href="#handle_pgdn">handle_pgdn()</a>
+<a href="#handle_pgup">handle_pgup()</a>
+<a href="#handle_popup_key">handle_popup_key()</a>
+<a href="#handle_rpress">handle_rpress()</a>
+<a href="#handle_select_all">handle_select_all()</a>
+<a href="#handle_table_key">handle_table_key()</a>
+<a href="#handle_triple_click">handle_triple_click()</a>
+<a href="#init">init()</a>
+<a href="#initially">initially()</a>
+<a href="#input">input()</a>
+<a href="#input_handler">input_handler()</a>
+<a href="#int_param">int_param()</a>
+<a href="#int_params">int_params()</a>
+<a href="#invalidate_cursor">invalidate_cursor()</a>
+<a href="#invalidate_link">invalidate_link()</a>
+<a href="#invalidate_region">invalidate_region()</a>
+<a href="#is_partial_utf8">is_partial_utf8()</a>
+<a href="#keeps">keeps()</a>
+<a href="#label_field">label_field()</a>
+<a href="#layout">layout()</a>
+<a href="#line_len">line_len()</a>
+<a href="#line_str">line_str()</a>
+<a href="#move_cursor">move_cursor()</a>
+<a href="#new">new()</a>
+<a href="#normalize_after_size_changed">normalize_after_size_changed()</a>
+<a href="#on_lost_primary_ownership">on_lost_primary_ownership()</a>
+<a href="#on_popup_closed">on_popup_closed()</a>
+<a href="#on_popup_selection">on_popup_selection()</a>
+<a href="#open_popup">open_popup()</a>
+<a href="#own_primary">own_primary()</a>
+<a href="#page_jump_impl">page_jump_impl()</a>
+<a href="#peek_ch">peek_ch()</a>
+<a href="#put_all_segments">put_all_segments()</a>
+<a href="#put_segment">put_segment()</a>
+<a href="#put_user_string">put_user_string()</a>
+<a href="#quieten_cursor_and_clear_msg">quieten_cursor_and_clear_msg()</a>
+<a href="#read_params">read_params()</a>
+<a href="#read_string1">read_string1()</a>
+<a href="#read_string2">read_string2()</a>
+<a href="#reflow">reflow()</a>
+<a href="#reflow_loc">reflow_loc()</a>
+<a href="#region_contains">region_contains()</a>
+<a href="#remove_custom_key">remove_custom_key()</a>
+<a href="#reset_blink">reset_blink()</a>
+<a href="#reset_charsets">reset_charsets()</a>
+<a href="#reset_custom_keys">reset_custom_keys()</a>
+<a href="#reset_margins">reset_margins()</a>
+<a href="#reset_search">reset_search()</a>
+<a href="#reset_tab_stops">reset_tab_stops()</a>
+<a href="#reset_term">reset_term()</a>
+<a href="#row_to_index">row_to_index()</a>
+<a href="#scroll_down">scroll_down()</a>
+<a href="#scroll_tick">scroll_tick()</a>
+<a href="#scroll_up">scroll_up()</a>
+<a href="#search_helper">search_helper()</a>
+<a href="#segments_in_range">segments_in_range()</a>
+<a href="#send">send()</a>
+<a href="#send_tr_nl">send_tr_nl()</a>
+<a href="#set_col_mode">set_col_mode()</a>
+<a href="#set_cursor_from_pos">set_cursor_from_pos()</a>
+<a href="#set_dont_quieten">set_dont_quieten()</a>
+<a href="#set_highlight">set_highlight()</a>
+<a href="#set_history_size">set_history_size()</a>
+<a href="#set_internal_fields">set_internal_fields()</a>
+<a href="#set_last_highlight">set_last_highlight()</a>
+<a href="#set_normal_bg">set_normal_bg()</a>
+<a href="#set_normal_fg">set_normal_fg()</a>
+<a href="#set_over">set_over()</a>
+<a href="#set_reverse_bg">set_reverse_bg()</a>
+<a href="#set_reverse_fg">set_reverse_fg()</a>
+<a href="#set_ui">set_ui()</a>
+<a href="#set_verbose">set_verbose()</a>
+<a href="#set_vt_font">set_vt_font()</a>
+<a href="#set_vt_height">set_vt_height()</a>
+<a href="#set_vt_width">set_vt_width()</a>
+<a href="#setup_charsets">setup_charsets()</a>
+<a href="#setup_key_table">setup_key_table()</a>
+<a href="#should_close">should_close()</a>
+<a href="#small_jump_impl">small_jump_impl()</a>
+<a href="#spc">spc()</a>
+<a href="#split_from">split_from()</a>
+<a href="#split_upto">split_upto()</a>
+<a href="#string_to_key_mask">string_to_key_mask()</a>
+<a href="#synch_view_colours">synch_view_colours()</a>
+<a href="#trim_history">trim_history()</a>
+<a href="#truncate">truncate()</a>
+<a href="#ts_add">ts_add()</a>
+<a href="#unflow_loc">unflow_loc()</a>
+<a href="#unflowed">unflowed()</a>
+<a href="#unquieten_cursor">unquieten_cursor()</a>
+<a href="#urls_in_segments">urls_in_segments()</a>
+<a href="#wait_for_buff">wait_for_buff()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#allow_80_132_mode">allow_80_132_mode</a>
+<a href="#application_cursor_mode">application_cursor_mode</a>
+<a href="#application_keypad_mode">application_keypad_mode</a>
+<a href="#attr">attr</a>
+<a href="#bottom_margin">bottom_margin</a>
+<a href="#buff">buff</a>
+<a href="#C">C</a>
+<a href="#char_w">char_w</a>
+<a href="#CHARSET">CHARSET</a>
+<a href="#charsets">charsets</a>
+<a href="#col_mode">col_mode</a>
+<a href="#COLORS">COLORS</a>
+<a href="#cols">cols</a>
+<a href="#contents">contents</a>
+<a href="#CSM">CSM</a>
+<a href="#curr_charset">curr_charset</a>
+<a href="#cursor_on">cursor_on</a>
+<a href="#cursor_ticker">cursor_ticker</a>
+<a href="#cursor_x">cursor_x</a>
+<a href="#cursor_y">cursor_y</a>
+<a href="#custom_keys">custom_keys</a>
+<a href="#cx">cx</a>
+<a href="#cy">cy</a>
+<a href="#DEFAULT_FONT">DEFAULT_FONT</a>
+<a href="#DEFAULT_HISTORY_SIZE">DEFAULT_HISTORY_SIZE</a>
+<a href="#DEFAULT_VT_HEIGHT">DEFAULT_VT_HEIGHT</a>
+<a href="#DEFAULT_VT_WIDTH">DEFAULT_VT_WIDTH</a>
+<a href="#dont_quieten_flag">dont_quieten_flag</a>
+<a href="#EMPTY_ATTR">EMPTY_ATTR</a>
+<a href="#going_up">going_up</a>
+<a href="#got">got</a>
+<a href="#held">held</a>
+<a href="#hide_cursor_mode">hide_cursor_mode</a>
+<a href="#highlight">highlight</a>
+<a href="#history_size">history_size</a>
+<a href="#input_handler_coex">input_handler_coex</a>
+<a href="#insert_mode">insert_mode</a>
+<a href="#K">K</a>
+<a href="#KEY_TABLE">KEY_TABLE</a>
+<a href="#last_highlight">last_highlight</a>
+<a href="#links_selection">links_selection</a>
+<a href="#M">M</a>
+<a href="#M4">M4</a>
+<a href="#M5">M5</a>
+<a href="#mark_x">mark_x</a>
+<a href="#mark_y">mark_y</a>
+<a href="#multi_begin">multi_begin</a>
+<a href="#no_drag">no_drag</a>
+<a href="#normal_bg">normal_bg</a>
+<a href="#normal_fg">normal_fg</a>
+<a href="#origin_mode">origin_mode</a>
+<a href="#OSC_CHAR">OSC_CHAR</a>
+<a href="#over">over</a>
+<a href="#PAGE_MARGIN">PAGE_MARGIN</a>
+<a href="#part_ch">part_ch</a>
+<a href="#popup">popup</a>
+<a href="#primary">primary</a>
+<a href="#primary_selection_owner">primary_selection_owner</a>
+<a href="#quieten">quieten</a>
+<a href="#reverse_bg">reverse_bg</a>
+<a href="#reverse_fg">reverse_fg</a>
+<a href="#reverse_mode">reverse_mode</a>
+<a href="#rows">rows</a>
+<a href="#S">S</a>
+<a href="#saved_buffer">saved_buffer</a>
+<a href="#saved_cursor">saved_cursor</a>
+<a href="#scroll_ticker">scroll_ticker</a>
+<a href="#scroll_ticker_interval">scroll_ticker_interval</a>
+<a href="#search_increment_flag">search_increment_flag</a>
+<a href="#search_term">search_term</a>
+<a href="#search_term_c1">search_term_c1</a>
+<a href="#tab_stops">tab_stops</a>
+<a href="#text_selection">text_selection</a>
+<a href="#top_margin">top_margin</a>
+<a href="#U">U</a>
+<a href="#ui">ui</a>
+<a href="#verbose_flag">verbose_flag</a>
+<a href="#vt_height">vt_height</a>
+<a href="#vt_width">vt_width</a>
+<a href="#wraparound_mode">wraparound_mode</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_cursor_key"/>
+<h3>add_cursor_key(k, c)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#567" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="add_custom_key"/>
+<h3>add_custom_key(code, bits, mask, func, data)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2523" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="add_std_key"/>
+<h3>add_std_key(k, s, t)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#561" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="add_std_mods"/>
+<h3>add_std_mods(k, l, r)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#551" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="allow_nested"/>
+<h3>allow_nested(c)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#allow_nested">allow_nested()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2950" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="apply_charset"/>
+<h3>apply_charset(s, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#937" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="calc_size"/>
+<h3>calc_size()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#751" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_line_count"/>
+<h3>calculate_line_count()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#calculate_line_count">calculate_line_count()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2106" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_line_height"/>
+<h3>calculate_line_height()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#calculate_line_height">calculate_line_height()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2110" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_links_selection"/>
+<h3>calculate_links_selection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2647" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_subject_width"/>
+<h3>calculate_subject_width()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#calculate_subject_width">calculate_subject_width()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2114" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_text_selection"/>
+<h3>calculate_text_selection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2668" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="check_changed_size"/>
+<h3>check_changed_size()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#620" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="check_font"/>
+<h3>check_font(s)</h3>
+private static<p/>
+<dl>
+<dd>
+Check the font s is monospaced; if so return the average char
+width (which may be a real).
+<p/><a href="ipl.vt-vt.icn.html#812" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="check_font1"/>
+<h3>check_font1(W, s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#803" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="check_scroll_ticker"/>
+<h3>check_scroll_ticker(d)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2324" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_mark"/>
+<h3>clear_mark()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2275" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="close_all"/>
+<h3>close_all()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#close_all">close_all()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2953" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="close_popup"/>
+<h3>close_popup()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2957" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="col_for_x"/>
+<h3>col_for_x(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2565" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="content_delete"/>
+<h3>content_delete(i)</h3>
+private<p/>
+<dl>
+<dd>
+Delete a line from the content; the caller must invalidate the view
+<p/><a href="ipl.vt-vt.icn.html#1920" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="content_edit"/>
+<h3>content_edit(i, l, bg, join)</h3>
+private<p/>
+<dl>
+<dd>
+Change line i in the contents; the caller is responsible for invalidating the line i.
+<p/><a href="ipl.vt-vt.icn.html#1438" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="content_insert"/>
+<h3>content_insert(i)</h3>
+private<p/>
+<dl>
+<dd>
+Add a line to the content; the caller must invalidate the view
+<p/><a href="ipl.vt-vt.icn.html#1933" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="contents_str"/>
+<h3>contents_str(i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2288" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="create_view"/>
+<h3>create_view()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.DrawScrollArea.html#create_view">create_view()</a> in <a href="gui.DrawScrollArea.html" target="displayFrame">gui.DrawScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#579" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="create_vsb"/>
+<h3>create_vsb()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#create_vsb">create_vsb()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#583" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_tick"/>
+<h3>cursor_tick()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2357" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cy_to_index"/>
+<h3>cy_to_index()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1990" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="decode_list"/>
+<h3>decode_list(l)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1630" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="delete_lines"/>
+<h3>delete_lines(r, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1950" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_allow_80_132_mode"/>
+<h3>do_allow_80_132_mode(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1195" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_apc"/>
+<h3>do_apc()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1784" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_application_cursor_keys_mode"/>
+<h3>do_application_cursor_keys_mode(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1814" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_application_keypad_mode"/>
+<h3>do_application_keypad_mode(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1810" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_backspace"/>
+<h3>do_backspace()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#955" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_cr"/>
+<h3>do_cr()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1998" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_crnl"/>
+<h3>do_crnl()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2009" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_csi"/>
+<h3>do_csi()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#996" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_cursor_down"/>
+<h3>do_cursor_down(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1613" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_cursor_left"/>
+<h3>do_cursor_left(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1625" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_cursor_right"/>
+<h3>do_cursor_right(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1621" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_cursor_up"/>
+<h3>do_cursor_up(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1605" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_custom_erase_right"/>
+<h3>do_custom_erase_right()</h3>
+private<p/>
+<dl>
+<dd>
+Flowterm-specific; like do_erase_right(), but a no-op if the
+cursor is in the "extra" last column.  This behaves like konsole
+and gnome terminal's erase-right.
+<p/><a href="ipl.vt-vt.icn.html#1543" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_custom_key"/>
+<h3>do_custom_key(e)</h3>
+public<p/>
+<dl>
+<dd>
+Given a key event e, lookup and call any matching defined custom
+key.
+<p/><a href="ipl.vt-vt.icn.html#2455" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_dcs"/>
+<h3>do_dcs()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1788" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_dec_reset"/>
+<h3>do_dec_reset(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1097" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_dec_set"/>
+<h3>do_dec_set(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1083" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_decaln"/>
+<h3>do_decaln()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1861" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_default_str"/>
+<h3>do_default_str(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2063" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_delete_chars"/>
+<h3>do_delete_chars(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1534" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_delete_lines"/>
+<h3>do_delete_lines(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1227" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_designate_charset"/>
+<h3>do_designate_charset(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1829" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_device_status_report"/>
+<h3>do_device_status_report(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1039" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_above"/>
+<h3>do_erase_above()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1412" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_all"/>
+<h3>do_erase_all()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1421" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_below"/>
+<h3>do_erase_below()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1404" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_characters"/>
+<h3>do_erase_characters(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1393" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_history"/>
+<h3>do_erase_history()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1427" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_in_display"/>
+<h3>do_erase_in_display(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1371" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_in_line"/>
+<h3>do_erase_in_line(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1380" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_left"/>
+<h3>do_erase_left()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1561" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_line"/>
+<h3>do_erase_line()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1570" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_erase_right"/>
+<h3>do_erase_right()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1553" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_esc"/>
+<h3>do_esc()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1698" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_esc_hash"/>
+<h3>do_esc_hash()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1852" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_full_reset"/>
+<h3>do_full_reset()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1075" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_hide_cursor"/>
+<h3>do_hide_cursor(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1818" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_index"/>
+<h3>do_index()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1966" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_insert"/>
+<h3>do_insert(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2049" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_insert_blanks"/>
+<h3>do_insert_blanks(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1231" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_insert_lines"/>
+<h3>do_insert_lines(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1219" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_insert_or_put"/>
+<h3>do_insert_or_put(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2014" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_move_cursor"/>
+<h3>do_move_cursor(r, c)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1447" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_move_cursor_x"/>
+<h3>do_move_cursor_x(c)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1455" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_next_line"/>
+<h3>do_next_line()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1982" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_nl"/>
+<h3>do_nl()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2002" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_origin_mode"/>
+<h3>do_origin_mode(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1186" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_osc"/>
+<h3>do_osc()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1792" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_popup"/>
+<h3>do_popup(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1638" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_privacy_message"/>
+<h3>do_privacy_message()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1780" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_put"/>
+<h3>do_put(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2021" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_reset_mode"/>
+<h3>do_reset_mode(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1058" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_restore_cursor"/>
+<h3>do_restore_cursor()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1839" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_reverse_index"/>
+<h3>do_reverse_index()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1974" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_reverse_video"/>
+<h3>do_reverse_video(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1181" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_save_cursor"/>
+<h3>do_save_cursor()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1835" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_scroll_up"/>
+<h3>do_scroll_up(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1223" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_search"/>
+<h3>do_search(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#3065" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_search_next"/>
+<h3>do_search_next()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#3112" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_search_prev"/>
+<h3>do_search_prev()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#3088" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_send_primary_device_attrs"/>
+<h3>do_send_primary_device_attrs(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1359" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_send_secondary_device_attrs"/>
+<h3>do_send_secondary_device_attrs(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1365" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_set_attr"/>
+<h3>do_set_attr(n)</h3>
+private<p/>
+<dl>
+<dd>
+ESC[{n}m
+<p/><a href="ipl.vt-vt.icn.html#1670" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_set_charset"/>
+<h3>do_set_charset(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#933" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_set_link"/>
+<h3>do_set_link(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1650" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_set_margins"/>
+<h3>do_set_margins(top, bottom)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1459" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_set_mode"/>
+<h3>do_set_mode(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1052" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_single_shift"/>
+<h3>do_single_shift(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1823" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_soft_reset"/>
+<h3>do_soft_reset()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1071" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_sos"/>
+<h3>do_sos()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1806" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_tab"/>
+<h3>do_tab()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#941" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_tab_clear"/>
+<h3>do_tab_clear(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1064" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_tab_set"/>
+<h3>do_tab_set()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1848" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_use_alternate_buffer"/>
+<h3>do_use_alternate_buffer()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1111" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_use_normal_buffer"/>
+<h3>do_use_normal_buffer()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1139" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_vertical_and_horizontal_pos"/>
+<h3>do_vertical_and_horizontal_pos(m, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1215" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_vertical_pos_absolute"/>
+<h3>do_vertical_pos_absolute(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1207" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_vertical_pos_relative"/>
+<h3>do_vertical_pos_relative(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1211" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="do_wraparound_mode"/>
+<h3>do_wraparound_mode(f)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1191" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="done_search"/>
+<h3>done_search(pos, matching, num)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#3137" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="draw"/>
+<h3>draw()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#draw">draw()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2120" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_line"/>
+<h3>draw_line()</h3>
+public override optional<p/>
+<dl>
+<dd>Overrides <a href="gui.LineBasedScrollArea.html#draw_line">draw_line()</a> in <a href="gui.LineBasedScrollArea.html" target="displayFrame">gui.LineBasedScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2118" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="ensure_pointer_line_visible"/>
+<h3>ensure_pointer_line_visible(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2839" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#finally">finally()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#838" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="focus_changed"/>
+<h3>focus_changed(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#focus_changed">focus_changed()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2776" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_custom_key_codes"/>
+<h3>gen_custom_key_codes()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2515" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_custom_key_entries"/>
+<h3>gen_custom_key_entries(code)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2519" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_popup_components"/>
+<h3>gen_popup_components()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#gen_popup_components">gen_popup_components()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2943" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_actual_history_size"/>
+<h3>get_actual_history_size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the history size, but ignoring the value used by the
+alternate buffer, if we are in that mode.
+<p/><a href="ipl.vt-vt.icn.html#1351" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_ch"/>
+<h3>get_ch()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#899" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_chs"/>
+<h3>get_chs(cs)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#889" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_links_selection"/>
+<h3>get_current_links_selection()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2643" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_text_selection"/>
+<h3>get_current_text_selection()</h3>
+public<p/>
+<dl>
+<dd>
+Return the currently selected text, or fail if none is selected.
+<p/><a href="ipl.vt-vt.icn.html#2617" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_height"/>
+<h3>get_default_height()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#get_default_height">get_default_height()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#616" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_width"/>
+<h3>get_default_width()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#get_default_width">get_default_width()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#612" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_key_flags"/>
+<h3>get_key_flags(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2442" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_nesting_component"/>
+<h3>get_nesting_component()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#get_nesting_component">get_nesting_component()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2947" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="get_segment_for_pos"/>
+<h3>get_segment_for_pos(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2571" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_copy"/>
+<h3>handle_copy(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2406" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_copy_links"/>
+<h3>handle_copy_links(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2412" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_default_key"/>
+<h3>handle_default_key(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2431" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_double_click"/>
+<h3>handle_double_click()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2781" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_exit"/>
+<h3>handle_exit(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2918" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_in_chain"/>
+<h3>handle_in_chain(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2905" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_interrupted"/>
+<h3>handle_interrupted(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2923" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_key"/>
+<h3>handle_key(e, src, ty)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2511" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_ldrag"/>
+<h3>handle_ldrag(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2299" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lpress"/>
+<h3>handle_lpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2843" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lpress1"/>
+<h3>handle_lpress1(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2819" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lrelease"/>
+<h3>handle_lrelease(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2701" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_mdrag"/>
+<h3>handle_mdrag(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2738" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_move"/>
+<h3>handle_move(ev)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2901" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_mpress"/>
+<h3>handle_mpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2602" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_mpress_response"/>
+<h3>handle_mpress_response(target_type, data)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2597" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_mrelease"/>
+<h3>handle_mrelease(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2752" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_pgdn"/>
+<h3>handle_pgdn(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2386" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_pgup"/>
+<h3>handle_pgup(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2382" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_popup_key"/>
+<h3>handle_popup_key(e, src, ty)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2480" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_rpress"/>
+<h3>handle_rpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2859" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_select_all"/>
+<h3>handle_select_all(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2722" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_table_key"/>
+<h3>handle_table_key(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2467" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_triple_click"/>
+<h3>handle_triple_click()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2803" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#469" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#initially">initially()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#794" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="input"/>
+<h3>input(s)</h3>
+public<p/>
+<dl>
+<dd>
+Provide input to the terminal
+<p/><a href="ipl.vt-vt.icn.html#845" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="input_handler"/>
+<h3>input_handler()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#914" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="int_param"/>
+<h3>int_param(param, n, def)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1469" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="int_params"/>
+<h3>int_params(param, def)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1473" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="invalidate_cursor"/>
+<h3>invalidate_cursor()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2772" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="invalidate_link"/>
+<h3>invalidate_link(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2536" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="invalidate_region"/>
+<h3>invalidate_region()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2768" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="is_partial_utf8"/>
+<h3>is_partial_utf8(s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#854" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="keeps"/>
+<h3>keeps(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#keeps">keeps()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2095" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="label_field"/>
+<h3>label_field(x)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2978" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="layout"/>
+<h3>layout()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#layout">layout()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#587" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="line_len"/>
+<h3>line_len(l)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2281" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="line_str"/>
+<h3>line_str(l)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2292" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="move_cursor"/>
+<h3>move_cursor(x, y, extra)</h3>
+private<p/>
+<dl>
+<dd>
+extra is a flag; if set then we allow the x cursor to go into the
+"extra" cols+1 column; this is used when restoring a saved
+cursor.
+<p/><a href="ipl.vt-vt.icn.html#1578" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#new">new()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#3170" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="normalize_after_size_changed"/>
+<h3>normalize_after_size_changed(old_cols, old_rows)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#759" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="on_lost_primary_ownership"/>
+<h3>on_lost_primary_ownership()</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#573" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="on_popup_closed"/>
+<h3>on_popup_closed()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2879" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="on_popup_selection"/>
+<h3>on_popup_selection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2971" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="open_popup"/>
+<h3>open_popup(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2982" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="own_primary"/>
+<h3>own_primary()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2715" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="page_jump_impl"/>
+<h3>page_jump_impl(n)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2390" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="peek_ch"/>
+<h3>peek_ch()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#909" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="put_all_segments"/>
+<h3>put_all_segments(l, others)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1481" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="put_segment"/>
+<h3>put_segment(l, s, attr)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1490" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="put_user_string"/>
+<h3>put_user_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+Put a string as though typed by the user.
+<p/><a href="ipl.vt-vt.icn.html#2421" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="quieten_cursor_and_clear_msg"/>
+<h3>quieten_cursor_and_clear_msg()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2883" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="read_params"/>
+<h3>read_params()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#960" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="read_string1"/>
+<h3>read_string1()</h3>
+private<p/>
+<dl>
+<dd>
+Read a string according to ecma 8.3.27, 8.3.89 and others.  The
+stuck loop check is non-standard.
+<p/><a href="ipl.vt-vt.icn.html#1730" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="read_string2"/>
+<h3>read_string2()</h3>
+private<p/>
+<dl>
+<dd>
+Read a string according to ecma 8.3.128.  The stuck loop check is
+non-standard.
+<p/><a href="ipl.vt-vt.icn.html#1756" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reflow"/>
+<h3>reflow(old_rows)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#711" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reflow_loc"/>
+<h3>reflow_loc(x, y)</h3>
+private<p/>
+<dl>
+<dd>
+Given an x, y position based on "unflowed" coordinates, returns
+a new position based on the current (flowed) contents.
+<p/><a href="ipl.vt-vt.icn.html#691" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="region_contains"/>
+<h3>region_contains(i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1946" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_custom_key"/>
+<h3>remove_custom_key(code, bits, mask)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2527" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_blink"/>
+<h3>reset_blink()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2271" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_charsets"/>
+<h3>reset_charsets()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1239" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_custom_keys"/>
+<h3>reset_custom_keys()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2531" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_margins"/>
+<h3>reset_margins()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#789" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_search"/>
+<h3>reset_search()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#3165" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_tab_stops"/>
+<h3>reset_tab_stops()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1235" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_term"/>
+<h3>reset_term()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1245" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="row_to_index"/>
+<h3>row_to_index(r)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1994" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_down"/>
+<h3>scroll_down(r, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1868" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_tick"/>
+<h3>scroll_tick()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2331" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_up"/>
+<h3>scroll_up(r, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1897" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="search_helper"/>
+<h3>search_helper(str)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#3080" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="segments_in_range"/>
+<h3>segments_in_range(row, i, j)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2631" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="send"/>
+<h3>send(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2378" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="send_tr_nl"/>
+<h3>send_tr_nl(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2374" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_col_mode"/>
+<h3>set_col_mode(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1199" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cursor_from_pos"/>
+<h3>set_cursor_from_pos(e)</h3>
+private<p/>
+<dl>
+<dd>
+Set cursor from the given event
+<p/><a href="ipl.vt-vt.icn.html#2259" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dont_quieten"/>
+<h3>set_dont_quieten(f)</h3>
+public<p/>
+<dl>
+<dd>
+If set, quietening of the cursor is disabled.
+<p/><a href="ipl.vt-vt.icn.html#1279" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_highlight"/>
+<h3>set_highlight(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2555" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_history_size"/>
+<h3>set_history_size(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the history size; 0 implies no scrollbar.
+<p/><a href="ipl.vt-vt.icn.html#1335" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_internal_fields"/>
+<h3>set_internal_fields()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#set_internal_fields">set_internal_fields()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2099" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_last_highlight"/>
+<h3>set_last_highlight(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2546" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_normal_bg"/>
+<h3>set_normal_bg(c)</h3>
+public<p/>
+<dl>
+<dd>
+Set the bg colour to use in non-reverse mode.
+<p/><a href="ipl.vt-vt.icn.html#1323" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_normal_fg"/>
+<h3>set_normal_fg(c)</h3>
+public<p/>
+<dl>
+<dd>
+Set the fg colour to use in normal (non-reverse) mode.
+<p/><a href="ipl.vt-vt.icn.html#1311" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_over"/>
+<h3>set_over(u)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2582" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_reverse_bg"/>
+<h3>set_reverse_bg(c)</h3>
+public<p/>
+<dl>
+<dd>
+Set the bg colour to use in reverse mode.
+<p/><a href="ipl.vt-vt.icn.html#1299" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_reverse_fg"/>
+<h3>set_reverse_fg(c)</h3>
+public<p/>
+<dl>
+<dd>
+Set the fg colour to use in reverse mode.
+<p/><a href="ipl.vt-vt.icn.html#1287" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ui"/>
+<h3>set_ui(ui)</h3>
+public<p/>
+<dl>
+<dd>
+Set the VtUI to use.
+<p/><a href="ipl.vt-vt.icn.html#2931" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_verbose"/>
+<h3>set_verbose(f)</h3>
+public<p/>
+<dl>
+<dd>
+If set, some debug output is produced.
+<p/><a href="ipl.vt-vt.icn.html#1271" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_vt_font"/>
+<h3>set_vt_font(s)</h3>
+public<p/>
+<dl>
+<dd>
+A wrapper around <code><a href="gui.Component.html#set_font">set_font()</a></code>, which validates <code>s</code> as a valid
+font and resets the component if necessary.
+<p/><a href="ipl.vt-vt.icn.html#822" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_vt_height"/>
+<h3>set_vt_height(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the height of the vt in lines.  The default is 25.  Only used
+if the size of the component is not set in pixels.
+<p/><a href="ipl.vt-vt.icn.html#602" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="set_vt_width"/>
+<h3>set_vt_width(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the width of the vt in characters.  The default is 80. Only
+used if the size of the component is not set in pixels.
+<p/><a href="ipl.vt-vt.icn.html#592" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_charsets"/>
+<h3>setup_charsets()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#493" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_key_table"/>
+<h3>setup_key_table()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#521" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="should_close"/>
+<h3>should_close(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#should_close">should_close()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2939" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="small_jump_impl"/>
+<h3>small_jump_impl(n)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2399" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="spc"/>
+<h3>spc(n)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1389" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="split_from"/>
+<h3>split_from(r, j, m)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1517" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="split_upto"/>
+<h3>split_upto(r, j, pad)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#1497" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="string_to_key_mask"/>
+<h3>string_to_key_mask(s)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#501" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="synch_view_colours"/>
+<h3>synch_view_colours()</h3>
+package<p/>
+<dl>
+<dd>
+This is called (from view's initially) just after cbwin has been
+initialized, and just before view.cbwin is to be initialized.
+<p/><a href="ipl.vt-vt.icn.html#1655" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="trim_history"/>
+<h3>trim_history()</h3>
+private<p/>
+<dl>
+<dd>
+Trim the history list so that it is within range; caller must
+invalidate line count.
+<p/><a href="ipl.vt-vt.icn.html#1882" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="truncate"/>
+<h3>truncate(l, lim)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2034" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="ts_add"/>
+<h3>ts_add(r, l, fl)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2624" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="unflow_loc"/>
+<h3>unflow_loc(x, y)</h3>
+private<p/>
+<dl>
+<dd>
+Given an x, y position in the current contents, this returns the
+corresponding position in "unflowed" coordinates (ie, consistent
+with the rows generated by unflowed() above).
+<p/><a href="ipl.vt-vt.icn.html#662" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="unflowed"/>
+<h3>unflowed()</h3>
+private<p/>
+<dl>
+<dd>
+This generates the rows so that multi-row lines (with join set)
+are merged together and generated as one row.
+<p/><a href="ipl.vt-vt.icn.html#636" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="unquieten_cursor"/>
+<h3>unquieten_cursor()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2897" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="urls_in_segments"/>
+<h3>urls_in_segments(e)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#2748" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="wait_for_buff"/>
+<h3>wait_for_buff()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#858" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="allow_80_132_mode"/>
+<h3>allow_80_132_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#434" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="application_cursor_mode"/>
+<h3>application_cursor_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#436" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="application_keypad_mode"/>
+<h3>application_keypad_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#435" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="attr"/>
+<h3>attr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#409" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="bottom_margin"/>
+<h3>bottom_margin</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#428" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="buff"/>
+<h3>buff</h3>
+private<p/>
+<dl>
+<dd>
+Input buffer, a ucs string.
+<p/><a href="ipl.vt-vt.icn.html#407" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="C"/>
+<h3>C</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="char_w"/>
+<h3>char_w</h3>
+private readable<p/>
+<dl>
+<dd>
+Character width dimensions of the font in use.
+<p/><a href="ipl.vt-vt.icn.html#422" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="CHARSET"/>
+<h3>CHARSET</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#458" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="charsets"/>
+<h3>charsets</h3>
+private readable<p/>
+<dl>
+<dd>
+List of 4 Charsets G0..G4
+<p/><a href="ipl.vt-vt.icn.html#448" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="col_mode"/>
+<h3>col_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#433" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="COLORS"/>
+<h3>COLORS</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#459" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cols"/>
+<h3>cols</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#424" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="contents"/>
+<h3>contents</h3>
+private<p/>
+<dl>
+<dd>
+List of Rows
+<p/><a href="ipl.vt-vt.icn.html#393" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="CSM"/>
+<h3>CSM</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="curr_charset"/>
+<h3>curr_charset</h3>
+private readable<p/>
+<dl>
+<dd>
+Current charset 1=G0 etc.  <br>
+<p/><a href="ipl.vt-vt.icn.html#449" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_on"/>
+<h3>cursor_on</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#396" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_ticker"/>
+<h3>cursor_ticker</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#388" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_x"/>
+<h3>cursor_x</h3>
+private readable<p/>
+<dl>
+<dd>
+The selection cursor/mark
+<p/><a href="ipl.vt-vt.icn.html#418" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_y"/>
+<h3>cursor_y</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#419" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="custom_keys"/>
+<h3>custom_keys</h3>
+private<p/>
+<dl>
+<dd>
+KeyTable for custom key settings.
+<p/><a href="ipl.vt-vt.icn.html#395" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cx"/>
+<h3>cx</h3>
+private readable<p/>
+<dl>
+<dd>
+The cursor position (in screen co-ordinates)
+<p/><a href="ipl.vt-vt.icn.html#425" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="cy"/>
+<h3>cy</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#426" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFAULT_FONT"/>
+<h3>DEFAULT_FONT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#465" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFAULT_HISTORY_SIZE"/>
+<h3>DEFAULT_HISTORY_SIZE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#462" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFAULT_VT_HEIGHT"/>
+<h3>DEFAULT_VT_HEIGHT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#464" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFAULT_VT_WIDTH"/>
+<h3>DEFAULT_VT_WIDTH</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#463" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="dont_quieten_flag"/>
+<h3>dont_quieten_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+Don't quieten the cursor if set
+<p/><a href="ipl.vt-vt.icn.html#416" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="EMPTY_ATTR"/>
+<h3>EMPTY_ATTR</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#455" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="going_up"/>
+<h3>going_up</h3>
+private<p/>
+<dl>
+<dd>
+Selection scrolling direction
+<p/><a href="ipl.vt-vt.icn.html#397" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="got"/>
+<h3>got</h3>
+private<p/>
+<dl>
+<dd>
+Raw input, a string.
+<p/><a href="ipl.vt-vt.icn.html#405" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="held"/>
+<h3>held</h3>
+private<p/>
+<dl>
+<dd>
+Link held by mouse down
+<p/><a href="ipl.vt-vt.icn.html#402" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="hide_cursor_mode"/>
+<h3>hide_cursor_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#437" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="highlight"/>
+<h3>highlight</h3>
+private<p/>
+<dl>
+<dd>
+Link clicked on (shown red).
+<p/><a href="ipl.vt-vt.icn.html#399" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="history_size"/>
+<h3>history_size</h3>
+private readable<p/>
+<dl>
+<dd>
+Size of history scroll lines; 0 -&gt; no vsb
+<p/><a href="ipl.vt-vt.icn.html#441" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="input_handler_coex"/>
+<h3>input_handler_coex</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#408" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="insert_mode"/>
+<h3>insert_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#431" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="K"/>
+<h3>K</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="KEY_TABLE"/>
+<h3>KEY_TABLE</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#456" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="last_highlight"/>
+<h3>last_highlight</h3>
+private<p/>
+<dl>
+<dd>
+Link last clicked, shown with a dotted rectangle
+<p/><a href="ipl.vt-vt.icn.html#400" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="links_selection"/>
+<h3>links_selection</h3>
+private readable<p/>
+<dl>
+<dd>
+Current links selection (a list of URLs), or null
+<p/><a href="ipl.vt-vt.icn.html#439" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="M"/>
+<h3>M</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="M4"/>
+<h3>M4</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="M5"/>
+<h3>M5</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="mark_x"/>
+<h3>mark_x</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#420" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="mark_y"/>
+<h3>mark_y</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#421" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="multi_begin"/>
+<h3>multi_begin</h3>
+private<p/>
+<dl>
+<dd>
+Start of potential shifted middle press block
+<p/><a href="ipl.vt-vt.icn.html#401" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="no_drag"/>
+<h3>no_drag</h3>
+private<p/>
+<dl>
+<dd>
+Don't allow drag to set the cursor
+<p/><a href="ipl.vt-vt.icn.html#404" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="normal_bg"/>
+<h3>normal_bg</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#447" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="normal_fg"/>
+<h3>normal_fg</h3>
+private readable<p/>
+<dl>
+<dd>
+Colours of non-reverse mode, or null implying use cbwin colours.
+<p/><a href="ipl.vt-vt.icn.html#446" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="origin_mode"/>
+<h3>origin_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+Various mode flags
+<p/><a href="ipl.vt-vt.icn.html#429" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="OSC_CHAR"/>
+<h3>OSC_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#467" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="over"/>
+<h3>over</h3>
+private<p/>
+<dl>
+<dd>
+Link mouse is over
+<p/><a href="ipl.vt-vt.icn.html#403" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="PAGE_MARGIN"/>
+<h3>PAGE_MARGIN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#466" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="part_ch"/>
+<h3>part_ch</h3>
+private<p/>
+<dl>
+<dd>
+Partial utf-8 char, a string.
+<p/><a href="ipl.vt-vt.icn.html#406" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="popup"/>
+<h3>popup</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#412" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="primary"/>
+<h3>primary</h3>
+private readable<p/>
+<dl>
+<dd>
+Primary selection string, or null
+<p/><a href="ipl.vt-vt.icn.html#440" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="primary_selection_owner"/>
+<h3>primary_selection_owner</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#389" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="quieten"/>
+<h3>quieten</h3>
+private<p/>
+<dl>
+<dd>
+A flag to stop distracting in_chain cursor updates
+<p/><a href="ipl.vt-vt.icn.html#413" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reverse_bg"/>
+<h3>reverse_bg</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#445" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reverse_fg"/>
+<h3>reverse_fg</h3>
+private readable<p/>
+<dl>
+<dd>
+Colours of reverse mode, or null implying true reverse.
+<p/><a href="ipl.vt-vt.icn.html#444" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="reverse_mode"/>
+<h3>reverse_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#430" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="rows"/>
+<h3>rows</h3>
+private readable<p/>
+<dl>
+<dd>
+Size of the emulated screen
+<p/><a href="ipl.vt-vt.icn.html#423" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="S"/>
+<h3>S</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="saved_buffer"/>
+<h3>saved_buffer</h3>
+private<p/>
+<dl>
+<dd>
+A SavedBuffer instance for implementing decset 1049
+<p/><a href="ipl.vt-vt.icn.html#411" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="saved_cursor"/>
+<h3>saved_cursor</h3>
+private<p/>
+<dl>
+<dd>
+A SavedCursor instance for implementing decset 1048
+<p/><a href="ipl.vt-vt.icn.html#410" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_ticker"/>
+<h3>scroll_ticker</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#387" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_ticker_interval"/>
+<h3>scroll_ticker_interval</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#398" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="search_increment_flag"/>
+<h3>search_increment_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+Should next search forward/backward be incremental? (ie from mark).
+<p/><a href="ipl.vt-vt.icn.html#452" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="search_term"/>
+<h3>search_term</h3>
+private readable<p/>
+<dl>
+<dd>
+Current string being searched for.
+<p/><a href="ipl.vt-vt.icn.html#450" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="search_term_c1"/>
+<h3>search_term_c1</h3>
+private readable<p/>
+<dl>
+<dd>
+Cset of first search char.
+<p/><a href="ipl.vt-vt.icn.html#451" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="tab_stops"/>
+<h3>tab_stops</h3>
+private<p/>
+<dl>
+<dd>
+Set of column numbers.
+<p/><a href="ipl.vt-vt.icn.html#394" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="text_selection"/>
+<h3>text_selection</h3>
+private readable<p/>
+<dl>
+<dd>
+Current text selection, or null
+<p/><a href="ipl.vt-vt.icn.html#438" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="top_margin"/>
+<h3>top_margin</h3>
+private readable<p/>
+<dl>
+<dd>
+Optional margins
+<p/><a href="ipl.vt-vt.icn.html#427" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="U"/>
+<h3>U</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#457" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="ui"/>
+<h3>ui</h3>
+private<p/>
+<dl>
+<dd>
+The VtUI instance providing external functionality.
+<p/><a href="ipl.vt-vt.icn.html#392" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="verbose_flag"/>
+<h3>verbose_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#417" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="vt_height"/>
+<h3>vt_height</h3>
+private readable<p/>
+<dl>
+<dd>
+Default height in chars, used by get_default_height()
+<p/><a href="ipl.vt-vt.icn.html#443" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="vt_width"/>
+<h3>vt_width</h3>
+private readable<p/>
+<dl>
+<dd>
+Default width in chars, used by get_default_width()
+<p/><a href="ipl.vt-vt.icn.html#442" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+<a name="wraparound_mode"/>
+<h3>wraparound_mode</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.vt-vt.icn.html#432" target="displayFrame">Source - vt.icn </a>
+</dd>
+</dl><hr>
+</body></html>

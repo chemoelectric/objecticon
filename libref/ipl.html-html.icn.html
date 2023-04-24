@@ -1,0 +1,332 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>html.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     html.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for parsing HTML
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     July 4, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	These procedures parse HTML files:
+<a name="18"/>#
+<a name="19"/>#	htchunks(f)	generates the basic chunks -- tags and text --
+<a name="20"/>#			that compose an HTML file.
+<a name="21"/>#
+<a name="22"/>#	htrefs(f)	generates the tagname/keyword/value combinations
+<a name="23"/>#			that reference other files.
+<a name="24"/>#
+<a name="25"/>#	These procedures process strings from HTML files:
+<a name="26"/>#
+<a name="27"/>#	httag(s)	extracts the name of a tag.
+<a name="28"/>#
+<a name="29"/>#	htvals(s)	generates the keyword/value pairs from a tag.
+<a name="30"/>#
+<a name="31"/>#	urlmerge(base,new) interprets a new URL in the context of a base.
+<a name="32"/>#
+<a name="33"/>############################################################################
+<a name="34"/>#
+<a name="35"/>#   	htchunks(f) generates the HTML chunks from file f.
+<a name="36"/>#	It returns strings beginning with
+<a name="37"/>#
+<a name="38"/>#		&lt;!--	for unclosed comments (legal comments are deleted)
+<a name="39"/>#		&lt;	for tags (will end with "&gt;" unless unclosed at EOF)
+<a name="40"/>#	anything else	for text
+<a name="41"/>#
+<a name="42"/>#	At this level entities such as &amp;amp are left unprocessed and all
+<a name="43"/>#	whitespace is preserved, including newlines.
+<a name="44"/>#
+<a name="45"/>############################################################################
+<a name="46"/>#
+<a name="47"/>#	htrefs(f) extracts file/url references from within an HTML file
+<a name="48"/>#	and generates a string of the form
+<a name="49"/>#		tagname keyword value
+<a name="50"/>#   	for each reference.
+<a name="51"/>#
+<a name="52"/>#	A single space character separates the three fields, but if no
+<a name="53"/>#	value is supplied for the keyword, no space follows the keyword.
+<a name="54"/>#	Tag and keyword names are always returned in upper case.
+<a name="55"/>#
+<a name="56"/>#	Quotation marks are stripped from the value, but note that the
+<a name="57"/>#	value can contain spaces or other special characters (although
+<a name="58"/>#	by strict HTML rules it probably shouldn't).
+<a name="59"/>#
+<a name="60"/>#       A table in the code determines which fields are references to
+<a name="61"/>#	other files.  For example, with &lt;IMG&gt;, SRC= is a reference but
+<a name="62"/>#	WIDTH= is not.  The table is based on the HTML 4.0 standard:
+<a name="63"/>#		http://www.w3.org/TR/REC-html40/
+<a name="64"/>#
+<a name="65"/>############################################################################
+<a name="66"/>#
+<a name="67"/>#	httag(s) extracts and returns the tag name from within an HTML
+<a name="68"/>#	tag string of the form "&lt;tagname...&gt;".   The tag name is returned
+<a name="69"/>#	in upper case.
+<a name="70"/>#
+<a name="71"/>############################################################################
+<a name="72"/>#
+<a name="73"/>#	htvals(s) generates the tag values contained within an HTML tag
+<a name="74"/>#	string of the form "&lt;tagname kw=val kw=val ...&gt;".   For each
+<a name="75"/>#	keyword=value pair beyond the tagname, a string of the form
+<a name="76"/>#
+<a name="77"/>#		keyword value
+<a name="78"/>#
+<a name="79"/>#	is generated.  One space follows the keyword, which is returned
+<a name="80"/>#	in upper case, and quotation marks are stripped from the value.
+<a name="81"/>#	The value itself can be an empty string.
+<a name="82"/>#
+<a name="83"/>#	For each keyword given without a value, the keyword is generated
+<a name="84"/>#	in upper case with no following space.
+<a name="85"/>#
+<a name="86"/>#	Parsing is somewhat tolerant of errors.
+<a name="87"/>#
+<a name="88"/>############################################################################
+<a name="89"/>#
+<a name="90"/>#	urlmerge(base,new) interprets a full or partial new URL in the
+<a name="91"/>#	context of a base URL, returning the combined URL.
+<a name="92"/>#
+<a name="93"/>#	Here are some examples of applying urlmerge() with a base value
+<a name="94"/>#	of "http://www.vcu.edu/misc/sched.html" and a new value as given:
+<a name="95"/>#
+<a name="96"/>#	new		result
+<a name="97"/>#	-------------	-------------------
+<a name="98"/>#	#tuesday	http://www.vcu.edu/misc/sched.html#tuesday
+<a name="99"/>#	bulletin.html	http://www.vcu.edu/misc/bulletin.html
+<a name="100"/>#	./results.html	http://www.vcu.edu/misc/results.html
+<a name="101"/>#	images/rs.gif	http://www.vcu.edu/misc/images/rs.gif
+<a name="102"/>#	../		http://www.vcu.edu/
+<a name="103"/>#	/greet.html	http://www.vcu.edu/greet.html
+<a name="104"/>#	file:a.html	file:a.html
+<a name="105"/>#
+<a name="106"/>#	Path components of "./" and "../" at the beginning of the
+<a name="107"/>#	new URL are handled specially to produce a simpler result.
+<a name="108"/>#	No other simplifications are applied.
+<a name="109"/>#
+<a name="110"/>############################################################################
+<a name="111"/>
+<a name="112"/>
+<a name="113"/>#   htchunks(f) -- generate HTML chunks from file f
+<a name="114"/>
+<a name="115"/>package ipl.html
+<a name="116"/>
+<a name="117"/>import
+<a name="118"/>   io(read)
+<a name="119"/>
+<a name="120"/># generate chunks of HTML file
+<a name="121"/>procedure htchunks(f)			
+<a name="122"/>
+<a name="123"/>
+<a name="124"/>   "" ? repeat {
+<a name="125"/>
+<a name="126"/>      if pos(0) then
+<a name="127"/>         &amp;subject := (read(f) || "\n") | fail
+<a name="128"/>
+<a name="129"/>      if ="&lt;!--" then
+<a name="130"/>         suspend htc_comment(f)		# fails if comment is legal
+<a name="131"/>      else if ="&lt;" then
+<a name="132"/>         suspend htc_tag(f)		# generate tag
+<a name="133"/>      else
+<a name="134"/>         suspend htc_text(f)		# generate text chunk
+<a name="135"/>
+<a name="136"/>      }
+<a name="137"/>end
+<a name="138"/>
+<a name="139"/>procedure htc_tag(f)
+<a name="140"/>   local s
+<a name="141"/>
+<a name="142"/>   s := "&lt;"
+<a name="143"/>   repeat {
+<a name="144"/>      if s ||:= tab(upto('&gt;') + 1) then
+<a name="145"/>         return s			# completed tag
+<a name="146"/>      s ||:= tab(0)
+<a name="147"/>      &amp;subject := (read(f) || "\n") | break
+<a name="148"/>      }
+<a name="149"/>   return s				# unclosed tag
+<a name="150"/>end
+<a name="151"/>
+<a name="152"/>procedure htc_comment(f)
+<a name="153"/>   local s
+<a name="154"/>
+<a name="155"/>   s := ""
+<a name="156"/>   repeat {
+<a name="157"/>      if s ||:= tab(find("--&gt;") + 3) then
+<a name="158"/>         fail				# normal case: discard comment
+<a name="159"/>      s ||:= tab(0)
+<a name="160"/>      &amp;subject := (read(f) || "\n") | break
+<a name="161"/>      }
+<a name="162"/>
+<a name="163"/>   &amp;subject := s			# rescan unclosed comment
+<a name="164"/>   return "&lt;!--"			# return error indicator
+<a name="165"/>end
+<a name="166"/>
+<a name="167"/>procedure htc_text(f)
+<a name="168"/>   local s
+<a name="169"/>
+<a name="170"/>   s := ""
+<a name="171"/>   repeat {
+<a name="172"/>      if s ||:= tab(upto('&lt;')) then
+<a name="173"/>         return s
+<a name="174"/>      s ||:= tab(0)
+<a name="175"/>      &amp;subject := (read(f) || "\n") | return s
+<a name="176"/>      }
+<a name="177"/>end
+<a name="178"/>
+<a name="179"/>
+<a name="180"/>##  htrefs(f) -- generate references from HTML file f
+<a name="181"/>
+<a name="182"/># generate references from HTML file
+<a name="183"/>procedure htrefs(f)			
+<a name="184"/>   local tag, tagname, kwset, s
+<a name="185"/>   static ttable
+<a name="186"/>   initial {
+<a name="187"/>      ttable := table()
+<a name="188"/>      ttable["A"]	:= set("HREF")
+<a name="189"/>      ttable["APPLET"]	:= set("CODEBASE")
+<a name="190"/>      ttable["AREA"]	:= set("HREF")
+<a name="191"/>      ttable["BASE"]	:= set("HREF")
+<a name="192"/>      ttable["BLOCKQUOTE"] := set("CITE")
+<a name="193"/>      ttable["BODY"]	:= set("BACKGROUND")
+<a name="194"/>      ttable["DEL"]	:= set("CITE")
+<a name="195"/>      ttable["FORM"]	:= set("ACTION")
+<a name="196"/>      ttable["FRAME"]	:= set("SRC", "LONGDESC")
+<a name="197"/>      ttable["HEAD"]	:= set("PROFILE")
+<a name="198"/>      ttable["IFRAME"]	:= set("SRC", "LONGDESC")
+<a name="199"/>      ttable["IMG"]	:= set("SRC", "LONGDESC", "USEMAP")
+<a name="200"/>      ttable["INPUT"]	:= set("SRC", "USEMAP")
+<a name="201"/>      ttable["INS"]	:= set("CITE")
+<a name="202"/>      ttable["LINK"]	:= set("HREF")
+<a name="203"/>      ttable["OBJECT"]	:= set("CLASSID","CODEBASE","DATA","ARCHIVE","USEMAP")
+<a name="204"/>      ttable["Q"]	:= set("CITE")
+<a name="205"/>      ttable["SCRIPT"]	:= set("SRC", "FOR")
+<a name="206"/>      }
+<a name="207"/>
+<a name="208"/>   every tag := htchunks(f) do {
+<a name="209"/>      tagname := httag(tag) | next
+<a name="210"/>      kwset := \ttable[tagname] | next
+<a name="211"/>      every s := htvals(tag) do
+<a name="212"/>         if member(kwset, s ? tab(upto(' '))) then
+<a name="213"/>            suspend tagname || " " || s
+<a name="214"/>      }
+<a name="215"/>end
+<a name="216"/>
+<a name="217"/>
+<a name="218"/>
+<a name="219"/>##  httag(s) -- return the name of the HTML tag s
+<a name="220"/>
+<a name="221"/># extract name of HTML tag
+<a name="222"/>procedure httag(s)			
+<a name="223"/>   static idset, wset, lcase, ucase
+<a name="224"/>   initial {
+<a name="225"/>      idset := &amp;letters ++ &amp;digits ++ '.\-/'
+<a name="226"/>      wset := ' \t\r\n\v\f'
+<a name="227"/>      lcase := string(&amp;lcase)
+<a name="228"/>      ucase := string(&amp;ucase)
+<a name="229"/>   }
+<a name="230"/>
+<a name="231"/>   s ? {
+<a name="232"/>      ="&lt;" | fail
+<a name="233"/>      tab(many(wset))
+<a name="234"/>      return map(tab(many(idset)), lcase, ucase)
+<a name="235"/>   }
+<a name="236"/>end
+<a name="237"/>
+<a name="238"/>
+<a name="239"/>
+<a name="240"/>##  htvals(s) -- generate tag values of HTML tag s
+<a name="241"/>
+<a name="242"/># generate values in HTML tag
+<a name="243"/>procedure htvals(s)			
+<a name="244"/>   local kw
+<a name="245"/>   static idset, wset, qset, lcase, ucase
+<a name="246"/>   initial {
+<a name="247"/>      idset := &amp;letters ++ &amp;digits ++ '.-/'
+<a name="248"/>      wset := ' \t\r\n\v\f'
+<a name="249"/>      qset := wset ++ '&gt;'
+<a name="250"/>      lcase := string(&amp;lcase)
+<a name="251"/>      ucase := string(&amp;ucase)
+<a name="252"/>   }
+<a name="253"/>
+<a name="254"/>   s ? {
+<a name="255"/>      ="&lt;" | fail
+<a name="256"/>      tab(many(wset))
+<a name="257"/>      tab(many(idset)) | fail		# no name
+<a name="258"/>      repeat {
+<a name="259"/>         tab(upto(idset)) | fail
+<a name="260"/>         kw := map(tab(many(idset)), lcase, ucase)
+<a name="261"/>         tab(many(wset))
+<a name="262"/>         if ="=" then {
+<a name="263"/>            tab(many(wset))
+<a name="264"/>            kw ||:= " "
+<a name="265"/>            if ="\"" then {
+<a name="266"/>               kw ||:= tab(upto('"') | 0)
+<a name="267"/>               tab(any('"'))
+<a name="268"/>               }
+<a name="269"/>            else if ="'" then {
+<a name="270"/>               kw ||:= tab(upto('\'') | 0)
+<a name="271"/>               tab(any('\''))
+<a name="272"/>               }
+<a name="273"/>            else
+<a name="274"/>               kw ||:= tab(upto(qset) | 0)
+<a name="275"/>            }
+<a name="276"/>         suspend kw
+<a name="277"/>      }
+<a name="278"/>   }
+<a name="279"/>end
+<a name="280"/>
+<a name="281"/>
+<a name="282"/>
+<a name="283"/>#  urlmerge(base,new) -- merge URLs
+<a name="284"/>
+<a name="285"/># merge URLs
+<a name="286"/>procedure urlmerge(base, new)		
+<a name="287"/>   local protocol, host, path
+<a name="288"/>   static notslash
+<a name="289"/>   initial notslash := ~'/'
+<a name="290"/>
+<a name="291"/>   if new ? (tab(many(&amp;letters)) &amp; =":") then
+<a name="292"/>      return new			# new is fully specified
+<a name="293"/>
+<a name="294"/>   base ? {
+<a name="295"/>      protocol := (tab(many(&amp;letters)) || =":") | ""
+<a name="296"/>      host := (="//" || tab(upto('/') | 0)) | ""
+<a name="297"/>      path := tab(upto('#') | 0)
+<a name="298"/>      }
+<a name="299"/>
+<a name="300"/>   new ? {
+<a name="301"/>      if ="#" then
+<a name="302"/>         return protocol || host || path || new
+<a name="303"/>      if ="/" then
+<a name="304"/>         return protocol || host || new
+<a name="305"/>
+<a name="306"/>      while (="." &amp; (="/" | pos(0))) |
+<a name="307"/>            (=".." &amp; (="/" | pos(0)) &amp; (path := url_trim(path)))
+<a name="308"/>
+<a name="309"/>      return protocol || host || trim(path, notslash) || tab(0)
+<a name="310"/>      }
+<a name="311"/>end
+<a name="312"/>
+<a name="313"/>#  url_trim(path) -- trim trailing dir provided that at least one "/" remains
+<a name="314"/>
+<a name="315"/>procedure url_trim(path)
+<a name="316"/>   static notslash
+<a name="317"/>   initial notslash := ~'/'
+<a name="318"/>
+<a name="319"/>   reverse(path) ? {			# work from back end
+<a name="320"/>      tab(upto('/') + 1) | fail		# trim dir, fail if no "/"
+<a name="321"/>      if =".." &amp; (="/" | pos(0))
+<a name="322"/>         then fail			# don't trim a ".." component
+<a name="323"/>      path := reverse(tab(0))		# otherwise use the rest
+<a name="324"/>   }
+<a name="325"/>   if upto('/', path) then		# one / must remain to be valid
+<a name="326"/>      return path
+<a name="327"/>   else
+<a name="328"/>      fail
+<a name="329"/>end
+</pre></body></html>

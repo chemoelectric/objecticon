@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>UnmodifiableSet</title></head><body>
+<h1>UnmodifiableSet</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+A class to provide an unmodifiable view of another set.
+<p/><a href="datastruct-sets.icn.html#219" target="displayFrame">Source - sets.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="datastruct.Set.html">datastruct.Set</a>
+<a href="datastruct.UnmodifiableSet.html">datastruct.UnmodifiableSet</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from datastruct.Set</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.Set.html#clear">clear()</a>
+<a href="datastruct.Set.html#delete">delete()</a>
+<a href="datastruct.Set.html#init">init()</a>
+<a href="datastruct.Set.html#insert">insert()</a>
+<a href="datastruct.Set.html#member_list">member_list()</a>
+<a href="datastruct.Set.html#object_equals">object_equals()</a>
+<a href="datastruct.Set.html#object_hash">object_hash()</a>
+<a href="datastruct.Set.html#object_output">object_output()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from datastruct.Set</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.Set.html#DELETE">DELETE</a>
+<a href="datastruct.Set.html#EMPTY_SET">EMPTY_SET</a>
+<a href="datastruct.Set.html#INSERT">INSERT</a>
+<a href="datastruct.Set.html#ORDER">ORDER</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#back">back()</a>
+<a href="#empty">empty()</a>
+<a href="#gen">gen()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#member">member()</a>
+<a href="#new">new()</a>
+<a href="#random">random()</a>
+<a href="#rank">rank()</a>
+<a href="#select">select()</a>
+<a href="#size">size()</a>
+<a href="#sort">sort()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#s">s</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="back"/>
+<h3>back(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#back">back()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#238" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="empty"/>
+<h3>empty()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#empty">empty()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#254" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#gen">gen()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#234" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#262" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="member"/>
+<h3>member(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#member">member()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#226" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-sets.icn.html#266" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="random"/>
+<h3>random()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#random">random()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#258" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="rank"/>
+<h3>rank(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#rank">rank()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#242" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="select"/>
+<h3>select(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#select">select()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#246" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#size">size()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#250" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<a name="sort"/>
+<h3>sort()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.Set.html#sort">sort()</a> in <a href="datastruct.Set.html" target="displayFrame">datastruct.Set</a></dd>
+<dd>
+<p/><a href="datastruct-sets.icn.html#230" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="s"/>
+<h3>s</h3>
+protected const<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-sets.icn.html#223" target="displayFrame">Source - sets.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,274 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gettext.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     gettext.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for gettext (simple text-base routines)
+<a name="6"/>#
+<a name="7"/>#	Author:   Richard L. Goerwitz
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  History:
+<a name="18"/>#       Version 1.19: December 28, 1993 (plt)
+<a name="19"/>#            Tested with DOS, DOS-386, OS/2, ProIcon, UNIX
+<a name="20"/>#            Modified link and OS statements.
+<a name="21"/>#            Open index file in untranslated mode for
+<a name="22"/>#              MS-DOS and OS/2 -- ignored by UNIX and Amiga
+<a name="23"/>#            Handle multiple, indexed citations.
+<a name="24"/>#            Change delimiter from &lt;TAB&gt; to char(255).
+<a name="25"/>#            Simplified binary search. 
+<a name="26"/>#        Version 1.20: August 5, 1995 (plt)
+<a name="27"/>#            Replace link statement with preprocessor include.
+<a name="28"/>#            Retrieve text for multiple keys on the same line.
+<a name="29"/>#            Correct debug printout of indexed and sequential
+<a name="30"/>#              search values.
+<a name="31"/>#
+<a name="32"/>############################################################################
+<a name="33"/>#
+<a name="34"/>#  Version:  1.19   December 28, 1993 - Phillip Lee Thomas
+<a name="35"/>#  Version:  1.20   August 5, 1995    - plt
+<a name="36"/>#
+<a name="37"/>############################################################################
+<a name="38"/>#
+<a name="39"/>#  Gettext() and associated routines allow the user to maintain a file
+<a name="40"/>#  of KEY/value combinations such that a call to gettext(KEY, FNAME)
+<a name="41"/>#  will produce value.  Gettext() fails if no such KEY exists.
+<a name="42"/>#  Returns an empty string if the key exists, but has no associated
+<a name="43"/>#  value in the file, FNAME.
+<a name="44"/>#
+<a name="45"/>#  The file format is simple.  Keys belong on separate lines, marked
+<a name="46"/>#  as such by an initial colon+colon (::).  Values begin on the line
+<a name="47"/>#  following their respective keys, and extend up to the next
+<a name="48"/>#  colon+colon-initial line or EOF.  E.g.
+<a name="49"/>#
+<a name="50"/>#    ::sample.1
+<a name="51"/># or:
+<a name="52"/>#    ::sample.1  ::sample.2
+<a name="53"/>#
+<a name="54"/>#    Notice how the key above, sample.1, has :: prepended to mark it
+<a name="55"/>#    out as a key.  The text you are now reading represents that key's
+<a name="56"/>#    value.  To retrieve this text, you would call gettext() with the
+<a name="57"/>#    name of the key passed as its first argument, and the name of the
+<a name="58"/>#    file in which this text is stored as its second argument (as in
+<a name="59"/>#    gettext("sample.1","tmp.idx")).
+<a name="60"/>#    ::next.key
+<a name="61"/>#    etc...
+<a name="62"/>#
+<a name="63"/>#  For faster access, an indexing utility is included, idxtext.  Idxtext
+<a name="64"/>#  creates a separate index for a given text-base file.  If an index file
+<a name="65"/>#  exists in the same directory as FNAME, gettext() will make use of it.
+<a name="66"/>#  The index becomes worthwhile (at least on my system) after the text-
+<a name="67"/>#  base file becomes longer than 5 kilobytes.
+<a name="68"/>#
+<a name="69"/>#  Donts:
+<a name="70"/>#      1) Don't nest gettext text-base files.
+<a name="71"/>#      2) In searches, surround phrases with spaces or tabs in
+<a name="72"/>#        key names with quotation marks:   "an example"
+<a name="73"/>#      3) Don't modify indexed files in any way other than to append
+<a name="74"/>#         additional keys/values (unless you want to re-index).
+<a name="75"/>#
+<a name="76"/>#  This program is intended for situations where keys tend to have
+<a name="77"/>#  very large values, and use of an Icon table structure would be
+<a name="78"/>#  unwieldy.
+<a name="79"/>#
+<a name="80"/>#  BUGS:  Gettext() relies on the Icon runtime system and the OS to
+<a name="81"/>#  make sure the last text/index file it opens gets closed.
+<a name="82"/>#
+<a name="83"/>############################################################################
+<a name="84"/>#
+<a name="85"/>#  Links:  adjuncts
+<a name="86"/>#
+<a name="87"/>############################################################################
+<a name="88"/>#
+<a name="89"/>#         Invoke set_OS() before first call to gettext() or
+<a name="90"/>#           sequential_search()
+<a name="91"/>#
+<a name="92"/>#  Tested with UNIX, OS/2, DOS, DOS-386, ProIcon
+<a name="93"/>#
+<a name="94"/>############################################################################
+<a name="95"/>
+<a name="96"/>package ipl.gettext
+<a name="97"/>
+<a name="98"/>import
+<a name="99"/>   io(close, open, read, stop),
+<a name="100"/>   ipl.adjuncts(Pathname, _OS_offset, _delimiter, firstline,
+<a name="101"/>                getidxname)
+<a name="102"/>
+<a name="103"/># search database by indexed term
+<a name="104"/>procedure gettext(KEY,FNAME)      
+<a name="105"/>
+<a name="106"/>   local line, value
+<a name="107"/>   static last_FNAME, intext, inidx, off_set, off_sets
+<a name="108"/>
+<a name="109"/>   (/KEY | /FNAME) &amp; runerr("(gettext):  null argument")
+<a name="110"/>
+<a name="111"/>   if FNAME == \last_FNAME then {
+<a name="112"/>      intext.seek(1)
+<a name="113"/>      (\inidx).seek(1)
+<a name="114"/>      }
+<a name="115"/>   else {
+<a name="116"/>      # We've got a new text-base file.  Close the old one.
+<a name="117"/>      every close(\intext | \inidx)
+<a name="118"/>      # Try to open named text-base file.
+<a name="119"/>      intext := open(FNAME) | stop("gettext: file \"",FNAME,"\" not found")
+<a name="120"/>      # Try to open index file.
+<a name="121"/>      inidx := open(Pathname(FNAME) || getidxname(FNAME),"ru") | &amp;null
+<a name="122"/>      }
+<a name="123"/>   last_FNAME := FNAME
+<a name="124"/>
+<a name="125"/>   # Find offsets, if any, for key KEY in index file.
+<a name="126"/>   # Then seek to the end and do a sequential search
+<a name="127"/>   # for any key/value entries that have been added
+<a name="128"/>   # since the last time idxtext was run.
+<a name="129"/>
+<a name="130"/>   if off_sets := get_offsets(KEY, inidx) then {
+<a name="131"/>      off_sets ?  {
+<a name="132"/>         while off_set := (move(1),tab(many(&amp;digits))) do {
+<a name="133"/>            intext.seek(off_set)
+<a name="134"/>
+<a name="135"/>         # Find key.  Should be right there, unless the user has appended
+<a name="136"/>         # key/value pairs to the end without re-indexing, or else has not
+<a name="137"/>         # bothered to index in the first place.  In this case we're
+<a name="138"/>         # supposed to start a sequential search for KEY upto EOF.
+<a name="139"/>
+<a name="140"/>            while line := (read(intext) | fail) do {
+<a name="141"/>               line ? {
+<a name="142"/>                   if (="::",KEY)
+<a name="143"/>                     then break
+<a name="144"/>                  }
+<a name="145"/>               }
+<a name="146"/>
+<a name="147"/>         # Collect all text upto the next colon+colon line (::)
+<a name="148"/>         # or EOF.
+<a name="149"/>            value := ""
+<a name="150"/>            while line := read(intext) do {
+<a name="151"/>               find("::",line) &amp; break
+<a name="152"/>               value ||:= line || "\n"
+<a name="153"/>               }
+<a name="154"/>
+<a name="155"/>         # Note that a key with an empty value returns an empty string.
+<a name="156"/>            suspend trim(value, '\n') || " (" || off_set || "-i)"
+<a name="157"/>            }
+<a name="158"/>         }
+<a name="159"/>      }
+<a name="160"/>
+<a name="161"/>   # Find additional values appended to file since last indexing.
+<a name="162"/>
+<a name="163"/>   intext.seek(\firstline - _OS_offset)
+<a name="164"/>   while value := sequential_search(KEY, intext) do
+<a name="165"/>      suspend trim(value,'\n') #|| " (" || off_set || "-s)"
+<a name="166"/>
+<a name="167"/>end
+<a name="168"/>
+<a name="169"/># binary search of index
+<a name="170"/>procedure get_offsets(KEY, inidx)       
+<a name="171"/>   local  bottom, top, loc, firstpart,  line
+<a name="172"/>
+<a name="173"/>   # Use these to store values likely to be reused.
+<a name="174"/>   static old_inidx, SOF, EOF
+<a name="175"/>
+<a name="176"/>   # If there's no index file, then fail.
+<a name="177"/>   if /inidx then
+<a name="178"/>      fail
+<a name="179"/>
+<a name="180"/>   # First line contains offset of last indexed byte in the main
+<a name="181"/>   # text file.  We need this later.  Save it.  Start the binary
+<a name="182"/>   # search routine at the next byte after this line.
+<a name="183"/>
+<a name="184"/>   inidx.seek(1)
+<a name="185"/>   unless inidx === \old_inidx then {
+<a name="186"/>
+<a name="187"/>      # Get first line.
+<a name="188"/>      firstline := !inidx
+<a name="189"/>
+<a name="190"/>      # Set "bottom."
+<a name="191"/>      SOF := 1
+<a name="192"/>
+<a name="193"/>      # How big is this file?
+<a name="194"/>      inidx.seek(0)
+<a name="195"/>      EOF := inidx.tell()
+<a name="196"/>
+<a name="197"/>      old_inidx := inidx
+<a name="198"/>      }
+<a name="199"/>
+<a name="200"/>   # SOF, EOF constant for a given inidx file.
+<a name="201"/>   bottom := SOF ; top := EOF
+<a name="202"/>
+<a name="203"/>
+<a name="204"/>   # If bottom gets bigger than top, there's no such key.
+<a name="205"/>   until bottom &gt;= top do {
+<a name="206"/>
+<a name="207"/>      loc := (top+bottom) / 2
+<a name="208"/>      inidx.seek(loc)
+<a name="209"/>
+<a name="210"/>      # Move past next newline.  If at EOF, break.
+<a name="211"/>
+<a name="212"/>      read(inidx)
+<a name="213"/>      if (inidx.tell() &gt; EOF) | (loc = bottom) | (loc = top) then {
+<a name="214"/>         break
+<a name="215"/>         }
+<a name="216"/>
+<a name="217"/>      # Check to see if the current line contains KEY.
+<a name="218"/>      if line := read(inidx) then {
+<a name="219"/>         line ? {
+<a name="220"/>
+<a name="221"/>            # .IDX file line format is KEY&lt;delimiter&gt;offset
+<a name="222"/>            firstpart := tab(upto(_delimiter))
+<a name="223"/>         
+<a name="224"/>            if KEY ==  firstpart then {
+<a name="225"/>               # return offset and addresses for any added material
+<a name="226"/>               return tab(1 - _OS_offset)
+<a name="227"/>               }
+<a name="228"/>
+<a name="229"/>         # Ah, this is what all binary searches do.
+<a name="230"/>         else {
+<a name="231"/>            if KEY &gt;&gt; firstpart
+<a name="232"/>            then bottom := loc
+<a name="233"/>            else top    := loc
+<a name="234"/>            }
+<a name="235"/>         }
+<a name="236"/>      }
+<a name="237"/>   else top := loc      # Too far, move back
+<a name="238"/>   }
+<a name="239"/>end
+<a name="240"/>
+<a name="241"/># Perform sequential search of intext for all instances of KEY.
+<a name="242"/>
+<a name="243"/># brute-force database search
+<a name="244"/>procedure sequential_search(KEY, intext)  
+<a name="245"/>
+<a name="246"/>   local line, value, off_set
+<a name="247"/>   
+<a name="248"/>   # Collect all text upto the next colon+colon line (::)
+<a name="249"/>   # or EOF.
+<a name="250"/>
+<a name="251"/>   off_set := intext.tell()
+<a name="252"/>   while (line := read(intext)) | fail do {
+<a name="253"/>      line  ? {
+<a name="254"/>         if =("::" || KEY) &amp; (match(" " | "\t") | pos(0))
+<a name="255"/>         then break
+<a name="256"/>         else off_set := intext.tell()
+<a name="257"/>         }
+<a name="258"/>      }
+<a name="259"/>   value := ""
+<a name="260"/>   while line := read(intext) do {
+<a name="261"/>      find("::", line) &amp; break
+<a name="262"/>      value ||:= line || "\n"
+<a name="263"/>      }
+<a name="264"/>
+<a name="265"/>   # Debug information for sequential searching:
+<a name="266"/>   value := value[1:-1] || " (" || off_set || "-s)\n"
+<a name="267"/>
+<a name="268"/>   # Back up to allow for consecutive instances of KEY.
+<a name="269"/>   intext.seek(intext.tell() - *line - 2)
+<a name="270"/>   suspend trim(value || "\n")
+<a name="271"/>end
+</pre></body></html>

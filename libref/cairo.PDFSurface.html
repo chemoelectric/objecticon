@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>PDFSurface</title></head><body>
+<h1>PDFSurface</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="cairo.PagedSurface.html" target="displayFrame">cairo.PagedSurface</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="cairo-package.html" target="listFrame">cairo</a></dd>
+</dl><p/>
+This class wraps a cairo PDF surface object.
+<p/><a href="cairo-cairo.icn.html#844" target="displayFrame">Source - cairo.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="cairo.Surface.html">cairo.Surface</a>
+<a href="cairo.PagedSurface.html">cairo.PagedSurface</a>
+<a href="cairo.PDFSurface.html">cairo.PDFSurface</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from cairo.Surface</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="cairo.Surface.html#close">close()</a>
+<a href="cairo.Surface.html#get_device_offset">get_device_offset()</a>
+<a href="cairo.Surface.html#get_device_offset_impl">get_device_offset_impl()</a>
+<a href="cairo.Surface.html#get_device_scale">get_device_scale()</a>
+<a href="cairo.Surface.html#get_device_scale_impl">get_device_scale_impl()</a>
+<a href="cairo.Surface.html#get_type">get_type()</a>
+<a href="cairo.Surface.html#set_device_offset">set_device_offset()</a>
+<a href="cairo.Surface.html#set_device_scale">set_device_scale()</a>
+<a href="cairo.Surface.html#set_ptr">set_ptr()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from cairo.Surface</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="cairo.Surface.html#ptr">ptr</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from cairo.PagedSurface</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="cairo.PagedSurface.html#copy_page">copy_page()</a>
+<a href="cairo.PagedSurface.html#show_page">show_page()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#create_for_ptr">create_for_ptr()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#set_size">set_size()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="create_for_ptr"/>
+<h3>create_for_ptr(ptr)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#851" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#847" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(filename, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#862" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#860" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_size"/>
+<h3>set_size(width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Changes the size of a PDF surface for the current (and
+subsequent) pages.
+<p/><a href="cairo-cairo.icn.html#855" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+</body></html>

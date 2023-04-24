@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ItemPaintPTableColumn</title></head><body>
+<h1>ItemPaintPTableColumn</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.BasePTableColumn.html" target="displayFrame">gui.BasePTableColumn</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A table column which delegates interpretation of the data to
+an <code><a href="gui.ItemPaint.html" target="displayFrame">ItemPaint</a></code> instance.
+<p/><a href="gui-ptable.icn.html#133" target="displayFrame">Source - ptable.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.BasePTableColumn.html">gui.BasePTableColumn</a>
+<a href="gui.ItemPaintPTableColumn.html">gui.ItemPaintPTableColumn</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.BasePTableColumn</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.BasePTableColumn.html#get_column_index">get_column_index()</a>
+<a href="gui.BasePTableColumn.html#set_fixed_width">set_fixed_width()</a>
+<a href="gui.BasePTableColumn.html#set_weight">set_weight()</a>
+<a href="gui.BasePTableColumn.html#slice">slice()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.BasePTableColumn</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.BasePTableColumn.html#calc_width">calc_width</a>
+<a href="gui.BasePTableColumn.html#fixed_width">fixed_width</a>
+<a href="gui.BasePTableColumn.html#ptable">ptable</a>
+<a href="gui.BasePTableColumn.html#weight">weight</a>
+<a href="gui.BasePTableColumn.html#width">width</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#calculate_column_width">calculate_column_width()</a>
+<a href="#calculate_line_height">calculate_line_height()</a>
+<a href="#draw_cell">draw_cell()</a>
+<a href="#finally">finally()</a>
+<a href="#initially">initially()</a>
+<a href="#new">new()</a>
+<a href="#set_align">set_align()</a>
+<a href="#set_item_border">set_item_border()</a>
+<a href="#set_item_paint">set_item_paint()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#item_border">item_border</a>
+<a href="#item_paint">item_paint</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="calculate_column_width"/>
+<h3>calculate_column_width(W)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.BasePTableColumn.html#calculate_column_width">calculate_column_width()</a> in <a href="gui.BasePTableColumn.html" target="displayFrame">gui.BasePTableColumn</a></dd>
+<dd>
+<p/><a href="gui-ptable.icn.html#189" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_line_height"/>
+<h3>calculate_line_height(W)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.BasePTableColumn.html#calculate_line_height">calculate_line_height()</a> in <a href="gui.BasePTableColumn.html" target="displayFrame">gui.BasePTableColumn</a></dd>
+<dd>
+<p/><a href="gui-ptable.icn.html#182" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_cell"/>
+<h3>draw_cell(W, data, line, col, cx, cy, ch)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.BasePTableColumn.html#draw_cell">draw_cell()</a> in <a href="gui.BasePTableColumn.html" target="displayFrame">gui.BasePTableColumn</a></dd>
+<dd>
+<p/><a href="gui-ptable.icn.html#194" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.BasePTableColumn.html#finally">finally()</a> in <a href="gui.BasePTableColumn.html" target="displayFrame">gui.BasePTableColumn</a></dd>
+<dd>
+<p/><a href="gui-ptable.icn.html#148" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.BasePTableColumn.html#initially">initially()</a> in <a href="gui.BasePTableColumn.html" target="displayFrame">gui.BasePTableColumn</a></dd>
+<dd>
+<p/><a href="gui-ptable.icn.html#141" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.BasePTableColumn.html#new">new()</a> in <a href="gui.BasePTableColumn.html" target="displayFrame">gui.BasePTableColumn</a></dd>
+<dd>
+<p/><a href="gui-ptable.icn.html#201" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="set_align"/>
+<h3>set_align(x)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#177" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="set_item_border"/>
+<h3>set_item_border(b)</h3>
+public<p/>
+<dl>
+<dd>
+Set a border to draw along with each Paint instance.
+<p/><a href="gui-ptable.icn.html#164" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="set_item_paint"/>
+<h3>set_item_paint(r)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#154" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="item_border"/>
+<h3>item_border</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#139" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+<a name="item_paint"/>
+<h3>item_paint</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-ptable.icn.html#138" target="displayFrame">Source - ptable.icn </a>
+</dd>
+</dl><hr>
+</body></html>

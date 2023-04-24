@@ -1,0 +1,1012 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>DirectoryDialog</title></head><body>
+<h1>DirectoryDialog</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Dialog.html" target="displayFrame">gui.Dialog</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+Directory dialog class.  This class provides a standard directory selection dialog.
+<p/>
+Example :-
+<pre>
+  d := DirectoryDialog()
+  d.show_modal()
+  write(d.get_result() | "cancelled")
+</pre>
+<p/><a href="gui-directorydialog.icn.html#42" target="displayFrame">Source - directorydialog.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="gui.Dialog.html">gui.Dialog</a>
+<a href="gui.DirectoryDialog.html">gui.DirectoryDialog</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#add">add()</a>
+<a href="gui.Component.html#add_list">add_list()</a>
+<a href="gui.Component.html#build_point_chain">build_point_chain()</a>
+<a href="gui.Component.html#can_drag">can_drag()</a>
+<a href="gui.Component.html#can_drop">can_drop()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display">display()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#drag_event">drag_event()</a>
+<a href="gui.Component.html#drag_reset">drag_reset()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#finally">finally()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#focus_changed">focus_changed()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_default_height">get_default_height()</a>
+<a href="gui.Component.html#get_default_width">get_default_width()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_index">get_index()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip">get_tooltip()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#handle_accel">handle_accel()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#keeps">keeps()</a>
+<a href="gui.Component.html#layout">layout()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#match_accel">match_accel()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove">remove()</a>
+<a href="gui.Component.html#remove_all">remove_all()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_index">remove_index()</a>
+<a href="gui.Component.html#remove_list">remove_list()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reposition">reposition()</a>
+<a href="gui.Component.html#reposition_index">reposition_index()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout">reset_layout()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#shift">shift()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Dialog</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Dialog.html#add_popup">add_popup()</a>
+<a href="gui.Dialog.html#change_pointer">change_pointer()</a>
+<a href="gui.Dialog.html#check_click_count">check_click_count()</a>
+<a href="gui.Dialog.html#check_dnd">check_dnd()</a>
+<a href="gui.Dialog.html#check_entered">check_entered()</a>
+<a href="gui.Dialog.html#clear_focus">clear_focus()</a>
+<a href="gui.Dialog.html#close_win">close_win()</a>
+<a href="gui.Dialog.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Dialog.html#create_point_chain">create_point_chain()</a>
+<a href="gui.Dialog.html#dispose">dispose()</a>
+<a href="gui.Dialog.html#dispose_selections">dispose_selections()</a>
+<a href="gui.Dialog.html#ensure_size">ensure_size()</a>
+<a href="gui.Dialog.html#enter_menu_mode">enter_menu_mode()</a>
+<a href="gui.Dialog.html#exit_dnd">exit_dnd()</a>
+<a href="gui.Dialog.html#exit_menu_mode">exit_menu_mode()</a>
+<a href="gui.Dialog.html#find_next_focus">find_next_focus()</a>
+<a href="gui.Dialog.html#find_previous_focus">find_previous_focus()</a>
+<a href="gui.Dialog.html#fire_list">fire_list()</a>
+<a href="gui.Dialog.html#focus_win">focus_win()</a>
+<a href="gui.Dialog.html#generate_crossing_events">generate_crossing_events()</a>
+<a href="gui.Dialog.html#generate_events">generate_events()</a>
+<a href="gui.Dialog.html#get_click_count">get_click_count()</a>
+<a href="gui.Dialog.html#get_curr_drag">get_curr_drag()</a>
+<a href="gui.Dialog.html#get_focus">get_focus()</a>
+<a href="gui.Dialog.html#get_focus_list">get_focus_list()</a>
+<a href="gui.Dialog.html#get_held">get_held()</a>
+<a href="gui.Dialog.html#get_held_count">get_held_count()</a>
+<a href="gui.Dialog.html#get_menu_mode">get_menu_mode()</a>
+<a href="gui.Dialog.html#get_point_chain">get_point_chain()</a>
+<a href="gui.Dialog.html#get_point_chain_source">get_point_chain_source()</a>
+<a href="gui.Dialog.html#get_win">get_win()</a>
+<a href="gui.Dialog.html#hide_tooltip">hide_tooltip()</a>
+<a href="gui.Dialog.html#hold">hold()</a>
+<a href="gui.Dialog.html#initially">initially()</a>
+<a href="gui.Dialog.html#invalidate_rect">invalidate_rect()</a>
+<a href="gui.Dialog.html#invoke_can_drag">invoke_can_drag()</a>
+<a href="gui.Dialog.html#invoke_drag_event">invoke_drag_event()</a>
+<a href="gui.Dialog.html#invoke_later">invoke_later()</a>
+<a href="gui.Dialog.html#invoke_sooner">invoke_sooner()</a>
+<a href="gui.Dialog.html#is_blocked">is_blocked()</a>
+<a href="gui.Dialog.html#is_entered">is_entered()</a>
+<a href="gui.Dialog.html#is_focus_in">is_focus_in()</a>
+<a href="gui.Dialog.html#is_focus_out">is_focus_out()</a>
+<a href="gui.Dialog.html#is_popup">is_popup()</a>
+<a href="gui.Dialog.html#is_unblocked">is_unblocked()</a>
+<a href="gui.Dialog.html#lower_win">lower_win()</a>
+<a href="gui.Dialog.html#needs_validate">needs_validate()</a>
+<a href="gui.Dialog.html#on_interrupted">on_interrupted()</a>
+<a href="gui.Dialog.html#open_buffer_win">open_buffer_win()</a>
+<a href="gui.Dialog.html#open_visible_win">open_visible_win()</a>
+<a href="gui.Dialog.html#own_selection">own_selection()</a>
+<a href="gui.Dialog.html#process_dnd">process_dnd()</a>
+<a href="gui.Dialog.html#process_event">process_event()</a>
+<a href="gui.Dialog.html#process_focus_in">process_focus_in()</a>
+<a href="gui.Dialog.html#process_focus_out">process_focus_out()</a>
+<a href="gui.Dialog.html#process_invoke_later">process_invoke_later()</a>
+<a href="gui.Dialog.html#process_normal">process_normal()</a>
+<a href="gui.Dialog.html#process_resize">process_resize()</a>
+<a href="gui.Dialog.html#process_selection_clear">process_selection_clear()</a>
+<a href="gui.Dialog.html#process_selection_request">process_selection_request()</a>
+<a href="gui.Dialog.html#process_selection_response">process_selection_response()</a>
+<a href="gui.Dialog.html#process_tooltip_event">process_tooltip_event()</a>
+<a href="gui.Dialog.html#process_tooltip_tick">process_tooltip_tick()</a>
+<a href="gui.Dialog.html#raise_win">raise_win()</a>
+<a href="gui.Dialog.html#release">release()</a>
+<a href="gui.Dialog.html#remove_popup">remove_popup()</a>
+<a href="gui.Dialog.html#request_selection">request_selection()</a>
+<a href="gui.Dialog.html#reset_tooltip_state">reset_tooltip_state()</a>
+<a href="gui.Dialog.html#resize_win">resize_win()</a>
+<a href="gui.Dialog.html#resize_win_impl">resize_win_impl()</a>
+<a href="gui.Dialog.html#restore_win">restore_win()</a>
+<a href="gui.Dialog.html#resynch_pointer">resynch_pointer()</a>
+<a href="gui.Dialog.html#set_base_height">set_base_height()</a>
+<a href="gui.Dialog.html#set_base_size">set_base_size()</a>
+<a href="gui.Dialog.html#set_base_width">set_base_width()</a>
+<a href="gui.Dialog.html#set_canvas">set_canvas()</a>
+<a href="gui.Dialog.html#set_display">set_display()</a>
+<a href="gui.Dialog.html#set_dx">set_dx()</a>
+<a href="gui.Dialog.html#set_dy">set_dy()</a>
+<a href="gui.Dialog.html#set_focus">set_focus()</a>
+<a href="gui.Dialog.html#set_focus_out">set_focus_out()</a>
+<a href="gui.Dialog.html#set_geometry">set_geometry()</a>
+<a href="gui.Dialog.html#set_height">set_height()</a>
+<a href="gui.Dialog.html#set_icon">set_icon()</a>
+<a href="gui.Dialog.html#set_increment_height">set_increment_height()</a>
+<a href="gui.Dialog.html#set_increment_size">set_increment_size()</a>
+<a href="gui.Dialog.html#set_increment_width">set_increment_width()</a>
+<a href="gui.Dialog.html#set_is_blocked">set_is_blocked()</a>
+<a href="gui.Dialog.html#set_label">set_label()</a>
+<a href="gui.Dialog.html#set_max_aspect_ratio">set_max_aspect_ratio()</a>
+<a href="gui.Dialog.html#set_max_height">set_max_height()</a>
+<a href="gui.Dialog.html#set_max_size">set_max_size()</a>
+<a href="gui.Dialog.html#set_max_width">set_max_width()</a>
+<a href="gui.Dialog.html#set_min_aspect_ratio">set_min_aspect_ratio()</a>
+<a href="gui.Dialog.html#set_min_height">set_min_height()</a>
+<a href="gui.Dialog.html#set_min_size">set_min_size()</a>
+<a href="gui.Dialog.html#set_min_width">set_min_width()</a>
+<a href="gui.Dialog.html#set_pos">set_pos()</a>
+<a href="gui.Dialog.html#set_remember_size">set_remember_size()</a>
+<a href="gui.Dialog.html#set_resize">set_resize()</a>
+<a href="gui.Dialog.html#set_size">set_size()</a>
+<a href="gui.Dialog.html#set_width">set_width()</a>
+<a href="gui.Dialog.html#set_x">set_x()</a>
+<a href="gui.Dialog.html#set_y">set_y()</a>
+<a href="gui.Dialog.html#show">show()</a>
+<a href="gui.Dialog.html#show_and_wait">show_and_wait()</a>
+<a href="gui.Dialog.html#show_modal">show_modal()</a>
+<a href="gui.Dialog.html#show_tooltip">show_tooltip()</a>
+<a href="gui.Dialog.html#synch_pointer">synch_pointer()</a>
+<a href="gui.Dialog.html#tooltip_dispose">tooltip_dispose()</a>
+<a href="gui.Dialog.html#tooltip_init">tooltip_init()</a>
+<a href="gui.Dialog.html#update_drop">update_drop()</a>
+<a href="gui.Dialog.html#validate">validate()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Dialog</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Dialog.html#child_dialogs">child_dialogs</a>
+<a href="gui.Dialog.html#click_count">click_count</a>
+<a href="gui.Dialog.html#click_event">click_event</a>
+<a href="gui.Dialog.html#crossing">crossing</a>
+<a href="gui.Dialog.html#curr_drag">curr_drag</a>
+<a href="gui.Dialog.html#curr_drag_holder">curr_drag_holder</a>
+<a href="gui.Dialog.html#curr_drop">curr_drop</a>
+<a href="gui.Dialog.html#curr_pointer">curr_pointer</a>
+<a href="gui.Dialog.html#DND_NEGATIVE_POINTER">DND_NEGATIVE_POINTER</a>
+<a href="gui.Dialog.html#DND_POSITIVE_POINTER">DND_POSITIVE_POINTER</a>
+<a href="gui.Dialog.html#DOUBLE_CLICK_DELAY">DOUBLE_CLICK_DELAY</a>
+<a href="gui.Dialog.html#DOUBLE_CLICK_TOLERANCE">DOUBLE_CLICK_TOLERANCE</a>
+<a href="gui.Dialog.html#DRAG_GESTURE_OFFSET">DRAG_GESTURE_OFFSET</a>
+<a href="gui.Dialog.html#drag_gesture_x">drag_gesture_x</a>
+<a href="gui.Dialog.html#drag_gesture_y">drag_gesture_y</a>
+<a href="gui.Dialog.html#entered">entered</a>
+<a href="gui.Dialog.html#focus">focus</a>
+<a href="gui.Dialog.html#FOCUS_DOWN">FOCUS_DOWN</a>
+<a href="gui.Dialog.html#focus_out_flag">focus_out_flag</a>
+<a href="gui.Dialog.html#FOCUS_UP">FOCUS_UP</a>
+<a href="gui.Dialog.html#held">held</a>
+<a href="gui.Dialog.html#invalid_rects">invalid_rects</a>
+<a href="gui.Dialog.html#is_blocked_flag">is_blocked_flag</a>
+<a href="gui.Dialog.html#menu_mode">menu_mode</a>
+<a href="gui.Dialog.html#menu_mode_stack">menu_mode_stack</a>
+<a href="gui.Dialog.html#owning_dialog">owning_dialog</a>
+<a href="gui.Dialog.html#point_chain">point_chain</a>
+<a href="gui.Dialog.html#point_chain_source">point_chain_source</a>
+<a href="gui.Dialog.html#POINTER">POINTER</a>
+<a href="gui.Dialog.html#popup_manager">popup_manager</a>
+<a href="gui.Dialog.html#popups">popups</a>
+<a href="gui.Dialog.html#remember_size_flag">remember_size_flag</a>
+<a href="gui.Dialog.html#ROOT_WATTRIBS">ROOT_WATTRIBS</a>
+<a href="gui.Dialog.html#selection_requests">selection_requests</a>
+<a href="gui.Dialog.html#selections">selections</a>
+<a href="gui.Dialog.html#tooltip_component">tooltip_component</a>
+<a href="gui.Dialog.html#TOOLTIP_CONTINUE_DELAY">TOOLTIP_CONTINUE_DELAY</a>
+<a href="gui.Dialog.html#tooltip_continue_time">tooltip_continue_time</a>
+<a href="gui.Dialog.html#TOOLTIP_END_DELAY">TOOLTIP_END_DELAY</a>
+<a href="gui.Dialog.html#tooltip_end_time">tooltip_end_time</a>
+<a href="gui.Dialog.html#tooltip_last_event">tooltip_last_event</a>
+<a href="gui.Dialog.html#tooltip_last_obj">tooltip_last_obj</a>
+<a href="gui.Dialog.html#tooltip_last_tip">tooltip_last_tip</a>
+<a href="gui.Dialog.html#TOOLTIP_START_DELAY">TOOLTIP_START_DELAY</a>
+<a href="gui.Dialog.html#tooltip_start_time">tooltip_start_time</a>
+<a href="gui.Dialog.html#tooltip_state">tooltip_state</a>
+<a href="gui.Dialog.html#tooltip_ticker">tooltip_ticker</a>
+<a href="gui.Dialog.html#TOOLTIP_X_OFFSET">TOOLTIP_X_OFFSET</a>
+<a href="gui.Dialog.html#TOOLTIP_Y_OFFSET">TOOLTIP_Y_OFFSET</a>
+<a href="gui.Dialog.html#tried_drag">tried_drag</a>
+<a href="gui.Dialog.html#win">win</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#check_existing">check_existing()</a>
+<a href="#component_setup">component_setup()</a>
+<a href="#end_dialog">end_dialog()</a>
+<a href="#find_child">find_child()</a>
+<a href="#gen_favourites_directories">gen_favourites_directories()</a>
+<a href="#get_dir_path">get_dir_path()</a>
+<a href="#get_entry">get_entry()</a>
+<a href="#get_favourites_directories">get_favourites_directories()</a>
+<a href="#get_full_path">get_full_path()</a>
+<a href="#get_result">get_result()</a>
+<a href="#get_result_path">get_result_path()</a>
+<a href="#goto_dir">goto_dir()</a>
+<a href="#init">init()</a>
+<a href="#init_dialog">init_dialog()</a>
+<a href="#keep_directory">keep_directory()</a>
+<a href="#list_directory">list_directory()</a>
+<a href="#load_subtree">load_subtree()</a>
+<a href="#msg">msg()</a>
+<a href="#new">new()</a>
+<a href="#on_cancel_button">on_cancel_button()</a>
+<a href="#on_dir_action">on_dir_action()</a>
+<a href="#on_dir_content_changed">on_dir_content_changed()</a>
+<a href="#on_favourite_dirs_menu_item">on_favourite_dirs_menu_item()</a>
+<a href="#on_home_button">on_home_button()</a>
+<a href="#on_new_dir_menu_item">on_new_dir_menu_item()</a>
+<a href="#on_okay_button">on_okay_button()</a>
+<a href="#on_refresh_menu_item">on_refresh_menu_item()</a>
+<a href="#on_show_hidden_menu_item">on_show_hidden_menu_item()</a>
+<a href="#on_tree_expansion">on_tree_expansion()</a>
+<a href="#on_tree_selection">on_tree_selection()</a>
+<a href="#on_up_button">on_up_button()</a>
+<a href="#refresh_node">refresh_node()</a>
+<a href="#set_directories">set_directories()</a>
+<a href="#set_directory">set_directory()</a>
+<a href="#set_existing_file_mode">set_existing_file_mode()</a>
+<a href="#set_show_hidden_files">set_show_hidden_files()</a>
+<a href="#setup">setup()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cancel_button">cancel_button</a>
+<a href="#dir">dir</a>
+<a href="#DISALLOW">DISALLOW</a>
+<a href="#existing_file_mode">existing_file_mode</a>
+<a href="#home_button">home_button</a>
+<a href="#IGNORE">IGNORE</a>
+<a href="#init_dirs">init_dirs</a>
+<a href="#message_label">message_label</a>
+<a href="#okay_button">okay_button</a>
+<a href="#REQUIRE">REQUIRE</a>
+<a href="#res">res</a>
+<a href="#selected_path">selected_path</a>
+<a href="#show_hidden_menu_item">show_hidden_menu_item</a>
+<a href="#tools_menu">tools_menu</a>
+<a href="#tools_menu_button">tools_menu_button</a>
+<a href="#tree">tree</a>
+<a href="#up_button">up_button</a>
+<a href="#WARN">WARN</a>
+<a href="#warned">warned</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="check_existing"/>
+<h3>check_existing()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#345" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="component_setup"/>
+<h3>component_setup()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Dialog.html#component_setup">component_setup()</a> in <a href="gui.Dialog.html" target="displayFrame">gui.Dialog</a></dd>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#97" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="end_dialog"/>
+<h3>end_dialog()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Dialog.html#end_dialog">end_dialog()</a> in <a href="gui.Dialog.html" target="displayFrame">gui.Dialog</a></dd>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#451" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="find_child"/>
+<h3>find_child(n, s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#336" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_favourites_directories"/>
+<h3>gen_favourites_directories()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#458" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_dir_path"/>
+<h3>get_dir_path()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#262" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_entry"/>
+<h3>get_entry(f)</h3>
+public static<p/>
+<dl>
+<dd>
+Return a <code><a href="ipl.filegui.ListEntryWithIcon.html" target="displayFrame">ListEntryWithIcon</a></code> for the given file f.
+<p/><a href="gui-directorydialog.icn.html#85" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_favourites_directories"/>
+<h3>get_favourites_directories()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#454" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_full_path"/>
+<h3>get_full_path(n)</h3>
+public<p/>
+<dl>
+<dd>
+Given a TreeNode n, return a <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code> path it represents by traversing
+up the tree structure to the root and converting to a <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code>.  Each
+element in the path is a ucs string, so the ucs() method on the path will
+always succeed.
+<p/><a href="gui-directorydialog.icn.html#165" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_result"/>
+<h3>get_result()</h3>
+public<p/>
+<dl>
+<dd>
+Get the result, (will fail if cancel was pressed).
+<p/><a href="gui-directorydialog.icn.html#224" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_result_path"/>
+<h3>get_result_path()</h3>
+public<p/>
+<dl>
+<dd>
+Get the result, as a <code><a href="io.FilePath.html" target="displayFrame">FilePath</a></code> (will fail if cancel was pressed).
+<p/><a href="gui-directorydialog.icn.html#231" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="goto_dir"/>
+<h3>goto_dir(d)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#266" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#73" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="init_dialog"/>
+<h3>init_dialog()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Dialog.html#init_dialog">init_dialog()</a> in <a href="gui.Dialog.html" target="displayFrame">gui.Dialog</a></dd>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#114" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="keep_directory"/>
+<h3>keep_directory()</h3>
+public<p/>
+<dl>
+<dd>
+Keep the directory last selected by this dialog.
+<p/><a href="gui-directorydialog.icn.html#255" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="list_directory"/>
+<h3>list_directory(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#150" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="load_subtree"/>
+<h3>load_subtree(n)</h3>
+public<p/>
+<dl>
+<dd>
+Given a TreeNode n, load its children with the sub-directories.
+<p/><a href="gui-directorydialog.icn.html#125" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="msg"/>
+<h3>msg(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#428" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Dialog.html#new">new()</a> in <a href="gui.Dialog.html" target="displayFrame">gui.Dialog</a></dd>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#432" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_cancel_button"/>
+<h3>on_cancel_button()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#382" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_dir_action"/>
+<h3>on_dir_action(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#213" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_dir_content_changed"/>
+<h3>on_dir_content_changed(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#217" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_favourite_dirs_menu_item"/>
+<h3>on_favourite_dirs_menu_item(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#462" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_home_button"/>
+<h3>on_home_button(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#405" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_new_dir_menu_item"/>
+<h3>on_new_dir_menu_item(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#421" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_okay_button"/>
+<h3>on_okay_button()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#356" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_refresh_menu_item"/>
+<h3>on_refresh_menu_item(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#416" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_show_hidden_menu_item"/>
+<h3>on_show_hidden_menu_item(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#392" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_tree_expansion"/>
+<h3>on_tree_expansion()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#188" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_tree_selection"/>
+<h3>on_tree_selection(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#204" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="on_up_button"/>
+<h3>on_up_button(ev)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#398" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="refresh_node"/>
+<h3>refresh_node(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#409" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="set_directories"/>
+<h3>set_directories(l)</h3>
+public<p/>
+<dl>
+<dd>
+Set the initial directories as a list; the first is the one
+initially shown.
+<p/><a href="gui-directorydialog.icn.html#246" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="set_directory"/>
+<h3>set_directory(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the initial directory.
+<p/><a href="gui-directorydialog.icn.html#238" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="set_existing_file_mode"/>
+<h3>set_existing_file_mode(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#80" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="set_show_hidden_files"/>
+<h3>set_show_hidden_files(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#386" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="setup"/>
+<h3>setup()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#466" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="cancel_button"/>
+<h3>cancel_button</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#59" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="dir"/>
+<h3>dir</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#66" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="DISALLOW"/>
+<h3>DISALLOW</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#71" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="existing_file_mode"/>
+<h3>existing_file_mode</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#67" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="home_button"/>
+<h3>home_button</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#57" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="IGNORE"/>
+<h3>IGNORE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#71" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="init_dirs"/>
+<h3>init_dirs</h3>
+public<p/>
+<dl>
+<dd>
+Directory choices
+<p/><a href="gui-directorydialog.icn.html#61" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="message_label"/>
+<h3>message_label</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#64" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="okay_button"/>
+<h3>okay_button</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#60" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="REQUIRE"/>
+<h3>REQUIRE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#71" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="res"/>
+<h3>res</h3>
+public<p/>
+<dl>
+<dd>
+Resulting file path          <br>
+<p/><a href="gui-directorydialog.icn.html#62" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="selected_path"/>
+<h3>selected_path</h3>
+public<p/>
+<dl>
+<dd>
+FilePath of tree selection
+<p/><a href="gui-directorydialog.icn.html#63" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="show_hidden_menu_item"/>
+<h3>show_hidden_menu_item</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#54" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="tools_menu"/>
+<h3>tools_menu</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#55" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="tools_menu_button"/>
+<h3>tools_menu_button</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#56" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="tree"/>
+<h3>tree</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#65" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="up_button"/>
+<h3>up_button</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#58" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="WARN"/>
+<h3>WARN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#71" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+<a name="warned"/>
+<h3>warned</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-directorydialog.icn.html#68" target="displayFrame">Source - directorydialog.icn </a>
+</dd>
+</dl><hr>
+</body></html>

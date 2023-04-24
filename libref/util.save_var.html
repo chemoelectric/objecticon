@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>save_var</title></head><body>
+<h1>save_var(e, var, i)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Invoke co-expression <code>e</code>, generating its results, in such a way that
+changes to <code>var</code> made by <code>e</code> will not be seen by the caller, and
+vice versa.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - a co-expression to evaluate
+</dd>
+<dd>
+<code>var</code> - a co-expression generating a global variable.
+</dd>
+<dd>
+<code>i</code> - an optional initial value for the global variable
+within e
+<p/>
+</dd>
+</dl>
+Example :-
+<pre>
+  # Cleanup some io stuff, without affecting global vars g.
+  save_var{ io_cleanup(), g }
+</pre>
+<p/><a href="util-misc.icn.html#62" target="displayFrame">Source - misc.icn </a>
+<p/>
+</body></html>

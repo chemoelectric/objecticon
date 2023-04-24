@@ -1,0 +1,1791 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>tables.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: tables.icn 9012 2021-03-27 23:58:37Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package datastruct
+<a name="6"/>
+<a name="7"/>import
+<a name="8"/>   lang,
+<a name="9"/>   util,
+<a name="10"/>   ipl.tables(tbldflt),
+<a name="11"/>   ipl.pdco(Index),
+<a name="12"/>   ipl.sort(need_callable_def)
+<a name="13"/>
+<a name="14"/>record Entry(key, val)
+<a name="15"/>
+<a name="16"/>#
+<a name="17"/># This is a common superclass for several table-like data structures.
+<a name="18"/>#
+<a name="19"/># A subclass must implement different optional methods depending on
+<a name="20"/># its capability mode, as follows :-
+<a name="21"/>#
+<a name="22"/>#  * `ORDER` - `back_key()`, `rank()` and `select()`
+<a name="23"/>#  * `INSERT` - `insert()`, `add()`
+<a name="24"/>#  * `DELETE` - `delete()`
+<a name="25"/>#
+<a name="26"/># There are several other abstract methods which all classes must of
+<a name="27"/># course implement, and others which may be overridden to provide more
+<a name="28"/># efficient implementations than the default.
+<a name="29"/>#
+<a name="30"/># Note that the behaviour of the various generator methods should the
+<a name="31"/># table be concurrently modified during the course of generation,
+<a name="32"/># depends upon the particular table implementation.
+<a name="33"/>#
+<a name="34"/>abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
+<a name="35"/>   public const
+<a name="36"/>      # The table's default value.
+<a name="37"/>      def
+<a name="38"/>
+<a name="39"/>   public static const
+<a name="40"/>      # Empty table implementation
+<a name="41"/>      EMPTY_TABLE,
+<a name="42"/>      # Constant indicating modifiable capability
+<a name="43"/>      MODIFY,
+<a name="44"/>      # Constant indicating insert capability
+<a name="45"/>      INSERT,
+<a name="46"/>      # Constant indicating delete capability
+<a name="47"/>      DELETE,
+<a name="48"/>      # Constant indicating keys are stored in order
+<a name="49"/>      ORDER
+<a name="50"/>
+<a name="51"/>   private static init()
+<a name="52"/>      EMPTY_TABLE := EmptyTable()
+<a name="53"/>      MODIFY := 1
+<a name="54"/>      INSERT := 2
+<a name="55"/>      DELETE := 4
+<a name="56"/>      ORDER := 8
+<a name="57"/>   end
+<a name="58"/>   
+<a name="59"/>   #
+<a name="60"/>   # Insert a new entry, or change an existing one.  Always succeeds
+<a name="61"/>   # and returns `self`.  Only implemented with INSERT capability.
+<a name="62"/>   #
+<a name="63"/>   public optional insert(key, val)
+<a name="64"/>
+<a name="65"/>   #
+<a name="66"/>   # Return the value for the given key if it is in the table, or fail
+<a name="67"/>   # if it is not present.  If the table has MODIFY capability, a
+<a name="68"/>   # variable is returned; otherwise the value.
+<a name="69"/>   #
+<a name="70"/>   public abstract member(key)
+<a name="71"/>   
+<a name="72"/>   #
+<a name="73"/>   # Delete the entry with the given key.  Fails if the key was not
+<a name="74"/>   # present, otherwise succeeds and returns `self`.  Only implemented
+<a name="75"/>   # with DELETE capability.
+<a name="76"/>   #
+<a name="77"/>   public optional delete(key)
+<a name="78"/>
+<a name="79"/>   #
+<a name="80"/>   # Return the value with the given key, or the default value if
+<a name="81"/>   # the key is not present.  Equivalent to `.t[k]` for a table.
+<a name="82"/>   #
+<a name="83"/>   public get(key)
+<a name="84"/>      return .member(key) | def
+<a name="85"/>   end
+<a name="86"/>
+<a name="87"/>   #
+<a name="88"/>   # Like `member`, but if the key is not present a new entry is added
+<a name="89"/>   # (with the default value).  If the table has MODIFY capability, a
+<a name="90"/>   # variable for the new entry is returned, otherwise a value is
+<a name="91"/>   # returned.  Only implemented with INSERT capability.
+<a name="92"/>   #
+<a name="93"/>   # Example :-
+<a name="94"/>   # ~
+<a name="95"/>   #    # Word counting
+<a name="96"/>   #    t := SortTable(0)
+<a name="97"/>   #    every w := words() do
+<a name="98"/>   #       t.add(w) +:= 1
+<a name="99"/>   # ~
+<a name="100"/>   public optional add(key)
+<a name="101"/>
+<a name="102"/>   #
+<a name="103"/>   # Return a sorted list of key-value pairs.
+<a name="104"/>   #
+<a name="105"/>   public sort()
+<a name="106"/>      local l
+<a name="107"/>      l := entry_list()
+<a name="108"/>      return if can(ORDER) then l else sortf(l, 1)
+<a name="109"/>   end
+<a name="110"/>
+<a name="111"/>   #
+<a name="112"/>   # Return a sorted list of keys.
+<a name="113"/>   #
+<a name="114"/>   public key_sort()
+<a name="115"/>      # This is defined in terms of sort() above rather than just
+<a name="116"/>      # sorting key_list(), so that classes with a custom sort()
+<a name="117"/>      # ordering don't need to override both sort methods.
+<a name="118"/>      return if can(ORDER) then key_list() else ipl.pdco.List{ (!sort())[1] }
+<a name="119"/>   end
+<a name="120"/>
+<a name="121"/>   #
+<a name="122"/>   # Generate the keys (cf the builtin key() function).  With ORDER
+<a name="123"/>   # capability, the keys are generated in sorted order, starting with
+<a name="124"/>   # the key at index `i` (default 1).
+<a name="125"/>   #
+<a name="126"/>   public abstract key(i)
+<a name="127"/>
+<a name="128"/>   #
+<a name="129"/>   # Generate alternating key/value pairs (cf the builtin keyval()
+<a name="130"/>   # function.)  If the table has MODIFY capability, the entry values
+<a name="131"/>   # will be generated as variables, otherwise as values.  With ORDER
+<a name="132"/>   # capability, the pairs are generated in sorted key order, starting
+<a name="133"/>   # with the key at index `i` (default 1).
+<a name="134"/>   #
+<a name="135"/>   public keyval(i)
+<a name="136"/>      suspend key_member(key(i))
+<a name="137"/>   end
+<a name="138"/>
+<a name="139"/>   #
+<a name="140"/>   # Generate the keys in reverse order, starting with the key before
+<a name="141"/>   # index `i` (thus generating the elements in the range 1:i); `i`
+<a name="142"/>   # defaults to 0.  Only implemented with ORDER capability.
+<a name="143"/>   #
+<a name="144"/>   public optional back_key(i)
+<a name="145"/>
+<a name="146"/>   #
+<a name="147"/>   # Helper method to suspend the key `k` and its corresponding entry.
+<a name="148"/>   #
+<a name="149"/>   public key_member(k)
+<a name="150"/>      suspend k | member(k)
+<a name="151"/>   end
+<a name="152"/>
+<a name="153"/>   #
+<a name="154"/>   # Generate alternating key/value pairs, starting with the key
+<a name="155"/>   # before index `i` (thus generating the elements in the range 1:i);
+<a name="156"/>   # `i` defaults to 0.  If the table has MODIFY capability, the entry
+<a name="157"/>   # values will be generated as variables, otherwise as values.  Only
+<a name="158"/>   # implemented with ORDER capability.
+<a name="159"/>   #
+<a name="160"/>    public back_keyval(i)
+<a name="161"/>      suspend key_member(back_key(i))
+<a name="162"/>   end
+<a name="163"/>
+<a name="164"/>   #
+<a name="165"/>   # Return the rank of the given key, ie its order number in the
+<a name="166"/>   # table; fails if there is no matching key in the table.  Only
+<a name="167"/>   # implemented for tables with ORDER capability.
+<a name="168"/>   #
+<a name="169"/>   public optional rank(key)
+<a name="170"/>
+<a name="171"/>   #
+<a name="172"/>   # Return the `i`th key, in order, in the table.  Fails if `i` is
+<a name="173"/>   # out of range, using standard icon indexing semantics.  Only
+<a name="174"/>   # implemented for tables with ORDER capability.
+<a name="175"/>   #
+<a name="176"/>   public optional select(i)
+<a name="177"/>
+<a name="178"/>   #
+<a name="179"/>   # Generate the values (cf !t for a table).  If the table has MODIFY
+<a name="180"/>   # capability, variables are generated, otherwise values are
+<a name="181"/>   # generated.  With ORDER capability, the values are generated in
+<a name="182"/>   # the order corresponding to the sorted key order, starting with
+<a name="183"/>   # the key at index `i` (default 1).
+<a name="184"/>   #
+<a name="185"/>   public gen(i)
+<a name="186"/>      suspend member(key(i))
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   #
+<a name="190"/>   # Generate the values in reverse order, starting with the value
+<a name="191"/>   # corresponding to the key before index `i` (thus generating the
+<a name="192"/>   # values in the range 1:i); `i` defaults to 0.  Only implemented
+<a name="193"/>   # with ORDER capability.  If the table has MODIFY capability,
+<a name="194"/>   # variables are generated, otherwise values are generated.
+<a name="195"/>   #
+<a name="196"/>   public back(i)
+<a name="197"/>      suspend member(back_key(i))
+<a name="198"/>   end
+<a name="199"/>
+<a name="200"/>   #
+<a name="201"/>   # Return the size of the table.
+<a name="202"/>   #
+<a name="203"/>   public abstract size()
+<a name="204"/>      
+<a name="205"/>   #
+<a name="206"/>   # Succeed iff the size is zero.
+<a name="207"/>   #
+<a name="208"/>   public empty()
+<a name="209"/>      succeed size() = 0
+<a name="210"/>   end
+<a name="211"/>
+<a name="212"/>   #
+<a name="213"/>   # Return a random value (cf ?t for a table).  If the table has MODIFY
+<a name="214"/>   # capability, a variable is returned, otherwise a value is returned.
+<a name="215"/>   #
+<a name="216"/>   public random()
+<a name="217"/>      return member(random_key())
+<a name="218"/>   end
+<a name="219"/>
+<a name="220"/>   #
+<a name="221"/>   # Return a random key.
+<a name="222"/>   #
+<a name="223"/>   public random_key()
+<a name="224"/>      local r
+<a name="225"/>      if r := ?(0 &lt; size()) then
+<a name="226"/>         return if can(ORDER) then select(r) else Index{ key(), r }
+<a name="227"/>   end
+<a name="228"/>
+<a name="229"/>   #
+<a name="230"/>   # Clear the table of all elements. Always succeeds and returns
+<a name="231"/>   # `self`.  Only implemented with DELETE capability.
+<a name="232"/>   #
+<a name="233"/>   public clear()
+<a name="234"/>      while delete(key())
+<a name="235"/>      link
+<a name="236"/>   end
+<a name="237"/>
+<a name="238"/>   #
+<a name="239"/>   # Generate key-value pairs as a sequence of `Entry` records.  NB -
+<a name="240"/>   # for each invocation, the same record is returned every time, with
+<a name="241"/>   # the values replaced.
+<a name="242"/>   #
+<a name="243"/>   public entries()
+<a name="244"/>      suspend Entries{ keyval() }
+<a name="245"/>   end
+<a name="246"/>
+<a name="247"/>   #
+<a name="248"/>   # Return a flat list, with alternating key-value entries.
+<a name="249"/>   #
+<a name="250"/>   public flatten()
+<a name="251"/>      return ipl.pdco.List{ keyval() }
+<a name="252"/>   end
+<a name="253"/>
+<a name="254"/>   #
+<a name="255"/>   # Return a list of the keys; it will be sorted if the table has
+<a name="256"/>   # ORDER capability.
+<a name="257"/>   #
+<a name="258"/>   public key_list()
+<a name="259"/>      return ipl.pdco.List{ key() }
+<a name="260"/>   end
+<a name="261"/>
+<a name="262"/>   #
+<a name="263"/>   # Return a list of pairs of key-values; it will be sorted by key if
+<a name="264"/>   # the table has ORDER capability.
+<a name="265"/>   #
+<a name="266"/>   public entry_list()
+<a name="267"/>      return EntryList{ keyval() }
+<a name="268"/>   end
+<a name="269"/>
+<a name="270"/>   #
+<a name="271"/>   # Custom equals mirrors the `equals()` behaviour for builtin tables.
+<a name="272"/>   #
+<a name="273"/>   protected override object_equals(other, seen)
+<a name="274"/>      other.size() = self.size() | fail
+<a name="275"/>      equals(other.def, self.def, seen) | fail
+<a name="276"/>      return hash_and_check(other.entry_list(), self.entry_list(), seen)
+<a name="277"/>   end
+<a name="278"/>
+<a name="279"/>   #
+<a name="280"/>   # Custom hash mirrors the `hash()` behaviour for builtin tables.
+<a name="281"/>   #
+<a name="282"/>   protected override object_hash(depth)
+<a name="283"/>      local n
+<a name="284"/>      n := size()
+<a name="285"/>      if depth &gt; 1 then {
+<a name="286"/>         n +:= hash(def, depth - 1)
+<a name="287"/>         every n +:= hash(key(), depth - 1)
+<a name="288"/>      }
+<a name="289"/>      return n
+<a name="290"/>   end
+<a name="291"/>
+<a name="292"/>   #
+<a name="293"/>   # Output object
+<a name="294"/>   #
+<a name="295"/>   protected override object_output(oo)
+<a name="296"/>      local pairs, e, sep
+<a name="297"/>      pairs := sort()
+<a name="298"/>      if oo.simple{!!pairs | def} then {
+<a name="299"/>         oo.object_start(self)
+<a name="300"/>         if \def then {
+<a name="301"/>            oo.writes1("default=").
+<a name="302"/>               traverse(def)
+<a name="303"/>            sep := &amp;yes
+<a name="304"/>         }
+<a name="305"/>         every e := !pairs do {
+<a name="306"/>            if \sep then
+<a name="307"/>               oo.writes1(";")
+<a name="308"/>            oo.traverse(e.key).
+<a name="309"/>               writes1("-&gt;").
+<a name="310"/>               traverse(e.val)
+<a name="311"/>            sep := &amp;yes
+<a name="312"/>         }
+<a name="313"/>         oo.object_end(self)
+<a name="314"/>      } else {
+<a name="315"/>         oo.nl().
+<a name="316"/>            object_start(self).
+<a name="317"/>            iplus()
+<a name="318"/>         if \def then {
+<a name="319"/>            oo.nl().
+<a name="320"/>               writes1("default=").
+<a name="321"/>               iplus().
+<a name="322"/>               traverse(def).
+<a name="323"/>               iminus()
+<a name="324"/>         }
+<a name="325"/>         every e := !pairs do {
+<a name="326"/>            oo.nl().
+<a name="327"/>               traverse(e.key).
+<a name="328"/>               writes1("-&gt;").
+<a name="329"/>               iplus().
+<a name="330"/>               traverse(e.val).
+<a name="331"/>               iminus()
+<a name="332"/>         }
+<a name="333"/>         oo.iminus().
+<a name="334"/>            nl().
+<a name="335"/>            object_end(self)
+<a name="336"/>      }
+<a name="337"/>   end
+<a name="338"/>
+<a name="339"/>   protected init_entries(entries)
+<a name="340"/>      if *entries % 2 ~= 0 then
+<a name="341"/>          runerr(168)
+<a name="342"/>      while *entries &gt; 0 do
+<a name="343"/>         insert(default.get(entries), default.get(entries))
+<a name="344"/>   end
+<a name="345"/>end
+<a name="346"/>
+<a name="347"/>#
+<a name="348"/># Given a co-expression `e` generating successive key and value pairs,
+<a name="349"/># generate a corresponding sequence of `Entry` records.  NB - for each
+<a name="350"/># invocation, the same record is returned every time, with the values
+<a name="351"/># replaced.
+<a name="352"/>#
+<a name="353"/>procedure Entries(e)
+<a name="354"/>   local r, x, f
+<a name="355"/>   r := Entry()
+<a name="356"/>   while x := @e do {
+<a name="357"/>      if /f then {
+<a name="358"/>         r.key := x
+<a name="359"/>         f := &amp;yes
+<a name="360"/>      } else {
+<a name="361"/>         r.val := x
+<a name="362"/>         suspend r
+<a name="363"/>         f := &amp;null
+<a name="364"/>      }
+<a name="365"/>   }
+<a name="366"/>end
+<a name="367"/>
+<a name="368"/>#
+<a name="369"/># Given a co-expression `e` generating successive key and value pairs,
+<a name="370"/># return a corresponding list of `Entry` records.
+<a name="371"/>#
+<a name="372"/>procedure EntryList(e)
+<a name="373"/>   return ipl.pdco.List{ |Entry(@e, @e) }
+<a name="374"/>end
+<a name="375"/>
+<a name="376"/>#
+<a name="377"/># A helpful abstract class for a table with `ORDER` capability, which
+<a name="378"/># wishes to implement the generator methods `key()` and `back_key()`
+<a name="379"/># in terms of `select()`.
+<a name="380"/>#
+<a name="381"/># In the case of changes to the table during generation, the methods
+<a name="382"/># behave like the builtin `forward()` and `back()` functions.
+<a name="383"/>#
+<a name="384"/>abstract class OrderTableImpl1(Table)
+<a name="385"/>   public override key(i)
+<a name="386"/>      if i := first_forward(i, size()) then
+<a name="387"/>         suspend |1(select(i), i +:= 1)
+<a name="388"/>   end
+<a name="389"/>
+<a name="390"/>   public override back_key(i)
+<a name="391"/>      if i := first_back(i, size()) then
+<a name="392"/>         suspend |1(select(i), i -:= 1)
+<a name="393"/>   end
+<a name="394"/>end
+<a name="395"/>
+<a name="396"/>#
+<a name="397"/># A helpful abstract class for a table with `ORDER` capability, which
+<a name="398"/># wishes to implement `select()` in terms of `key()`.
+<a name="399"/>#
+<a name="400"/>abstract class OrderTableImpl2(Table)
+<a name="401"/>   public override select(i)
+<a name="402"/>      return Index{ key(), cvpos_item(i, size()) }
+<a name="403"/>   end
+<a name="404"/>end
+<a name="405"/>
+<a name="406"/>#
+<a name="407"/># A helpful abstract class for a table with `INSERT` capability, which
+<a name="408"/># wishes to implement `insert()` in terms of `add()`.
+<a name="409"/>#
+<a name="410"/>abstract class InsertTableImpl1(Table)
+<a name="411"/>   public override insert(key, val)
+<a name="412"/>      add(key) := val
+<a name="413"/>      link
+<a name="414"/>   end
+<a name="415"/>end
+<a name="416"/>
+<a name="417"/>#
+<a name="418"/># A helpful abstract class for a table with `INSERT` capability, which
+<a name="419"/># wishes to implement `add()` in terms of `member()` and `insert()`.
+<a name="420"/>#
+<a name="421"/>abstract class InsertTableImpl2(Table)
+<a name="422"/>   public override add(key)
+<a name="423"/>      return member(key) | (insert(key, def) &amp; member(key))
+<a name="424"/>   end
+<a name="425"/>end
+<a name="426"/>
+<a name="427"/>#
+<a name="428"/># A class to provide an unmodifiable view of another table.
+<a name="429"/>#
+<a name="430"/>class UnmodifiableTable(Table)
+<a name="431"/>   protected const
+<a name="432"/>      t
+<a name="433"/>
+<a name="434"/>   public override member(key)
+<a name="435"/>      return .t.member(key)
+<a name="436"/>   end
+<a name="437"/>
+<a name="438"/>   public override key(i)
+<a name="439"/>      suspend t.key(i)
+<a name="440"/>   end
+<a name="441"/>
+<a name="442"/>   public override keyval(i)
+<a name="443"/>      suspend .t.keyval(i)
+<a name="444"/>   end
+<a name="445"/>
+<a name="446"/>   public override back_key(i)
+<a name="447"/>      suspend t.back_key(i)
+<a name="448"/>   end
+<a name="449"/>
+<a name="450"/>   public override back_keyval(i)
+<a name="451"/>      suspend .t.back_keyval(i)
+<a name="452"/>   end
+<a name="453"/>
+<a name="454"/>   public override rank(key)
+<a name="455"/>      return t.rank(key)
+<a name="456"/>   end
+<a name="457"/>
+<a name="458"/>   public override select(i)
+<a name="459"/>      return t.select(i)
+<a name="460"/>   end
+<a name="461"/>
+<a name="462"/>   public override gen(i)
+<a name="463"/>      suspend .t.gen(i)
+<a name="464"/>   end
+<a name="465"/>
+<a name="466"/>   public override back(i)
+<a name="467"/>      suspend .t.back(i)
+<a name="468"/>   end
+<a name="469"/>
+<a name="470"/>   public override size()
+<a name="471"/>      return t.size()
+<a name="472"/>   end
+<a name="473"/>
+<a name="474"/>   public override empty()
+<a name="475"/>      return t.empty()
+<a name="476"/>   end
+<a name="477"/>
+<a name="478"/>   public override random()
+<a name="479"/>      return .t.random()
+<a name="480"/>   end
+<a name="481"/>
+<a name="482"/>   public override get_mode()
+<a name="483"/>      return iand(ORDER, t.get_mode())
+<a name="484"/>   end
+<a name="485"/>
+<a name="486"/>   public new(t)
+<a name="487"/>      self.t := need_instance(t, Table)
+<a name="488"/>      self.def := t.def
+<a name="489"/>      return
+<a name="490"/>   end
+<a name="491"/>end
+<a name="492"/>
+<a name="493"/>#
+<a name="494"/># A list-view of the keys of a table with ORDER capability.  Note that
+<a name="495"/># this implementation uses the table's generator methods to generate
+<a name="496"/># the list elements; these may behave differently from the
+<a name="497"/># corresponding builtin list generators if the underlying table is
+<a name="498"/># concurrently modified.
+<a name="499"/>#
+<a name="500"/>class TableKeyList(List)
+<a name="501"/>   protected const
+<a name="502"/>      t
+<a name="503"/>
+<a name="504"/>   public override at(i)
+<a name="505"/>      return t.select(i)
+<a name="506"/>   end
+<a name="507"/>
+<a name="508"/>   public override gen(i)
+<a name="509"/>      suspend t.key(i)
+<a name="510"/>   end
+<a name="511"/>
+<a name="512"/>   public override back(i)
+<a name="513"/>      suspend t.back_key(i)
+<a name="514"/>   end
+<a name="515"/>
+<a name="516"/>   public override delete(i)
+<a name="517"/>      link t.delete(t.select(i))
+<a name="518"/>   end
+<a name="519"/>
+<a name="520"/>   public override size()
+<a name="521"/>      return t.size()
+<a name="522"/>   end
+<a name="523"/>
+<a name="524"/>   public override clear()
+<a name="525"/>      t.clear()
+<a name="526"/>      link
+<a name="527"/>   end
+<a name="528"/>
+<a name="529"/>   public override get_mode()
+<a name="530"/>      return iand(DELETE, t.get_mode())
+<a name="531"/>   end
+<a name="532"/>
+<a name="533"/>   public new(t)
+<a name="534"/>      self.t := need_instance(t, Table)
+<a name="535"/>      t.can(Table.ORDER) | runerr("Table doesn't have ORDER capability", t)
+<a name="536"/>      return
+<a name="537"/>   end
+<a name="538"/>end
+<a name="539"/>
+<a name="540"/>#
+<a name="541"/># A node in a `SortTable` tree.
+<a name="542"/>#
+<a name="543"/>final class SortTableNode()
+<a name="544"/>   public const
+<a name="545"/>      key
+<a name="546"/>   public
+<a name="547"/>      val
+<a name="548"/>   package
+<a name="549"/>      l, r, p, is_red_flag, N
+<a name="550"/>
+<a name="551"/>   #
+<a name="552"/>   # Return the next node by sorted order within the enclosing tree,
+<a name="553"/>   # or fail if there is none.
+<a name="554"/>   #
+<a name="555"/>   public get_next()
+<a name="556"/>      local t, c
+<a name="557"/>      need_linked()
+<a name="558"/>      if t := \r then {
+<a name="559"/>         while t := \t.l
+<a name="560"/>         return t
+<a name="561"/>      } else {
+<a name="562"/>         c := self
+<a name="563"/>         while t := c.p.real() do {
+<a name="564"/>            if c === t.l then
+<a name="565"/>               return t
+<a name="566"/>            c := t
+<a name="567"/>         }
+<a name="568"/>      }
+<a name="569"/>   end
+<a name="570"/>
+<a name="571"/>   #
+<a name="572"/>   # Return the previous node by sorted order within the enclosing
+<a name="573"/>   # tree, or fail if there is none.
+<a name="574"/>   #
+<a name="575"/>   public get_prev()
+<a name="576"/>      local t, c
+<a name="577"/>      need_linked()
+<a name="578"/>      if t := \l then {
+<a name="579"/>         while t := \t.r
+<a name="580"/>         return t
+<a name="581"/>      } else {
+<a name="582"/>         c := self
+<a name="583"/>         while t := c.p.real() do {
+<a name="584"/>            if c === t.r then
+<a name="585"/>               return t
+<a name="586"/>            c := t
+<a name="587"/>         }
+<a name="588"/>      }
+<a name="589"/>   end
+<a name="590"/>
+<a name="591"/>   #
+<a name="592"/>   # Move along the ordered sequence of nodes `i` places; positive
+<a name="593"/>   # means increasing key order, negative means decreasing.  Returns
+<a name="594"/>   # the node at that position, or fail if either end of the sequence
+<a name="595"/>   # is encountered.
+<a name="596"/>   #
+<a name="597"/>   public move(i)
+<a name="598"/>      local n
+<a name="599"/>      i := need_integer(i)
+<a name="600"/>      need_linked()
+<a name="601"/>      n := self
+<a name="602"/>      if i &gt; 0 then {
+<a name="603"/>         every 1 to i do
+<a name="604"/>            n := n.get_next() | fail
+<a name="605"/>      } else {
+<a name="606"/>         every 1 to -i do
+<a name="607"/>            n := n.get_prev() | fail
+<a name="608"/>      }
+<a name="609"/>      return n
+<a name="610"/>   end
+<a name="611"/>
+<a name="612"/>   #
+<a name="613"/>   # Check if this node is "linked" (hasn't been unlinked), signalling
+<a name="614"/>   # a runtime error otherwise.
+<a name="615"/>   #
+<a name="616"/>   public need_linked()
+<a name="617"/>      \N | runerr("Node has been unlinked", self)
+<a name="618"/>      link
+<a name="619"/>   end
+<a name="620"/>
+<a name="621"/>   #
+<a name="622"/>   # Succeed iff this node is "linked" (meaning it hasn't been
+<a name="623"/>   # deleted from its tree).
+<a name="624"/>   #
+<a name="625"/>   public is_linked()
+<a name="626"/>      succeed \N
+<a name="627"/>   end
+<a name="628"/>
+<a name="629"/>   #
+<a name="630"/>   # Generate this node and all subsequent nodes in the sort order in
+<a name="631"/>   # the enclosing tree.
+<a name="632"/>   #
+<a name="633"/>   # Changes to the tree structure are permitted during iteration,
+<a name="634"/>   # with the exception that the last node generated may not be
+<a name="635"/>   # removed from the tree ("unlinked") before the next result is
+<a name="636"/>   # generated; if it is then a runtime error is immediately raised.
+<a name="637"/>   #
+<a name="638"/>   # In order to iterate over the tree and remove selected nodes, a
+<a name="639"/>   # loop using `move_unlink` may be used instead.
+<a name="640"/>   #
+<a name="641"/>   public gen()
+<a name="642"/>      local n
+<a name="643"/>      need_linked()
+<a name="644"/>      n := self
+<a name="645"/>      repeat {
+<a name="646"/>         suspend n
+<a name="647"/>         n := n.get_next() | fail
+<a name="648"/>      }
+<a name="649"/>   end
+<a name="650"/>
+<a name="651"/>   #
+<a name="652"/>   # Generate this node and all prior nodes in the sort order in the
+<a name="653"/>   # enclosing tree.
+<a name="654"/>   #
+<a name="655"/>   # See also `gen()` for a tree modification limitation (the same
+<a name="656"/>   # applies to this method).
+<a name="657"/>   #
+<a name="658"/>   public back()
+<a name="659"/>      local n
+<a name="660"/>      need_linked()
+<a name="661"/>      n := self
+<a name="662"/>      repeat {
+<a name="663"/>         suspend n
+<a name="664"/>         n := n.get_prev() | fail
+<a name="665"/>      }
+<a name="666"/>   end
+<a name="667"/>
+<a name="668"/>   #
+<a name="669"/>   # Return the `SortTable` associated with this node, which
+<a name="670"/>   # must be "linked".
+<a name="671"/>   #
+<a name="672"/>   # This method works by moving up the tree to the root node, whose
+<a name="673"/>   # "parent" is a special object which contains a link to the
+<a name="674"/>   # enclosing tree.
+<a name="675"/>   #
+<a name="676"/>   # If this tree of nodes was orphaned because the parent tree
+<a name="677"/>   # performed a `clear()`, then this method fails.
+<a name="678"/>   #
+<a name="679"/>   public get_tree()
+<a name="680"/>      local n
+<a name="681"/>      need_linked()
+<a name="682"/>      n := p
+<a name="683"/>      while n := n.real().p
+<a name="684"/>      return \n.tree
+<a name="685"/>   end
+<a name="686"/>
+<a name="687"/>   #
+<a name="688"/>   # Remove this node from its tree.
+<a name="689"/>   #
+<a name="690"/>   # After a node has been unlinked it cannot be used for further
+<a name="691"/>   # operations, and any attempt to do so will cause a runtime error.
+<a name="692"/>   # (See also `is_linked`).
+<a name="693"/>   #
+<a name="694"/>   # Example :-
+<a name="695"/>   # ~
+<a name="696"/>   #   t := SortTable(,, "Cat", 12, "Mouse", 2, "Gerbil", 1)
+<a name="697"/>   #   n := t.node(2)     # SortTableNode(key="Gerbil";val=1)
+<a name="698"/>   #   n.unlink()
+<a name="699"/>   #   # t is now SortTable("Cat"-&gt;12;"Mouse"-&gt;2)
+<a name="700"/>   #   n.gen()            # runtime error
+<a name="701"/>   # ~
+<a name="702"/>   #
+<a name="703"/>   public unlink()
+<a name="704"/>      need_linked()
+<a name="705"/>      SortTable.unlink(self)
+<a name="706"/>      link
+<a name="707"/>   end
+<a name="708"/>
+<a name="709"/>   #
+<a name="710"/>   # This method combines a `move` and an `unlink`.  First, `move(i)`
+<a name="711"/>   # is performed, and the result is noted.  Then the `unlink` is
+<a name="712"/>   # peformed.  The result of the `move` is returned; if the `move`
+<a name="713"/>   # failed, then this method fails, but the `unlink` is carried out
+<a name="714"/>   # regardless.
+<a name="715"/>   #
+<a name="716"/>   # This gives a convenient way to iterate over the tree and delete
+<a name="717"/>   # selected nodes.
+<a name="718"/>   #
+<a name="719"/>   # Example :-
+<a name="720"/>   # ~
+<a name="721"/>   #    # Delete all entries with even-numbered keys.
+<a name="722"/>   #    n := t.node(1)
+<a name="723"/>   #    while
+<a name="724"/>   #       n := if n.key % 2 = 0 then
+<a name="725"/>   #          n.move_unlink(1)
+<a name="726"/>   #       else
+<a name="727"/>   #          n.get_next()
+<a name="728"/>   # ~
+<a name="729"/>   #
+<a name="730"/>   public move_unlink(i)
+<a name="731"/>      local t
+<a name="732"/>      t := move(i)
+<a name="733"/>      unlink()
+<a name="734"/>      return \t
+<a name="735"/>   end
+<a name="736"/>
+<a name="737"/>   #
+<a name="738"/>   # Return the rank of this node, ie its index in the sorted order of
+<a name="739"/>   # nodes in the enclosing tree, with 1 being the rank of the
+<a name="740"/>   # "smallest" key.
+<a name="741"/>   #
+<a name="742"/>   public rank()
+<a name="743"/>      need_linked()
+<a name="744"/>      return SortTable.rank_of(self)
+<a name="745"/>   end
+<a name="746"/>
+<a name="747"/>   package keyval()
+<a name="748"/>      suspend key | val
+<a name="749"/>   end
+<a name="750"/>
+<a name="751"/>   package real()
+<a name="752"/>      link
+<a name="753"/>   end
+<a name="754"/>
+<a name="755"/>   package new(k, v, p)
+<a name="756"/>      self.key := k
+<a name="757"/>      self.val := v
+<a name="758"/>      self.p := p
+<a name="759"/>      self.N := 1
+<a name="760"/>      return
+<a name="761"/>   end
+<a name="762"/>end
+<a name="763"/>
+<a name="764"/>#
+<a name="765"/># A sentinel which is the parent of the root node of a tree.
+<a name="766"/>#
+<a name="767"/>package class SortTableSentinel()
+<a name="768"/>   public
+<a name="769"/>      tree,    # Parent SortTable, or null if cleared
+<a name="770"/>      root     # Root node, or null if table empty.
+<a name="771"/>
+<a name="772"/>   package real()
+<a name="773"/>   end
+<a name="774"/>
+<a name="775"/>   package new(t)
+<a name="776"/>      self.tree := t
+<a name="777"/>      return
+<a name="778"/>   end
+<a name="779"/>end
+<a name="780"/>
+<a name="781"/>#
+<a name="782"/># A `Table` which uses a red-black binary tree so that its members are
+<a name="783"/># always in sorted order.
+<a name="784"/>#
+<a name="785"/>class SortTable(InsertTableImpl1)
+<a name="786"/>   private
+<a name="787"/>      sentinel
+<a name="788"/>   public const
+<a name="789"/>      cmp
+<a name="790"/>
+<a name="791"/>   public override add(key)
+<a name="792"/>      return add_node(key).val
+<a name="793"/>   end
+<a name="794"/>
+<a name="795"/>   #
+<a name="796"/>   # This is like `add_node()`, but sets the value of the node to
+<a name="797"/>   # `val` before returning it.
+<a name="798"/>   #
+<a name="799"/>   public new_node(key, val)
+<a name="800"/>      local n
+<a name="801"/>      n := add_node(key)
+<a name="802"/>      n.val := val
+<a name="803"/>      return n
+<a name="804"/>   end
+<a name="805"/>
+<a name="806"/>   #
+<a name="807"/>   # Add a new node into the tree with the given key (and the default
+<a name="808"/>   # value), or return an existing node if one with a matching key is
+<a name="809"/>   # already present.
+<a name="810"/>   #
+<a name="811"/>   public add_node(key)
+<a name="812"/>      local n, p, i
+<a name="813"/>      if /sentinel.root then {
+<a name="814"/>         sentinel.root := n := SortTableNode(key, def, sentinel)
+<a name="815"/>         return n
+<a name="816"/>      }
+<a name="817"/>      n := sentinel.root
+<a name="818"/>      repeat {
+<a name="819"/>         i := cmp(key, n.key)
+<a name="820"/>         if i = 0 then
+<a name="821"/>            return n
+<a name="822"/>         p := n
+<a name="823"/>         n := if i &lt; 0 then
+<a name="824"/>            n.l
+<a name="825"/>         else
+<a name="826"/>            n.r
+<a name="827"/>         if /n then {
+<a name="828"/>            n := SortTableNode(key, def, p)
+<a name="829"/>            if i &lt; 0 then
+<a name="830"/>               p.l := n
+<a name="831"/>            else
+<a name="832"/>               p.r := n
+<a name="833"/>            fix_sizes(p, 1)
+<a name="834"/>            fix_after_insertion(n)
+<a name="835"/>            return n
+<a name="836"/>         }
+<a name="837"/>      }
+<a name="838"/>   end
+<a name="839"/>
+<a name="840"/>   private static fix_sizes(n, d)
+<a name="841"/>      repeat {
+<a name="842"/>         n.N +:= d
+<a name="843"/>         n := n.p.real() | fail
+<a name="844"/>      }
+<a name="845"/>   end
+<a name="846"/>
+<a name="847"/>   public override delete(key)
+<a name="848"/>      return unlink(find_node(key))
+<a name="849"/>   end
+<a name="850"/>
+<a name="851"/>   package static unlink(n)
+<a name="852"/>      local x
+<a name="853"/>      # If n has 2 children, swap its position with its successor
+<a name="854"/>      # (which has at most one child).
+<a name="855"/>      if \n.l &amp; \n.r then
+<a name="856"/>         swap_nodes(n, n.get_next())
+<a name="857"/>      if x := \n.l | \n.r then {
+<a name="858"/>         # One child
+<a name="859"/>         x.p := n.p
+<a name="860"/>         down_var(n) := x
+<a name="861"/>         fix_sizes(x.p.real(), -1)
+<a name="862"/>         n.l := n.r := n.p := n.N := &amp;null
+<a name="863"/>         fix_after_deletion(x)
+<a name="864"/>      } else {
+<a name="865"/>         # No children
+<a name="866"/>         fix_after_deletion(n)
+<a name="867"/>         down_var(n) := &amp;null
+<a name="868"/>         fix_sizes(n.p.real(), -1)
+<a name="869"/>         n.p := n.N := &amp;null
+<a name="870"/>      }
+<a name="871"/>      link
+<a name="872"/>   end
+<a name="873"/>
+<a name="874"/>   private static fix_after_deletion(x)
+<a name="875"/>      local sib, xp
+<a name="876"/>      while /x.is_red_flag &amp; xp := x.p.real() do {
+<a name="877"/>         if x === xp.l then {
+<a name="878"/>            sib := xp.r
+<a name="879"/>            if is_red(sib) then {
+<a name="880"/>               sib.is_red_flag := &amp;no
+<a name="881"/>               xp.is_red_flag := &amp;yes
+<a name="882"/>               rotate_left(xp)
+<a name="883"/>               # Since x is xp.l and rotate_left(n) doesn't change
+<a name="884"/>               # n.l, xp is still valid.
+<a name="885"/>               sib := xp.r
+<a name="886"/>            }
+<a name="887"/>            if /sib | (is_black(sib.l) &amp; is_black(sib.r)) then {
+<a name="888"/>               (\sib).is_red_flag := &amp;yes
+<a name="889"/>               x := xp
+<a name="890"/>            } else {
+<a name="891"/>               if is_black(sib.r) then {
+<a name="892"/>                  (\sib.l).is_red_flag := &amp;no
+<a name="893"/>                  sib.is_red_flag := &amp;yes
+<a name="894"/>                  rotate_right(sib)
+<a name="895"/>                  # xp is still the same
+<a name="896"/>                  sib := xp.r
+<a name="897"/>               }
+<a name="898"/>               sib.is_red_flag := xp.is_red_flag
+<a name="899"/>               xp.is_red_flag := &amp;no
+<a name="900"/>               (\sib.r).is_red_flag := &amp;no
+<a name="901"/>               rotate_left(xp)
+<a name="902"/>               return
+<a name="903"/>            }
+<a name="904"/>         } else {       # Symmetric
+<a name="905"/>            sib := xp.l
+<a name="906"/>            if is_red(sib) then {
+<a name="907"/>               sib.is_red_flag := &amp;no
+<a name="908"/>               xp.is_red_flag := &amp;yes
+<a name="909"/>               rotate_right(xp)
+<a name="910"/>               sib := xp.l
+<a name="911"/>            }
+<a name="912"/>            if /sib | (is_black(sib.l) &amp; is_black(sib.r)) then {
+<a name="913"/>                (\sib).is_red_flag := &amp;yes
+<a name="914"/>                x := xp
+<a name="915"/>            } else {
+<a name="916"/>               if is_black(sib.l) then {
+<a name="917"/>                  (\sib.r).is_red_flag := &amp;no
+<a name="918"/>                  sib.is_red_flag := &amp;yes
+<a name="919"/>                  rotate_left(sib)
+<a name="920"/>                  sib := xp.l
+<a name="921"/>               }
+<a name="922"/>               sib.is_red_flag := xp.is_red_flag
+<a name="923"/>               xp.is_red_flag := &amp;no
+<a name="924"/>               (\sib.l).is_red_flag := &amp;no
+<a name="925"/>               rotate_right(xp)
+<a name="926"/>               return
+<a name="927"/>            }
+<a name="928"/>         }
+<a name="929"/>      }
+<a name="930"/>      x.is_red_flag := &amp;no 
+<a name="931"/>   end
+<a name="932"/>
+<a name="933"/>   private static swap_nodes(x, y)
+<a name="934"/>      down_var(x) := y
+<a name="935"/>      down_var(y) := x
+<a name="936"/>      x.p :=: y.p
+<a name="937"/>      x.l :=: y.l
+<a name="938"/>      x.r :=: y.r
+<a name="939"/>      x.N :=: y.N
+<a name="940"/>      x.is_red_flag :=: y.is_red_flag
+<a name="941"/>      (\x.l).p := x
+<a name="942"/>      (\x.r).p := x
+<a name="943"/>      (\y.l).p := y
+<a name="944"/>      (\y.r).p := y
+<a name="945"/>   end
+<a name="946"/>
+<a name="947"/>   private static down_var(n)
+<a name="948"/>      local t
+<a name="949"/>      return if t := n.p.real() then {
+<a name="950"/>         if t.l === n then
+<a name="951"/>            t.l
+<a name="952"/>         else
+<a name="953"/>            t.r
+<a name="954"/>      } else
+<a name="955"/>         n.p.root
+<a name="956"/>   end
+<a name="957"/>
+<a name="958"/>   private static is_black(p)
+<a name="959"/>      succeed /p | /p.is_red_flag
+<a name="960"/>   end
+<a name="961"/>
+<a name="962"/>   private static is_red(n)
+<a name="963"/>      succeed \ (\n).is_red_flag
+<a name="964"/>   end
+<a name="965"/>
+<a name="966"/>   private fix_after_insertion(x)
+<a name="967"/>      local y, xp, xpp
+<a name="968"/>      x.is_red_flag := &amp;yes
+<a name="969"/>      while xp := x.p.real() &amp; \xp.is_red_flag do {
+<a name="970"/>         if xpp := xp.p.real() &amp; xp === xpp.l then {
+<a name="971"/>            if y := \xpp.r &amp; \y.is_red_flag then {
+<a name="972"/>               xp.is_red_flag := &amp;no
+<a name="973"/>               y.is_red_flag := &amp;no
+<a name="974"/>               xpp.is_red_flag := &amp;yes
+<a name="975"/>               x := xpp
+<a name="976"/>            } else {
+<a name="977"/>               if x === xp.r then {
+<a name="978"/>                  x := xp
+<a name="979"/>                  rotate_left(x)
+<a name="980"/>               }
+<a name="981"/>               if xp := x.p.real() then {
+<a name="982"/>                  xp.is_red_flag := &amp;no
+<a name="983"/>                  if xpp := xp.p.real() then {
+<a name="984"/>                     xpp.is_red_flag := &amp;yes
+<a name="985"/>                     rotate_right(xpp)
+<a name="986"/>                  }
+<a name="987"/>               }
+<a name="988"/>            }
+<a name="989"/>         } else {
+<a name="990"/>            if xpp := xp.p.real() &amp; y := \xpp.l &amp; \y.is_red_flag then {
+<a name="991"/>               xp.is_red_flag := &amp;no
+<a name="992"/>               y.is_red_flag := &amp;no
+<a name="993"/>               xpp.is_red_flag := &amp;yes
+<a name="994"/>               x := xpp
+<a name="995"/>            } else {
+<a name="996"/>               if x === xp.l then {
+<a name="997"/>                  x := xp
+<a name="998"/>                  rotate_right(x)
+<a name="999"/>               }
+<a name="1000"/>               if xp := x.p.real() then {
+<a name="1001"/>                  xp.is_red_flag := &amp;no
+<a name="1002"/>                  if xpp := xp.p.real() then {
+<a name="1003"/>                     xpp.is_red_flag := &amp;yes
+<a name="1004"/>                     rotate_left(xpp)
+<a name="1005"/>                  }
+<a name="1006"/>               }
+<a name="1007"/>            }
+<a name="1008"/>         }
+<a name="1009"/>      }
+<a name="1010"/>      sentinel.root.is_red_flag := &amp;no
+<a name="1011"/>   end
+<a name="1012"/>
+<a name="1013"/>   private static rotate_left(n)
+<a name="1014"/>      local x
+<a name="1015"/>      x := n.r
+<a name="1016"/>      n.r := x.l
+<a name="1017"/>      (\x.l).p := n
+<a name="1018"/>      x.p := n.p
+<a name="1019"/>      down_var(n) := x
+<a name="1020"/>      x.l := n
+<a name="1021"/>      n.p := x
+<a name="1022"/>      x.N := n.N
+<a name="1023"/>      n.N := size1(n.l) + size1(n.r) + 1
+<a name="1024"/>   end
+<a name="1025"/>
+<a name="1026"/>   private static rotate_right(n)
+<a name="1027"/>      local x
+<a name="1028"/>      x := n.l
+<a name="1029"/>      n.l := x.r
+<a name="1030"/>      (\x.r).p := n
+<a name="1031"/>      x.p := n.p
+<a name="1032"/>      down_var(n) := x
+<a name="1033"/>      x.r := n
+<a name="1034"/>      n.p := x
+<a name="1035"/>      x.N := n.N
+<a name="1036"/>      n.N := size1(n.l) + size1(n.r) + 1
+<a name="1037"/>   end
+<a name="1038"/>
+<a name="1039"/>   #
+<a name="1040"/>   # Return the node with the smallest key greater than `key`, or fail
+<a name="1041"/>   # there is no such node.
+<a name="1042"/>   #
+<a name="1043"/>   public find_node_gt(key)
+<a name="1044"/>      local n, i
+<a name="1045"/>      n := sentinel.root
+<a name="1046"/>      while \n do {
+<a name="1047"/>         i := cmp(key, n.key)
+<a name="1048"/>         if i &lt; 0 then {
+<a name="1049"/>            if /n.l then
+<a name="1050"/>               return n
+<a name="1051"/>            n := n.l
+<a name="1052"/>         } else {
+<a name="1053"/>            if /n.r then
+<a name="1054"/>               return n.get_next()
+<a name="1055"/>            n := n.r
+<a name="1056"/>         }
+<a name="1057"/>      }
+<a name="1058"/>   end
+<a name="1059"/>
+<a name="1060"/>   #
+<a name="1061"/>   # Return the node with the largest key less than `key`, or fail
+<a name="1062"/>   # there is no such node.
+<a name="1063"/>   #
+<a name="1064"/>   public find_node_lt(key)
+<a name="1065"/>      local n, i
+<a name="1066"/>      n := sentinel.root
+<a name="1067"/>      while \n do {
+<a name="1068"/>         i := cmp(key, n.key)
+<a name="1069"/>         if i &gt; 0 then {
+<a name="1070"/>            if /n.r then
+<a name="1071"/>               return n
+<a name="1072"/>            n := n.r
+<a name="1073"/>         } else {
+<a name="1074"/>            if /n.l then
+<a name="1075"/>               return n.get_prev()
+<a name="1076"/>            n := n.l
+<a name="1077"/>         }
+<a name="1078"/>      }
+<a name="1079"/>   end
+<a name="1080"/>
+<a name="1081"/>   #
+<a name="1082"/>   # Return the node with the smallest key greater than or equal to
+<a name="1083"/>   # `key`, or fail there is no such node.
+<a name="1084"/>   #
+<a name="1085"/>   public find_node_ge(key)
+<a name="1086"/>      local n, i
+<a name="1087"/>      n := sentinel.root
+<a name="1088"/>      while \n do {
+<a name="1089"/>         i := cmp(key, n.key)
+<a name="1090"/>         if i &lt; 0 then {
+<a name="1091"/>            if /n.l then
+<a name="1092"/>               return n
+<a name="1093"/>            n := n.l
+<a name="1094"/>         } else if i &gt; 0 then {
+<a name="1095"/>            if /n.r then
+<a name="1096"/>               return n.get_next()
+<a name="1097"/>            n := n.r
+<a name="1098"/>         } else
+<a name="1099"/>            return n
+<a name="1100"/>      }
+<a name="1101"/>   end
+<a name="1102"/>
+<a name="1103"/>   #
+<a name="1104"/>   # Return the node with the largest key less than or equal to `key`,
+<a name="1105"/>   # or fail there is no such node.
+<a name="1106"/>   #
+<a name="1107"/>   public find_node_le(key)
+<a name="1108"/>      local n, i
+<a name="1109"/>      n := sentinel.root
+<a name="1110"/>      while \n do {
+<a name="1111"/>         i := cmp(key, n.key)
+<a name="1112"/>         if i &gt; 0 then {
+<a name="1113"/>            if /n.r then
+<a name="1114"/>               return n
+<a name="1115"/>            n := n.r
+<a name="1116"/>         } else if i &lt; 0 then {
+<a name="1117"/>            if /n.l then
+<a name="1118"/>               return n.get_prev()
+<a name="1119"/>            n := n.l
+<a name="1120"/>         } else
+<a name="1121"/>            return n
+<a name="1122"/>      }
+<a name="1123"/>   end
+<a name="1124"/>
+<a name="1125"/>   #
+<a name="1126"/>   # Return the node corresponding to `key`, or fail if it is not
+<a name="1127"/>   # found.
+<a name="1128"/>   #
+<a name="1129"/>   public find_node(key)
+<a name="1130"/>      local n, i
+<a name="1131"/>      n := sentinel.root
+<a name="1132"/>      while \n do {
+<a name="1133"/>         i := cmp(key, n.key)
+<a name="1134"/>         if i = 0 then
+<a name="1135"/>            return n
+<a name="1136"/>         n := if i &lt; 0 then
+<a name="1137"/>            n.l
+<a name="1138"/>         else
+<a name="1139"/>            n.r
+<a name="1140"/>      }
+<a name="1141"/>   end
+<a name="1142"/>
+<a name="1143"/>   #
+<a name="1144"/>   # Return the smallest key greater than `key`, or fail there is no
+<a name="1145"/>   # such key.
+<a name="1146"/>   #
+<a name="1147"/>   public find_key_gt(key)
+<a name="1148"/>      return find_node_gt(key).key
+<a name="1149"/>   end
+<a name="1150"/>
+<a name="1151"/>   #
+<a name="1152"/>   # Return the largest key less than `key`, or fail there is no such
+<a name="1153"/>   # key.
+<a name="1154"/>   #
+<a name="1155"/>   public find_key_lt(key)
+<a name="1156"/>      return find_node_lt(key).key
+<a name="1157"/>   end
+<a name="1158"/>
+<a name="1159"/>   #
+<a name="1160"/>   # Return the smallest key greater than or equal to `key`, or fail
+<a name="1161"/>   # there is no such key.
+<a name="1162"/>   #
+<a name="1163"/>   public find_key_ge(key)
+<a name="1164"/>      return find_node_ge(key).key
+<a name="1165"/>   end
+<a name="1166"/>
+<a name="1167"/>   #
+<a name="1168"/>   # Return the largest key less than or equal to `key`, or fail there
+<a name="1169"/>   # is no such key.
+<a name="1170"/>   #
+<a name="1171"/>   public find_key_le(key)
+<a name="1172"/>      return find_node_le(key).key
+<a name="1173"/>   end
+<a name="1174"/>
+<a name="1175"/>   public override member(key)
+<a name="1176"/>      return find_node(key).val
+<a name="1177"/>   end
+<a name="1178"/>
+<a name="1179"/>   #
+<a name="1180"/>   # Generate the nodes in the table, in sorted key order, starting at
+<a name="1181"/>   # index `i` (default 1).  Each node represents one entry in the
+<a name="1182"/>   # table, and contains key and val members; the former is read-only,
+<a name="1183"/>   # the latter may be changed if desired, to edit the value in the
+<a name="1184"/>   # table.  The nodes are generated in sorted key order.
+<a name="1185"/>   #
+<a name="1186"/>   # See also `SortTableNode.gen()`.
+<a name="1187"/>   #
+<a name="1188"/>   public nodes(i)
+<a name="1189"/>      /i := 1
+<a name="1190"/>      suspend node(i).gen()
+<a name="1191"/>   end
+<a name="1192"/>
+<a name="1193"/>   #
+<a name="1194"/>   # Generate the nodes in reverse order, starting with the node
+<a name="1195"/>   # before index `i` in the sorted order (thus generating the
+<a name="1196"/>   # elements in the range 1:i); `i` defaults to 0. (see `nodes()`).
+<a name="1197"/>   #
+<a name="1198"/>   public back_nodes(i)
+<a name="1199"/>      i := need_integer(\i) | 0
+<a name="1200"/>      suspend node(i - 1).back()
+<a name="1201"/>   end
+<a name="1202"/>
+<a name="1203"/>   package static rank_of(n)
+<a name="1204"/>      local i, t
+<a name="1205"/>      i := size1(n.l) + 1
+<a name="1206"/>      while t := n.p.real() do {
+<a name="1207"/>         if n === t.r then
+<a name="1208"/>            i +:= size1(t.l) + 1
+<a name="1209"/>         n := t
+<a name="1210"/>      }
+<a name="1211"/>      return i
+<a name="1212"/>   end
+<a name="1213"/>
+<a name="1214"/>   private static size1(n)
+<a name="1215"/>      return if /n then 0 else n.N
+<a name="1216"/>   end
+<a name="1217"/>
+<a name="1218"/>   public override key(i)
+<a name="1219"/>      suspend nodes(i).key
+<a name="1220"/>   end
+<a name="1221"/>
+<a name="1222"/>   public override keyval(i)
+<a name="1223"/>      suspend nodes(i).keyval()
+<a name="1224"/>   end
+<a name="1225"/>
+<a name="1226"/>   public override back_key(i)
+<a name="1227"/>      suspend back_nodes(i).key
+<a name="1228"/>   end
+<a name="1229"/>
+<a name="1230"/>   public override back_keyval(i)
+<a name="1231"/>      suspend back_nodes(i).keyval()
+<a name="1232"/>   end
+<a name="1233"/>
+<a name="1234"/>   public override gen(i)
+<a name="1235"/>      suspend nodes(i).val
+<a name="1236"/>   end
+<a name="1237"/>
+<a name="1238"/>   public override back(i)
+<a name="1239"/>      suspend back_nodes(i).val
+<a name="1240"/>   end
+<a name="1241"/>
+<a name="1242"/>   private new_sentinel()
+<a name="1243"/>      self.sentinel := SortTableSentinel(self)
+<a name="1244"/>   end
+<a name="1245"/>
+<a name="1246"/>   #
+<a name="1247"/>   # This is a constant-time operation that leaves the former tree of
+<a name="1248"/>   # nodes intact, but entirely divorced from this table.  The old
+<a name="1249"/>   # nodes will remain "linked" to one another, and can still be
+<a name="1250"/>   # operated upon, but without affecting this table.
+<a name="1251"/>   #
+<a name="1252"/>   public override clear()
+<a name="1253"/>      sentinel.tree := &amp;null
+<a name="1254"/>      new_sentinel()
+<a name="1255"/>      link
+<a name="1256"/>   end
+<a name="1257"/>
+<a name="1258"/>   public override random()
+<a name="1259"/>      return node(?(0 &lt; size())).val
+<a name="1260"/>   end
+<a name="1261"/>
+<a name="1262"/>   public override size()
+<a name="1263"/>      return size1(sentinel.root)
+<a name="1264"/>   end
+<a name="1265"/>
+<a name="1266"/>   public override select(i)
+<a name="1267"/>      return node(i).key
+<a name="1268"/>   end
+<a name="1269"/>
+<a name="1270"/>   #
+<a name="1271"/>   # Return the `i`th node in the sorted order (see `nodes()`).
+<a name="1272"/>   #
+<a name="1273"/>   public node(i)
+<a name="1274"/>      i := cvpos_item(i, size()) | fail
+<a name="1275"/>      return select1(sentinel.root, i)
+<a name="1276"/>   end
+<a name="1277"/>
+<a name="1278"/>   public override rank(k)
+<a name="1279"/>      return rank1(sentinel.root, k)
+<a name="1280"/>   end
+<a name="1281"/>
+<a name="1282"/>   private select1(n, i)
+<a name="1283"/>      local t
+<a name="1284"/>      t := size1(n.l) + 1
+<a name="1285"/>      return if t &gt; i then
+<a name="1286"/>         select1(n.l, i)
+<a name="1287"/>      else if t &lt; i then
+<a name="1288"/>         select1(n.r, i - t)
+<a name="1289"/>      else
+<a name="1290"/>         n
+<a name="1291"/>   end
+<a name="1292"/>   
+<a name="1293"/>   private rank1(n, k)
+<a name="1294"/>      local t
+<a name="1295"/>      \n | fail
+<a name="1296"/>      t := cmp(k, n.key)
+<a name="1297"/>      return if t &lt; 0 then
+<a name="1298"/>         rank1(n.l, k)
+<a name="1299"/>      else if t &gt; 0 then 
+<a name="1300"/>         1 + size1(n.l) + rank1(n.r, k)
+<a name="1301"/>      else 
+<a name="1302"/>         1 + size1(n.l)
+<a name="1303"/>   end
+<a name="1304"/>
+<a name="1305"/>   #
+<a name="1306"/>   # Check the table for internal consistency.
+<a name="1307"/>   #
+<a name="1308"/>   public check()
+<a name="1309"/>      is_bst(sentinel.root) | return error("Not in symmetric order")
+<a name="1310"/>      is_size_consistent(sentinel.root)  | return error("Subtree counts not consistent")
+<a name="1311"/>      is_rank_consistent(sentinel.root)  | return error("Ranks not consistent")
+<a name="1312"/>      is_balanced() | return error("Not balanced")
+<a name="1313"/>      is_correctly_linked(sentinel.root) | return error("Not correctly linked")
+<a name="1314"/>      if (\sentinel.root).p.real() then return error("Root has a parent")
+<a name="1315"/>      return
+<a name="1316"/>   end
+<a name="1317"/>
+<a name="1318"/>   #
+<a name="1319"/>   # Return the height of the tree; useful for testing purposes.
+<a name="1320"/>   #
+<a name="1321"/>   public height()
+<a name="1322"/>      return height1(sentinel.root)
+<a name="1323"/>   end
+<a name="1324"/>
+<a name="1325"/>   private height1(n)
+<a name="1326"/>      return if /n then 0 else 1 + max(height1(n.l), height1(n.r))
+<a name="1327"/>   end
+<a name="1328"/>
+<a name="1329"/>   private is_correctly_linked(n)
+<a name="1330"/>      if /n then return
+<a name="1331"/>      if (\n.l | \n.r).p ~=== n then fail
+<a name="1332"/>      succeed is_correctly_linked(n.l) &amp; is_correctly_linked(n.r)
+<a name="1333"/>   end
+<a name="1334"/>
+<a name="1335"/>   private is_balanced()
+<a name="1336"/>      local b, n
+<a name="1337"/>      b := 0
+<a name="1338"/>      n := sentinel.root
+<a name="1339"/>      while \n do {
+<a name="1340"/>         is_red(n) | (b +:= 1)
+<a name="1341"/>         n := n.l
+<a name="1342"/>      }
+<a name="1343"/>      succeed is_balanced1(sentinel.root, b)
+<a name="1344"/>   end
+<a name="1345"/>
+<a name="1346"/>   private is_balanced1(n, b)
+<a name="1347"/>      if /n then succeed b = 0
+<a name="1348"/>      is_red(n) | (b -:= 1)
+<a name="1349"/>      succeed is_balanced1(n.l, b) &amp; is_balanced1(n.r, b)
+<a name="1350"/>   end
+<a name="1351"/>
+<a name="1352"/>   private is_bst(n, min, max)
+<a name="1353"/>      if /n then return
+<a name="1354"/>      if cmp(n.key, \min) &lt;= 0 then fail
+<a name="1355"/>      if cmp(n.key, \max) &gt;= 0 then fail
+<a name="1356"/>      succeed is_bst(n.l, min, n.key) &amp; is_bst(n.r, n.key, max)
+<a name="1357"/>   end
+<a name="1358"/>
+<a name="1359"/>   private is_size_consistent(n)
+<a name="1360"/>      if /n then return
+<a name="1361"/>      (n.N = size1(n.l) + size1(n.r) + 1) | fail
+<a name="1362"/>      succeed is_size_consistent(n.l) &amp; is_size_consistent(n.r)
+<a name="1363"/>   end
+<a name="1364"/>
+<a name="1365"/>   private is_rank_consistent()
+<a name="1366"/>      local i, k
+<a name="1367"/>      every i := 1 to size() do
+<a name="1368"/>         (i = rank(select(i))) | fail
+<a name="1369"/>      every k := key() do
+<a name="1370"/>         (cmp(k, select(rank(k))) = 0) | fail
+<a name="1371"/>      return
+<a name="1372"/>   end
+<a name="1373"/>
+<a name="1374"/>   public override get_mode()
+<a name="1375"/>      return MODIFY + INSERT + DELETE + ORDER
+<a name="1376"/>   end
+<a name="1377"/>
+<a name="1378"/>   #
+<a name="1379"/>   # Create a new instance.
+<a name="1380"/>   #
+<a name="1381"/>   # :Parameters :
+<a name="1382"/>   # :  `def` - the default value
+<a name="1383"/>   # :  `cmp` - a comparator function taking two arbitrary values and
+<a name="1384"/>   #     returning `&lt;0`, `0` or `&gt;0` by way of comparison.  The default
+<a name="1385"/>   #     value is `Internal.compare`.  The function must satisfy
+<a name="1386"/>   #     *  `sign(cmp(a,b)) = -sign(cmp(b,a))` for all `a,b`
+<a name="1387"/>   #     *  `cmp(a,b)&gt;0 &amp; cmp(b,c)&gt;0 =&gt; cmp(a,c)&gt;0`
+<a name="1388"/>   #     *  `cmp(a,b)=0 &lt;=&gt; sign(cmp(a,x))=sign(cmp(b,x))` for all other `x'.
+<a name="1389"/>   # :  `entries` - initial key-value entries.
+<a name="1390"/>   #
+<a name="1391"/>   public new(def, cmp, entries[])
+<a name="1392"/>      new_sentinel()
+<a name="1393"/>      self.def := def
+<a name="1394"/>      self.cmp := need_callable_def(cmp)
+<a name="1395"/>      init_entries(entries)
+<a name="1396"/>      return
+<a name="1397"/>   end
+<a name="1398"/>end
+<a name="1399"/>
+<a name="1400"/>#
+<a name="1401"/># A `Table` which uses the `lang.equals` procedure for key comparison,
+<a name="1402"/># rather than the builtin `===` operator.
+<a name="1403"/>#
+<a name="1404"/>class EqTable(InsertTableImpl1)
+<a name="1405"/>   private const
+<a name="1406"/>      t
+<a name="1407"/>   private
+<a name="1408"/>      sz
+<a name="1409"/>
+<a name="1410"/>   public override add(key)
+<a name="1411"/>      local h, l, e, n
+<a name="1412"/>      h := hash(key)
+<a name="1413"/>      if l := default.member(t, h) then {
+<a name="1414"/>         every e := !l do {
+<a name="1415"/>            if equals(e.key, key) then
+<a name="1416"/>               return e.val
+<a name="1417"/>         }
+<a name="1418"/>      }
+<a name="1419"/>      n := Entry(key, def)
+<a name="1420"/>      if \l then
+<a name="1421"/>         put(l, n)
+<a name="1422"/>      else
+<a name="1423"/>         default.insert(t, h, [n])
+<a name="1424"/>      sz +:= 1
+<a name="1425"/>      return n.val
+<a name="1426"/>   end
+<a name="1427"/>
+<a name="1428"/>   public override member(key)
+<a name="1429"/>      local e
+<a name="1430"/>      every e := !default.member(t, hash(key)) do {
+<a name="1431"/>         if equals(e.key, key) then
+<a name="1432"/>            return e.val
+<a name="1433"/>      }
+<a name="1434"/>   end
+<a name="1435"/>
+<a name="1436"/>   public override delete(key)
+<a name="1437"/>      local h, l, e, i
+<a name="1438"/>      h := hash(key)
+<a name="1439"/>      l := default.member(t, h) | fail
+<a name="1440"/>      i := 1
+<a name="1441"/>      every e := !l do {
+<a name="1442"/>         if equals(e.key, key) then {
+<a name="1443"/>            default.delete(l, i)
+<a name="1444"/>            if *l = 0 then
+<a name="1445"/>               default.delete(t, h)
+<a name="1446"/>            sz -:= 1
+<a name="1447"/>            link
+<a name="1448"/>         }
+<a name="1449"/>         i +:= 1
+<a name="1450"/>      }
+<a name="1451"/>   end
+<a name="1452"/>
+<a name="1453"/>   public override key()
+<a name="1454"/>      suspend .(!!t).key
+<a name="1455"/>   end
+<a name="1456"/>
+<a name="1457"/>   public override keyval()
+<a name="1458"/>      local e
+<a name="1459"/>      every e := !!t do
+<a name="1460"/>         suspend .e.key | e.val
+<a name="1461"/>   end
+<a name="1462"/>
+<a name="1463"/>   public override gen()
+<a name="1464"/>      suspend (!!t).val
+<a name="1465"/>   end
+<a name="1466"/>
+<a name="1467"/>   public override size()
+<a name="1468"/>      return .sz
+<a name="1469"/>   end
+<a name="1470"/>
+<a name="1471"/>   public override clear()
+<a name="1472"/>      default.clear(t)
+<a name="1473"/>      sz := 0
+<a name="1474"/>      link
+<a name="1475"/>   end
+<a name="1476"/>
+<a name="1477"/>   public override get_mode()
+<a name="1478"/>      return MODIFY + INSERT + DELETE
+<a name="1479"/>   end
+<a name="1480"/>
+<a name="1481"/>   #
+<a name="1482"/>   # Create a new instance.
+<a name="1483"/>   #
+<a name="1484"/>   # :Parameters :
+<a name="1485"/>   # :  `def` - the default value
+<a name="1486"/>   # :  `entries` - initial key-value entries.
+<a name="1487"/>   #
+<a name="1488"/>   public new(def, entries[])
+<a name="1489"/>      self.def := def
+<a name="1490"/>      t := table()
+<a name="1491"/>      sz := 0
+<a name="1492"/>      init_entries(entries)
+<a name="1493"/>      return
+<a name="1494"/>   end
+<a name="1495"/>end
+<a name="1496"/>
+<a name="1497"/>#
+<a name="1498"/># A `Table` which is just a wrapper around a builtin table.
+<a name="1499"/>#
+<a name="1500"/>class BuiltinTable(InsertTableImpl2)
+<a name="1501"/>   private const
+<a name="1502"/>      t
+<a name="1503"/>
+<a name="1504"/>   public override insert(key, val)
+<a name="1505"/>      default.insert(t, key, val)
+<a name="1506"/>      link
+<a name="1507"/>   end
+<a name="1508"/>
+<a name="1509"/>   public override member(key)
+<a name="1510"/>      return default.member(t, key)
+<a name="1511"/>   end
+<a name="1512"/>
+<a name="1513"/>   public override delete(key)
+<a name="1514"/>      link default.delete(t, key)
+<a name="1515"/>   end
+<a name="1516"/>
+<a name="1517"/>   public override key()
+<a name="1518"/>      suspend default.key(t)
+<a name="1519"/>   end
+<a name="1520"/>
+<a name="1521"/>   public override keyval()
+<a name="1522"/>      suspend default.keyval(t)
+<a name="1523"/>   end
+<a name="1524"/>
+<a name="1525"/>   public override gen()
+<a name="1526"/>      suspend !t
+<a name="1527"/>   end
+<a name="1528"/>
+<a name="1529"/>   public override clear()
+<a name="1530"/>      default.clear(t)
+<a name="1531"/>      link
+<a name="1532"/>   end
+<a name="1533"/>
+<a name="1534"/>   public override size()
+<a name="1535"/>      return *t
+<a name="1536"/>   end
+<a name="1537"/>
+<a name="1538"/>   public override random()
+<a name="1539"/>      return ?t
+<a name="1540"/>   end
+<a name="1541"/>
+<a name="1542"/>   public override get_mode()
+<a name="1543"/>      return MODIFY + INSERT + DELETE
+<a name="1544"/>   end
+<a name="1545"/>
+<a name="1546"/>   #
+<a name="1547"/>   # Create a new instance.
+<a name="1548"/>   #
+<a name="1549"/>   # :Parameters :
+<a name="1550"/>   # :  `t` - the table to wrap; if omitted then a new table is
+<a name="1551"/>   #       created.
+<a name="1552"/>   #
+<a name="1553"/>   public new(t)
+<a name="1554"/>      if /t then
+<a name="1555"/>         self.t := table()
+<a name="1556"/>      else {
+<a name="1557"/>         self.t := need_table(t)
+<a name="1558"/>         self.def := tbldflt(t)
+<a name="1559"/>      }
+<a name="1560"/>      return
+<a name="1561"/>   end
+<a name="1562"/>end
+<a name="1563"/>
+<a name="1564"/>#
+<a name="1565"/># An empty table.  An instance of this class is `Table.EMPTY_TABLE`.
+<a name="1566"/>#
+<a name="1567"/>class EmptyTable(OrderTableImpl1)
+<a name="1568"/>   public override member(x)
+<a name="1569"/>   end
+<a name="1570"/>
+<a name="1571"/>   public override select(i)
+<a name="1572"/>   end
+<a name="1573"/>
+<a name="1574"/>   public override rank(x)
+<a name="1575"/>   end
+<a name="1576"/>
+<a name="1577"/>   public override size()
+<a name="1578"/>      return 0
+<a name="1579"/>   end
+<a name="1580"/>
+<a name="1581"/>   public override get_mode()
+<a name="1582"/>      return ORDER
+<a name="1583"/>   end
+<a name="1584"/>end
+<a name="1585"/>
+<a name="1586"/>#
+<a name="1587"/># A `Table` which uses weak references
+<a name="1588"/>#
+<a name="1589"/>class WeakrefTable(InsertTableImpl1)
+<a name="1590"/>   private const
+<a name="1591"/>      t
+<a name="1592"/>   private
+<a name="1593"/>      sz,
+<a name="1594"/>      last_purge,
+<a name="1595"/>      repeat_collect_flag
+<a name="1596"/>
+<a name="1597"/>   #
+<a name="1598"/>   # This flag can be set to force repeated collections during a
+<a name="1599"/>   # purge, whilst this reduces the size of the table.  This can be
+<a name="1600"/>   # useful in the case that the values in the table hold references
+<a name="1601"/>   # to objects that are also referenced as keys.  Unlike those keys,
+<a name="1602"/>   # these references count as non-weak.  What happens therefore is
+<a name="1603"/>   # that a single collect (and purge) will delete just those keys
+<a name="1604"/>   # that don't have references via values.  As those keys and values
+<a name="1605"/>   # are purged, the next level of references can be removed with
+<a name="1606"/>   # another collect and purge, and so on.  This flag causes such a
+<a name="1607"/>   # loop to be executed by each purge.
+<a name="1608"/>   #
+<a name="1609"/>   public set_repeat_collect(s)
+<a name="1610"/>      self.repeat_collect_flag := need_flag(s)
+<a name="1611"/>      link
+<a name="1612"/>   end
+<a name="1613"/>
+<a name="1614"/>   public override add(key)
+<a name="1615"/>      local h, l, e, n
+<a name="1616"/>      maybe_purge()
+<a name="1617"/>      h := Internal.hash(key)
+<a name="1618"/>      if l := default.member(t, h) then {
+<a name="1619"/>         every e := !l do {
+<a name="1620"/>            if weakrefval(e.key) === key then
+<a name="1621"/>               return e.val
+<a name="1622"/>         }
+<a name="1623"/>      }
+<a name="1624"/>      n := Entry(weakref(key), def) | runerr("Type of key cannot be used with weakref")
+<a name="1625"/>      if \l then
+<a name="1626"/>         put(l, n)
+<a name="1627"/>      else
+<a name="1628"/>         default.insert(t, h, [n])
+<a name="1629"/>      sz +:= 1
+<a name="1630"/>      return n.val
+<a name="1631"/>   end
+<a name="1632"/>
+<a name="1633"/>   public override member(key)
+<a name="1634"/>      local e
+<a name="1635"/>      maybe_purge()
+<a name="1636"/>      every e := !default.member(t, Internal.hash(key)) do {
+<a name="1637"/>         if weakrefval(e.key) === key then
+<a name="1638"/>            return e.val
+<a name="1639"/>      }
+<a name="1640"/>   end
+<a name="1641"/>
+<a name="1642"/>   public override delete(key)
+<a name="1643"/>      local h, l, e, i
+<a name="1644"/>      maybe_purge()
+<a name="1645"/>      h := Internal.hash(key)
+<a name="1646"/>      l := default.member(t, h) | fail
+<a name="1647"/>      i := 1
+<a name="1648"/>      every e := !l do {
+<a name="1649"/>         if weakrefval(e.key) === key then {
+<a name="1650"/>            default.delete(l, i)
+<a name="1651"/>            if *l = 0 then
+<a name="1652"/>               default.delete(t, h)
+<a name="1653"/>            sz -:= 1
+<a name="1654"/>            link
+<a name="1655"/>         }
+<a name="1656"/>         i +:= 1
+<a name="1657"/>      }
+<a name="1658"/>   end
+<a name="1659"/>
+<a name="1660"/>   public override key()
+<a name="1661"/>      maybe_purge()
+<a name="1662"/>      suspend weakrefval((!!t).key)
+<a name="1663"/>   end
+<a name="1664"/>
+<a name="1665"/>   public override keyval()
+<a name="1666"/>      local e
+<a name="1667"/>      maybe_purge()
+<a name="1668"/>      every e := !!t do
+<a name="1669"/>         suspend weakrefval(e.key) | e.val
+<a name="1670"/>   end
+<a name="1671"/>
+<a name="1672"/>   public override gen()
+<a name="1673"/>      maybe_purge()
+<a name="1674"/>      suspend (!!t).val
+<a name="1675"/>   end
+<a name="1676"/>
+<a name="1677"/>   public override clear()
+<a name="1678"/>      default.clear(t)
+<a name="1679"/>      sz := 0
+<a name="1680"/>      link
+<a name="1681"/>   end
+<a name="1682"/>
+<a name="1683"/>   public override size()
+<a name="1684"/>      maybe_purge()
+<a name="1685"/>      return .sz
+<a name="1686"/>   end
+<a name="1687"/>
+<a name="1688"/>   public maybe_purge()
+<a name="1689"/>      local old_sz
+<a name="1690"/>      if last_purge ~=== Prog.get_global_collection_count() then {
+<a name="1691"/>         repeat {
+<a name="1692"/>            old_sz := sz
+<a name="1693"/>            last_purge := Prog.get_global_collection_count()
+<a name="1694"/>            purge()
+<a name="1695"/>            if /repeat_collect_flag | (old_sz = sz) then
+<a name="1696"/>               break
+<a name="1697"/>            collect()
+<a name="1698"/>         }
+<a name="1699"/>      }
+<a name="1700"/>      link
+<a name="1701"/>   end
+<a name="1702"/>
+<a name="1703"/>   private purge()
+<a name="1704"/>      local h, l, i
+<a name="1705"/>      every h := default.key(t) do {
+<a name="1706"/>         l := t[h]
+<a name="1707"/>         i := 1
+<a name="1708"/>         while i &lt;= *l do {
+<a name="1709"/>            if weakrefval(l[i].key) then
+<a name="1710"/>               i +:= 1
+<a name="1711"/>            else {
+<a name="1712"/>               default.delete(l, i)
+<a name="1713"/>               sz -:= 1
+<a name="1714"/>            }
+<a name="1715"/>         }
+<a name="1716"/>         if *l = 0 then
+<a name="1717"/>            default.delete(t, h)
+<a name="1718"/>      }
+<a name="1719"/>   end
+<a name="1720"/>
+<a name="1721"/>   public override get_mode()
+<a name="1722"/>      return MODIFY + INSERT + DELETE
+<a name="1723"/>   end
+<a name="1724"/>
+<a name="1725"/>   #
+<a name="1726"/>   # Create a new instance.
+<a name="1727"/>   #
+<a name="1728"/>   # :Parameters :
+<a name="1729"/>   # :  `def` - the default value
+<a name="1730"/>   # :  `entries` - initial key-value entries.
+<a name="1731"/>   #
+<a name="1732"/>   public new(def, entries[])
+<a name="1733"/>      self.def := def
+<a name="1734"/>      self.t := table()
+<a name="1735"/>      self.sz := 0
+<a name="1736"/>      init_entries(entries)
+<a name="1737"/>      return
+<a name="1738"/>   end
+<a name="1739"/>end
+<a name="1740"/>
+<a name="1741"/>#
+<a name="1742"/># A convenient equivalent to wrapping a BuiltinTable in an
+<a name="1743"/># UnmodifiableTable.
+<a name="1744"/>#
+<a name="1745"/>class UnmodifiableBuiltinTable(Table)
+<a name="1746"/>   private const
+<a name="1747"/>      t
+<a name="1748"/>
+<a name="1749"/>   public override member(key)
+<a name="1750"/>      return .default.member(t, key)
+<a name="1751"/>   end
+<a name="1752"/>
+<a name="1753"/>   public override key()
+<a name="1754"/>      suspend default.key(t)
+<a name="1755"/>   end
+<a name="1756"/>
+<a name="1757"/>   public override keyval()
+<a name="1758"/>      suspend .default.keyval(t)
+<a name="1759"/>   end
+<a name="1760"/>
+<a name="1761"/>   public override gen()
+<a name="1762"/>      suspend .!t
+<a name="1763"/>   end
+<a name="1764"/>
+<a name="1765"/>   public override size()
+<a name="1766"/>      return *t
+<a name="1767"/>   end
+<a name="1768"/>
+<a name="1769"/>   public override random()
+<a name="1770"/>      return .?t
+<a name="1771"/>   end
+<a name="1772"/>
+<a name="1773"/>   public override get_mode()
+<a name="1774"/>      return 0
+<a name="1775"/>   end
+<a name="1776"/>
+<a name="1777"/>   #
+<a name="1778"/>   # Create a new instance.
+<a name="1779"/>   #
+<a name="1780"/>   # :Parameters :
+<a name="1781"/>   # :  `t` - the table to wrap
+<a name="1782"/>   #
+<a name="1783"/>   public new(t)
+<a name="1784"/>      self.t := need_table(t)
+<a name="1785"/>      self.def := tbldflt(t)
+<a name="1786"/>      return
+<a name="1787"/>   end
+<a name="1788"/>end
+</pre></body></html>

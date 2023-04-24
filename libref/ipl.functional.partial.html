@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>partial</title></head><body>
+<h1>partial(f, spec, l[])</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Returns a function which modifies its arguments according to <code>spec</code>,  before applying them
+to f.  The modification is specified by the following characters in spec:-
+"v": add the next value from the arguments which follow the spec
+parameter, or <code>&amp;null</code> if none remain.
+"V": add the remaining values.
+"a": add the next argument, or <code>&amp;null</code> if none remain.
+"A": add the remaining arguments.
+"-": skip the next argument.
+<p/>
+Example :-
+<pre>
+    f := partial(write, "vvvAV", "a", "b", "c", "p", "q", "r")
+    f("x","y","z")   # writes abcxyzpqr
+</pre>
+<p/><a href="ipl.functional-highorder.icn.html#42" target="displayFrame">Source - highorder.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Parser</title></head><body>
+<h1>Parser</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="parser-package.html" target="listFrame">parser</a></dd>
+</dl><p/>
+<p/><a href="parser-parser.icn.html#63" target="displayFrame">Source - parser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="parser.Parser.html">parser.Parser</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#init">init()</a>
+<a href="#lxerror">lxerror()</a>
+<a href="#new">new()</a>
+<a href="#parse">parse()</a>
+<a href="#parse_expression">parse_expression()</a>
+<a href="#parse_file">parse_file()</a>
+<a href="#pperror">pperror()</a>
+<a href="#yyerror">yyerror()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#first_err">first_err</a>
+<a href="#lex">lex</a>
+<a href="#LEXER_ERROR_EVENT">LEXER_ERROR_EVENT</a>
+<a href="#PARSER_ERROR_EVENT">PARSER_ERROR_EVENT</a>
+<a href="#pp">pp</a>
+<a href="#PREPROCESSOR_ERROR_EVENT">PREPROCESSOR_ERROR_EVENT</a>
+<a href="#yy">yy</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#72" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="lxerror"/>
+<h3>lxerror(ed)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#126" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.Connectable.html#new">new()</a> in <a href="util.Connectable.html" target="displayFrame">util.Connectable</a></dd>
+<dd>
+<p/><a href="parser-parser.icn.html#78" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s, encoding)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#86" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_expression"/>
+<h3>parse_expression(s, encoding)</h3>
+public<p/>
+<dl>
+<dd>
+Parse <code>s</code>, as an expression (actually, a compound expression).
+<p/><a href="parser-parser.icn.html#97" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_file"/>
+<h3>parse_file(fname, predefined_syms)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#105" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="pperror"/>
+<h3>pperror(ed)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#131" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="yyerror"/>
+<h3>yyerror(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#117" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="first_err"/>
+<h3>first_err</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#65" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="lex"/>
+<h3>lex</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#65" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="LEXER_ERROR_EVENT"/>
+<h3>LEXER_ERROR_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#69" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="PARSER_ERROR_EVENT"/>
+<h3>PARSER_ERROR_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#70" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="pp"/>
+<h3>pp</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#65" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="PREPROCESSOR_ERROR_EVENT"/>
+<h3>PREPROCESSOR_ERROR_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#68" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+<a name="yy"/>
+<h3>yy</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="parser-parser.icn.html#65" target="displayFrame">Source - parser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

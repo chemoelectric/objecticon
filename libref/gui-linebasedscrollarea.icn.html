@@ -1,0 +1,434 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>linebasedscrollarea.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: linebasedscrollarea.icn 8357 2020-07-06 09:47:09Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import io, util, ipl.pdco(Sum)
+<a name="12"/>
+<a name="13"/>class LineBasedScrollAreaRangeInfo()
+<a name="14"/>   public
+<a name="15"/>      first,
+<a name="16"/>      last,
+<a name="17"/>      first_whole,
+<a name="18"/>      last_whole,
+<a name="19"/>      offset
+<a name="20"/>end
+<a name="21"/>
+<a name="22"/>
+<a name="23"/>#
+<a name="24"/># This is a scroll area where the objects to be displayed are lines of
+<a name="25"/># a fixed height.
+<a name="26"/>#
+<a name="27"/>abstract class LineBasedScrollArea(DrawScrollArea)
+<a name="28"/>   public 
+<a name="29"/>      # Cached line height and count.
+<a name="30"/>      line_height,
+<a name="31"/>      cum_line_height,
+<a name="32"/>      line_count
+<a name="33"/>
+<a name="34"/>   #
+<a name="35"/>   # Succeed if the line count is non-zero
+<a name="36"/>   #
+<a name="37"/>   public has_lines()
+<a name="38"/>      succeed get_line_count() &gt; 0
+<a name="39"/>   end
+<a name="40"/>
+<a name="41"/>   #
+<a name="42"/>   # Get the line to go to on a page move.
+<a name="43"/>   #
+<a name="44"/>   public get_page_movement(curr, dir)
+<a name="45"/>      local s, h, r, e
+<a name="46"/>      if integer(h := get_line_height()) then
+<a name="47"/>         return curr + dir * (view.h / h)
+<a name="48"/>      else {
+<a name="49"/>         s := 0
+<a name="50"/>         r := curr
+<a name="51"/>         if dir &gt; 0 then {
+<a name="52"/>            every e := h[curr + 1 to *h] do {
+<a name="53"/>               if s + e &gt;= view.h then
+<a name="54"/>                  break
+<a name="55"/>               r +:= 1
+<a name="56"/>               s +:= e
+<a name="57"/>            }
+<a name="58"/>         } else {
+<a name="59"/>            every e := h[curr - 1 to 1 by -1] do {
+<a name="60"/>               if s + e &gt;= view.h then
+<a name="61"/>                  break
+<a name="62"/>               r -:= 1
+<a name="63"/>               s +:= e
+<a name="64"/>            }
+<a name="65"/>         }
+<a name="66"/>         return r
+<a name="67"/>      }
+<a name="68"/>   end
+<a name="69"/>
+<a name="70"/>   #
+<a name="71"/>   # Get line info for the rectangle `r`, which defaults to the view.
+<a name="72"/>   # If given, `r` must be within the view.  The result gives the
+<a name="73"/>   # first and last lines in `r` and the first and last wholly visible
+<a name="74"/>   # lines in `r`.  For the latter, if there are no such lines then
+<a name="75"/>   # the first and last lines are returned.  Fails if there are no
+<a name="76"/>   # data lines in `r`.
+<a name="77"/>   #
+<a name="78"/>   public get_line_info(r)
+<a name="79"/>      local s, h, a, n, e, t, res, lc
+<a name="80"/>      /r := view
+<a name="81"/>      (r.h &gt; 0) | fail
+<a name="82"/>      a := r.y - get_subject_y()
+<a name="83"/>      res := LineBasedScrollAreaRangeInfo()
+<a name="84"/>      if integer(h := get_line_height()) then {
+<a name="85"/>         lc := get_line_count()
+<a name="86"/>         res.offset := a % h
+<a name="87"/>         # Imagine r extended upwards to include the first partial bit...
+<a name="88"/>         t := r.h + res.offset
+<a name="89"/>         res.first := a / h + 1
+<a name="90"/>         # This should only be possible if r is not view or lc = 0.
+<a name="91"/>         if res.first &gt; lc then
+<a name="92"/>            fail
+<a name="93"/>         res.last := res.first + t / h - 1
+<a name="94"/>         if t % h &gt; 0 then
+<a name="95"/>            res.last +:= 1
+<a name="96"/>         res.last &gt;:= lc
+<a name="97"/>
+<a name="98"/>         if res.offset &gt; 0 &amp; t / h &gt; 1 then
+<a name="99"/>            res.first_whole := min(res.first + 1, lc)
+<a name="100"/>         else
+<a name="101"/>            res.first_whole := res.first
+<a name="102"/>
+<a name="103"/>         # The term in brackets gives the distance from the base of the partial
+<a name="104"/>         # one below up to the top of r.
+<a name="105"/>         if t % h &gt; 0 &amp; (r.h + h - t % h) / h &gt; 1 then
+<a name="106"/>            res.last_whole := min((a + r.h) / h, lc)
+<a name="107"/>         else
+<a name="108"/>            res.last_whole := res.last
+<a name="109"/>      } else {
+<a name="110"/>         s := 0
+<a name="111"/>         n := 1
+<a name="112"/>         every e := !h do {
+<a name="113"/>            if /res.first &amp; s + e &gt; a then {
+<a name="114"/>               res.first := n
+<a name="115"/>               res.offset := a - s
+<a name="116"/>            }
+<a name="117"/>            if s &gt;= a &amp; s + e &lt;= a + r.h then {
+<a name="118"/>               /res.first_whole := n
+<a name="119"/>               res.last_whole := n
+<a name="120"/>            }
+<a name="121"/>            if s &lt; a + r.h then
+<a name="122"/>               res.last := n
+<a name="123"/>            else
+<a name="124"/>               break
+<a name="125"/>            n +:= 1
+<a name="126"/>            s +:= e
+<a name="127"/>         }
+<a name="128"/>         if /res.first then
+<a name="129"/>            fail
+<a name="130"/>         /res.first_whole := res.first
+<a name="131"/>         /res.last_whole := res.last
+<a name="132"/>      }
+<a name="133"/>      return res
+<a name="134"/>   end
+<a name="135"/>
+<a name="136"/>   #
+<a name="137"/>   # Get the total line height upto but not including the line, which
+<a name="138"/>   # is constrained within the range from 1 ... line_count+1.
+<a name="139"/>   #
+<a name="140"/>   public get_cum_line_height(line)
+<a name="141"/>      local h, s
+<a name="142"/>      line := need_integer(line)
+<a name="143"/>      line &lt;:= 1
+<a name="144"/>      return if integer(h := get_line_height()) then {
+<a name="145"/>         line &gt;:= get_line_count() + 1
+<a name="146"/>         h * (line - 1)
+<a name="147"/>      } else {
+<a name="148"/>         if /cum_line_height := [0] then {
+<a name="149"/>            s := 0
+<a name="150"/>            every put(cum_line_height, s +:= !h)
+<a name="151"/>         }
+<a name="152"/>         cum_line_height[line | -1]
+<a name="153"/>      }
+<a name="154"/>   end
+<a name="155"/>
+<a name="156"/>   #
+<a name="157"/>   # Goto line, horiz
+<a name="158"/>   #
+<a name="159"/>   public goto_pos(line, horiz)
+<a name="160"/>      goto_first(\line)
+<a name="161"/>      set_area_x(\horiz)
+<a name="162"/>      link
+<a name="163"/>   end
+<a name="164"/>
+<a name="165"/>   #
+<a name="166"/>   # Make the given line the first in the view.
+<a name="167"/>   #
+<a name="168"/>   public goto_first(line)
+<a name="169"/>      set_area_y(get_cum_line_height(line))
+<a name="170"/>      link
+<a name="171"/>   end
+<a name="172"/>
+<a name="173"/>   #
+<a name="174"/>   # Make the given line the last in the view.
+<a name="175"/>   #
+<a name="176"/>   public goto_last(line)
+<a name="177"/>      set_area_y(get_cum_line_height(line + 1) - view.h)
+<a name="178"/>      link
+<a name="179"/>   end
+<a name="180"/>
+<a name="181"/>   #
+<a name="182"/>   # Ensure the given line is visible
+<a name="183"/>   #
+<a name="184"/>   public ensure_line_visible(line) 
+<a name="185"/>      local i
+<a name="186"/>      i := get_line_info() | fail
+<a name="187"/>      # Use &lt;= first rather than &lt; first_whole: this is nicer if there are no
+<a name="188"/>      # whole lines and line = first (it causes a scroll to top rather than not).
+<a name="189"/>      if line &lt;= i.first then
+<a name="190"/>         goto_first(line)
+<a name="191"/>      else if line &gt;= i.last then
+<a name="192"/>         goto_last(line)
+<a name="193"/>      link
+<a name="194"/>   end
+<a name="195"/>
+<a name="196"/>   #
+<a name="197"/>   # Place the given line, so far as possible, in the centre of the
+<a name="198"/>   # view area.
+<a name="199"/>   #
+<a name="200"/>   public center_line(line)
+<a name="201"/>      set_area_y(get_cum_line_height(line) + get_height_for_line(line) / 2 - view.h / 2)
+<a name="202"/>      link
+<a name="203"/>   end
+<a name="204"/>
+<a name="205"/>   #
+<a name="206"/>   # Invalidate the rectangle of the given line.
+<a name="207"/>   #
+<a name="208"/>   public invalidate_line(line, i)
+<a name="209"/>      is_live() | fail
+<a name="210"/>      /i := get_line_info()
+<a name="211"/>      if \i &amp; (i.first &lt;= line &lt;= i.last) then
+<a name="212"/>         view.invalidate(get_line_rect(line))
+<a name="213"/>      link
+<a name="214"/>   end
+<a name="215"/>
+<a name="216"/>   #
+<a name="217"/>   # Invalidate all the lines from line1 to line2
+<a name="218"/>   #
+<a name="219"/>   public invalidate_lines(line1, line2, i)
+<a name="220"/>      local t
+<a name="221"/>      is_live() | fail
+<a name="222"/>      /i := get_line_info()
+<a name="223"/>      if \i &amp; t := range(line1, line2, i.first, i.last) then
+<a name="224"/>         view.invalidate(get_line_rect(t.lo).union(get_line_rect(t.hi)))
+<a name="225"/>      link
+<a name="226"/>   end
+<a name="227"/>
+<a name="228"/>   # Return a `Rect` (in dialog-based coordinates) indicating the area
+<a name="229"/>   # occupied by the line; note this may be outside of the view area.
+<a name="230"/>   #
+<a name="231"/>   public get_line_rect(line)
+<a name="232"/>      return Rect(view.x, 
+<a name="233"/>                  get_subject_y() + get_cum_line_height(line),
+<a name="234"/>                  view.w,
+<a name="235"/>                  get_height_for_line(line))
+<a name="236"/>   end
+<a name="237"/>
+<a name="238"/>   # Return a `Rect` (in area-based coordinates) indicating the area
+<a name="239"/>   # occupied by the line.
+<a name="240"/>   #
+<a name="241"/>   public get_area_line_rect(line)
+<a name="242"/>      return Rect(0, 
+<a name="243"/>                  get_cum_line_height(line),
+<a name="244"/>                  get_subject_width(),
+<a name="245"/>                  get_height_for_line(line))
+<a name="246"/>   end
+<a name="247"/>
+<a name="248"/>   #
+<a name="249"/>   # Convert the current y pointer offset to a line number.  The result is &lt;=0 if the
+<a name="250"/>   # pointer is above all lines, &gt;get_line_count() if below.  The view window is not
+<a name="251"/>   # taken into account, so the result may not actually be visible.
+<a name="252"/>   #
+<a name="253"/>   public pointer_to_line(e)
+<a name="254"/>      local s, h, a, r, i
+<a name="255"/>      a := e.y - get_subject_y()
+<a name="256"/>      if integer(h := get_line_height()) then 
+<a name="257"/>         return a / h + 1
+<a name="258"/>      else {
+<a name="259"/>         if a &lt; 0 then
+<a name="260"/>            return 0
+<a name="261"/>         s := 0
+<a name="262"/>         r := 1
+<a name="263"/>         every i := !h do {
+<a name="264"/>            if s &lt;= a &lt; s + i then
+<a name="265"/>               break
+<a name="266"/>            r +:= 1
+<a name="267"/>            s +:= i
+<a name="268"/>         }
+<a name="269"/>         return r
+<a name="270"/>      }
+<a name="271"/>   end
+<a name="272"/>
+<a name="273"/>   #
+<a name="274"/>   # Return the line under the current x, y cursor, or fail if not over a line.
+<a name="275"/>   #
+<a name="276"/>   public get_line_under_pointer(e)
+<a name="277"/>      local r, i
+<a name="278"/>      (view.in_region(e) &amp; has_lines()) | fail
+<a name="279"/>      r := pointer_to_line(e)
+<a name="280"/>      i := get_line_info() | fail
+<a name="281"/>      if i.first &lt;= r &lt;= i.last then
+<a name="282"/>         return r
+<a name="283"/>   end
+<a name="284"/>
+<a name="285"/>   #
+<a name="286"/>   # Return the nearest line to the pointer; fails only if there are no lines.
+<a name="287"/>   #
+<a name="288"/>   public get_nearest_line_to_pointer(e)
+<a name="289"/>      local r, i
+<a name="290"/>      has_lines() | fail
+<a name="291"/>      r := pointer_to_line(e)
+<a name="292"/>      i := get_line_info() | fail
+<a name="293"/>      r &lt;:= i.first
+<a name="294"/>      r &gt;:= i.last
+<a name="295"/>      return r
+<a name="296"/>   end
+<a name="297"/>
+<a name="298"/>   public override draw()
+<a name="299"/>      local xp, yp, i, info, h, lh, r
+<a name="300"/>
+<a name="301"/>      r := view.get_cbwin_clip()
+<a name="302"/>
+<a name="303"/>      info := get_line_info(r) | fail
+<a name="304"/>      h := get_line_height()
+<a name="305"/>
+<a name="306"/>      #
+<a name="307"/>      # Where to draw them
+<a name="308"/>      #
+<a name="309"/>      yp := r.y - info.offset
+<a name="310"/>
+<a name="311"/>      #
+<a name="312"/>      # Left offset
+<a name="313"/>      #
+<a name="314"/>      xp := get_subject_x()
+<a name="315"/>
+<a name="316"/>      #
+<a name="317"/>      # Write the lines
+<a name="318"/>      #
+<a name="319"/>      every i := info.first to info.last do {
+<a name="320"/>         lh := integer(h) | h[i]
+<a name="321"/>         draw_line(xp, yp, lh, i)
+<a name="322"/>         yp +:= lh
+<a name="323"/>      }
+<a name="324"/>   end
+<a name="325"/>
+<a name="326"/>   #
+<a name="327"/>   # This method is overridden by the subclass to draw the given 
+<a name="328"/>   # line at the given position, into the buffer window cbwin.
+<a name="329"/>   # :Parameters :
+<a name="330"/>   # :  `xp` - The x position it should be drawn at
+<a name="331"/>   # :  `yp` - The y position it should be drawn at
+<a name="332"/>   # :  `lh` - The line height allowed for this line
+<a name="333"/>   # :  `i` - The line number to draw
+<a name="334"/>   #
+<a name="335"/>   public abstract draw_line(xp, yp, lh, i)
+<a name="336"/>
+<a name="337"/>   #
+<a name="338"/>   # Clear the cached value of line height (and subject height).
+<a name="339"/>   #
+<a name="340"/>   public invalidate_line_height()
+<a name="341"/>      self.subject_height := self.line_height := self.cum_line_height := &amp;null
+<a name="342"/>      link
+<a name="343"/>   end
+<a name="344"/>
+<a name="345"/>   #
+<a name="346"/>   # This method is overridden by the subclass to work out the line
+<a name="347"/>   # height.  It should return either an integer, indicating that each
+<a name="348"/>   # line is the same height, or a list, giving the height of each
+<a name="349"/>   # line.
+<a name="350"/>   #
+<a name="351"/>   # Because this operation is potentially expensive, it is called as
+<a name="352"/>   # late as possible and its value cached.
+<a name="353"/>   #
+<a name="354"/>   public abstract calculate_line_height()
+<a name="355"/>
+<a name="356"/>   #
+<a name="357"/>   # This method is overridden by the subclass to work out the
+<a name="358"/>   # line count. Because this operation is potentially expensive, it
+<a name="359"/>   # is called as late as possible and its value cached.
+<a name="360"/>   #
+<a name="361"/>   public abstract calculate_line_count()
+<a name="362"/>
+<a name="363"/>   #
+<a name="364"/>   # Return the line height
+<a name="365"/>   #
+<a name="366"/>   public get_line_height()
+<a name="367"/>      /self.line_height := calculate_line_height()
+<a name="368"/>      return self.line_height
+<a name="369"/>   end
+<a name="370"/>
+<a name="371"/>   #
+<a name="372"/>   # Return the line count
+<a name="373"/>   #
+<a name="374"/>   public get_line_count()
+<a name="375"/>      /self.line_count := calculate_line_count()
+<a name="376"/>      return self.line_count
+<a name="377"/>   end
+<a name="378"/>
+<a name="379"/>   #
+<a name="380"/>   # Clear the cached value of line count (and subject height).
+<a name="381"/>   #
+<a name="382"/>   public invalidate_line_count()
+<a name="383"/>      self.subject_height := self.line_count := &amp;null
+<a name="384"/>      link
+<a name="385"/>   end
+<a name="386"/>
+<a name="387"/>   public override calculate_subject_height()
+<a name="388"/>      local h
+<a name="389"/>      return if integer(h := get_line_height()) then
+<a name="390"/>         get_line_count() * h
+<a name="391"/>      else
+<a name="392"/>         Sum{ !h }
+<a name="393"/>   end
+<a name="394"/>
+<a name="395"/>   #
+<a name="396"/>   # Return the height of the given line, failing if that line is not
+<a name="397"/>   # in the range 1..line_count.
+<a name="398"/>   #
+<a name="399"/>   public get_height_for_line(line)
+<a name="400"/>      local h
+<a name="401"/>      line := need_integer(line)
+<a name="402"/>      if line &gt; 0 then
+<a name="403"/>         return if integer(h := get_line_height()) then {
+<a name="404"/>            if line &lt;= get_line_count() then
+<a name="405"/>               h
+<a name="406"/>         } else
+<a name="407"/>            h[line]
+<a name="408"/>   end
+<a name="409"/>
+<a name="410"/>   public override create_vsb()
+<a name="411"/>      local h
+<a name="412"/>      h := integer(get_line_height()) | scale(16)
+<a name="413"/>      return ScrollBar().
+<a name="414"/>         set_increment_size(h)
+<a name="415"/>   end
+<a name="416"/>
+<a name="417"/>   public override create_hsb()
+<a name="418"/>      return ScrollBar().
+<a name="419"/>         set_increment_size(cbwin.text_width("m"))
+<a name="420"/>   end
+<a name="421"/>
+<a name="422"/>   public dump()
+<a name="423"/>      local i
+<a name="424"/>      i := get_line_info()
+<a name="425"/>      write("lines:", i.first, "-", i.last)
+<a name="426"/>      write("whole lines:", i.first_whole, "-", i.last_whole)
+<a name="427"/>      write("offset: ", i.offset)
+<a name="428"/>      write("----------")
+<a name="429"/>   end
+<a name="430"/>end
+<a name="431"/>
+</pre></body></html>

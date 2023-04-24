@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>columnize.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     columnize.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to arrange data into columns
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     June 15, 1990
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  columnize() -- Arrange data into columns.
+<a name="18"/>#
+<a name="19"/>#  Procedure to arrange a number of data items into multiple columns.
+<a name="20"/>#  Items are arranged in column-wise order, that is, the sequence runs
+<a name="21"/>#  down the first column, then down the second, etc.
+<a name="22"/>#
+<a name="23"/>#  This procedure goes to great lengths to print the items in as few
+<a name="24"/>#  vertical lines as possible.
+<a name="25"/>#
+<a name="26"/>############################################################################
+<a name="27"/>
+<a name="28"/>package ipl.columnize
+<a name="29"/>
+<a name="30"/>import ipl.pdco, util
+<a name="31"/>
+<a name="32"/># Result record for `columnize`
+<a name="33"/>record ColumnizeResult(rows, cols, width)
+<a name="34"/>
+<a name="35"/># A helpful function to take a list of strings and columnize them into
+<a name="36"/># generated lines using `columnize`.  Widths are taken to be simple
+<a name="37"/># string lengths.
+<a name="38"/>#
+<a name="39"/># :Parameters :
+<a name="40"/># :  `l` - a list of strings
+<a name="41"/># :  `screen_width` - the total width available in characters
+<a name="42"/># :  `gutter` - the desired space between columns, default 2 characters
+<a name="43"/># : `rowwise` - a flag indicating whether output will be left to right
+<a name="44"/>#               (flag set), or top to bottom (flag unset).
+<a name="45"/># :  `cvt` - an optional function to apply to an input string just
+<a name="46"/>#            before it is added to the output.  It is given the `l` and
+<a name="47"/>#            an index into `l`.
+<a name="48"/># 
+<a name="49"/>procedure columnize_gen(l, screen_width, gutter, rowwise, cvt)
+<a name="50"/>   local cr, s, i, j, k
+<a name="51"/>   /gutter := 2
+<a name="52"/>   /cvt := proc("[]", 2)
+<a name="53"/>   cr := columnize(List{*!l}, screen_width, gutter, rowwise)
+<a name="54"/>   every i := 1 to cr.rows do {
+<a name="55"/>      s := ""
+<a name="56"/>      every j := seq() do {
+<a name="57"/>         if /rowwise then {
+<a name="58"/>            k := i + cr.rows * (j - 1)
+<a name="59"/>            s ||:= cvt(l, k)
+<a name="60"/>            # Check for end-of-line
+<a name="61"/>            (k + cr.rows &lt;= *l) | break
+<a name="62"/>         } else {
+<a name="63"/>            k := (i - 1) * cr.cols + j 
+<a name="64"/>            s ||:= cvt(l, k)
+<a name="65"/>            (k &lt; *l &amp; j &lt; cr.cols) | break
+<a name="66"/>         }
+<a name="67"/>         # Not end of line, so add padding
+<a name="68"/>         s ||:= repl(" ", cr.width[j] + gutter - *l[k])
+<a name="69"/>      }
+<a name="70"/>      suspend s
+<a name="71"/>   }
+<a name="72"/>end
+<a name="73"/>
+<a name="74"/># Columnize a list of items given their widths.  A `ColumnizeResult`
+<a name="75"/># record is returned, giving the dimensions of the output as well as a
+<a name="76"/># list of the column widths.
+<a name="77"/>#
+<a name="78"/># :Parameters :
+<a name="79"/># :  `l` - a list of item widths
+<a name="80"/># :  `screen_width` - the total width available
+<a name="81"/># :  `gutter` - the desired space between columns
+<a name="82"/># : `rowwise` - a flag indicating whether output will be left to right
+<a name="83"/>#               (flag set), or top to bottom (flag unset).
+<a name="84"/>#
+<a name="85"/>procedure columnize(l, screen_width, gutter, rowwise)
+<a name="86"/>   local cols, rows, w, mean, est, widths, mx
+<a name="87"/>   # Note that we explicitly allow -ve screen_width; this is helpful
+<a name="88"/>   # for some gui components (which can legally have -ve widths).
+<a name="89"/>   screen_width := need_integer(screen_width)
+<a name="90"/>   mx := MaxNN{!l}
+<a name="91"/>   if *l &gt;= 2 &amp; mx &lt; screen_width then {
+<a name="92"/>      gutter := need_integer(\gutter, 0) | 2
+<a name="93"/>      mean := Sum{!l} / *l
+<a name="94"/>      est := 2 * screen_width / (mean + gutter)
+<a name="95"/>      est &gt;:= *l
+<a name="96"/>      every cols := est to 2 by -1 do {
+<a name="97"/>         if rows := compute_rows(l, cols, rowwise) then {
+<a name="98"/>            widths := calc_widths(l, rows, cols, rowwise)
+<a name="99"/>            w := gutter * (cols - 1) + Sum{!widths}
+<a name="100"/>            if w &lt;= screen_width then
+<a name="101"/>               return ColumnizeResult(rows, cols, widths)
+<a name="102"/>         }
+<a name="103"/>      }
+<a name="104"/>   }
+<a name="105"/>   return ColumnizeResult(*l, 1, [mx])
+<a name="106"/>end
+<a name="107"/>
+<a name="108"/>package procedure compute_rows(l, cols, rowwise)
+<a name="109"/>   local rows
+<a name="110"/>
+<a name="111"/>   if cols &lt; 2 then
+<a name="112"/>      return *l
+<a name="113"/>
+<a name="114"/>   rows := *l / cols
+<a name="115"/>   if *l % cols ~= 0 then
+<a name="116"/>      rows +:= 1
+<a name="117"/>
+<a name="118"/>   # For column-wise orientation, check if the end of the first row is
+<a name="119"/>   # in range... if not then these dimensions don't fit (eg 49 in 8
+<a name="120"/>   # columns doesn't fit - the last column would be empty).
+<a name="121"/>   if /rowwise &amp; rows * (cols-1) &gt;= *l then
+<a name="122"/>      fail
+<a name="123"/>
+<a name="124"/>   return rows
+<a name="125"/>end
+<a name="126"/>
+<a name="127"/>package procedure calc_widths(l, rows, cols, rowwise)
+<a name="128"/>   local w, i, e
+<a name="129"/>   w := list(cols, 0)
+<a name="130"/>   i := 0
+<a name="131"/>   if /rowwise then {
+<a name="132"/>      every e := !l do {
+<a name="133"/>         w[i / rows + 1] &lt;:= e
+<a name="134"/>         i +:= 1
+<a name="135"/>      }
+<a name="136"/>   } else {
+<a name="137"/>      every e := !l do {
+<a name="138"/>         w[i % cols + 1] &lt;:= e
+<a name="139"/>         i +:= 1
+<a name="140"/>      }
+<a name="141"/>   }
+<a name="142"/>   return w
+<a name="143"/>end
+</pre></body></html>

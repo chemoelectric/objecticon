@@ -1,0 +1,810 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>tabset.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: tabset.icn 8783 2020-12-27 20:18:51Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import util, lang, io, graphics, ipl.pdco
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This class holds the several `TabItem`s, and represents a tabbed pane.
+<a name="15"/>#
+<a name="16"/># A Event.SELECTION_CHANGED is fired whenever the tab is changed via
+<a name="17"/># user interaction.
+<a name="18"/>#
+<a name="19"/>class TabSet(Component)
+<a name="20"/>   public 
+<a name="21"/>      which_one,
+<a name="22"/>      which_highlight,
+<a name="23"/>      tab_h,
+<a name="24"/>      label_h,
+<a name="25"/>      line_break,
+<a name="26"/>      no_click_focus_flag,
+<a name="27"/>      prefer_one_row_flag,
+<a name="28"/>      old_which_one,
+<a name="29"/>      tabs_at_bottom_flag,
+<a name="30"/>      remember_focus_flag,
+<a name="31"/>      may_drag
+<a name="32"/>
+<a name="33"/>   public static const
+<a name="34"/>      X_PADDING_INC
+<a name="35"/>
+<a name="36"/>   private static init()
+<a name="37"/>      X_PADDING_INC := scale(5)
+<a name="38"/>   end
+<a name="39"/>
+<a name="40"/>   # Vertical layout :-
+<a name="41"/>   #           border top margin
+<a name="42"/>   #           label_h - max tab label height ) row 1 ) tab_h
+<a name="43"/>   #           Gui.BORDER_WIDTH               )       )
+<a name="44"/>   #           label_h                        ) row 2 )
+<a name="45"/>   #           Gui.BORDER_WIDTH               )       )
+<a name="46"/>   #           tab content height
+<a name="47"/>   #           border bottom margin
+<a name="48"/>   # Thus the total height is border.get_total_height() + content height
+<a name="49"/>   #                            + num lines * (label_h + Gui.BORDER_WIDTH)
+<a name="50"/>   # Note that on display(), a further Gui.BORDER_WIDTH is drawn above the first
+<a name="51"/>   # row, inside the border top margin area.
+<a name="52"/>   #
+<a name="53"/>   # Horizontal layout, say for 3 tab labels. :-
+<a name="54"/>   #
+<a name="55"/>   #           border left margin
+<a name="56"/>   #           label 1 width
+<a name="57"/>   #           2 * Gui.BORDER_WIDTH
+<a name="58"/>   #           label 2 width
+<a name="59"/>   #           2 * Gui.BORDER_WIDTH 
+<a name="60"/>   #           label 3 width
+<a name="61"/>   #           border right margin
+<a name="62"/>   #
+<a name="63"/>   # So the width of the row is border.get_total_width() + total label width +
+<a name="64"/>   #                  (num labels in row - 1) * (2 * Gui.BORDER_WIDTH)
+<a name="65"/>   # Note again that an extra Gui.BORDER_WIDTH is painted inside the left and right
+<a name="66"/>   # margin area.
+<a name="67"/>   #
+<a name="68"/>
+<a name="69"/>   #
+<a name="70"/>   # If set, then the tabs are at the bottom, not the top.
+<a name="71"/>   #
+<a name="72"/>   public set_tabs_at_bottom(s)
+<a name="73"/>      self.tabs_at_bottom_flag := need_flag(s)
+<a name="74"/>      link
+<a name="75"/>   end
+<a name="76"/>
+<a name="77"/>   #
+<a name="78"/>   # If set, then a tab remembers if it had focus when it was
+<a name="79"/>   # deselected, and restores it when it is reselected.  This only
+<a name="80"/>   # really makes sense with no-click-focus set, except when switching
+<a name="81"/>   # tabs programatically.
+<a name="82"/>   #
+<a name="83"/>   public set_remember_focus(s)
+<a name="84"/>      self.remember_focus_flag := need_flag(s)
+<a name="85"/>      link
+<a name="86"/>   end
+<a name="87"/>
+<a name="88"/>   #
+<a name="89"/>   # Set the no-click-focus behaviour.  If set, the component will
+<a name="90"/>   # not get the focus on a left click.
+<a name="91"/>   #
+<a name="92"/>   public set_no_click_focus(s)
+<a name="93"/>      self.no_click_focus_flag := need_flag(s)
+<a name="94"/>      link
+<a name="95"/>   end
+<a name="96"/>
+<a name="97"/>   #
+<a name="98"/>   # Set the draggable tabs behaviour.  If set, the tabs can be moved.
+<a name="99"/>   #
+<a name="100"/>   public set_draggable_tabs(s)
+<a name="101"/>      allow_drop_flag := allow_drag_flag := need_flag(s)
+<a name="102"/>      link
+<a name="103"/>   end
+<a name="104"/>
+<a name="105"/>   #
+<a name="106"/>   # If this is set, the preferred width will return a value big
+<a name="107"/>   # enough to accommodate a single row of tabs.
+<a name="108"/>   #
+<a name="109"/>   public set_prefer_one_row(s)
+<a name="110"/>      self.prefer_one_row_flag := need_flag(s)
+<a name="111"/>      link
+<a name="112"/>   end
+<a name="113"/>
+<a name="114"/>   public override keeps(e)
+<a name="115"/>      succeed member(Key.CURSOR_H, e.code)
+<a name="116"/>   end
+<a name="117"/>
+<a name="118"/>   public override focus_changed(e) 
+<a name="119"/>      invalidate_tab_region()
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   public invalidate_tab_region()
+<a name="123"/>      local r
+<a name="124"/>      is_live() | fail
+<a name="125"/>      r := if /self.tabs_at_bottom_flag then
+<a name="126"/>         Rect(self.x + border.get_l_inset(), self.y + border.get_t_inset(), self.w - border.get_total_width(), self.tab_h)
+<a name="127"/>      else
+<a name="128"/>         Rect(self.x + border.get_l_inset(), self.y + self.h - border.get_b_inset() - self.tab_h, self.w - border.get_total_width(), self.tab_h)
+<a name="129"/>      return invalidate(r)
+<a name="130"/>   end
+<a name="131"/>
+<a name="132"/>   public display_tabs_at_top()
+<a name="133"/>      local l, c, ypos, nx, cc, W
+<a name="134"/>
+<a name="135"/>      ypos := self.y + border.get_t_inset()
+<a name="136"/>
+<a name="137"/>      use {
+<a name="138"/>         W := cbwin.clone(), 
+<a name="139"/>         {
+<a name="140"/>            every l := !self.line_break do {
+<a name="141"/>               every c := !l do {
+<a name="142"/>                  if cbwin.drawable(c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH,
+<a name="143"/>                                    c.tab_w + 2 * Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH) then 
+<a name="144"/>                  {
+<a name="145"/>                     draw_shadow_segment("e",
+<a name="146"/>                                         c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
+<a name="147"/>                                         ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
+<a name="148"/>                     draw_hilite_segment("w",
+<a name="149"/>                                         c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+<a name="150"/>                                         self.label_h + 2 * Gui.BORDER_WIDTH)
+<a name="151"/>                     draw_hilite_segment("n",
+<a name="152"/>                                         c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+<a name="153"/>                                         c.tab_w + 2 * Gui.BORDER_WIDTH)
+<a name="154"/>
+<a name="155"/>                     if cc := cbwin.drawable(c.tab_x, ypos, c.tab_w, self.label_h) then {
+<a name="156"/>                        W.clip!cc
+<a name="157"/>                        c.draw_label(W, 
+<a name="158"/>                                     c.tab_x, 
+<a name="159"/>                                     ypos, 
+<a name="160"/>                                     c.tab_w, 
+<a name="161"/>                                     self.label_h,
+<a name="162"/>                                     Yes{ should_draw_focus() &amp; c === self.which_one },
+<a name="163"/>                                     Yes{ c === self.which_highlight })
+<a name="164"/>                     }
+<a name="165"/>                  }
+<a name="166"/>               }
+<a name="167"/>               ypos +:= self.label_h + Gui.BORDER_WIDTH
+<a name="168"/>            }
+<a name="169"/>         }
+<a name="170"/>      }
+<a name="171"/>
+<a name="172"/>      #
+<a name="173"/>      # Display line under tabs.
+<a name="174"/>      #
+<a name="175"/>      draw_hilite_segment("s",
+<a name="176"/>                          self.x,
+<a name="177"/>                          self.y + border.get_t_inset() + self.tab_h - 1,
+<a name="178"/>                          self.which_one.tab_x - Gui.BORDER_WIDTH - self.x)
+<a name="179"/>
+<a name="180"/>      # The x of the next one along (if any)
+<a name="181"/>      nx := self.which_one.tab_x + Gui.BORDER_WIDTH + self.which_one.tab_w - 1
+<a name="182"/>      draw_hilite_segment("s",
+<a name="183"/>                          nx, self.y + border.get_t_inset() + self.tab_h - 1,
+<a name="184"/>                          self.x + self.w - nx)
+<a name="185"/>   end
+<a name="186"/>
+<a name="187"/>   public display_tabs_at_bottom()
+<a name="188"/>      local l, c, ypos, nx, cc, W
+<a name="189"/>
+<a name="190"/>      ypos := self.y + self.h - border.get_b_inset() - self.label_h
+<a name="191"/>      
+<a name="192"/>      use {
+<a name="193"/>         W := cbwin.clone(), 
+<a name="194"/>         {
+<a name="195"/>            every l := !self.line_break do {
+<a name="196"/>               every c := !l do {
+<a name="197"/>
+<a name="198"/>                  if cbwin.drawable(c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH,
+<a name="199"/>                                    c.tab_w + 2 * Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH) then 
+<a name="200"/>                  {
+<a name="201"/>
+<a name="202"/>                     draw_shadow_segment("e",
+<a name="203"/>                                         c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
+<a name="204"/>                                         ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
+<a name="205"/>                     draw_hilite_segment("w",
+<a name="206"/>                                         c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+<a name="207"/>                                         self.label_h + 2 * Gui.BORDER_WIDTH)
+<a name="208"/>                     draw_hilite_segment("s",
+<a name="209"/>                                         c.tab_x - Gui.BORDER_WIDTH, ypos + label_h + Gui.BORDER_WIDTH - 1, 
+<a name="210"/>                                         c.tab_w + 2 * Gui.BORDER_WIDTH)
+<a name="211"/>
+<a name="212"/>                     if cc := cbwin.drawable(c.tab_x, ypos, c.tab_w, self.label_h) then {
+<a name="213"/>                        W.clip!cc
+<a name="214"/>                        c.draw_label(W, 
+<a name="215"/>                                     c.tab_x, 
+<a name="216"/>                                     ypos, 
+<a name="217"/>                                     c.tab_w, 
+<a name="218"/>                                     self.label_h,
+<a name="219"/>                                     Yes{ should_draw_focus() &amp; c === self.which_one })
+<a name="220"/>                     }
+<a name="221"/>                  }
+<a name="222"/>               }
+<a name="223"/>               ypos -:= self.label_h + Gui.BORDER_WIDTH
+<a name="224"/>            }
+<a name="225"/>         }
+<a name="226"/>      }
+<a name="227"/>
+<a name="228"/>      ypos +:= self.label_h + Gui.BORDER_WIDTH
+<a name="229"/>
+<a name="230"/>      #
+<a name="231"/>      # Display line under tabs.
+<a name="232"/>      #
+<a name="233"/>      draw_hilite_segment("n",
+<a name="234"/>                          self.x, self.y + self.h - border.get_b_inset() - self.tab_h,
+<a name="235"/>                          self.which_one.tab_x - Gui.BORDER_WIDTH - self.x)
+<a name="236"/>
+<a name="237"/>      # The x of the next one along (if any)
+<a name="238"/>      nx := self.which_one.tab_x + Gui.BORDER_WIDTH + self.which_one.tab_w - 1
+<a name="239"/>      draw_hilite_segment("n",
+<a name="240"/>                          nx, self.y + self.h - border.get_b_inset() - self.tab_h,
+<a name="241"/>                          self.x + self.w - nx)
+<a name="242"/>   end
+<a name="243"/>
+<a name="244"/>   public override display()
+<a name="245"/>      local r
+<a name="246"/>      r := get_cbwin_clip()
+<a name="247"/>      
+<a name="248"/>      #
+<a name="249"/>      # Display outline of tabbed pane area.
+<a name="250"/>      #
+<a name="251"/>      border.draw_rect(self.cbwin, self)
+<a name="252"/>
+<a name="253"/>      #
+<a name="254"/>      # Display all tabs.
+<a name="255"/>      #
+<a name="256"/>      if /self.tabs_at_bottom_flag then {
+<a name="257"/>         if r.y &lt; self.y + border.get_t_inset() + self.tab_h then
+<a name="258"/>            display_tabs_at_top()
+<a name="259"/>      } else {
+<a name="260"/>         if r.y + r.h &gt; self.y + self.h - border.get_b_inset() - self.tab_h then
+<a name="261"/>            display_tabs_at_bottom()
+<a name="262"/>      }
+<a name="263"/>
+<a name="264"/>      #
+<a name="265"/>      # Display contents of current tab into buffer
+<a name="266"/>      #
+<a name="267"/>      display_child(which_one)
+<a name="268"/>   end
+<a name="269"/>
+<a name="270"/>   public draw_shadow_segment(loc, x, y, len)
+<a name="271"/>      local i
+<a name="272"/>      if len &lt; Gui.BORDER_WIDTH then
+<a name="273"/>         fail
+<a name="274"/>      every i := 0 to Gui.BORDER_WIDTH - 1 do {
+<a name="275"/>         case loc of {
+<a name="276"/>            "e": Gui.style.fill_shadow_rectangle(self.cbwin, x - i, y + i, 1, len - 2 * i)
+<a name="277"/>            "w": Gui.style.fill_shadow_rectangle(self.cbwin, x + i, y + i, 1, len - 2 * i)
+<a name="278"/>            "n": Gui.style.fill_shadow_rectangle(self.cbwin, x + i, y + i, len - 2 * i, 1)
+<a name="279"/>            "s": Gui.style.fill_shadow_rectangle(self.cbwin, x + i, y - i, len - 2 * i, 1)
+<a name="280"/>         }
+<a name="281"/>      }
+<a name="282"/>   end
+<a name="283"/>
+<a name="284"/>   public draw_hilite_segment(loc, x, y, len)
+<a name="285"/>      local i
+<a name="286"/>      if len &lt; Gui.BORDER_WIDTH then
+<a name="287"/>         fail
+<a name="288"/>      every i := 0 to Gui.BORDER_WIDTH - 1 do {
+<a name="289"/>         case loc of {
+<a name="290"/>            "e": Gui.style.fill_hilite_rectangle(self.cbwin, x - i, y + i, 1, len - 2 * i)
+<a name="291"/>            "w": Gui.style.fill_hilite_rectangle(self.cbwin, x + i, y + i, 1, len - 2 * i)
+<a name="292"/>            "n": Gui.style.fill_hilite_rectangle(self.cbwin, x + i, y + i, len - 2 * i, 1)
+<a name="293"/>            "s": Gui.style.fill_hilite_rectangle(self.cbwin, x + i, y - i, len - 2 * i, 1)
+<a name="294"/>         }
+<a name="295"/>      }
+<a name="296"/>   end
+<a name="297"/>
+<a name="298"/>   #
+<a name="299"/>   # Determine which tab if any mouse is over.
+<a name="300"/>   #
+<a name="301"/>   public which_tab(e)
+<a name="302"/>      local l, c
+<a name="303"/>      in_tab_region(e) | fail
+<a name="304"/>      l := if /self.tabs_at_bottom_flag then
+<a name="305"/>         (e.y - (self.y + border.get_t_inset())) / (self.label_h + Gui.BORDER_WIDTH) + 1
+<a name="306"/>      else
+<a name="307"/>         (self.y + self.h - border.get_b_inset() - e.y - 1) / (self.label_h + Gui.BORDER_WIDTH) + 1
+<a name="308"/>      every c := !self.line_break[l] do {
+<a name="309"/>         if (c.tab_x - Gui.BORDER_WIDTH &lt;= e.x &lt; c.tab_x + c.tab_w + Gui.BORDER_WIDTH) then
+<a name="310"/>            return c
+<a name="311"/>      }
+<a name="312"/>   end
+<a name="313"/>
+<a name="314"/>   #
+<a name="315"/>   # Ensure which_one is at front of tab lines
+<a name="316"/>   #
+<a name="317"/>   public adjust_lines()
+<a name="318"/>      local i
+<a name="319"/>      every i := 1 to *self.line_break - 1 do {
+<a name="320"/>         if self.which_one === !self.line_break[i] then {
+<a name="321"/>            self.line_break[i] :=: self.line_break[-1]
+<a name="322"/>            break
+<a name="323"/>         }
+<a name="324"/>      }
+<a name="325"/>   end
+<a name="326"/>
+<a name="327"/>   public maybe_remember_focus()
+<a name="328"/>      local f
+<a name="329"/>      \remember_focus_flag | fail
+<a name="330"/>      which_one.remembered_focus := &amp;null
+<a name="331"/>      f := parent_dialog.get_focus() | fail
+<a name="332"/>      if f.gen_parents() === which_one then
+<a name="333"/>         which_one.remembered_focus := f
+<a name="334"/>   end
+<a name="335"/>
+<a name="336"/>   public maybe_restore_focus()
+<a name="337"/>      local f
+<a name="338"/>      \remember_focus_flag | fail
+<a name="339"/>      f := \which_one.remembered_focus | fail
+<a name="340"/>      if f.is_live() then
+<a name="341"/>         f.grab_focus()
+<a name="342"/>   end
+<a name="343"/>
+<a name="344"/>   #
+<a name="345"/>   # Set which tab is currently on display.
+<a name="346"/>   # :Parameters :
+<a name="347"/>   # :  `x` - The `TabItem` to be displayed.
+<a name="348"/>   # :  `dont_restore_flag` - if set, then the tab's remembered focus will not be
+<a name="349"/>   #         restored (only relevant if remember_focus is on).
+<a name="350"/>   #
+<a name="351"/>   public set_which_one(x, dont_restore_flag)
+<a name="352"/>      if which_one === x then
+<a name="353"/>         link
+<a name="354"/>      if is_initialized() then {
+<a name="355"/>         maybe_remember_focus()
+<a name="356"/>         which_one := x
+<a name="357"/>         set_hidden_flags()
+<a name="358"/>         adjust_lines()
+<a name="359"/>         if /dont_restore_flag then
+<a name="360"/>            maybe_restore_focus()
+<a name="361"/>         invalidate()
+<a name="362"/>      } else
+<a name="363"/>         which_one := x
+<a name="364"/>      link
+<a name="365"/>   end
+<a name="366"/>
+<a name="367"/>   public set_which_highlight(x)
+<a name="368"/>      if self.which_highlight ~=== x then {
+<a name="369"/>         self.which_highlight := x
+<a name="370"/>         invalidate_tab_region()
+<a name="371"/>      }
+<a name="372"/>      link
+<a name="373"/>   end
+<a name="374"/>   
+<a name="375"/>   public set_hidden_flags()
+<a name="376"/>      local c
+<a name="377"/>      every c := !self.children do {
+<a name="378"/>         if c === self.which_one then
+<a name="379"/>            c.set_is_hidden(&amp;no)
+<a name="380"/>         else
+<a name="381"/>            c.set_is_hidden(&amp;yes)
+<a name="382"/>      }
+<a name="383"/>      link
+<a name="384"/>   end
+<a name="385"/>
+<a name="386"/>   #
+<a name="387"/>   # Return the currently selected tab
+<a name="388"/>   #
+<a name="389"/>   public get_which_one()
+<a name="390"/>      return self.which_one
+<a name="391"/>   end
+<a name="392"/>
+<a name="393"/>   public start_handle(e)
+<a name="394"/>      old_which_one := which_one
+<a name="395"/>   end
+<a name="396"/>
+<a name="397"/>   public end_handle(e)
+<a name="398"/>      if old_which_one ~=== which_one then
+<a name="399"/>         fire(Event.SELECTION_CHANGED, e)     
+<a name="400"/>      old_which_one := &amp;null
+<a name="401"/>   end
+<a name="402"/>
+<a name="403"/>   public handle_lpress(e)
+<a name="404"/>      local t
+<a name="405"/>      start_handle(e)
+<a name="406"/>      if t := which_tab(e) &amp; allow_navigation_to(t) then {
+<a name="407"/>         set_which_one(t)
+<a name="408"/>         # If t is no longer which_tab(e), then we have shuffled the
+<a name="409"/>         # lines around, and moved t to the front.  It would be ugly
+<a name="410"/>         # to drag the tab in this case, so it is disallowed.
+<a name="411"/>         may_drag := Yes{ t === which_tab(e) }
+<a name="412"/>      } else
+<a name="413"/>         may_drag := &amp;no
+<a name="414"/>      end_handle(e)
+<a name="415"/>   end
+<a name="416"/>
+<a name="417"/>   public allow_navigation_to(c)
+<a name="418"/>      # Always allow navigation to a tab if draggable_tabs is enabled, so that we
+<a name="419"/>      # can arrange all tabs.
+<a name="420"/>      return \allow_drag_flag | c.is_unshaded()
+<a name="421"/>   end
+<a name="422"/>
+<a name="423"/>   public handle_key_left(e)
+<a name="424"/>      local c, i, j
+<a name="425"/>      start_handle(e)
+<a name="426"/>      i := get_index(which_one)
+<a name="427"/>      every j := (i - 1 to 1 by -1) | (*children to i + 1 by -1) do {
+<a name="428"/>         c := children[j]
+<a name="429"/>         if allow_navigation_to(c) then {
+<a name="430"/>            # We don't allow remembered focus, since the cursor key
+<a name="431"/>            # would then be applied by the dialog on the new focus,
+<a name="432"/>            # and would move off it.
+<a name="433"/>            set_which_one(c, &amp;yes)
+<a name="434"/>            break
+<a name="435"/>         }
+<a name="436"/>      }
+<a name="437"/>      end_handle(e)
+<a name="438"/>   end
+<a name="439"/>
+<a name="440"/>   public handle_key_right(e)
+<a name="441"/>      local c, i, j
+<a name="442"/>      start_handle(e)
+<a name="443"/>      i := get_index(which_one)
+<a name="444"/>      every j := (i + 1 to *children) | (1 to *children to i - 1) do {
+<a name="445"/>         c := children[j]
+<a name="446"/>         if allow_navigation_to(c) then {
+<a name="447"/>            set_which_one(c, &amp;yes)
+<a name="448"/>            break
+<a name="449"/>         }
+<a name="450"/>      }
+<a name="451"/>      end_handle(e)
+<a name="452"/>   end
+<a name="453"/>
+<a name="454"/>   public handle_key(e)
+<a name="455"/>      if e.code === Key.LEFT then
+<a name="456"/>         handle_key_left(e)
+<a name="457"/>      else if e.code === Key.RIGHT then
+<a name="458"/>         handle_key_right(e)
+<a name="459"/>   end
+<a name="460"/>
+<a name="461"/>   public override can_drag(ev)
+<a name="462"/>      if \may_drag &amp; is_held(Mouse.LEFT_PRESS) then
+<a name="463"/>         return which_one
+<a name="464"/>   end
+<a name="465"/>
+<a name="466"/>   public override define_dnd_pointers(drag)
+<a name="467"/>      cbwin.copy_pointer("dnd negative", Dialog.DND_NEGATIVE_POINTER)
+<a name="468"/>      cbwin.copy_pointer("dnd positive", "sb h double arrow")
+<a name="469"/>   end
+<a name="470"/>
+<a name="471"/>   public override drag_event(drag, e)
+<a name="472"/>      local t
+<a name="473"/>      drag.get_source() === self | fail
+<a name="474"/>      t := which_tab(e)
+<a name="475"/>      set_which_highlight(t)
+<a name="476"/>      return \t
+<a name="477"/>   end
+<a name="478"/>
+<a name="479"/>   public override can_drop(drag, e)
+<a name="480"/>      return which_one ~=== \which_highlight
+<a name="481"/>   end
+<a name="482"/>
+<a name="483"/>   public override perform_drop(drag, drop, e)
+<a name="484"/>      reposition(which_one, get_index(drop.content))
+<a name="485"/>      invalidate_line_break()
+<a name="486"/>      layout()
+<a name="487"/>      invalidate()
+<a name="488"/>      return
+<a name="489"/>   end
+<a name="490"/>
+<a name="491"/>   public invalidate_line_break()
+<a name="492"/>      line_break := &amp;null
+<a name="493"/>      link
+<a name="494"/>   end
+<a name="495"/>
+<a name="496"/>   public override drag_reset(e)
+<a name="497"/>      set_which_highlight()
+<a name="498"/>   end
+<a name="499"/>
+<a name="500"/>   public in_tab_region(e)
+<a name="501"/>      in_region(e) &amp; 
+<a name="502"/>         (self.x + border.get_l_inset() &lt;= e.x &lt; self.x + self.w - border.get_r_inset()) | fail 
+<a name="503"/>      return if /self.tabs_at_bottom_flag then
+<a name="504"/>         self.y + border.get_t_inset() &lt;= e.y &lt; self.y + border.get_t_inset() + self.tab_h
+<a name="505"/>      else
+<a name="506"/>         self.y + self.h - border.get_b_inset() - self.tab_h &lt;= e.y &lt; self.y + self.h - border.get_b_inset()
+<a name="507"/>   end
+<a name="508"/>
+<a name="509"/>   public override accepts_focus(e)
+<a name="510"/>      if \e then {
+<a name="511"/>         if e.code === Mouse.LEFT_PRESS &amp; \self.no_click_focus_flag then
+<a name="512"/>            fail
+<a name="513"/>         # Outside of tabs never gives focus.
+<a name="514"/>         if member(Mouse.PRESS, e.code) &amp; not self.in_tab_region(e) then
+<a name="515"/>            fail
+<a name="516"/>      }
+<a name="517"/>      succeed Component.accepts_focus(e)
+<a name="518"/>   end
+<a name="519"/>
+<a name="520"/>   public override get_tooltip(e)
+<a name="521"/>      if \self.tooltip then
+<a name="522"/>         return self.tooltip
+<a name="523"/>      return which_tab(e).get_tab_tooltip(e)
+<a name="524"/>   end
+<a name="525"/>
+<a name="526"/>   public override handle_accel(e)
+<a name="527"/>      start_handle(e)
+<a name="528"/>      set_which_one(find_key(e.code))
+<a name="529"/>      if /self.no_click_focus_flag then
+<a name="530"/>         grab_focus(e)
+<a name="531"/>      end_handle(e)
+<a name="532"/>   end
+<a name="533"/> 
+<a name="534"/>   public override match_accel(e)
+<a name="535"/>      succeed find_key(e)
+<a name="536"/>   end
+<a name="537"/>
+<a name="538"/>   #
+<a name="539"/>   # Find the TabItem with the given accelerator.
+<a name="540"/>   #
+<a name="541"/>   public find_key(k)
+<a name="542"/>      local m
+<a name="543"/>      every m := !self.children do {
+<a name="544"/>         if m.accel === k &amp; m.is_unshaded() then
+<a name="545"/>            return m
+<a name="546"/>      }
+<a name="547"/>   end
+<a name="548"/>
+<a name="549"/>   #
+<a name="550"/>   # Break the set of tabs up into lines, given the padding within each tab.
+<a name="551"/>   # Returns a list each element of which is a list of those tabs on one line.
+<a name="552"/>   #
+<a name="553"/>   public how_many_lines(pad, width)
+<a name="554"/>      local t, l, cl, c, lw
+<a name="555"/>
+<a name="556"/>      width -:= border.get_total_width()
+<a name="557"/>
+<a name="558"/>      t := 0
+<a name="559"/>      l := []
+<a name="560"/>      cl := []
+<a name="561"/>      every c := !self.children do {
+<a name="562"/>         lw := c.get_label_width() + pad
+<a name="563"/>         if *cl = 0 then {
+<a name="564"/>            # First on a line
+<a name="565"/>            t := lw
+<a name="566"/>            put(cl, c)
+<a name="567"/>         }
+<a name="568"/>         else if t + lw + 2 * Gui.BORDER_WIDTH &gt; width then {
+<a name="569"/>            # New line required.
+<a name="570"/>            t := lw
+<a name="571"/>            put(l, cl)
+<a name="572"/>            cl := [c]
+<a name="573"/>         } else {
+<a name="574"/>            t +:= lw + 2 * Gui.BORDER_WIDTH
+<a name="575"/>            put(cl, c)
+<a name="576"/>         }
+<a name="577"/>      }
+<a name="578"/>      #
+<a name="579"/>      # Final line, if any
+<a name="580"/>      #
+<a name="581"/>      if t &gt; 0 then
+<a name="582"/>         put(l, cl)
+<a name="583"/>
+<a name="584"/>      return l
+<a name="585"/>   end
+<a name="586"/>
+<a name="587"/>   public override initially()
+<a name="588"/>      if *self.children = 0 then
+<a name="589"/>         runerr("No TabItems in TabSet")
+<a name="590"/>      /self.which_one := self.children[1]
+<a name="591"/>      set_hidden_flags()
+<a name="592"/>      Component.initially()
+<a name="593"/>   end
+<a name="594"/>
+<a name="595"/>   public override get_default_width()
+<a name="596"/>      local mw, tw
+<a name="597"/>
+<a name="598"/>      # Max width of tab contents.
+<a name="599"/>      mw := MaxNN{ (!children).get_preferred_width() }
+<a name="600"/>      if \self.prefer_one_row_flag then {
+<a name="601"/>         # Expand mw to the total tab label width if needed.
+<a name="602"/>         tw := Sum{ (!children).get_label_width() }
+<a name="603"/>         # There is 2 * Gui.BORDER_WIDTH of decoration between each label...
+<a name="604"/>         tw +:= 2 * Gui.BORDER_WIDTH * (*self.children - 1)
+<a name="605"/>         mw &lt;:= tw
+<a name="606"/>      } else {
+<a name="607"/>         # We should be wide enough for the widest label to be on a line on its own
+<a name="608"/>         # without clipping.
+<a name="609"/>         tw := MaxNN{ (!children).get_label_width() }
+<a name="610"/>         mw &lt;:= tw
+<a name="611"/>      }
+<a name="612"/>
+<a name="613"/>      # Our border's width
+<a name="614"/>      mw +:= border.get_total_width()
+<a name="615"/>
+<a name="616"/>      return mw
+<a name="617"/>   end
+<a name="618"/>
+<a name="619"/>   public override get_default_height(dw)
+<a name="620"/>      local mh
+<a name="621"/>
+<a name="622"/>      # Our border's width
+<a name="623"/>      dw -:= border.get_total_width()
+<a name="624"/>
+<a name="625"/>      # Max height of tab contents.
+<a name="626"/>      mh := MaxNN{ (!children).get_preferred_height(dw) }
+<a name="627"/>      # The top and bottom borders.
+<a name="628"/>      mh +:= border.get_total_height()
+<a name="629"/>
+<a name="630"/>      # Note that we don't simply check prefer_one_row_flag here, because we may
+<a name="631"/>      # have manually set a w_spec value, meaning we might get several rows anyway.
+<a name="632"/>      # Every line occupies the label_height plus a border below.
+<a name="633"/>
+<a name="634"/>      return mh +
+<a name="635"/>         *how_many_lines(0, get_preferred_width()) * (Gui.BORDER_WIDTH + get_label_height())
+<a name="636"/>   end
+<a name="637"/>
+<a name="638"/>   public get_label_height()
+<a name="639"/>      return MaxNN{ (!children).get_label_height() }
+<a name="640"/>   end
+<a name="641"/>
+<a name="642"/>   # Debug functions
+<a name="643"/>   #
+<a name="644"/>
+<a name="645"/>   public dump()
+<a name="646"/>      local curr_line, c, t
+<a name="647"/>      write("Total available width:", self.w - border.get_total_width())
+<a name="648"/>      every curr_line := !self.line_break do {
+<a name="649"/>         write("Line")
+<a name="650"/>         t := 0
+<a name="651"/>         every c := !curr_line do {
+<a name="652"/>            write("\tTab width=", c.get_label_width(),
+<a name="653"/>                  " tab_x=", c.tab_x,
+<a name="654"/>                  " tab_w=", c.tab_w)
+<a name="655"/>            t +:= c.tab_w
+<a name="656"/>         }
+<a name="657"/>         t +:= 2 * Gui.BORDER_WIDTH * (*curr_line - 1)
+<a name="658"/>         write("\tLine total allocated:", t)
+<a name="659"/>      }
+<a name="660"/>   end
+<a name="661"/>
+<a name="662"/>   public dump_split(l,s)
+<a name="663"/>      local e, f
+<a name="664"/>      write("Split of lines:",s)
+<a name="665"/>      every e := !l do {
+<a name="666"/>         writes("Line:",*e,":\t")
+<a name="667"/>         every f := !e do
+<a name="668"/>            writes(f.get_label_width(),"   ")
+<a name="669"/>         write()
+<a name="670"/>      }
+<a name="671"/>      write("----")
+<a name="672"/>   end
+<a name="673"/>
+<a name="674"/>   #
+<a name="675"/>   # Does the current line_break still suffice, or do we need
+<a name="676"/>   # to use the new_break? Keeping the current one if we can saves 
+<a name="677"/>   # unsightly flicking of the tabs on a resize.
+<a name="678"/>   #
+<a name="679"/>   public keep_current_break(new_break)
+<a name="680"/>      local e, t, s1, s2
+<a name="681"/>
+<a name="682"/>      # The old one must be at least as good as the new one, line-wise
+<a name="683"/>      *\self.line_break &lt;= *new_break | fail
+<a name="684"/>
+<a name="685"/>      # The old and new breaks must have the same elements, ie
+<a name="686"/>      # no tabs added or deleted.
+<a name="687"/>      s1 := set()
+<a name="688"/>      s2 := set()
+<a name="689"/>      every insert(s1, !!line_break)
+<a name="690"/>      every insert(s2, !!new_break)
+<a name="691"/>      lang.equals(s1, s2) | fail
+<a name="692"/>
+<a name="693"/>      # The current line_break's lines must still fit in the
+<a name="694"/>      # new width.
+<a name="695"/>      every e := !line_break do {
+<a name="696"/>         t := Sum{ (!e).get_label_width() }
+<a name="697"/>         t +:= 2 * Gui.BORDER_WIDTH * (*e - 1)
+<a name="698"/>         if t &gt; self.w - border.get_total_width() then
+<a name="699"/>            fail
+<a name="700"/>      }
+<a name="701"/>      return
+<a name="702"/>   end
+<a name="703"/>
+<a name="704"/>   public override layout()
+<a name="705"/>      local pad, l2, n, curr_line, t, c, d
+<a name="706"/>
+<a name="707"/>      # Cache the label height.
+<a name="708"/>      self.label_h := get_label_height()
+<a name="709"/>
+<a name="710"/>      # Determine how many lines with no padding.
+<a name="711"/>      pad := 0
+<a name="712"/>      l2 := how_many_lines(pad, self.w)
+<a name="713"/>
+<a name="714"/>      # Do we need a new line break?
+<a name="715"/>      unless keep_current_break(l2) then {
+<a name="716"/>         # We do need a new line break.
+<a name="717"/>         self.line_break := l2
+<a name="718"/>         self.tab_h :=  (self.label_h + Gui.BORDER_WIDTH) * (*self.line_break)
+<a name="719"/>
+<a name="720"/>         #
+<a name="721"/>         # Expand padding whilst can do so and remain within the original
+<a name="722"/>         # number of lines.  This should even out the tabs.
+<a name="723"/>         #
+<a name="724"/>         if 1 &lt; *self.line_break &lt; *self.children then {
+<a name="725"/>            while *(l2 := how_many_lines(pad + X_PADDING_INC, self.w)) &lt;= *self.line_break do {
+<a name="726"/>               self.line_break := l2
+<a name="727"/>               pad +:= X_PADDING_INC
+<a name="728"/>            }
+<a name="729"/>         }
+<a name="730"/>      }
+<a name="731"/>
+<a name="732"/>      #
+<a name="733"/>      # Finally, space out the tabs on each line to fill up each line.
+<a name="734"/>      #
+<a name="735"/>      n := 1
+<a name="736"/>      every curr_line := !self.line_break do {
+<a name="737"/>         #
+<a name="738"/>         # Work out total already used.
+<a name="739"/>         #
+<a name="740"/>         t := 0
+<a name="741"/>         every c := !curr_line do {
+<a name="742"/>            c.tab_w := c.get_label_width() + pad
+<a name="743"/>            t +:= c.tab_w
+<a name="744"/>         }
+<a name="745"/>         # Two Gui.BORDER_WIDTHS between each tab on the line
+<a name="746"/>         t +:= 2 * Gui.BORDER_WIDTH * (*curr_line - 1)
+<a name="747"/>
+<a name="748"/>         #
+<a name="749"/>         # Amount to add to each tab.
+<a name="750"/>         #
+<a name="751"/>         d := (self.w - border.get_total_width() - t) / *curr_line
+<a name="752"/>
+<a name="753"/>         #
+<a name="754"/>         # Add the amount, compute new total
+<a name="755"/>         #
+<a name="756"/>         t := 0
+<a name="757"/>         every c := curr_line[1 to *curr_line - 1] do {
+<a name="758"/>            c.tab_x := self.x + border.get_l_inset() + t
+<a name="759"/>            c.tab_w +:= d
+<a name="760"/>            t +:= c.tab_w + 2 * Gui.BORDER_WIDTH
+<a name="761"/>         }
+<a name="762"/>         # Rightmost tab gets the residue so that the tabs exactly
+<a name="763"/>         # fit in the line.
+<a name="764"/>         c := curr_line[-1]
+<a name="765"/>         c.tab_x := self.x + border.get_l_inset() + t
+<a name="766"/>         c.tab_w := self.w - border.get_total_width() - t
+<a name="767"/>
+<a name="768"/>         n +:= 1
+<a name="769"/>      }
+<a name="770"/>
+<a name="771"/>      self.adjust_lines()
+<a name="772"/>
+<a name="773"/>      #
+<a name="774"/>      # Layout the children
+<a name="775"/>      #
+<a name="776"/>      every c := !self.children do {
+<a name="777"/>         c.x := self.x + border.get_l_inset()
+<a name="778"/>         c.w := self.w - border.get_total_width()
+<a name="779"/>         c.y := if /self.tabs_at_bottom_flag then
+<a name="780"/>            self.y + border.get_t_inset() + self.tab_h
+<a name="781"/>         else
+<a name="782"/>            self.y + border.get_t_inset()
+<a name="783"/>         c.h := self.h - self.tab_h - border.get_total_height()
+<a name="784"/>         c.layout()
+<a name="785"/>      }
+<a name="786"/>   end
+<a name="787"/>
+<a name="788"/>   public override shift(dx, dy)
+<a name="789"/>      local c
+<a name="790"/>      Component.shift(dx, dy)
+<a name="791"/>       every c := !self.children do
+<a name="792"/>          c.tab_x +:= dx
+<a name="793"/>   end
+<a name="794"/>
+<a name="795"/>   public override new()
+<a name="796"/>      Component.new()
+<a name="797"/>      self.accepts_focus_flag := &amp;yes
+<a name="798"/>      self.set_constraint("x_fill", &amp;yes)
+<a name="799"/>      self.set_constraint("y_fill", &amp;yes)
+<a name="800"/>      self.set_constraint("x_weight", 1.0)
+<a name="801"/>      self.set_constraint("y_weight",  1.0)
+<a name="802"/>      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+<a name="803"/>      connect(self.handle_key, Event.KEY_PRESS)
+<a name="804"/>      set_border(RaisedBorder())
+<a name="805"/>      return
+<a name="806"/>   end
+<a name="807"/>end
+</pre></body></html>

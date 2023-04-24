@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>image.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: image.icn 8654 2020-11-07 12:07:54Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import util
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This class scales and displays an image.  The image source can
+<a name="15"/># be an image string, an external file, or another window, and
+<a name="16"/># can be changed at any time.
+<a name="17"/>#
+<a name="18"/>class Image(Component)
+<a name="19"/>   public 
+<a name="20"/>      image_str,
+<a name="21"/>      image_window,
+<a name="22"/>      image_cache,
+<a name="23"/>      image_pixels,
+<a name="24"/>      win,
+<a name="25"/>      zoom_win,
+<a name="26"/>      win_pix,
+<a name="27"/>      fill_dimensions
+<a name="28"/>
+<a name="29"/>   #
+<a name="30"/>   # Set an image to use; the parameter is passed to `ImageCache.load`
+<a name="31"/>   # to load the image.
+<a name="32"/>   #
+<a name="33"/>   public set_image(x)
+<a name="34"/>      image_str := image_cache := image_window := image_pixels := &amp;null
+<a name="35"/>      if is_initialized() then {
+<a name="36"/>         close_image()
+<a name="37"/>         image_str := x
+<a name="38"/>         load_image()
+<a name="39"/>         invalidate()
+<a name="40"/>      } else
+<a name="41"/>         image_str := x
+<a name="42"/>      link
+<a name="43"/>   end
+<a name="44"/>
+<a name="45"/>   #
+<a name="46"/>   # Set an image to use; the parameter is passed to `ImageCache.get`
+<a name="47"/>   # to load the image.
+<a name="48"/>   #
+<a name="49"/>   public set_cache(x)
+<a name="50"/>      image_str := image_cache := image_window := image_pixels := &amp;null
+<a name="51"/>      if is_initialized() then {
+<a name="52"/>         close_image()
+<a name="53"/>         image_cache := x
+<a name="54"/>         load_image()
+<a name="55"/>         invalidate()
+<a name="56"/>      } else
+<a name="57"/>         image_cache := x
+<a name="58"/>      link
+<a name="59"/>   end
+<a name="60"/>
+<a name="61"/>   #
+<a name="62"/>   # Set a `Window` to use as the image source.  It will not be closed
+<a name="63"/>   # by this Component.
+<a name="64"/>   #
+<a name="65"/>   public set_window(x)
+<a name="66"/>      image_str := image_cache := image_window := image_pixels := &amp;null
+<a name="67"/>      if is_initialized() then {
+<a name="68"/>         close_image()
+<a name="69"/>         image_window := x
+<a name="70"/>         load_image()
+<a name="71"/>         invalidate()
+<a name="72"/>      } else
+<a name="73"/>         image_window := x
+<a name="74"/>      link
+<a name="75"/>   end
+<a name="76"/>
+<a name="77"/>   #
+<a name="78"/>   # Set a `Pixels` to use as the image source.  It will not be closed
+<a name="79"/>   # by this Component.
+<a name="80"/>   #
+<a name="81"/>   public set_pixels(x)
+<a name="82"/>      image_str := image_cache := image_window := image_pixels := &amp;null
+<a name="83"/>      if is_initialized() then {
+<a name="84"/>         close_image()
+<a name="85"/>         image_pixels := x
+<a name="86"/>         load_image()
+<a name="87"/>         invalidate()
+<a name="88"/>      } else
+<a name="89"/>         image_pixels := x
+<a name="90"/>      link
+<a name="91"/>   end
+<a name="92"/>
+<a name="93"/>   #
+<a name="94"/>   # Blank the image
+<a name="95"/>   #
+<a name="96"/>   public clear_image()
+<a name="97"/>      image_str := image_cache := image_window := image_pixels := &amp;null
+<a name="98"/>      if is_initialized() then {
+<a name="99"/>         close_image()
+<a name="100"/>         invalidate()
+<a name="101"/>      }
+<a name="102"/>      link
+<a name="103"/>   end
+<a name="104"/>
+<a name="105"/>   public override initially()
+<a name="106"/>      Component.initially()
+<a name="107"/>      load_image()
+<a name="108"/>   end
+<a name="109"/>
+<a name="110"/>   public load_image()
+<a name="111"/>      if \image_str then
+<a name="112"/>         win_pix := ImageCache.load_pixels(image_str, cbwin)
+<a name="113"/>      else if \image_pixels then
+<a name="114"/>         win_pix := image_pixels.shared_copy()
+<a name="115"/>      else if \image_cache then
+<a name="116"/>         win := ImageCache.get(image_cache, cbwin).shared_copy()
+<a name="117"/>      else if \image_window then
+<a name="118"/>         win := image_window.shared_copy()
+<a name="119"/>   end
+<a name="120"/>
+<a name="121"/>   # This controls how the image will be expanded if its size is less
+<a name="122"/>   # than that specified by `set_size()`.  If 0, then the image will
+<a name="123"/>   # not be expanded; if 1 then the image will not be distorted, but
+<a name="124"/>   # will be expanded to fill one of the dimensions depending on its
+<a name="125"/>   # shape.  If 2, then the image will be distorted and expanded to
+<a name="126"/>   # fill both dimensions.
+<a name="127"/>   # 
+<a name="128"/>   # If the image is bigger than the specified size then it will
+<a name="129"/>   # always be scaled down, but if this setting is 2, then again the
+<a name="130"/>   # image is distorted to fill both dimensions.
+<a name="131"/>   #
+<a name="132"/>   public set_fill_dimensions(n)
+<a name="133"/>      self.fill_dimensions := need_integer(n, 0, 2)
+<a name="134"/>      link
+<a name="135"/>   end
+<a name="136"/>
+<a name="137"/>   public close_image()
+<a name="138"/>      (\win).close()
+<a name="139"/>      (\zoom_win).close()
+<a name="140"/>      (\win_pix).close()
+<a name="141"/>      win := zoom_win := win_pix := &amp;null
+<a name="142"/>   end
+<a name="143"/>
+<a name="144"/>   public override get_default_width()
+<a name="145"/>      local ww
+<a name="146"/>      ww := get_image_width() | 0
+<a name="147"/>      return ww + border.get_total_width()
+<a name="148"/>   end
+<a name="149"/>
+<a name="150"/>   public override get_default_height(dw)
+<a name="151"/>      local t, wh, ww
+<a name="152"/>      ww := get_image_width() | 0
+<a name="153"/>      wh := get_image_height() | 0
+<a name="154"/>      dw -:= border.get_total_width()
+<a name="155"/>      t := if fill_dimensions &lt; 2 &amp; ww &lt;= dw then
+<a name="156"/>         wh
+<a name="157"/>      else if ww &gt; 0 then (dw * wh) / ww else 0
+<a name="158"/>      return t + border.get_total_height()
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   #
+<a name="162"/>   # Succeed if an image is currently loaded.
+<a name="163"/>   #
+<a name="164"/>   public has_image()
+<a name="165"/>      succeed \win | \win_pix
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   #
+<a name="169"/>   # Return the loaded image width, or fail if no image is loaded.
+<a name="170"/>   #
+<a name="171"/>   public get_image_width()
+<a name="172"/>      return (\win).get_width() | (\win_pix).get_width()
+<a name="173"/>   end
+<a name="174"/>
+<a name="175"/>   #
+<a name="176"/>   # Return the loaded image height, or fail if no image is loaded.
+<a name="177"/>   #
+<a name="178"/>   public get_image_height()
+<a name="179"/>      return (\win).get_height() | (\win_pix).get_height()
+<a name="180"/>   end
+<a name="181"/>
+<a name="182"/>   public override display()
+<a name="183"/>      local ir, img_w, img_h,
+<a name="184"/>         asp_r, asp_max, zoom_w, zoom_h, pt
+<a name="185"/>
+<a name="186"/>      border.draw_rect(self.cbwin, self)
+<a name="187"/>
+<a name="188"/>      has_image() | fail
+<a name="189"/>
+<a name="190"/>      ir := border.get_inner_rect(self)
+<a name="191"/>      if ir.empty() then
+<a name="192"/>         fail
+<a name="193"/>
+<a name="194"/>      img_w := get_image_width()
+<a name="195"/>      img_h := get_image_height()
+<a name="196"/>
+<a name="197"/>      #
+<a name="198"/>      # Scale the image to the desired size
+<a name="199"/>      #
+<a name="200"/>      if (fill_dimensions = 0) &amp; (img_w &lt;= ir.w) &amp; (img_h &lt;= ir.h) then {
+<a name="201"/>         zoom_w := img_w
+<a name="202"/>         zoom_h := img_h
+<a name="203"/>      } else if fill_dimensions = 2 then { 
+<a name="204"/>         zoom_w := ir.w
+<a name="205"/>         zoom_h := ir.h
+<a name="206"/>      } else {
+<a name="207"/>         asp_r := real(img_w) / img_h
+<a name="208"/>         asp_max := real(ir.w) / ir.h
+<a name="209"/>
+<a name="210"/>         if asp_r &gt; asp_max then {
+<a name="211"/>            zoom_w := ir.w
+<a name="212"/>            zoom_h := integer(ir.w / asp_r)
+<a name="213"/>         } else {
+<a name="214"/>            zoom_w := integer(ir.h * asp_r)
+<a name="215"/>            zoom_h := ir.h
+<a name="216"/>         }
+<a name="217"/>      }
+<a name="218"/>
+<a name="219"/>      pt := ir.float(Size(zoom_w, zoom_h), border)
+<a name="220"/>
+<a name="221"/>      zoom_w &lt;:= 1
+<a name="222"/>      zoom_h &lt;:= 1
+<a name="223"/>
+<a name="224"/>      if img_w = zoom_w &amp; img_h = zoom_h then {
+<a name="225"/>         /win := open_image(win_pix)
+<a name="226"/>         win.copy_to(,,,, self.cbwin, pt.x, pt.y)
+<a name="227"/>      } else if \zoom_win &amp;
+<a name="228"/>         zoom_win.get_width() = zoom_w &amp; 
+<a name="229"/>         zoom_win.get_height() = zoom_h
+<a name="230"/>      then
+<a name="231"/>         zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
+<a name="232"/>      else {
+<a name="233"/>         (\zoom_win).close()
+<a name="234"/>         /win_pix := win.get_pixels()
+<a name="235"/>         zoom_win := zoom_pix(win_pix, zoom_w, zoom_h)
+<a name="236"/>         zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
+<a name="237"/>      }
+<a name="238"/>   end
+<a name="239"/>
+<a name="240"/>   public override finally()
+<a name="241"/>      Component.finally()
+<a name="242"/>      close_image()
+<a name="243"/>   end
+<a name="244"/>
+<a name="245"/>   public override new()
+<a name="246"/>      Component.new()
+<a name="247"/>      self.set_constraint("x_fill", &amp;yes)
+<a name="248"/>      self.set_constraint("y_fill", &amp;yes)
+<a name="249"/>      self.set_constraint("x_weight", 1.0)
+<a name="250"/>      self.set_constraint("y_weight",  1.0)
+<a name="251"/>      set_border(RaisedBorder())
+<a name="252"/>      fill_dimensions := 0
+<a name="253"/>      return
+<a name="254"/>   end
+<a name="255"/>end
+</pre></body></html>

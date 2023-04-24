@@ -1,0 +1,1388 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>files.icn</title></head><body><pre>
+<a name="1"/>package io
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   lang,
+<a name="5"/>   util,
+<a name="6"/>   net,
+<a name="7"/>   posix,
+<a name="8"/>   ipl.random,
+<a name="9"/>   ipl.scan,
+<a name="10"/>   ipl.strings,
+<a name="11"/>   ipl.pdco(List)
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This class has several static methods which provide
+<a name="15"/># system-independent access to the file system.
+<a name="16"/>#
+<a name="17"/>final abstract class Files()
+<a name="18"/>   package static const 
+<a name="19"/>      FS
+<a name="20"/>
+<a name="21"/>   public static const 
+<a name="22"/>      # The separator for elements of a path
+<a name="23"/>      PATH_SEPARATOR,
+<a name="24"/>      # A cset, being the non-filename characters which may appear in a path
+<a name="25"/>      PATH_SPECIALS,
+<a name="26"/>      # The separator for individual paths in a list of paths (such as the PATH
+<a name="27"/>      # environment variable).
+<a name="28"/>      PATHS_SEPARATOR,
+<a name="29"/>      # Suffix for dynamic library
+<a name="30"/>      LIB_SUFFIX,
+<a name="31"/>      # Suffix for executable
+<a name="32"/>      PROG_SUFFIX,
+<a name="33"/>      # Name of null file
+<a name="34"/>      NULL_FILE,
+<a name="35"/>      # Relative filename of current directory
+<a name="36"/>      CURRENT_DIR,
+<a name="37"/>      # Relative filename of parent directory
+<a name="38"/>      PARENT_DIR
+<a name="39"/>
+<a name="40"/>   private static init()
+<a name="41"/>$if _UNIX
+<a name="42"/>      PATH_SEPARATOR := "/"
+<a name="43"/>      PATH_SPECIALS := '/'
+<a name="44"/>      PATHS_SEPARATOR := ":"
+<a name="45"/>      LIB_SUFFIX := ".so"
+<a name="46"/>      PROG_SUFFIX := ""
+<a name="47"/>      NULL_FILE := "/dev/null"
+<a name="48"/>      CURRENT_DIR := "."
+<a name="49"/>      PARENT_DIR := ".."
+<a name="50"/>      FS := UnixFileSystem()
+<a name="51"/>$elsif _MS_WIN32
+<a name="52"/>      PATH_SEPARATOR := "\\"
+<a name="53"/>      PATH_SPECIALS := ':\\/'
+<a name="54"/>      PATHS_SEPARATOR := ";"
+<a name="55"/>      LIB_SUFFIX := ".dll"
+<a name="56"/>      PROG_SUFFIX := ".exe"
+<a name="57"/>      NULL_FILE := "nul"
+<a name="58"/>      CURRENT_DIR := "."
+<a name="59"/>      PARENT_DIR := ".."
+<a name="60"/>      FS := WindowsFileSystem()
+<a name="61"/>$else
+<a name="62"/>      runerr("Can't init_file_system: unknown o/s type")
+<a name="63"/>$endif
+<a name="64"/>   end
+<a name="65"/>
+<a name="66"/>   #
+<a name="67"/>   # Read the given directory returning a list of `ListEntry` objects,
+<a name="68"/>   # each containing the name, lstat and stat values for each entry.
+<a name="69"/>   #
+<a name="70"/>   # `f` is an optional parameter, providing an alternative constructor for
+<a name="71"/>   # the returned objects; by default it is `ListEntry`.
+<a name="72"/>   #
+<a name="73"/>   public static list(s, f)
+<a name="74"/>      local p
+<a name="75"/>      return use {
+<a name="76"/>         p := DirStream(s),
+<a name="77"/>         list1(FilePath(s), p, f, 1)
+<a name="78"/>      }
+<a name="79"/>   end
+<a name="80"/>
+<a name="81"/>   #
+<a name="82"/>   # Like `list`, but the filenames are converted to `ucs`; any that
+<a name="83"/>   # can't be converted are skipped.
+<a name="84"/>   #
+<a name="85"/>   public static ucs_list(s, f)
+<a name="86"/>      local p
+<a name="87"/>      return use {
+<a name="88"/>         p := DirStream(s),
+<a name="89"/>         list1(FilePath(s), p, f, ucs)
+<a name="90"/>      }
+<a name="91"/>   end
+<a name="92"/>
+<a name="93"/>   private static list1(path, p, f, g)
+<a name="94"/>      local l, s, cs, lst, st
+<a name="95"/>      /f := ListEntry
+<a name="96"/>      l := []
+<a name="97"/>      repeat {
+<a name="98"/>         s := p.read_line() | fail
+<a name="99"/>         if /s then
+<a name="100"/>            return l
+<a name="101"/>         cs := path.child(s).str()
+<a name="102"/>         lst := lstat(cs) | next
+<a name="103"/>         st := if lst.mode_str[1] == "l" then
+<a name="104"/>            stat(cs) | next
+<a name="105"/>         else
+<a name="106"/>            lst
+<a name="107"/>         put(l, f(g(s), lst, st))
+<a name="108"/>      }
+<a name="109"/>   end
+<a name="110"/>
+<a name="111"/>   #
+<a name="112"/>   # A useful function to help sort the result of the various list
+<a name="113"/>   # functions.  Sorts by ascending case-insensitive name.
+<a name="114"/>   #
+<a name="115"/>   public static name_cmp(d1, d2)
+<a name="116"/>      local t
+<a name="117"/>      t := Text.consistent_compare(d1.name, d2.name)
+<a name="118"/>      # Ensure a stable sort for file systems which allow duplicate
+<a name="119"/>      # names.
+<a name="120"/>      if t = 0 then
+<a name="121"/>         t := serial(d1) - serial(d2)
+<a name="122"/>      return t
+<a name="123"/>   end
+<a name="124"/>
+<a name="125"/>   #
+<a name="126"/>   # A useful function to help sort the result of the various list
+<a name="127"/>   # functions.  Sorts by size in bytes, biggest first, with name
+<a name="128"/>   # resolving ties.
+<a name="129"/>   #
+<a name="130"/>   public static size_cmp(d1, d2)
+<a name="131"/>      local t
+<a name="132"/>      t := d2.lstat.size - d1.lstat.size
+<a name="133"/>      if t = 0 then
+<a name="134"/>         t := name_cmp(d1, d2)
+<a name="135"/>      return t
+<a name="136"/>   end
+<a name="137"/>
+<a name="138"/>   #
+<a name="139"/>   # A useful function to help sort the result of the various list
+<a name="140"/>   # functions.  Sorts by modification time, newest first, with name
+<a name="141"/>   # resolving ties.
+<a name="142"/>   #
+<a name="143"/>   public static date_cmp(d1, d2)
+<a name="144"/>      local t
+<a name="145"/>      t := d2.lstat.mtime - d1.lstat.mtime
+<a name="146"/>      if t = 0 then {
+<a name="147"/>         t := d2.lstat.mtime_ns - d1.lstat.mtime_ns
+<a name="148"/>         if t = 0 then
+<a name="149"/>            t := name_cmp(d1, d2)
+<a name="150"/>      }
+<a name="151"/>      return t
+<a name="152"/>   end
+<a name="153"/>
+<a name="154"/>   #
+<a name="155"/>   # Return the home directory.
+<a name="156"/>   #
+<a name="157"/>   public static get_home()
+<a name="158"/>      return FS.get_home()
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   #
+<a name="162"/>   # Return the temporary directory.
+<a name="163"/>   #
+<a name="164"/>   public static get_temp()
+<a name="165"/>      return FS.get_temp()
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   #
+<a name="169"/>   # Succeed iff the given file is hidden.
+<a name="170"/>   #
+<a name="171"/>   public static is_hidden(s)
+<a name="172"/>      succeed FS.is_hidden(s)
+<a name="173"/>   end
+<a name="174"/>
+<a name="175"/>   #
+<a name="176"/>   # Succeed iff the given file is a relative directory name (on Unix,
+<a name="177"/>   # "." or "..").
+<a name="178"/>   #
+<a name="179"/>   public static is_relative_dir(s)
+<a name="180"/>      succeed FS.is_relative_dir(s)
+<a name="181"/>   end
+<a name="182"/>
+<a name="183"/>   #
+<a name="184"/>   # Get the roots of the file system.
+<a name="185"/>   #
+<a name="186"/>   public static get_roots()
+<a name="187"/>      suspend FS.get_roots()
+<a name="188"/>   end
+<a name="189"/>
+<a name="190"/>   #
+<a name="191"/>   # Split a list of paths (such as the $PATH variable) into its
+<a name="192"/>   # constituent elements.
+<a name="193"/>   #
+<a name="194"/>   public static split_paths(s)
+<a name="195"/>      suspend FS.split_paths(s)
+<a name="196"/>   end
+<a name="197"/>
+<a name="198"/>   #
+<a name="199"/>   # Load a file into a string
+<a name="200"/>   #
+<a name="201"/>   public static file_to_string(fn)
+<a name="202"/>      local f
+<a name="203"/>      return use {
+<a name="204"/>         f := FileStream(fn),
+<a name="205"/>         f.read_all()
+<a name="206"/>      }
+<a name="207"/>   end
+<a name="208"/>
+<a name="209"/>   #
+<a name="210"/>   # Write a string to a file.
+<a name="211"/>   #
+<a name="212"/>   public static string_to_file(fn, s)
+<a name="213"/>      local f
+<a name="214"/>      return use {
+<a name="215"/>         f := FileStream(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
+<a name="216"/>         f.writes1(s)
+<a name="217"/>      }
+<a name="218"/>   end
+<a name="219"/>
+<a name="220"/>   #
+<a name="221"/>   # Make a temporary filename.
+<a name="222"/>   # :Parameters :
+<a name="223"/>   # :  `prefix` - by default empty
+<a name="224"/>   # :  `suffix` - by default empty
+<a name="225"/>   # :  `path` - the directory, by default `get_temp()`
+<a name="226"/>   # :  `len` - the number of digits in the result, default 8
+<a name="227"/>   #
+<a name="228"/>   public static make_temp_filename(prefix, suffix, path, len)
+<a name="229"/>      local p, name
+<a name="230"/>      /prefix := ""
+<a name="231"/>      /suffix := ""
+<a name="232"/>      /path := get_temp()
+<a name="233"/>      /len := 8
+<a name="234"/>      randomize()
+<a name="235"/>      p := FilePath(path)
+<a name="236"/>      repeat {
+<a name="237"/>         ?1                                # change &amp;random
+<a name="238"/>         name := p.child(prefix || left(&amp;random, len, "0") || suffix).str()
+<a name="239"/>         # Try to create the file, with the EXCL flag.
+<a name="240"/>         if use{ FileStream(name, ior(FileOpt.WRONLY, FileOpt.CREAT, FileOpt.EXCL)) } then
+<a name="241"/>            return name
+<a name="242"/>         # Any reason other than a clash is an error.
+<a name="243"/>         errno() = Errno.EEXIST | fail
+<a name="244"/>      }
+<a name="245"/>   end
+<a name="246"/>
+<a name="247"/>   #
+<a name="248"/>   # Succeed iff the two given files have the same content.
+<a name="249"/>   #
+<a name="250"/>   public static equal_files(s1, s2)
+<a name="251"/>      local f1, f2
+<a name="252"/>      stat(s1).size = stat(s2).size | fail
+<a name="253"/>      return use {
+<a name="254"/>         f1 := FileStream(s1),
+<a name="255"/>         use {
+<a name="256"/>            f2 := FileStream(s2),
+<a name="257"/>            equal_files1(f1, f2)
+<a name="258"/>         }
+<a name="259"/>      }
+<a name="260"/>   end
+<a name="261"/>
+<a name="262"/>   private static equal_files1(f1, f2)
+<a name="263"/>      local b1, b2
+<a name="264"/>      repeat {
+<a name="265"/>         b1 := f1.in(1048576) | fail
+<a name="266"/>         if /b1 then 
+<a name="267"/>            # f1 is at eof, and a further read of f2 should be at eof.
+<a name="268"/>            return /f2.in(1)
+<a name="269"/>         b2 := f2.read_exactly(*b1) | fail
+<a name="270"/>         b1 === b2 | fail
+<a name="271"/>      }
+<a name="272"/>   end
+<a name="273"/>
+<a name="274"/>   #
+<a name="275"/>   # Succeed iff the given file is a directory.
+<a name="276"/>   #
+<a name="277"/>   public static is_directory(s)
+<a name="278"/>      succeed stat(s).mode_str[1] == "d"
+<a name="279"/>   end
+<a name="280"/>
+<a name="281"/>   #
+<a name="282"/>   # Move a file.  First, try to move it by renaming it.  If that
+<a name="283"/>   # fails, try to copy the file then delete the original, or if that
+<a name="284"/>   # fails, fail.
+<a name="285"/>   #
+<a name="286"/>   # :Parameters :
+<a name="287"/>   # :  `s1` - the source filename
+<a name="288"/>   # :  `s2` - the target filename
+<a name="289"/>   #
+<a name="290"/>   public static move(s1, s2)
+<a name="291"/>      return rename(s1, s2) |
+<a name="292"/>         (copy(s1, s2) &amp; remove(s1))
+<a name="293"/>   end
+<a name="294"/>
+<a name="295"/>   #
+<a name="296"/>   # Rename a file.
+<a name="297"/>   #
+<a name="298"/>   # :Parameters :
+<a name="299"/>   # :  `s1` - the source filename
+<a name="300"/>   # :  `s2` - the target filename
+<a name="301"/>   #
+<a name="302"/>   public static native rename(s1, s2)
+<a name="303"/>
+<a name="304"/>   #
+<a name="305"/>   # Create a (hard) link to a file.
+<a name="306"/>   #
+<a name="307"/>   # :Parameters :
+<a name="308"/>   # :  `s1` - the source filename
+<a name="309"/>   # :  `s2` - the target filename
+<a name="310"/>   #
+<a name="311"/>   public static native hardlink(s1, s2)
+<a name="312"/>
+<a name="313"/>   #
+<a name="314"/>   # Create a symlink to a file.
+<a name="315"/>   #
+<a name="316"/>   # :Parameters :
+<a name="317"/>   # :  `s1` - the source filename
+<a name="318"/>   # :  `s2` - the target filename
+<a name="319"/>   #
+<a name="320"/>   public static native symlink(s1, s2)
+<a name="321"/>
+<a name="322"/>   #
+<a name="323"/>   # Read a symbolic link
+<a name="324"/>   #
+<a name="325"/>   # :Parameters :
+<a name="326"/>   # :  `s` - the source filename
+<a name="327"/>   #
+<a name="328"/>   public static native readlink(s)
+<a name="329"/>
+<a name="330"/>   #
+<a name="331"/>   # Return the canonicalized absolute pathname as produced by the
+<a name="332"/>   # POSIX realpath function.
+<a name="333"/>   #
+<a name="334"/>   # :Parameters :
+<a name="335"/>   # :  `s` - a filename
+<a name="336"/>   #
+<a name="337"/>   public static native realpath(s)
+<a name="338"/>
+<a name="339"/>   #
+<a name="340"/>   # Changes the current directory to that specified in s.
+<a name="341"/>   #
+<a name="342"/>   # :Parameters :
+<a name="343"/>   # :  `s` - the directory
+<a name="344"/>   #
+<a name="345"/>   public static native chdir(s)
+<a name="346"/>
+<a name="347"/>   #
+<a name="348"/>   # Get current working directory
+<a name="349"/>   #
+<a name="350"/>   public static native getcwd()
+<a name="351"/>
+<a name="352"/>   #
+<a name="353"/>   # Remove a regular file
+<a name="354"/>   #
+<a name="355"/>   # :Parameters :
+<a name="356"/>   # :  `s` - the file
+<a name="357"/>   #
+<a name="358"/>   public static native remove(s)
+<a name="359"/>
+<a name="360"/>   #
+<a name="361"/>   # Remove an empty directory
+<a name="362"/>   #
+<a name="363"/>   # :Parameters :
+<a name="364"/>   # :  `s` - the empty directory
+<a name="365"/>   #
+<a name="366"/>   public static native rmdir(s)
+<a name="367"/>
+<a name="368"/>   #
+<a name="369"/>   # Make a new directory
+<a name="370"/>   #
+<a name="371"/>   # :Parameters :
+<a name="372"/>   # :  `s` - the directory path
+<a name="373"/>   # :  `perm` - the permission bits, defaults to rwxr-xr-x
+<a name="374"/>   #
+<a name="375"/>   public static native mkdir(s, perm)
+<a name="376"/>
+<a name="377"/>   #
+<a name="378"/>   # Truncate the given file to `len` bytes.
+<a name="379"/>   #
+<a name="380"/>   # :Parameters :
+<a name="381"/>   # :  `s1` - the source filename
+<a name="382"/>   # :  `len` - the desired length
+<a name="383"/>   #
+<a name="384"/>   public static native truncate(s, len)
+<a name="385"/>
+<a name="386"/>   #
+<a name="387"/>   # Obtain information about the given file
+<a name="388"/>   #
+<a name="389"/>   # :Parameters :
+<a name="390"/>   # :  `s` - the file
+<a name="391"/>   # :Returns :
+<a name="392"/>   # :  a `Stat` object
+<a name="393"/>   #
+<a name="394"/>   public static stat(s)
+<a name="395"/>      return Stat!stat_impl(s)
+<a name="396"/>   end
+<a name="397"/>
+<a name="398"/>   private static native stat_impl(s)
+<a name="399"/>
+<a name="400"/>   #
+<a name="401"/>   # Obtain information about the given file without following
+<a name="402"/>   # symlinks.
+<a name="403"/>   #
+<a name="404"/>   # :Parameters :
+<a name="405"/>   # :  `s` - the file
+<a name="406"/>   # :Returns :
+<a name="407"/>   # :  a `Stat` object
+<a name="408"/>   #
+<a name="409"/>   public static lstat(s)
+<a name="410"/>      return Stat!lstat_impl(s)
+<a name="411"/>   end
+<a name="412"/>
+<a name="413"/>   private static native lstat_impl(s)
+<a name="414"/>
+<a name="415"/>   #
+<a name="416"/>   # Write selected attributes about a file.  If any of the parameters
+<a name="417"/>   # are `&amp;null`, they are left unchanged.  The nanosecond parameters
+<a name="418"/>   # are ignored unless their corresponding time fields are being set.
+<a name="419"/>   #
+<a name="420"/>   # :Parameters :
+<a name="421"/>   # :  `s` - the file
+<a name="422"/>   # :  `mode` - the mode (an integer)
+<a name="423"/>   # :  `uid` - the owner id
+<a name="424"/>   # :  `gid` - the group id
+<a name="425"/>   # :  `atime` - the access time (an integer)
+<a name="426"/>   # :  `mtime` - the modification time (an integer)
+<a name="427"/>   # :  `atime_ns` - the access time nanosecond part (an integer, default 0)
+<a name="428"/>   # :  `mtime_ns` - the modification time nanosecond part (an integer, default 0)
+<a name="429"/>   #
+<a name="430"/>   public static native wstat(s, mode, uid, gid, atime, mtime, atime_ns, mtime_ns)
+<a name="431"/>
+<a name="432"/>   #
+<a name="433"/>   # Check whether the given file can be accessed in the given mode.
+<a name="434"/>   #
+<a name="435"/>   public static native access(s, mode)
+<a name="436"/>
+<a name="437"/>   #
+<a name="438"/>   # This method can be used after a `posix.System.fork` and before a
+<a name="439"/>   # `posix.System.exec` to close unnecessary duplicated file
+<a name="440"/>   # descriptors.  The algorithm used is not perfect, but should be
+<a name="441"/>   # effective in almost all cases.  Starting at descriptor number
+<a name="442"/>   # `start`, descriptors are closed in sequence until `gap`
+<a name="443"/>   # descriptors in succession are found to be absent from the file
+<a name="444"/>   # descriptor table (in other words, attempting to close them
+<a name="445"/>   # returns an error).
+<a name="446"/>   #
+<a name="447"/>   # :Parameters :
+<a name="448"/>   # :  `gap` - the gap (default 512)
+<a name="449"/>   # :  `start` - the starting descriptor number (default 3)
+<a name="450"/>   #
+<a name="451"/>   public static native bulk_close(gap, start)
+<a name="452"/>
+<a name="453"/>   #
+<a name="454"/>   # Copy a file.
+<a name="455"/>   # :Parameters :
+<a name="456"/>   # :  `s1` - the source filename
+<a name="457"/>   # :  `s2` - the target filename
+<a name="458"/>   #
+<a name="459"/>   public static copy(s1, s2)
+<a name="460"/>      local f1, f2
+<a name="461"/>      link use {
+<a name="462"/>         f1 := FileStream(s1),
+<a name="463"/>         use {
+<a name="464"/>            f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
+<a name="465"/>            f1.copy_to(f2)
+<a name="466"/>         }
+<a name="467"/>      }
+<a name="468"/>   end
+<a name="469"/>
+<a name="470"/>   #
+<a name="471"/>   # Append file `s1` onto `s2`.
+<a name="472"/>   # :Parameters :
+<a name="473"/>   # :  `s1` - the source filename
+<a name="474"/>   # :  `s2` - the target filename
+<a name="475"/>   #
+<a name="476"/>   public static append(s1, s2)
+<a name="477"/>      local f1, f2
+<a name="478"/>      link use {
+<a name="479"/>         f1 := FileStream(s1),
+<a name="480"/>         use {
+<a name="481"/>            f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)),
+<a name="482"/>            f1.copy_to(f2)
+<a name="483"/>         }
+<a name="484"/>      }
+<a name="485"/>   end
+<a name="486"/>
+<a name="487"/>   #
+<a name="488"/>   # Given a stem filename, return another unique filename based upon it.
+<a name="489"/>   #
+<a name="490"/>   public static ensure_unique_filename(stem)
+<a name="491"/>      local i, p, s
+<a name="492"/>      access(stem) | return stem
+<a name="493"/>      i := 1
+<a name="494"/>      p := get_extension(stem)
+<a name="495"/>      repeat {
+<a name="496"/>         s := stem
+<a name="497"/>         (if /p then s else s[-*p - 2]) ||:= "_" || i
+<a name="498"/>         access(s) | return s
+<a name="499"/>         i +:= 1
+<a name="500"/>      }
+<a name="501"/>   end
+<a name="502"/>
+<a name="503"/>   #
+<a name="504"/>   # Return the extension of a filename, or fail if there is none.
+<a name="505"/>   #
+<a name="506"/>   public static get_extension(f)
+<a name="507"/>      local i                                                     
+<a name="508"/>      f := need_text(f)
+<a name="509"/>      if (i := backto('.' ++ PATH_SPECIALS, f)\1) &lt;= *f &amp;
+<a name="510"/>         any('.', f[i - 1]) &amp; any(~PATH_SPECIALS, f[i - 2]) then
+<a name="511"/>         return f[i:0]
+<a name="512"/>   end
+<a name="513"/>
+<a name="514"/>   #
+<a name="515"/>   # This procedure searches for a file on a environment-defined path.
+<a name="516"/>   # It follows the same logic as the C function pathfind() in
+<a name="517"/>   # mlocal.c, except that the cd check is optional.
+<a name="518"/>   #
+<a name="519"/>   # :Parameters :
+<a name="520"/>   # :  `f` - the file to look for
+<a name="521"/>   # :  `n` - the name of the environment variable holding the path;
+<a name="522"/>   #          if &amp;null then no path is searched
+<a name="523"/>   # :  `cd` - the notional current directory to check before the path;
+<a name="524"/>   #          may be &amp;null, in which case no current directory
+<a name="525"/>   #          test is done
+<a name="526"/>   #
+<a name="527"/>   public static path_find(f, n, cd)
+<a name="528"/>      local p, s
+<a name="529"/>      p := FilePath(f)
+<a name="530"/>
+<a name="531"/>      # Don't search the path if we have an absolute file
+<a name="532"/>      if p.is_absolute() then {
+<a name="533"/>         s := p.str()
+<a name="534"/>         if access(s) then
+<a name="535"/>            return s
+<a name="536"/>         else
+<a name="537"/>            fail
+<a name="538"/>      }
+<a name="539"/>
+<a name="540"/>      # Try current directory first, if given
+<a name="541"/>      if s := FilePath(\cd).append(p).str() &amp; access(s) then
+<a name="542"/>         return s
+<a name="543"/>
+<a name="544"/>      # Don't search the path if we have a relative name
+<a name="545"/>      if p.size() &gt; 1 then
+<a name="546"/>         fail
+<a name="547"/>
+<a name="548"/>      # Search all the elements in the path
+<a name="549"/>      every s := FilePath(split_paths(env_string(\n))).append(p).str() do {
+<a name="550"/>         if access(s) then
+<a name="551"/>            return s
+<a name="552"/>      }
+<a name="553"/>   end
+<a name="554"/>
+<a name="555"/>   #
+<a name="556"/>   # Find executable on the given path.  Details vary by platform, but
+<a name="557"/>   # on Unix, the method is similar to `path_find` above, but a little
+<a name="558"/>   # more strict.  In particular, the cd isn't tried before the
+<a name="559"/>   # directories on the path.
+<a name="560"/>   #
+<a name="561"/>   # :Parameters :
+<a name="562"/>   # :  `f` - the file to look for
+<a name="563"/>   # :  `n` - the name of the environment variable holding the path,
+<a name="564"/>   #          by default (on Unix) "PATH"
+<a name="565"/>   #
+<a name="566"/>   public static find_exe(f, n)
+<a name="567"/>      return FS.find_exe(f, n)
+<a name="568"/>   end
+<a name="569"/>
+<a name="570"/>   #
+<a name="571"/>   # Search for a native library on the OI_NATIVE path.
+<a name="572"/>   #
+<a name="573"/>   public static find_native_lib(f)
+<a name="574"/>      static seen
+<a name="575"/>      local t
+<a name="576"/>      initial
+<a name="577"/>         seen := table()
+<a name="578"/>      if t := member(seen, f) then
+<a name="579"/>         return t
+<a name="580"/>      if t := path_find(f || LIB_SUFFIX, "OI_NATIVE") then {
+<a name="581"/>         insert(seen, f, t)
+<a name="582"/>         return t
+<a name="583"/>      }
+<a name="584"/>   end
+<a name="585"/>
+<a name="586"/>   #
+<a name="587"/>   # Return the opening escape sequence for an embedded link.  File f
+<a name="588"/>   # must be a `URL` (properly url-encoded), or an absolute path.
+<a name="589"/>   #
+<a name="590"/>   public static begin_link(f, line, col)
+<a name="591"/>      local t
+<a name="592"/>      unless is(f, URL) then {
+<a name="593"/>         f := URL(file_to_url(f)).
+<a name="594"/>            set_host(&amp;host) | runerr("Failed to convert to URL: " || &amp;why, f)
+<a name="595"/>         if \line then {
+<a name="596"/>            t := table()
+<a name="597"/>            insert(t, "line", need_integer(line, 1))
+<a name="598"/>            if \col then
+<a name="599"/>               insert(t, "col", need_integer(col, 1))
+<a name="600"/>            f.set_cgi_parameters(t)
+<a name="601"/>         }
+<a name="602"/>      }
+<a name="603"/>      return "\e[!\"" || f.str() || "\"L"
+<a name="604"/>   end
+<a name="605"/>
+<a name="606"/>   #
+<a name="607"/>   # Return the closing escape sequence for an embedded link
+<a name="608"/>   #
+<a name="609"/>   public static end_link()
+<a name="610"/>      return "\e[!L"
+<a name="611"/>   end
+<a name="612"/>
+<a name="613"/>   #
+<a name="614"/>   # Return the program name, based on the last path element of `&amp;progname`
+<a name="615"/>   #
+<a name="616"/>   public static get_program_name()
+<a name="617"/>      return FS.get_program_name()
+<a name="618"/>   end
+<a name="619"/>
+<a name="620"/>   #
+<a name="621"/>   # Given a `URL` instance, return an equivalent file name, using the
+<a name="622"/>   # local file system's conversion rules.  This method fails if the
+<a name="623"/>   # URL is not a "file" URL, or if the host is not local and the file
+<a name="624"/>   # system cannot represent a remote file (this is true in Unix, but
+<a name="625"/>   # not in Windows).
+<a name="626"/>   #
+<a name="627"/>   public static url_to_file(u)
+<a name="628"/>      u.scheme == "file" | return error("Can only convert a file: URL")
+<a name="629"/>      return FS.url_to_file(u)
+<a name="630"/>   end
+<a name="631"/>
+<a name="632"/>   #
+<a name="633"/>   # Given an absolute file name, return an equivalent "file" URL (as
+<a name="634"/>   # a string), using the local file system's conversion rules.
+<a name="635"/>   #
+<a name="636"/>   public static file_to_url(f)
+<a name="637"/>      return FS.file_to_url(f)
+<a name="638"/>   end
+<a name="639"/>
+<a name="640"/>   #
+<a name="641"/>   # Given an arbitrary filename, return an equivalent filename in a
+<a name="642"/>   # standard case.  For case-sensitive file systems, this does
+<a name="643"/>   # nothing and returns self.
+<a name="644"/>   #
+<a name="645"/>   public static standard_case(s)
+<a name="646"/>      return FS.standard_case(s)
+<a name="647"/>   end
+<a name="648"/>
+<a name="649"/>   #
+<a name="650"/>   # A comparator function for comparing two filename strings, taking
+<a name="651"/>   # into account the case-sensitivity of the underlying file system.
+<a name="652"/>   #
+<a name="653"/>   public static standard_case_cmp(s1, s2)
+<a name="654"/>      return FS.standard_case_cmp(s1, s2)
+<a name="655"/>   end
+<a name="656"/>end
+<a name="657"/>
+<a name="658"/>#
+<a name="659"/># This class provides implementations of some of the methods in
+<a name="660"/># `Files` and `FilePath`.  It is not used directly by clients.
+<a name="661"/>#
+<a name="662"/>package abstract class FileSystem()
+<a name="663"/>   public abstract get_path_list(s)
+<a name="664"/>   public abstract filepath_str(fp)
+<a name="665"/>   public abstract filepath_is_absolute(fp)
+<a name="666"/>   public abstract filepath_normal(fp)
+<a name="667"/>   public abstract filepath_absolute(fp, other)
+<a name="668"/>   public abstract filepath_standard_case(fp)
+<a name="669"/>   public abstract filepath_is_unc(fp)
+<a name="670"/>   public abstract filepath_is_prefix(fp)
+<a name="671"/>   public abstract standard_case(s)
+<a name="672"/>   public abstract standard_case_cmp(s1, s2)
+<a name="673"/>   public abstract file_to_url(f)
+<a name="674"/>   public abstract url_to_file(u)
+<a name="675"/>   public abstract get_home()
+<a name="676"/>   public abstract get_temp()
+<a name="677"/>   public abstract is_hidden(s)
+<a name="678"/>   public abstract is_relative_dir(s)
+<a name="679"/>   public abstract get_roots()
+<a name="680"/>   public abstract split_paths(s)
+<a name="681"/>   public abstract get_program_name()
+<a name="682"/>   public abstract find_exe(f, n)
+<a name="683"/>end
+<a name="684"/>
+<a name="685"/>#
+<a name="686"/># This class holds a result from the `Files.list` method.
+<a name="687"/>#
+<a name="688"/>class ListEntry()
+<a name="689"/>   public const
+<a name="690"/>      name,
+<a name="691"/>      lstat,
+<a name="692"/>      stat
+<a name="693"/>
+<a name="694"/>   public new(name, lstat, stat)
+<a name="695"/>      self.name := name
+<a name="696"/>      self.lstat := lstat
+<a name="697"/>      self.stat := stat
+<a name="698"/>      return
+<a name="699"/>   end
+<a name="700"/>end
+<a name="701"/>
+<a name="702"/># Helper procedure to convert x to a `FilePath` (using its constructor),
+<a name="703"/># and signal a runerr if that is not possible.
+<a name="704"/>#
+<a name="705"/># :Parameters :
+<a name="706"/># :  `x` - something convertible to a `FilePath`.
+<a name="707"/>#
+<a name="708"/>procedure need_FilePath(x)
+<a name="709"/>   return if is(x, FilePath) then x else FilePath(x)
+<a name="710"/>end
+<a name="711"/>
+<a name="712"/>#
+<a name="713"/># This class manipulates file paths by treating them as a list of
+<a name="714"/># elements.
+<a name="715"/>#
+<a name="716"/># Instances of this class are immutable.
+<a name="717"/>#
+<a name="718"/>class FilePath(ObjectOutput)
+<a name="719"/>   package const l
+<a name="720"/>
+<a name="721"/>   #
+<a name="722"/>   # Return the number of elements in the path.
+<a name="723"/>   #
+<a name="724"/>   public size()
+<a name="725"/>      return *l
+<a name="726"/>   end
+<a name="727"/>
+<a name="728"/>   #
+<a name="729"/>   # Return the `i`th element in the path.
+<a name="730"/>   #
+<a name="731"/>   public get(i)
+<a name="732"/>      return .l[i]
+<a name="733"/>   end
+<a name="734"/>
+<a name="735"/>   #
+<a name="736"/>   # Generate the elements in the path.
+<a name="737"/>   #
+<a name="738"/>   public gen()
+<a name="739"/>      suspend .!l
+<a name="740"/>   end
+<a name="741"/>
+<a name="742"/>   #
+<a name="743"/>   # Generate the elements in the path in reverse order
+<a name="744"/>   #
+<a name="745"/>   public back()
+<a name="746"/>      suspend .default.back(l)
+<a name="747"/>   end
+<a name="748"/>
+<a name="749"/>   #
+<a name="750"/>   # Return a new path consisting of elements i:j of the current path
+<a name="751"/>   #
+<a name="752"/>   public slice(i, j)
+<a name="753"/>      /i := 1
+<a name="754"/>      /j := 0
+<a name="755"/>      return from_list(l[i:j])
+<a name="756"/>   end
+<a name="757"/>
+<a name="758"/>   #
+<a name="759"/>   # Returns the path formed by appending the elements of `other` to
+<a name="760"/>   # this path.  `other` must be something convertible to a `FilePath`.
+<a name="761"/>   #
+<a name="762"/>   public append(other)
+<a name="763"/>      return from_list(l ||| need_FilePath(other).l)
+<a name="764"/>   end
+<a name="765"/>
+<a name="766"/>   #
+<a name="767"/>   # Takes a variable arguments list, and returns the path formed by
+<a name="768"/>   # appending the elements of that list to this path.
+<a name="769"/>   #
+<a name="770"/>   public walk(a[])
+<a name="771"/>      return from_list(List{ !l | need_text(!a) })
+<a name="772"/>   end
+<a name="773"/>
+<a name="774"/>   #
+<a name="775"/>   # Return the parent path, ie a path with everything but the last
+<a name="776"/>   # element.  Fails if and only if the path has no elements.  Note
+<a name="777"/>   # that some results may not be as expected; for example :-
+<a name="778"/>   # ~
+<a name="779"/>   #    FilePath("/").parent()
+<a name="780"/>   # ~
+<a name="781"/>   # gives the empty path (with no elements).
+<a name="782"/>   #
+<a name="783"/>   public parent()
+<a name="784"/>      return from_list(l[1:-1])
+<a name="785"/>   end
+<a name="786"/>
+<a name="787"/>   protected override object_output(oo)
+<a name="788"/>      oo.object_string(self, str())
+<a name="789"/>   end
+<a name="790"/>
+<a name="791"/>   #
+<a name="792"/>   # Return the child path, ie a path with the same elements plus the
+<a name="793"/>   # element `s`.
+<a name="794"/>   #
+<a name="795"/>   public child(s)
+<a name="796"/>      return from_list(l ||| [need_text(s)])
+<a name="797"/>   end
+<a name="798"/>
+<a name="799"/>   #
+<a name="800"/>   # Return the sibling path, ie a path with the same elements, except the
+<a name="801"/>   # last one, which is replaced by `s`.  Fails if the path has no elements.
+<a name="802"/>   #
+<a name="803"/>   # Caution is required with this function, since some results may
+<a name="804"/>   # not make much sense, especially if this path is not canonical.
+<a name="805"/>   # For example :-
+<a name="806"/>   # ~
+<a name="807"/>   #    FilePath("/").sibling("x")        # Gives FilePath("x")
+<a name="808"/>   #    FilePath("/a/b/..").sibling("y")  # Gives FilePath("/a/b/y")
+<a name="809"/>   # ~
+<a name="810"/>   # An alternative may be to use `walk("..", s)`.
+<a name="811"/>   #
+<a name="812"/>   public sibling(s)
+<a name="813"/>      local t
+<a name="814"/>      t := copy(l)
+<a name="815"/>      (t[-1] := need_text(s)) | fail
+<a name="816"/>      return from_list(t)
+<a name="817"/>   end
+<a name="818"/>
+<a name="819"/>   #
+<a name="820"/>   # Return a path which represents the absolute path of this path.
+<a name="821"/>   # `other` is an optional `FilePath` being the directory with which
+<a name="822"/>   # to calculate the absolute path; by default it is the current
+<a name="823"/>   # working directory, or, if that is not evaluable, the first root
+<a name="824"/>   # directory.
+<a name="825"/>   #
+<a name="826"/>   public absolute(other)
+<a name="827"/>      return if is_absolute() then
+<a name="828"/>         self
+<a name="829"/>      else {
+<a name="830"/>         other := if /other then 
+<a name="831"/>            FilePath(Files.getcwd() | Files.get_roots())
+<a name="832"/>         else
+<a name="833"/>            need_FilePath(other).absolute()
+<a name="834"/>         Files.FS.filepath_absolute(self, other)
+<a name="835"/>      }
+<a name="836"/>   end
+<a name="837"/>
+<a name="838"/>   #
+<a name="839"/>   # Convert the path back into a string.  The result is always a string, never ucs.
+<a name="840"/>   #
+<a name="841"/>   public str()
+<a name="842"/>      return Files.FS.filepath_str(self)
+<a name="843"/>   end
+<a name="844"/>
+<a name="845"/>   #
+<a name="846"/>   # Convenient method to give ucs(str()); may fail if str() is not convertible.
+<a name="847"/>   #
+<a name="848"/>   public ucs()
+<a name="849"/>      return default.ucs(str())
+<a name="850"/>   end
+<a name="851"/>
+<a name="852"/>   #
+<a name="853"/>   # Convenient method to give Text.liberal_ucs(str()); will never fail.
+<a name="854"/>   #
+<a name="855"/>   public liberal_ucs()
+<a name="856"/>      return Text.liberal_ucs(str())
+<a name="857"/>   end
+<a name="858"/>
+<a name="859"/>   #
+<a name="860"/>   # Succeed iff this path represents an absolute path.
+<a name="861"/>   #
+<a name="862"/>   public is_absolute()
+<a name="863"/>      succeed Files.FS.filepath_is_absolute(self)
+<a name="864"/>   end
+<a name="865"/>
+<a name="866"/>   #
+<a name="867"/>   # Canonicalize a path, which means trying to turn it into a
+<a name="868"/>   # standard form.  This involves (at least) getting the absolute
+<a name="869"/>   # path and removing any redundant path elements.
+<a name="870"/>   #
+<a name="871"/>   public canonical()
+<a name="872"/>      return Files.FS.filepath_normal(absolute())
+<a name="873"/>   end
+<a name="874"/>
+<a name="875"/>   #
+<a name="876"/>   # Normalize a path, which means removing any redundant path
+<a name="877"/>   # elements.
+<a name="878"/>   #
+<a name="879"/>   public normal()
+<a name="880"/>      return Files.FS.filepath_normal(self)
+<a name="881"/>   end
+<a name="882"/>
+<a name="883"/>   #
+<a name="884"/>   # Return a path with the elements put into a standard case.  For
+<a name="885"/>   # case-sensitive file systems, this does nothing and returns self.
+<a name="886"/>   #
+<a name="887"/>   public standard_case()
+<a name="888"/>      return Files.FS.filepath_standard_case(self)
+<a name="889"/>   end
+<a name="890"/>
+<a name="891"/>   #
+<a name="892"/>   # Return another `FilePath` with the same elements, but as ucs
+<a name="893"/>   # strings.  Fails if any part cannot be converted to ucs.
+<a name="894"/>   #
+<a name="895"/>   public ucs_path()
+<a name="896"/>      local s, t
+<a name="897"/>      t := []
+<a name="898"/>      every s := !l do
+<a name="899"/>         put(t, default.ucs(s)) | fail
+<a name="900"/>      return from_list(t)
+<a name="901"/>   end
+<a name="902"/>
+<a name="903"/>   #
+<a name="904"/>   # Return another `FilePath` with the same elements, but as plain
+<a name="905"/>   # strings.  Always succeeds.
+<a name="906"/>   #
+<a name="907"/>   public str_path()
+<a name="908"/>      return from_list(List{ string(!l) })
+<a name="909"/>   end
+<a name="910"/>
+<a name="911"/>   #
+<a name="912"/>   # Convenient method to convert this path to a file URL (as a
+<a name="913"/>   # string), using `Files.file_to_url()`, applied to the absolute
+<a name="914"/>   # path converted to string.
+<a name="915"/>   #
+<a name="916"/>   public to_url()
+<a name="917"/>      return Files.file_to_url(absolute().str())
+<a name="918"/>   end
+<a name="919"/>
+<a name="920"/>   #
+<a name="921"/>   # Succeed if this instance represents a Windows UNC path, meaning
+<a name="922"/>   # that its first element is a "\\".  This method always fails on
+<a name="923"/>   # non-Windows systems.
+<a name="924"/>   #
+<a name="925"/>   public is_unc()
+<a name="926"/>      return Files.FS.filepath_is_unc(self)
+<a name="927"/>   end
+<a name="928"/>
+<a name="929"/>   #
+<a name="930"/>   # Succeed iff this path is an absolute directory, and one which is
+<a name="931"/>   # a necessary prefix for such a path.  On Unix, this is just the
+<a name="932"/>   # root directory, and on Windows it is either a drive root or the
+<a name="933"/>   # three (or fewer) top-level elements of a UNC path.
+<a name="934"/>   #
+<a name="935"/>   public is_prefix()
+<a name="936"/>      return Files.FS.filepath_is_prefix(self)
+<a name="937"/>   end
+<a name="938"/>
+<a name="939"/>   #
+<a name="940"/>   # Succeed iff two FilePaths represent the same path, based on their
+<a name="941"/>   # `str()` values.
+<a name="942"/>   #
+<a name="943"/>   public static equiv(x, y)
+<a name="944"/>      succeed x.str() == y.str()
+<a name="945"/>   end
+<a name="946"/>
+<a name="947"/>   #
+<a name="948"/>   # Create a new instance from a list of elements, without taking a
+<a name="949"/>   # copy.
+<a name="950"/>   #
+<a name="951"/>   package static from_list(l)
+<a name="952"/>      local i
+<a name="953"/>      i := Class.create_raw_instance()
+<a name="954"/>      i.l := l
+<a name="955"/>      return Class.complete_raw_instance(i)
+<a name="956"/>   end
+<a name="957"/>
+<a name="958"/>   # Create a new instance from `x`, which may be another `FilePath`,
+<a name="959"/>   # in which case an equivalent new instance is returned, a list of
+<a name="960"/>   # strings representing the elements of the new instance, or a
+<a name="961"/>   # string/ucs to parse.
+<a name="962"/>   #
+<a name="963"/>   public new(x)
+<a name="964"/>      l := if x := text(x) then
+<a name="965"/>         Files.FS.get_path_list(x)
+<a name="966"/>      else if is(x, FilePath) then
+<a name="967"/>         x.l
+<a name="968"/>      else if type(x) == "list" then
+<a name="969"/>         List{ need_text(!x) }
+<a name="970"/>      else
+<a name="971"/>         runerr("text, list or FilePath expected", x)
+<a name="972"/>      return
+<a name="973"/>   end
+<a name="974"/>end
+<a name="975"/>
+<a name="976"/>#
+<a name="977"/># This class represents file stat information.
+<a name="978"/>#
+<a name="979"/>final class Stat()
+<a name="980"/>   public const 
+<a name="981"/>      dev,
+<a name="982"/>      ino,
+<a name="983"/>      mode,
+<a name="984"/>      mode_str,
+<a name="985"/>      nlink,
+<a name="986"/>      uid,
+<a name="987"/>      gid,
+<a name="988"/>      rdev,
+<a name="989"/>      size,
+<a name="990"/>      blksize,
+<a name="991"/>      blocks,
+<a name="992"/>      atime,
+<a name="993"/>      mtime,
+<a name="994"/>      ctime,
+<a name="995"/>      atime_ns,
+<a name="996"/>      mtime_ns,
+<a name="997"/>      ctime_ns
+<a name="998"/>
+<a name="999"/>   package new(dev,
+<a name="1000"/>               ino,
+<a name="1001"/>               mode,
+<a name="1002"/>               mode_str,
+<a name="1003"/>               nlink,
+<a name="1004"/>               uid,
+<a name="1005"/>               gid,
+<a name="1006"/>               rdev,
+<a name="1007"/>               size,
+<a name="1008"/>               blksize,
+<a name="1009"/>               blocks,
+<a name="1010"/>               atime,
+<a name="1011"/>               mtime,
+<a name="1012"/>               ctime,
+<a name="1013"/>               atime_ns,
+<a name="1014"/>               mtime_ns,
+<a name="1015"/>               ctime_ns)
+<a name="1016"/>      self.dev := dev
+<a name="1017"/>      self.ino := ino
+<a name="1018"/>      self.mode := mode
+<a name="1019"/>      self.mode_str := mode_str
+<a name="1020"/>      self.nlink := nlink
+<a name="1021"/>      self.uid := uid
+<a name="1022"/>      self.gid := gid
+<a name="1023"/>      self.rdev := rdev
+<a name="1024"/>      self.size := size
+<a name="1025"/>      self.blksize := blksize
+<a name="1026"/>      self.blocks := blocks
+<a name="1027"/>      self.atime := atime
+<a name="1028"/>      self.mtime := mtime
+<a name="1029"/>      self.ctime := ctime
+<a name="1030"/>      self.atime_ns := atime_ns
+<a name="1031"/>      self.mtime_ns := mtime_ns
+<a name="1032"/>      self.ctime_ns := ctime_ns
+<a name="1033"/>      return
+<a name="1034"/>   end
+<a name="1035"/>end
+<a name="1036"/>
+<a name="1037"/>$if _UNIX
+<a name="1038"/>
+<a name="1039"/>package class UnixFileSystem(FileSystem)
+<a name="1040"/>   public override get_path_list(s)
+<a name="1041"/>      local l, t
+<a name="1042"/>      l := []
+<a name="1043"/>      s ? {
+<a name="1044"/>         put(l, ="/")
+<a name="1045"/>         every t := separate(tab(0), '/') do {
+<a name="1046"/>            if *t &gt; 0 then
+<a name="1047"/>               put(l, t)
+<a name="1048"/>         }
+<a name="1049"/>      }
+<a name="1050"/>      return l
+<a name="1051"/>   end
+<a name="1052"/>
+<a name="1053"/>   public override filepath_str(fp)
+<a name="1054"/>      local e, s
+<a name="1055"/>      s := ""
+<a name="1056"/>      every e := !fp.l do {
+<a name="1057"/>         if s[-1] ~== "/" then 
+<a name="1058"/>            s ||:= "/"
+<a name="1059"/>         s ||:= string(e)
+<a name="1060"/>      }
+<a name="1061"/>      return s
+<a name="1062"/>   end
+<a name="1063"/>
+<a name="1064"/>   public override filepath_is_absolute(fp)
+<a name="1065"/>      succeed fp.l[1] == "/"
+<a name="1066"/>   end
+<a name="1067"/>
+<a name="1068"/>   public override filepath_is_unc(fp)
+<a name="1069"/>   end
+<a name="1070"/>
+<a name="1071"/>   public override filepath_is_prefix(fp)
+<a name="1072"/>      succeed filepath_is_absolute(fp) &amp; *fp.l = 1
+<a name="1073"/>   end
+<a name="1074"/>
+<a name="1075"/>   public override filepath_normal(fp)
+<a name="1076"/>      local e, r
+<a name="1077"/>      r := []
+<a name="1078"/>      every e := !fp.l do {
+<a name="1079"/>         if e == "." then
+<a name="1080"/>            next
+<a name="1081"/>         else if e == ".." then {
+<a name="1082"/>            # /.. -&gt; /
+<a name="1083"/>            unless *r = 1 &amp; filepath_is_absolute(fp) then {
+<a name="1084"/>               if *r = 0 | (r[-1] == "..") then
+<a name="1085"/>                  put(r, e)
+<a name="1086"/>               else
+<a name="1087"/>                  pull(r)
+<a name="1088"/>            }
+<a name="1089"/>         } else
+<a name="1090"/>            put(r, e)
+<a name="1091"/>      }
+<a name="1092"/>      return FilePath.from_list(r)
+<a name="1093"/>   end
+<a name="1094"/>
+<a name="1095"/>   public override filepath_absolute(fp, other)
+<a name="1096"/>      return other.append(fp)
+<a name="1097"/>   end
+<a name="1098"/>
+<a name="1099"/>$if _DARWIN
+<a name="1100"/>   public override filepath_standard_case(fp)
+<a name="1101"/>      return FilePath.from_list(List{ Text.lower(!fp.l) })
+<a name="1102"/>   end
+<a name="1103"/>
+<a name="1104"/>   public override standard_case(s)
+<a name="1105"/>      return Text.lower(s)
+<a name="1106"/>   end
+<a name="1107"/>
+<a name="1108"/>   public override standard_case_cmp(s1, s2)
+<a name="1109"/>      return Text.caseless_compare(s1, s2)
+<a name="1110"/>   end
+<a name="1111"/>$else
+<a name="1112"/>   public override filepath_standard_case(fp)
+<a name="1113"/>      return fp
+<a name="1114"/>   end
+<a name="1115"/>
+<a name="1116"/>   public override standard_case(s)
+<a name="1117"/>      return s
+<a name="1118"/>   end
+<a name="1119"/>
+<a name="1120"/>   public override standard_case_cmp(s1, s2)
+<a name="1121"/>      return Internal.compare(s1, s2)
+<a name="1122"/>   end
+<a name="1123"/>$endif
+<a name="1124"/>
+<a name="1125"/>   public override get_home()
+<a name="1126"/>      return env_string("HOME") | System.getpw(System.getuid()).dir | get_temp()
+<a name="1127"/>   end
+<a name="1128"/>
+<a name="1129"/>   public override get_temp()
+<a name="1130"/>      return env_string("TEMP") | "/tmp"
+<a name="1131"/>   end
+<a name="1132"/>
+<a name="1133"/>   public override is_hidden(s)
+<a name="1134"/>      succeed any('.', s)
+<a name="1135"/>   end
+<a name="1136"/>
+<a name="1137"/>   public override is_relative_dir(s)
+<a name="1138"/>      succeed s == ("." | "..")
+<a name="1139"/>   end
+<a name="1140"/>
+<a name="1141"/>   public override get_roots()
+<a name="1142"/>      return "/"
+<a name="1143"/>   end
+<a name="1144"/>   
+<a name="1145"/>   public override split_paths(s)
+<a name="1146"/>      local t
+<a name="1147"/>      every t := separate(s, ':') do {
+<a name="1148"/>         if *t = 0 then
+<a name="1149"/>            t ||:= "."   # Keep type of t
+<a name="1150"/>         suspend t
+<a name="1151"/>      }
+<a name="1152"/>   end
+<a name="1153"/>
+<a name="1154"/>   public override get_program_name()
+<a name="1155"/>      return FilePath(&amp;progname).get(-1)
+<a name="1156"/>   end
+<a name="1157"/>
+<a name="1158"/>   public override file_to_url(f)
+<a name="1159"/>      return "file:" || URL.percent_encode(f, URL.PATH_CHAR)
+<a name="1160"/>   end
+<a name="1161"/>
+<a name="1162"/>   public override url_to_file(u)
+<a name="1163"/>      u.is_local_file() | return error("Can't convert a file: URL from another host")
+<a name="1164"/>      return u.get_decoded_path()
+<a name="1165"/>   end
+<a name="1166"/>
+<a name="1167"/>   public override find_exe(f, n)
+<a name="1168"/>      local p, s, path
+<a name="1169"/>
+<a name="1170"/>      /n := "PATH"
+<a name="1171"/>      p := FilePath(f)
+<a name="1172"/>
+<a name="1173"/>      # Anything with separators in, we just look up and ignore the
+<a name="1174"/>      # path.
+<a name="1175"/>      if p.is_absolute() | (p.size() &gt; 1) then {
+<a name="1176"/>         s := p.str()
+<a name="1177"/>         if Files.access(s, Access.X_OK) &amp; not Files.is_directory(s) then
+<a name="1178"/>            return s
+<a name="1179"/>         else
+<a name="1180"/>            fail
+<a name="1181"/>      }
+<a name="1182"/>
+<a name="1183"/>      # Search all the elements in the path
+<a name="1184"/>      path := env_string(n) | ""
+<a name="1185"/>      every s := FilePath(split_paths(path)).append(p).str() do {
+<a name="1186"/>         if Files.access(s, Access.X_OK) &amp; not Files.is_directory(s) then
+<a name="1187"/>            return s
+<a name="1188"/>      }
+<a name="1189"/>   end
+<a name="1190"/>end
+<a name="1191"/>
+<a name="1192"/>$elsif _MS_WIN32
+<a name="1193"/>
+<a name="1194"/>package class WindowsFileSystem(FileSystem)
+<a name="1195"/>   public override get_path_list(s)
+<a name="1196"/>      local l, t
+<a name="1197"/>      l := []
+<a name="1198"/>      s := map(s, "/", "\\")
+<a name="1199"/>      s ? {
+<a name="1200"/>         if &amp;subject[2:4] == ":\\" then       # X:\
+<a name="1201"/>            put(l, move(3))
+<a name="1202"/>         else if &amp;subject[2] == ":" then      # X:
+<a name="1203"/>            put(l, move(2))
+<a name="1204"/>         else if &amp;subject[1:3] == "\\\\" then # \\X
+<a name="1205"/>            put(l, move(2))
+<a name="1206"/>         else if &amp;subject[1] == "\\" then     # \X
+<a name="1207"/>            put(l, move(1))                
+<a name="1208"/>         every t := separate(tab(0), '\\') do {
+<a name="1209"/>            if *t &gt; 0 then
+<a name="1210"/>               put(l, t)
+<a name="1211"/>         }
+<a name="1212"/>      }
+<a name="1213"/>      return l
+<a name="1214"/>   end
+<a name="1215"/>
+<a name="1216"/>   public override filepath_str(fp)
+<a name="1217"/>      local e, s
+<a name="1218"/>      s := ""
+<a name="1219"/>      every e := !fp.l do {
+<a name="1220"/>         if *s &gt; 0 &amp; not any('\\:', s[-1]) then
+<a name="1221"/>            s ||:= "\\"
+<a name="1222"/>         s ||:= string(e)
+<a name="1223"/>      }
+<a name="1224"/>      return s
+<a name="1225"/>   end
+<a name="1226"/>
+<a name="1227"/>   public override filepath_is_absolute(fp)
+<a name="1228"/>      succeed fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
+<a name="1229"/>   end
+<a name="1230"/>
+<a name="1231"/>   public override filepath_is_unc(fp)
+<a name="1232"/>      succeed fp.l[1] == "\\\\"
+<a name="1233"/>   end
+<a name="1234"/>
+<a name="1235"/>   public override filepath_is_prefix(fp)
+<a name="1236"/>      succeed filepath_is_absolute(fp) &amp; (*fp.l = 1 | (filepath_is_unc(fp) &amp; *fp.l &lt;= 3))
+<a name="1237"/>   end
+<a name="1238"/>
+<a name="1239"/>   public override filepath_normal(fp)
+<a name="1240"/>      local e, r
+<a name="1241"/>      # Check for named pipe.  See
+<a name="1242"/>      #   https://docs.microsoft.com/en-gb/windows/win32/ipc/pipe-names
+<a name="1243"/>      if filepath_is_unc(fp) &amp; Text.lower(fp.l[3]) == "pipe" then
+<a name="1244"/>         return fp
+<a name="1245"/>      r := []
+<a name="1246"/>      every e := !fp.l do {
+<a name="1247"/>         if e == "." then
+<a name="1248"/>            next
+<a name="1249"/>         else if e == ".." then {
+<a name="1250"/>            # Avoid, eg, c:\.. -&gt; empty; c:\.. is in fact invalid.
+<a name="1251"/>            unless *r = 1 &amp; filepath_is_absolute(fp) then {
+<a name="1252"/>               if *r = 0 | (r[-1] == "..") then
+<a name="1253"/>                  put(r, e)
+<a name="1254"/>               else
+<a name="1255"/>                  pull(r)
+<a name="1256"/>            }
+<a name="1257"/>         } else
+<a name="1258"/>            put(r, e)
+<a name="1259"/>      }
+<a name="1260"/>      return FilePath.from_list(r)
+<a name="1261"/>   end
+<a name="1262"/>
+<a name="1263"/>   public override filepath_standard_case(fp)
+<a name="1264"/>      return FilePath.from_list(List{ Text.lower(!fp.l) })
+<a name="1265"/>   end
+<a name="1266"/>
+<a name="1267"/>   public override standard_case(s)
+<a name="1268"/>      return Text.lower(s)
+<a name="1269"/>   end
+<a name="1270"/>
+<a name="1271"/>   public override standard_case_cmp(s1, s2)
+<a name="1272"/>      return Text.caseless_compare(s1, s2)
+<a name="1273"/>   end
+<a name="1274"/>
+<a name="1275"/>   public override filepath_absolute(fp, other)
+<a name="1276"/>      local s
+<a name="1277"/>      if fp.l[1] == "\\" then {
+<a name="1278"/>         return if other.l[1] == "\\\\" &amp; *other.l &gt; 1 then
+<a name="1279"/>            FilePath.from_list(other.l[1:3] ||| fp.l[2:0])
+<a name="1280"/>         else
+<a name="1281"/>            FilePath.from_list([other.l[1]] ||| fp.l[2:0])
+<a name="1282"/>      }
+<a name="1283"/>      if fp.l[1][2:0] == ":" then {
+<a name="1284"/>         if s := getdcwd(fp.l[1][1]) then
+<a name="1285"/>            # Maintain the case of the original drive letter
+<a name="1286"/>            s[1] := fp.l[1][1]
+<a name="1287"/>         else
+<a name="1288"/>            s := fp.l[1] || "\\"
+<a name="1289"/>         return FilePath(s).append(FilePath.from_list(fp.l[2:0]))
+<a name="1290"/>      }
+<a name="1291"/>      return other.append(fp)
+<a name="1292"/>   end
+<a name="1293"/>
+<a name="1294"/>   private static native getdcwd(d)
+<a name="1295"/>
+<a name="1296"/>   public override get_home()
+<a name="1297"/>      return env_string("USERPROFILE") | get_temp()
+<a name="1298"/>   end
+<a name="1299"/>
+<a name="1300"/>   public override get_temp()
+<a name="1301"/>      # Conform with what the Windows function GetTempPath() does.
+<a name="1302"/>      return env_string("TMP" | "TEMP" | "USERPROFILE") | "C:\\WINDOWS\\TEMP"
+<a name="1303"/>   end
+<a name="1304"/>
+<a name="1305"/>   public override is_hidden(s)
+<a name="1306"/>   end
+<a name="1307"/>
+<a name="1308"/>   public override is_relative_dir(s)
+<a name="1309"/>      succeed s == ("." | "..")
+<a name="1310"/>   end
+<a name="1311"/>
+<a name="1312"/>   public override native get_roots()
+<a name="1313"/>
+<a name="1314"/>   public override split_paths(s)
+<a name="1315"/>      local t
+<a name="1316"/>      every t := separate(s, ';') do {
+<a name="1317"/>         if *t = 0 then
+<a name="1318"/>            t ||:= "."   # Keep type of t
+<a name="1319"/>         suspend t
+<a name="1320"/>      }
+<a name="1321"/>   end
+<a name="1322"/>
+<a name="1323"/>   public override get_program_name()
+<a name="1324"/>      local s
+<a name="1325"/>      s := FilePath(&amp;progname).get(-1)
+<a name="1326"/>      if Text.lower(s[-4:0]) == ".exe" then
+<a name="1327"/>         s[-4:0] := ""
+<a name="1328"/>      return s
+<a name="1329"/>   end
+<a name="1330"/>
+<a name="1331"/>   public override file_to_url(f)
+<a name="1332"/>      local h, p
+<a name="1333"/>      f := map(need_string(f), "\\", "/")
+<a name="1334"/>      # See
+<a name="1335"/>      #   https://blogs.msdn.microsoft.com/ie/2006/12/06/file-uris-in-windows/
+<a name="1336"/>      return f ? if ="//" then {
+<a name="1337"/>         h := tab(upto('/') | 0)
+<a name="1338"/>         p := tab(0)
+<a name="1339"/>         "file://" || URL.percent_encode(h, URL.HOST_CHAR) || URL.percent_encode(p, URL.PATH_CHAR)
+<a name="1340"/>      } else
+<a name="1341"/>         "file:/" || URL.percent_encode(f, URL.PATH_CHAR)
+<a name="1342"/>   end
+<a name="1343"/>
+<a name="1344"/>   public override url_to_file(u)
+<a name="1345"/>      local f
+<a name="1346"/>      f := u.get_decoded_path()
+<a name="1347"/>      return if f[3:5] == ":/" then
+<a name="1348"/>         map(f[2:0], "/", "\\")
+<a name="1349"/>      else
+<a name="1350"/>         "\\\\" || u.get_decoded_host() || map(f, "/", "\\")
+<a name="1351"/>   end
+<a name="1352"/>
+<a name="1353"/>   private executables(s)
+<a name="1354"/>      local x
+<a name="1355"/>      if Files.get_extension(s) then
+<a name="1356"/>         return s
+<a name="1357"/>      x := env_string("PATHEXT") | ".COM;.EXE;.BAT"
+<a name="1358"/>      suspend s || Files.split_paths(x)
+<a name="1359"/>   end
+<a name="1360"/>
+<a name="1361"/>   public override find_exe(f, n)
+<a name="1362"/>      local p, s, path
+<a name="1363"/>
+<a name="1364"/>      /n := "PATH"
+<a name="1365"/>      p := FilePath(f)
+<a name="1366"/>
+<a name="1367"/>      # Try the file as given.
+<a name="1368"/>      every s := executables(p.str()) do
+<a name="1369"/>         if Files.access(s, Access.X_OK) &amp; not Files.is_directory(s) then
+<a name="1370"/>            return s
+<a name="1371"/>
+<a name="1372"/>      # If it has separators in, do no more.
+<a name="1373"/>      if p.is_absolute() | (p.size() &gt; 1) then
+<a name="1374"/>         fail
+<a name="1375"/>
+<a name="1376"/>      # Search all the elements in the path
+<a name="1377"/>      path := env_string(n) | ""
+<a name="1378"/>      every s := executables(FilePath(split_paths(path)).append(p).str()) do {
+<a name="1379"/>         if Files.access(s, Access.X_OK) &amp; not Files.is_directory(s) then
+<a name="1380"/>            return s
+<a name="1381"/>      }
+<a name="1382"/>   end
+<a name="1383"/>end
+<a name="1384"/>
+<a name="1385"/>$endif
+</pre></body></html>

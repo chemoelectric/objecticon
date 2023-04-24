@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>polystuf.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#       File:     polystuf.icn
+<a name="4"/>#
+<a name="5"/>#       Subject:  Procedures for manipulating polynomials
+<a name="6"/>#
+<a name="7"/>#       Author:   Erik Eid
+<a name="8"/>#
+<a name="9"/>#       Date:     May 23, 1994
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#     These procedures are for creating and performing operations on single-
+<a name="18"/># variable polynomials (like ax^2 + bx + c).
+<a name="19"/>#
+<a name="20"/>#     poly (c1, e1, c2, e2, ...)  - creates a polynomial from the parameters
+<a name="21"/>#                                   given as coefficient-exponent pairs:
+<a name="22"/>#                                   c1x^e1 + c2x^e2 + ...
+<a name="23"/>#     is_zero (n)                 - determines if n = 0
+<a name="24"/>#     is_zero_poly (p)            - determines if a given polynomial is 0x^0
+<a name="25"/>#     poly_add (p1, p2)           - returns the sum of two polynomials
+<a name="26"/>#     poly_sub (p1, p2)           - returns the difference of p1 - p2
+<a name="27"/>#     poly_mul (p1, p2)           - returns the product of two polynomials
+<a name="28"/>#     poly_eval (p, x)            - finds the value of polynomial p when
+<a name="29"/>#                                   evaluated at the given x.
+<a name="30"/>#     term2string (c, e)          - converts one coefficient-exponent pair
+<a name="31"/>#                                   into a string.
+<a name="32"/>#     poly_string (p)             - returns the string representation of an
+<a name="33"/>#                                   entire polynomial.
+<a name="34"/>#
+<a name="35"/>############################################################################
+<a name="36"/>
+<a name="37"/>package ipl.polystuf
+<a name="38"/>
+<a name="39"/>procedure poly(terms[])
+<a name="40"/>local p, coef, expn
+<a name="41"/>  if *terms % 2 = 1 then fail              # Odd number of terms means the 
+<a name="42"/>                                           # list does not contain all
+<a name="43"/>                                           # coefficient-exponent pairs.
+<a name="44"/>  p := table()
+<a name="45"/>  while *terms &gt; 0 do {                    # A polynomial is stored as a
+<a name="46"/>    coef := get(terms)                     # table in which the keys are
+<a name="47"/>    expn := get(terms)                     # exponents and the elements are
+<a name="48"/>                                           # coefficients.
+<a name="49"/>    if numeric(coef) then if numeric(expn)
+<a name="50"/>      then p[real(expn)] := coef           # If any part of pair is invalid,
+<a name="51"/>                                           # discard it.  Otherwise, save
+<a name="52"/>                                           # term with a real key (necessary
+<a name="53"/>                                           # for consistency in sorting).
+<a name="54"/>  }
+<a name="55"/>  return p
+<a name="56"/>end
+<a name="57"/>
+<a name="58"/>procedure is_zero(n)
+<a name="59"/>  if ((n = integer(n)) &amp; (n = 0)) then return else fail
+<a name="60"/>end
+<a name="61"/>
+<a name="62"/>procedure is_zero_poly(p)
+<a name="63"/>  if ((*p = 1) &amp; is_zero(p[real(0)])) then return else fail
+<a name="64"/>end
+<a name="65"/>
+<a name="66"/>procedure poly_add(p1, p2)
+<a name="67"/>local p3, z
+<a name="68"/>  p3 := copy(p1)                           # Make a copy to start with.
+<a name="69"/>  if is_zero_poly (p3) then delete (p3, real(0))
+<a name="70"/>                                           # If first is zero, don't include
+<a name="71"/>                                           # the 0x^0 term.
+<a name="72"/>  every z := key(p2) do {                  # For every term in the second
+<a name="73"/>    if member (p3, z) then p3[z] +:= p2[z] # polynomial, if one of its
+<a name="74"/>      else p3[z] := p2[z]                  # exponent is in the third,
+<a name="75"/>                                           # increment its coefficient.
+<a name="76"/>                                           # Otherwise, create a new term.
+<a name="77"/>    if is_zero(p3[z]) then delete (p3, z)       
+<a name="78"/>                                           # Remove any term with coefficient
+<a name="79"/>                                           # zero, since the term equals 0.
+<a name="80"/>  }
+<a name="81"/>  if *p3 = 0 then p3[real(0)] := 0         # Empty poly table indicates a
+<a name="82"/>                                           # zero polynomial.
+<a name="83"/>  return p3
+<a name="84"/>end
+<a name="85"/>
+<a name="86"/>procedure poly_sub(p1, p2)
+<a name="87"/>local p3, z
+<a name="88"/>  p3 := copy(p1)                           # Similar process to poly_add.
+<a name="89"/>  if is_zero_poly (p3) then delete (p3, real(0))
+<a name="90"/>  every z := key(p2) do {
+<a name="91"/>    if member (p3, z) then p3[z] -:= p2[z]
+<a name="92"/>      else p3[z] := -p2[z]
+<a name="93"/>    if is_zero(p3[z]) then delete (p3, z)
+<a name="94"/>  }
+<a name="95"/>  if *p3 = 0 then p3[real(0)] := 0
+<a name="96"/>  return p3
+<a name="97"/>end
+<a name="98"/>
+<a name="99"/>procedure poly_mul(p1, p2)
+<a name="100"/>local p3, c, e, y, z
+<a name="101"/>  p3 := table()
+<a name="102"/>  every y := key(p1) do                    # Multiply every term in p1 by
+<a name="103"/>    every z := key(p2) do {                # every term in p2 and add those
+<a name="104"/>      c := p1[y] * p2[z]                   # results into p3 as in poly_add.
+<a name="105"/>      e := y + z
+<a name="106"/>      if member (p3, e) then p3[e] +:= c
+<a name="107"/>        else p3[e] := c
+<a name="108"/>      if is_zero(p3[e]) then delete (p3, e)
+<a name="109"/>    }
+<a name="110"/>  if *p3 = 0 then p3[real(0)] := 0
+<a name="111"/>  return p3
+<a name="112"/>end
+<a name="113"/>
+<a name="114"/>procedure poly_eval(p, x)
+<a name="115"/>local e, sum
+<a name="116"/>  sum := 0
+<a name="117"/>  every e := key(p) do                     # Increase sum by coef * x ^ exp.
+<a name="118"/>    sum +:= p[e] * (x ^ e)                 # Note: this procedure does not
+<a name="119"/>                                           # check in advance if x^e will
+<a name="120"/>                                           # result in an error.
+<a name="121"/>  return sum
+<a name="122"/>end
+<a name="123"/>
+<a name="124"/>procedure term2string(c, e)
+<a name="125"/>local t
+<a name="126"/>  t := ""
+<a name="127"/>  if e = integer(e) then e := integer(e)   # Removes unnecessary ".0"
+<a name="128"/>  if c ~= 1 then {
+<a name="129"/>    if c = -1 then t ||:= "-" else t ||:= c
+<a name="130"/>  }                                        # Use "-x" or "x," not "-1x" or 
+<a name="131"/>                                           # "1x."
+<a name="132"/>    else if e = 0 then t ||:= c            # Make sure to include a 
+<a name="133"/>                                           # constant term.
+<a name="134"/>  if e ~= 0 then {
+<a name="135"/>    t ||:= "x"
+<a name="136"/>    if e ~= 1 then t ||:= ("^" || e)       # Use "x," not "x^1."
+<a name="137"/>  }
+<a name="138"/>  return t
+<a name="139"/>end
+<a name="140"/>
+<a name="141"/>procedure poly_string(p)
+<a name="142"/>local pstr, plist, c, e
+<a name="143"/>  pstr := ""
+<a name="144"/>  plist := sort(p, 3)                      # Sort table into key-value pairs.
+<a name="145"/>  while *plist &gt; 0 do {
+<a name="146"/>    c := pull(plist)                       # Since sort is nondecreasing,
+<a name="147"/>    e := pull(plist)                       # take terms in reverse order.
+<a name="148"/>    pstr ||:= (term2string (c, e) || " + ")
+<a name="149"/>  }
+<a name="150"/>  pstr := pstr[1:-3]                       # Remove last " + " from end
+<a name="151"/>  return pstr
+<a name="152"/>end
+<a name="153"/>
+</pre></body></html>

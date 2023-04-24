@@ -1,0 +1,471 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TableGrid</title></head><body>
+<h1>TableGrid</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-tablelayout.icn.html#54" target="displayFrame">Source - tablelayout.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cell_height_sort">cell_height_sort()</a>
+<a href="#cell_width_sort">cell_width_sort()</a>
+<a href="#cells_in_range">cells_in_range()</a>
+<a href="#choose">choose()</a>
+<a href="#compute_actual_col_positions">compute_actual_col_positions()</a>
+<a href="#compute_actual_col_widths">compute_actual_col_widths()</a>
+<a href="#compute_actual_row_heights">compute_actual_row_heights()</a>
+<a href="#compute_actual_row_positions">compute_actual_row_positions()</a>
+<a href="#compute_in_row">compute_in_row()</a>
+<a href="#compute_pct_widths">compute_pct_widths()</a>
+<a href="#compute_preferred_col_widths">compute_preferred_col_widths()</a>
+<a href="#compute_preferred_row_heights">compute_preferred_row_heights()</a>
+<a href="#create_cell">create_cell()</a>
+<a href="#dimension">dimension()</a>
+<a href="#dist_equally">dist_equally()</a>
+<a href="#get_max_width">get_max_width()</a>
+<a href="#get_preferred_height">get_preferred_height()</a>
+<a href="#get_preferred_width">get_preferred_width()</a>
+<a href="#new">new()</a>
+<a href="#print_layout">print_layout()</a>
+<a href="#rows_in_range">rows_in_range()</a>
+<a href="#set_dii">set_dii()</a>
+<a href="#set_doi">set_doi()</a>
+<a href="#set_fix_col1">set_fix_col1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#a_col_w">a_col_w</a>
+<a href="#a_col_x">a_col_x</a>
+<a href="#a_row_h">a_row_h</a>
+<a href="#a_row_y">a_row_y</a>
+<a href="#add_row_h">add_row_h</a>
+<a href="#add_x">add_x</a>
+<a href="#add_y">add_y</a>
+<a href="#dii">dii</a>
+<a href="#doi">doi</a>
+<a href="#fix_col1_flag">fix_col1_flag</a>
+<a href="#gh">gh</a>
+<a href="#gw">gw</a>
+<a href="#id_seq">id_seq</a>
+<a href="#in_row">in_row</a>
+<a href="#info">info</a>
+<a href="#p_col_max_w">p_col_max_w</a>
+<a href="#p_col_w">p_col_w</a>
+<a href="#p_row_h">p_row_h</a>
+<a href="#pct_col_w">pct_col_w</a>
+<a href="#total_p_col_max_w">total_p_col_max_w</a>
+<a href="#total_p_col_w">total_p_col_w</a>
+<a href="#total_p_row_h">total_p_row_h</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="cell_height_sort"/>
+<h3>cell_height_sort(i)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#261" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="cell_width_sort"/>
+<h3>cell_width_sort(i)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#257" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="cells_in_range"/>
+<h3>cells_in_range(ry, rh)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#304" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="choose"/>
+<h3>choose(total_a_col_w)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#368" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_col_positions"/>
+<h3>compute_actual_col_positions()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#416" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_col_widths"/>
+<h3>compute_actual_col_widths(w1)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#392" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_row_heights"/>
+<h3>compute_actual_row_heights(h1)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#430" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_actual_row_positions"/>
+<h3>compute_actual_row_positions()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#443" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_in_row"/>
+<h3>compute_in_row()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#457" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_pct_widths"/>
+<h3>compute_pct_widths()</h3>
+private<p/>
+<dl>
+<dd>
+Adjust the p_col_max_w based on any column % widths; preferred
+widths are not affected.
+<p/><a href="ipl.browser-tablelayout.icn.html#174" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_preferred_col_widths"/>
+<h3>compute_preferred_col_widths()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#146" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_preferred_row_heights"/>
+<h3>compute_preferred_row_heights()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#242" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="create_cell"/>
+<h3>create_cell(t)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#81" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="dimension"/>
+<h3>dimension()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#109" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="dist_equally"/>
+<h3>dist_equally(start, span, extra, l, flag)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#128" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="get_max_width"/>
+<h3>get_max_width()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#360" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_height"/>
+<h3>get_preferred_height()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#364" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_width"/>
+<h3>get_preferred_width()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#356" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#482" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="print_layout"/>
+<h3>print_layout()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#265" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="rows_in_range"/>
+<h3>rows_in_range(ry, rh)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#318" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dii"/>
+<h3>set_dii(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the default inner inset
+<p/><a href="ipl.browser-tablelayout.icn.html#466" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="set_doi"/>
+<h3>set_doi(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the default outer inset
+<p/><a href="ipl.browser-tablelayout.icn.html#474" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fix_col1"/>
+<h3>set_fix_col1(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#351" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="a_col_w"/>
+<h3>a_col_w</h3>
+public<p/>
+<dl>
+<dd>
+Actual column widths/row heights after extra
+<p/><a href="ipl.browser-tablelayout.icn.html#62" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="a_col_x"/>
+<h3>a_col_x</h3>
+public<p/>
+<dl>
+<dd>
+Actual row x and y values.  Unlike GridLayout, these
+<p/><a href="ipl.browser-tablelayout.icn.html#64" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="a_row_h"/>
+<h3>a_row_h</h3>
+public<p/>
+<dl>
+<dd>
+space has been allocated
+<p/><a href="ipl.browser-tablelayout.icn.html#63" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="a_row_y"/>
+<h3>a_row_y</h3>
+public<p/>
+<dl>
+<dd>
+are zero (offset) based, rather than absolute positions, to avoid
+<p/><a href="ipl.browser-tablelayout.icn.html#65" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="add_row_h"/>
+<h3>add_row_h</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#74" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="add_x"/>
+<h3>add_x</h3>
+public<p/>
+<dl>
+<dd>
+For auto-computing cell position and sizes.
+<p/><a href="ipl.browser-tablelayout.icn.html#72" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="add_y"/>
+<h3>add_y</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#73" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="dii"/>
+<h3>dii</h3>
+public<p/>
+<dl>
+<dd>
+Default inner padding, ie not at edge of grid
+<p/><a href="ipl.browser-tablelayout.icn.html#69" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="doi"/>
+<h3>doi</h3>
+public<p/>
+<dl>
+<dd>
+Default outer padding
+<p/><a href="ipl.browser-tablelayout.icn.html#70" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="fix_col1_flag"/>
+<h3>fix_col1_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#78" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="gh"/>
+<h3>gh</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#57" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="gw"/>
+<h3>gw</h3>
+public<p/>
+<dl>
+<dd>
+Grid width, height in cells
+<p/><a href="ipl.browser-tablelayout.icn.html#56" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="id_seq"/>
+<h3>id_seq</h3>
+public<p/>
+<dl>
+<dd>
+For generating CellInfo string ids for debug
+<p/><a href="ipl.browser-tablelayout.icn.html#71" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="in_row"/>
+<h3>in_row</h3>
+public<p/>
+<dl>
+<dd>
+Lists of CellInfos in each row
+<p/><a href="ipl.browser-tablelayout.icn.html#79" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="info"/>
+<h3>info</h3>
+public<p/>
+<dl>
+<dd>
+List of CellInfo for each component being laid out
+<p/><a href="ipl.browser-tablelayout.icn.html#68" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="p_col_max_w"/>
+<h3>p_col_max_w</h3>
+public<p/>
+<dl>
+<dd>
+Max column widths
+<p/><a href="ipl.browser-tablelayout.icn.html#58" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="p_col_w"/>
+<h3>p_col_w</h3>
+public<p/>
+<dl>
+<dd>
+Preferred column widths/row heights
+<p/><a href="ipl.browser-tablelayout.icn.html#59" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="p_row_h"/>
+<h3>p_row_h</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#60" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="pct_col_w"/>
+<h3>pct_col_w</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#61" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="total_p_col_max_w"/>
+<h3>total_p_col_max_w</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#76" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="total_p_col_w"/>
+<h3>total_p_col_w</h3>
+public<p/>
+<dl>
+<dd>
+Useful sum totals of p_col_w etc
+<p/><a href="ipl.browser-tablelayout.icn.html#75" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+<a name="total_p_row_h"/>
+<h3>total_p_row_h</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-tablelayout.icn.html#77" target="displayFrame">Source - tablelayout.icn </a>
+</dd>
+</dl><hr>
+</body></html>

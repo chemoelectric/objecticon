@@ -1,0 +1,605 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>directorydialog.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   ipl.sort,
+<a name="5"/>   ipl.filegui,
+<a name="6"/>   io,
+<a name="7"/>   util,
+<a name="8"/>   lang
+<a name="9"/>
+<a name="10"/>package class DirEditList(EditList)
+<a name="11"/>   protected override open_popup(ev)
+<a name="12"/>      set_selection_only()
+<a name="13"/>      synch_set_selection_list(parent_dialog.get_favourites_directories())
+<a name="14"/>      EditList.open_popup(ev)
+<a name="15"/>   end
+<a name="16"/>
+<a name="17"/>   public override create_popup()
+<a name="18"/>      return ItemPaintList().
+<a name="19"/>         set_item_paint(StringDirItemPaint()).
+<a name="20"/>         set_item_border(EmptyBorder().
+<a name="21"/>                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+<a name="22"/>                            set_x_align(Align.L))
+<a name="23"/>   end
+<a name="24"/>
+<a name="25"/>   public override create_view()
+<a name="26"/>      return EditListField().
+<a name="27"/>         set_directories_only(&amp;yes)
+<a name="28"/>   end
+<a name="29"/>end
+<a name="30"/>
+<a name="31"/>package class FileTreeWithTooltip(ItemPaintTree)
+<a name="32"/>   public override get_tooltip(e)
+<a name="33"/>      local n, s
+<a name="34"/>      if n := contents[get_line_under_pointer(e)] then {
+<a name="35"/>         s := item_paint.get_size(view.cbwin, n.label)
+<a name="36"/>         if n.depth * col_w + s.w + item_border.get_total_width() &gt; view.w + get_area_x() then
+<a name="37"/>            return n.label.name
+<a name="38"/>      }
+<a name="39"/>   end
+<a name="40"/>end
+<a name="41"/>
+<a name="42"/>#
+<a name="43"/>#
+<a name="44"/># Directory dialog class.  This class provides a standard directory selection dialog.
+<a name="45"/>#
+<a name="46"/># Example :-
+<a name="47"/># ~
+<a name="48"/>#   d := DirectoryDialog()
+<a name="49"/>#   d.show_modal()
+<a name="50"/>#   write(d.get_result() | "cancelled")
+<a name="51"/># ~
+<a name="52"/>class DirectoryDialog(Dialog)
+<a name="53"/>   public
+<a name="54"/>      show_hidden_menu_item,
+<a name="55"/>      tools_menu,
+<a name="56"/>      tools_menu_button,
+<a name="57"/>      home_button, 
+<a name="58"/>      up_button, 
+<a name="59"/>      cancel_button, 
+<a name="60"/>      okay_button,
+<a name="61"/>      init_dirs,         # Directory choices
+<a name="62"/>      res,               # Resulting file path          
+<a name="63"/>      selected_path,     # FilePath of tree selection
+<a name="64"/>      message_label, 
+<a name="65"/>      tree,
+<a name="66"/>      dir,
+<a name="67"/>      existing_file_mode,
+<a name="68"/>      warned
+<a name="69"/>
+<a name="70"/>   public static const
+<a name="71"/>      WARN, IGNORE, REQUIRE, DISALLOW
+<a name="72"/>   
+<a name="73"/>   private static init()
+<a name="74"/>      WARN := "warn"
+<a name="75"/>      IGNORE := "ignore"
+<a name="76"/>      REQUIRE := "require"
+<a name="77"/>      DISALLOW := "disallow"
+<a name="78"/>   end
+<a name="79"/>
+<a name="80"/>   public set_existing_file_mode(s)
+<a name="81"/>      existing_file_mode := s
+<a name="82"/>      link
+<a name="83"/>   end
+<a name="84"/>
+<a name="85"/>   # Return a `ListEntryWithIcon` for the given file f.
+<a name="86"/>   #
+<a name="87"/>   public static get_entry(f)
+<a name="88"/>      local lst, st
+<a name="89"/>      lst := Files.lstat(f) | fail
+<a name="90"/>      st := if lst.mode_str[1] == "l" then
+<a name="91"/>         Files.stat(f) | fail
+<a name="92"/>      else
+<a name="93"/>         lst
+<a name="94"/>      return ListEntryWithIcon(f, lst, st)
+<a name="95"/>   end
+<a name="96"/>
+<a name="97"/>   public override component_setup()
+<a name="98"/>      local root_node, d, l
+<a name="99"/>      #
+<a name="100"/>      # Defaults and extra dirs.
+<a name="101"/>      #
+<a name="102"/>      /init_dirs := []
+<a name="103"/>      root_node := TreeNode()
+<a name="104"/>      every d := Files.get_roots() do
+<a name="105"/>         if l := get_entry(ucs(d)) then
+<a name="106"/>            root_node.add(TreeNode().
+<a name="107"/>                            set_label(l).
+<a name="108"/>                            set_always_expandable(&amp;yes))
+<a name="109"/>      tree.set_root_node(root_node)
+<a name="110"/>      res := &amp;null
+<a name="111"/>      dir.set_use_wheel(&amp;no)
+<a name="112"/>   end
+<a name="113"/>
+<a name="114"/>   public override init_dialog()
+<a name="115"/>      res := &amp;null
+<a name="116"/>      # Clear any cached directory list in the suggest field
+<a name="117"/>      dir.view.refresh()
+<a name="118"/>      dir.grab_focus()
+<a name="119"/>      win.set_min_size(win.get_width(), win.get_height())
+<a name="120"/>      # Do this here as we need the tree to be setup so that we
+<a name="121"/>      # can scroll to the selected dir.
+<a name="122"/>      goto_dir(gen_favourites_directories())
+<a name="123"/>   end
+<a name="124"/>
+<a name="125"/>   #
+<a name="126"/>   # Given a TreeNode n, load its children with the sub-directories.
+<a name="127"/>   #
+<a name="128"/>   public load_subtree(n)
+<a name="129"/>      local s, e, l, i
+<a name="130"/>      s := get_full_path(n).str()
+<a name="131"/>      if l := list_directory(s) then {
+<a name="132"/>         i := 1
+<a name="133"/>         every e := !l do {
+<a name="134"/>            while Text.consistent_compare(n.children[i].label.name, e.name) &lt; 0 do
+<a name="135"/>               n.remove_index(i)
+<a name="136"/>            if Text.consistent_compare(n.children[i].label.name, e.name) = 0 then
+<a name="137"/>               n.children[i].set_label(e)
+<a name="138"/>            else
+<a name="139"/>               n.add(TreeNode().set_label(e).set_always_expandable(&amp;yes), i)
+<a name="140"/>            i +:= 1
+<a name="141"/>         }
+<a name="142"/>         while n.remove_index(i)
+<a name="143"/>         link
+<a name="144"/>      } else {
+<a name="145"/>         n.clear_children()
+<a name="146"/>         fail
+<a name="147"/>      }
+<a name="148"/>   end
+<a name="149"/>
+<a name="150"/>   public list_directory(s)
+<a name="151"/>      local e, dir_list, l, t
+<a name="152"/>      l := Files.ucs_list(s, ListEntryWithIcon) | fail
+<a name="153"/>      dir_list := []
+<a name="154"/>      every e := !l do {
+<a name="155"/>         t := e.name
+<a name="156"/>         if e.stat.mode_str[1] == "d" &amp;
+<a name="157"/>            not(Files.is_relative_dir(t)) &amp;
+<a name="158"/>            (show_hidden_menu_item.is_checked() | 
+<a name="159"/>               not(Files.is_hidden(t))) then
+<a name="160"/>            put(dir_list, e)
+<a name="161"/>      }
+<a name="162"/>      return qsort(dir_list, Files.name_cmp)
+<a name="163"/>   end
+<a name="164"/>
+<a name="165"/>   #
+<a name="166"/>   # Given a TreeNode n, return a `FilePath` path it represents by traversing
+<a name="167"/>   # up the tree structure to the root and converting to a `FilePath`.  Each
+<a name="168"/>   # element in the path is a ucs string, so the ucs() method on the path will
+<a name="169"/>   # always succeed.
+<a name="170"/>   #
+<a name="171"/>   public get_full_path(n)
+<a name="172"/>      local l, t
+<a name="173"/>      l := []
+<a name="174"/>      repeat {
+<a name="175"/>         push(l, n.get_label().name)
+<a name="176"/>         n := n.get_parent()
+<a name="177"/>         if n === tree.get_root_node() then
+<a name="178"/>            break
+<a name="179"/>      }
+<a name="180"/>      # A UNC needs special handling, since the first tree node
+<a name="181"/>      # must match to a three-element FilePath.
+<a name="182"/>      return if (t := FilePath(l[1])).is_unc() then
+<a name="183"/>         t.append(l[2:0])
+<a name="184"/>      else
+<a name="185"/>         FilePath(l)
+<a name="186"/>   end
+<a name="187"/>
+<a name="188"/>   public on_tree_expansion()
+<a name="189"/>      local n
+<a name="190"/>      n := tree.get_last_expanded()
+<a name="191"/>      #
+<a name="192"/>      # Check whether it was an expansion or a contraction.  If
+<a name="193"/>      # an expansion, load the subtree and refresh the tree.
+<a name="194"/>      #
+<a name="195"/>      if n.is_expanded() then {
+<a name="196"/>         if load_subtree(n) then
+<a name="197"/>            check_existing()
+<a name="198"/>         else
+<a name="199"/>            msg(&amp;why)
+<a name="200"/>         tree.tree_structure_changed()
+<a name="201"/>      }
+<a name="202"/>   end
+<a name="203"/>
+<a name="204"/>   public on_tree_selection(ev)
+<a name="205"/>      # This may fail if the user clears the selection; in this case
+<a name="206"/>      # do nothing and leave selected_path as is.
+<a name="207"/>      selected_path := get_full_path(tree.object_first_selection()) | fail
+<a name="208"/>      dir.set_contents(selected_path.ucs())
+<a name="209"/>      dir.view.set_cwd(selected_path)
+<a name="210"/>      check_existing()
+<a name="211"/>   end
+<a name="212"/>
+<a name="213"/>   public on_dir_action(ev)
+<a name="214"/>      goto_dir(dir.get_contents())
+<a name="215"/>   end
+<a name="216"/>
+<a name="217"/>   public on_dir_content_changed(ev)
+<a name="218"/>      if dir.was_applied(ev) | dir.view.was_applied(ev) then
+<a name="219"/>         goto_dir(dir.get_contents())
+<a name="220"/>      else
+<a name="221"/>         check_existing()
+<a name="222"/>   end
+<a name="223"/>
+<a name="224"/>   #
+<a name="225"/>   # Get the result, (will fail if cancel was pressed).
+<a name="226"/>   #
+<a name="227"/>   public get_result()
+<a name="228"/>      return (\self.res).str()
+<a name="229"/>   end
+<a name="230"/>
+<a name="231"/>   #
+<a name="232"/>   # Get the result, as a `FilePath` (will fail if cancel was pressed).
+<a name="233"/>   #
+<a name="234"/>   public get_result_path()
+<a name="235"/>      return \self.res
+<a name="236"/>   end
+<a name="237"/>
+<a name="238"/>   #
+<a name="239"/>   # Set the initial directory.
+<a name="240"/>   #
+<a name="241"/>   public set_directory(s)
+<a name="242"/>      self.init_dirs := [ need_text(s) ]
+<a name="243"/>      link
+<a name="244"/>   end
+<a name="245"/>
+<a name="246"/>   #
+<a name="247"/>   # Set the initial directories as a list; the first is the one
+<a name="248"/>   # initially shown.
+<a name="249"/>   #
+<a name="250"/>   public set_directories(l)
+<a name="251"/>      self.init_dirs := need_list(l)
+<a name="252"/>      link
+<a name="253"/>   end
+<a name="254"/>
+<a name="255"/>   #
+<a name="256"/>   # Keep the directory last selected by this dialog.
+<a name="257"/>   #
+<a name="258"/>   public keep_directory()
+<a name="259"/>      return set_directory(get_dir_path().str())
+<a name="260"/>   end
+<a name="261"/>
+<a name="262"/>   public get_dir_path()
+<a name="263"/>      return FilePath(dir.get_contents()).absolute(selected_path).canonical()
+<a name="264"/>   end
+<a name="265"/>
+<a name="266"/>   public goto_dir(d)
+<a name="267"/>      local n, s, p, err, i, root, v, l
+<a name="268"/>      p := need_FilePath(d).absolute(selected_path).canonical().ucs_path() | fail
+<a name="269"/>      n := root := tree.get_root_node()
+<a name="270"/>
+<a name="271"/>      # For a UNC file, the first three elements make up the
+<a name="272"/>      # top-level tree node.
+<a name="273"/>      if p.is_unc() &amp;
+<a name="274"/>         v := p.slice(1, 4).ucs()
+<a name="275"/>      then {
+<a name="276"/>         unless n := find_child(root, v) then {
+<a name="277"/>            if l := get_entry(Files.standard_case(v)) then {
+<a name="278"/>               n := TreeNode().
+<a name="279"/>                  set_label(l).
+<a name="280"/>                  set_always_expandable(&amp;yes)
+<a name="281"/>               root.add(n)
+<a name="282"/>               if load_subtree(n) then
+<a name="283"/>                  n.set_expanded(&amp;yes)
+<a name="284"/>               else
+<a name="285"/>                  err := &amp;why
+<a name="286"/>            }
+<a name="287"/>            else
+<a name="288"/>               err := &amp;why
+<a name="289"/>         }
+<a name="290"/>         if /err then {
+<a name="291"/>            every s := p.slice(4).gen() do {
+<a name="292"/>               n := find_child(n, s) | break
+<a name="293"/>               unless load_subtree(n) then {
+<a name="294"/>                  err := &amp;why
+<a name="295"/>                  break
+<a name="296"/>               }
+<a name="297"/>               n.set_expanded(&amp;yes)
+<a name="298"/>            }
+<a name="299"/>         }
+<a name="300"/>      } else {
+<a name="301"/>         every s := p.gen() do {
+<a name="302"/>            n := find_child(n, s) | break
+<a name="303"/>            unless load_subtree(n) then {
+<a name="304"/>               err := &amp;why
+<a name="305"/>               break
+<a name="306"/>            }
+<a name="307"/>            n.set_expanded(&amp;yes)
+<a name="308"/>         }
+<a name="309"/>      }
+<a name="310"/>
+<a name="311"/>      # n may still be at the root if (on Win32) we input an invalid
+<a name="312"/>      # or non-existent path.
+<a name="313"/>      if n === root then
+<a name="314"/>         n := root.children[1]
+<a name="315"/>      else
+<a name="316"/>         tree.tree_structure_changed()
+<a name="317"/>
+<a name="318"/>      i := tree.find_line(n)
+<a name="319"/>      tree.
+<a name="320"/>         set_selections([i]).
+<a name="321"/>         set_cursor(i).
+<a name="322"/>         center_line(i)
+<a name="323"/>
+<a name="324"/>      selected_path := get_full_path(n)
+<a name="325"/>      dir.set_contents(p.ucs())
+<a name="326"/>      dir.view.set_cwd(selected_path)
+<a name="327"/>      if \err then
+<a name="328"/>         msg(err)
+<a name="329"/>      else if Files.is_directory(p.str()) then
+<a name="330"/>         check_existing()
+<a name="331"/>      else
+<a name="332"/>         msg("Not a directory: " || p.ucs())
+<a name="333"/>      link
+<a name="334"/>   end
+<a name="335"/>
+<a name="336"/>   public find_child(n, s)
+<a name="337"/>      local n1
+<a name="338"/>      s := Files.standard_case(s)
+<a name="339"/>      every n1 := !n.children do {
+<a name="340"/>         if n1.label.standard_case() == s then
+<a name="341"/>            return n1
+<a name="342"/>      }
+<a name="343"/>   end
+<a name="344"/>
+<a name="345"/>   public check_existing()
+<a name="346"/>      local f
+<a name="347"/>      msg()
+<a name="348"/>      warned := &amp;null
+<a name="349"/>      f := get_dir_path().str()
+<a name="350"/>      if existing_file_mode === (WARN | DISALLOW) &amp; Files.is_directory(f) &amp; Files.access(f) then {
+<a name="351"/>         warned := &amp;yes
+<a name="352"/>         msg("Existing directory")
+<a name="353"/>      }
+<a name="354"/>   end
+<a name="355"/>
+<a name="356"/>   public on_okay_button()
+<a name="357"/>      local f, fs
+<a name="358"/>      f := get_dir_path()
+<a name="359"/>      fs := f.str()
+<a name="360"/>      if Files.access(fs) &amp; not Files.is_directory(fs) then {
+<a name="361"/>         msg("Selected file is not a directory")
+<a name="362"/>         fail
+<a name="363"/>      }
+<a name="364"/>      case existing_file_mode of {
+<a name="365"/>         REQUIRE: {
+<a name="366"/>            unless Files.access(fs) then {
+<a name="367"/>               msg("Selected directory doesn't exist")
+<a name="368"/>               fail
+<a name="369"/>            }
+<a name="370"/>         }
+<a name="371"/>         DISALLOW: {
+<a name="372"/>            if Files.access(fs) then {
+<a name="373"/>               msg("Selected directory already exists")
+<a name="374"/>               fail
+<a name="375"/>            }
+<a name="376"/>         }
+<a name="377"/>      }
+<a name="378"/>      self.res := f
+<a name="379"/>      self.dispose()
+<a name="380"/>   end
+<a name="381"/>
+<a name="382"/>   public on_cancel_button()
+<a name="383"/>      self.dispose()
+<a name="384"/>   end
+<a name="385"/>
+<a name="386"/>   public set_show_hidden_files(s)
+<a name="387"/>      show_hidden_menu_item.set_is_checked(s)
+<a name="388"/>      on_show_hidden_menu_item()
+<a name="389"/>      link
+<a name="390"/>   end
+<a name="391"/>
+<a name="392"/>   public on_show_hidden_menu_item(ev)
+<a name="393"/>      dir.view.set_show_hidden_files(show_hidden_menu_item.get_status())
+<a name="394"/>      if is_live() then
+<a name="395"/>         on_refresh_menu_item(ev)
+<a name="396"/>   end
+<a name="397"/>
+<a name="398"/>   public on_up_button(ev)
+<a name="399"/>      if selected_path.is_prefix() then
+<a name="400"/>         msg("At root")
+<a name="401"/>      else
+<a name="402"/>         goto_dir(selected_path.parent())
+<a name="403"/>   end
+<a name="404"/>
+<a name="405"/>   public on_home_button(ev)
+<a name="406"/>      goto_dir(Files.get_home())
+<a name="407"/>   end
+<a name="408"/>
+<a name="409"/>   public refresh_node(n)
+<a name="410"/>      if n.is_expanded() then {
+<a name="411"/>         load_subtree(n)
+<a name="412"/>         every refresh_node(!n.children)
+<a name="413"/>      }
+<a name="414"/>   end
+<a name="415"/>
+<a name="416"/>   public on_refresh_menu_item(ev)
+<a name="417"/>      every refresh_node(!tree.get_root_node().children)
+<a name="418"/>      tree.tree_structure_changed()
+<a name="419"/>   end
+<a name="420"/>
+<a name="421"/>   public on_new_dir_menu_item(ev)
+<a name="422"/>      local d
+<a name="423"/>      d := NewDirectoryDialog(selected_path.ucs()).
+<a name="424"/>         show_modal(self)
+<a name="425"/>      goto_dir(\d.result)
+<a name="426"/>   end
+<a name="427"/>
+<a name="428"/>   public msg(s)
+<a name="429"/>      message_label.set(s)
+<a name="430"/>   end
+<a name="431"/>
+<a name="432"/>   public override new()
+<a name="433"/>      Dialog.new()
+<a name="434"/>      self.setup()
+<a name="435"/>      tools_menu.set_border_mid(NullBorder())
+<a name="436"/>      # Try themed icon buttons
+<a name="437"/>      theme_toolbar_button(home_button, "go-home")
+<a name="438"/>      theme_toolbar_button(up_button, "go-up", "gui.UP_SVG")
+<a name="439"/>      theme_toolbar_button(tools_menu_button, "applications-system")
+<a name="440"/>      tree.
+<a name="441"/>         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * Tree.COL_PAD).
+<a name="442"/>         set_item_paint(IconFilesItemPaint()).
+<a name="443"/>         set_item_border(EmptyBorder().
+<a name="444"/>                            set_insets(Tree.COL_PAD, Gui.TEXT_INSET, 0, 0).
+<a name="445"/>                            set_x_align(Align.L))
+<a name="446"/>         
+<a name="447"/>      existing_file_mode := IGNORE
+<a name="448"/>      return
+<a name="449"/>   end
+<a name="450"/>
+<a name="451"/>   public override end_dialog()
+<a name="452"/>   end
+<a name="453"/>
+<a name="454"/>   public get_favourites_directories()
+<a name="455"/>      return FileDialog.unique_ucs_list{ gen_favourites_directories() }
+<a name="456"/>   end
+<a name="457"/>
+<a name="458"/>   public gen_favourites_directories()
+<a name="459"/>      suspend FilePath(!init_dirs).canonical().ucs() | FavouriteDirectoriesDialog.gen_directories_plus()
+<a name="460"/>   end
+<a name="461"/>
+<a name="462"/>   public on_favourite_dirs_menu_item(ev)
+<a name="463"/>      FavouriteDirectoriesDialog().show_modal(self)
+<a name="464"/>   end
+<a name="465"/>
+<a name="466"/>   private setup()
+<a name="467"/>      local paint_2, layout_7, paint_45, favourite_dirs_menu_item, layout_4, paint_11, paint_42, refresh_menu_item, panel_4, paint_47, paint_1, paint_9, layout_6, paint_44, paint_10, paint, paint_3, panel_3, paint_46, paint_43, new_dir_menu_item, paint_35
+<a name="468"/>      self.set_label("Select directory")
+<a name="469"/>      self.set_resize(&amp;yes)
+<a name="470"/>      paint_45 := ImagePaint().
+<a name="471"/>         set_cache("gui.CONFIGURE_24")
+<a name="472"/>      paint_42 := TextPaint("New directory...")
+<a name="473"/>      new_dir_menu_item := TextMenuItem().
+<a name="474"/>         connect(on_new_dir_menu_item, Event.ACTION).
+<a name="475"/>         set_paint_mid(paint_42)
+<a name="476"/>      paint_43 := TextPaint("Favourite dirs...")
+<a name="477"/>      favourite_dirs_menu_item := TextMenuItem().
+<a name="478"/>         connect(on_favourite_dirs_menu_item, Event.ACTION).
+<a name="479"/>         set_paint_mid(paint_43)
+<a name="480"/>      paint_44 := TextPaint("Show hidden files")
+<a name="481"/>      show_hidden_menu_item := CheckBoxMenuItem().
+<a name="482"/>         connect(on_show_hidden_menu_item, Event.ACTION).
+<a name="483"/>         set_paint_mid(paint_44)
+<a name="484"/>      paint_46 := TextPaint("Refresh")
+<a name="485"/>      refresh_menu_item := TextMenuItem().
+<a name="486"/>         connect(on_refresh_menu_item, Event.ACTION).
+<a name="487"/>         set_paint_mid(paint_46)
+<a name="488"/>      tools_menu := Menu().
+<a name="489"/>         set_paint_mid(paint_45).
+<a name="490"/>         add(new_dir_menu_item).
+<a name="491"/>         add(favourite_dirs_menu_item).
+<a name="492"/>         add(show_hidden_menu_item).
+<a name="493"/>         add(refresh_menu_item)
+<a name="494"/>      paint_47 := TextPaint("Tools")
+<a name="495"/>      tools_menu_button := MenuButton().
+<a name="496"/>         clear_constraints().
+<a name="497"/>         set_tooltip(paint_47).
+<a name="498"/>         set_menu(tools_menu)
+<a name="499"/>      paint_1 := ImagePaint().
+<a name="500"/>         set_cache("gui.HOME_24")
+<a name="501"/>      paint := TextPaint("Home")
+<a name="502"/>      home_button := IconButton().
+<a name="503"/>         set_align(Align.L, Align.C).
+<a name="504"/>         clear_constraints().
+<a name="505"/>         set_tooltip(paint).
+<a name="506"/>         connect(self.on_home_button, Event.ACTION).
+<a name="507"/>         set_no_click_focus(&amp;yes).
+<a name="508"/>         set_toggles(&amp;no).
+<a name="509"/>         set_paint(paint_1)
+<a name="510"/>      paint_3 := ImagePaint().
+<a name="511"/>         set_cache("gui.UP_24")
+<a name="512"/>      paint_2 := TextPaint("Up")
+<a name="513"/>      up_button := IconButton().
+<a name="514"/>         set_align(Align.L, Align.C).
+<a name="515"/>         clear_constraints().
+<a name="516"/>         set_tooltip(paint_2).
+<a name="517"/>         connect(self.on_up_button, Event.ACTION).
+<a name="518"/>         set_no_click_focus(&amp;yes).
+<a name="519"/>         set_toggles(&amp;no).
+<a name="520"/>         set_paint(paint_3)
+<a name="521"/>      layout_6 := GridLayout().
+<a name="522"/>         set_doi(scale(0)).
+<a name="523"/>         set_dii(scale(2)).
+<a name="524"/>         set_extra("cells")
+<a name="525"/>      panel_4 := Panel().
+<a name="526"/>         clear_constraints().
+<a name="527"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="528"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="529"/>         set_layout(layout_6).
+<a name="530"/>         add(tools_menu_button).
+<a name="531"/>         add(home_button).
+<a name="532"/>         add(up_button)
+<a name="533"/>      self.add(panel_4)
+<a name="534"/>      tree := FileTreeWithTooltip().
+<a name="535"/>         set_size(scale(520), scale(360)).
+<a name="536"/>         clear_constraints().
+<a name="537"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="538"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="539"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="540"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="541"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="542"/>         connect(self.on_tree_expansion, Event.TREE_NODE_EXPANSION).
+<a name="543"/>         connect(self.on_tree_selection, Event.SELECTION_CHANGED).
+<a name="544"/>         set_select_mode(Select.ONE).
+<a name="545"/>         set_show_root(&amp;no)
+<a name="546"/>      self.add(tree)
+<a name="547"/>      paint_35 := TextPaint("Directory")
+<a name="548"/>      dir := DirEditList().
+<a name="549"/>         set_size(scale(150)).
+<a name="550"/>         set_align(Align.L, Align.B).
+<a name="551"/>         clear_constraints().
+<a name="552"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="553"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="554"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="555"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="556"/>         set_tooltip(paint_35).
+<a name="557"/>         connect(self.on_dir_action, Event.ACTION).
+<a name="558"/>         connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
+<a name="559"/>         set_selection_list([""])
+<a name="560"/>      self.add(dir)
+<a name="561"/>      paint_9 := TextPaint("Okay")
+<a name="562"/>      okay_button := TextButton().
+<a name="563"/>         set_align(Align.L, Align.B).
+<a name="564"/>         clear_constraints().
+<a name="565"/>         connect(self.on_okay_button, Event.ACTION).
+<a name="566"/>         set_toggles(&amp;no).
+<a name="567"/>         set_paint(paint_9)
+<a name="568"/>      paint_10 := TextPaint("Cancel")
+<a name="569"/>      cancel_button := TextButton().
+<a name="570"/>         set_align(Align.L, Align.B).
+<a name="571"/>         clear_constraints().
+<a name="572"/>         connect(self.on_cancel_button, Event.ACTION).
+<a name="573"/>         set_toggles(&amp;no).
+<a name="574"/>         set_paint(paint_10)
+<a name="575"/>      paint_11 := TextPaint("")
+<a name="576"/>      message_label := MessageLabel().
+<a name="577"/>         set_size(scale(130)).
+<a name="578"/>         set_align(Align.L, Align.B).
+<a name="579"/>         clear_constraints().
+<a name="580"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="581"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="582"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="583"/>         set_paint(paint_11)
+<a name="584"/>      layout_4 := GridLayout().
+<a name="585"/>         set_doi(scale(0)).
+<a name="586"/>         set_extra("cells")
+<a name="587"/>      panel_3 := Panel().
+<a name="588"/>         clear_constraints().
+<a name="589"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="590"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="591"/>         set_layout(layout_4).
+<a name="592"/>         add(okay_button).
+<a name="593"/>         add(cancel_button).
+<a name="594"/>         add(message_label)
+<a name="595"/>      self.add(panel_3)
+<a name="596"/>      layout_7 := GridLayout().
+<a name="597"/>         set_extra("cells")
+<a name="598"/>      self.set_layout(layout_7)
+<a name="599"/>   end
+<a name="600"/>end
+<a name="601"/>
+<a name="602"/>### Ivib-v2 layout: layouts/$.layout
+</pre></body></html>

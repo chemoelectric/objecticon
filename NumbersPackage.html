@@ -37,10 +37,10 @@
 <h1 id="introduction">Introduction</h1>
 <p>The <code>numbers</code> package contains some classes and procedures for doing high-precision decimal arithmetic. Classes are provided for both decimal and rational numbers, as well as a simple complex number class.</p>
 <h1 id="dec-and-rat">Dec and Rat</h1>
-<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Dec.html"><code>numbers.Dec</code></a> represents an arbitrary decimal number. Internally it stores a number as an integer multiplied by an exponent, so that the number represented is :-</p>
+<p>The class <a href="libref/index.html?numbers.Dec.html"><code>numbers.Dec</code></a> represents an arbitrary decimal number. Internally it stores a number as an integer multiplied by an exponent, so that the number represented is :-</p>
 <pre><code>   i * 10^e</code></pre>
 <p>The integer is always “normalized”, so that its least significant digit is never zero (unless the number itself is zero). So for example, <code>2000</code> is stored as <code>2 * 10^3</code>, not <code>20 * 10^2</code> or <code>2000 * 10^0</code> or anything else. This means that two instances representing the same number will always have the same internal representation.</p>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Rat.html"><code>numbers.Rat</code></a> class represents a rational number. Like <code>Dec</code>, numbers are stored in a normalized form; in this case the fraction is reduced to its lowest terms, so that <code>25/10</code> say is stored as <code>5/2</code>.</p>
+<p>The <a href="libref/index.html?numbers.Rat.html"><code>numbers.Rat</code></a> class represents a rational number. Like <code>Dec</code>, numbers are stored in a normalized form; in this case the fraction is reduced to its lowest terms, so that <code>25/10</code> say is stored as <code>5/2</code>.</p>
 <p><code>Rat</code> and <code>Dec</code> both have helpful constructors which make constructing instances convenient. <code>Dec</code> accepts two integers representing integer and exponent :-</p>
 <pre><code>  Dec(123, -1)      # 12.3</code></pre>
 <p><code>Dec</code> also accepts various single-parameter cases :-</p>
@@ -55,7 +55,7 @@
   Dec(&quot;nonsense&quot;)   # Fails
   Dec([])           # Runtime error</code></pre>
 <p>Two of the above require further explanation. Firstly, the conversion of the real number 123.456. This will in fact first be converted to a string “123.456” using the standard icon <code>string()</code> function. Then that string is parsed into a <code>Dec</code> instance. This avoids any unpleasant problems concerning inaccurate binary representation of fractions. However, it does mean that only ten significant figures of the real number are converted (this being the precision used by the <code>string()</code> function).</p>
-<p>Secondly, note that the constructor fails in the case of <code>Dec("1/3")</code>. This is because of course <code>1/3</code> cannot be represented as a finite decimal. (The <code>Rat</code> class does in fact provides a method, <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Rat.html%23decimal"><code>numbers.Rat.decimal()</code></a>, to convert to <code>Dec</code> with a desired rounding).</p>
+<p>Secondly, note that the constructor fails in the case of <code>Dec("1/3")</code>. This is because of course <code>1/3</code> cannot be represented as a finite decimal. (The <code>Rat</code> class does in fact provides a method, <a href="libref/index.html?numbers.Rat.html%23decimal"><code>numbers.Rat.decimal()</code></a>, to convert to <code>Dec</code> with a desired rounding).</p>
 <p>The <code>Rat</code> constructor is also flexible. It also has a basic two-parameter form :-</p>
 <pre><code>  Rat(60,1024)      # 60/1024, normalized to 15/256</code></pre>
 <p>and a flexible one-parameter form :-</p>
@@ -75,7 +75,7 @@
   r.decimal(12)    # Returns Dec(0.353349346144), being r
                    # rounded to a precision of 12.</code></pre>
 <h1 id="complex-numbers">Complex numbers</h1>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Cpx.html"><code>numbers.Cpx</code></a> class represents a complex number. Its constructor takes two parameters, each of which should be convertible to either <code>Rat</code> or <code>Dec</code>. For example :-</p>
+<p>The <a href="libref/index.html?numbers.Cpx.html"><code>numbers.Cpx</code></a> class represents a complex number. Its constructor takes two parameters, each of which should be convertible to either <code>Rat</code> or <code>Dec</code>. For example :-</p>
 <pre><code>  Cpx(1, 2)        # 1 + 2i.  (Both r and i are Dec)
   Cpx(&quot;.1&quot;, &quot;2/3&quot;) # 0.1 + (2/3)i. (r is a Dec, i a Rat)
   Cpx(Rat(1,3), Rat(2, 3))  #  (1/3) + (2/3)i; both Rat</code></pre>
@@ -105,7 +105,7 @@
   d.div(37, 5)    # 30.027 - five digits.
   d.div(37, 6)    # 30.027 - also five digits.</code></pre>
 <p>What happened with the last one was that the integer and exponent of 300270 and -4 respectively were normalized to 30027 and -3.</p>
-<p>The three other binary arithmetic methods of <code>Dec</code> also take a rounding parameter. These are equivalent to applying the <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Dec.html%23round">round</a> method to the result, so</p>
+<p>The three other binary arithmetic methods of <code>Dec</code> also take a rounding parameter. These are equivalent to applying the <a href="libref/index.html?numbers.Dec.html%23round">round</a> method to the result, so</p>
 <pre><code>  d := Dec(123.4)
   d.add(1.234, 4)        # 124.6
   d.add(1.234).round(4)  # ...the same</code></pre>
@@ -119,7 +119,7 @@
   d := d.add(1, &quot;10 up&quot;)          # Now Dec(1.234500001e+60000)</code></pre>
 <p>The <code>mul</code> method also takes an optional rounding parameter, but this is just for consistency, and has no performance advantage over calling <code>round</code> separately.</p>
 <h1 id="rounding">Rounding</h1>
-<p><code>Dec</code> provides several options for controlling how numbers are rounded. These are encapsulated in the <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Round.html"><code>numbers.Round</code></a> class. Instances of this class contain three things :-</p>
+<p><code>Dec</code> provides several options for controlling how numbers are rounded. These are encapsulated in the <a href="libref/index.html?numbers.Round.html"><code>numbers.Round</code></a> class. Instances of this class contain three things :-</p>
 <ul>
 <li>A flag indicating whether to round to a particular precision or the number of decimal digits after the decimal point,</li>
 <li>The number of digits, and</li>
@@ -173,7 +173,7 @@
   Dec(123.499).round(&quot;4 t&quot;)    # 123.4, truncate (mode DOWN) at precision 4.
   Dec(123.987).round(&quot;0dp t&quot;)  # 123, truncate at 0 decimal places (ie, chop off fraction).</code></pre>
 <h1 id="string-formatting">String formatting</h1>
-<p>Each of the three classes has a <code>str</code> method for formatting. These takes options similar to the <a href="http://objecticon.sourceforge.net/libref/index.html?util.Format.html%23numeric_to_string"><code>util.Format.numeric_to_string()</code></a> method. For example :-</p>
+<p>Each of the three classes has a <code>str</code> method for formatting. These takes options similar to the <a href="libref/index.html?util.Format.html%23numeric_to_string"><code>util.Format.numeric_to_string()</code></a> method. For example :-</p>
 <pre><code>  d := Dec(&quot;1234.5678&quot;)
   d.str()             # &quot;1234.5678&quot;
   d.str(&#39;e&#39;)          # &quot;1.2345678e+3&quot;
@@ -226,7 +226,7 @@
    c.mul(c)          # A `Cpx`, -1 + 0i
    mul(c, c)         # A `Dec`, -1</code></pre>
 <h1 id="bigmath">BigMath</h1>
-<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.numbers.BigMath.html"><code>ipl.numbers.BigMath</code></a> provides static methods to evaluate common mathematical functions using <code>Dec</code> numbers. For example,</p>
+<p>The class <a href="libref/index.html?ipl.numbers.BigMath.html"><code>ipl.numbers.BigMath</code></a> provides static methods to evaluate common mathematical functions using <code>Dec</code> numbers. For example,</p>
 <pre><code>  BigMath.sin(1.25, 25)   # sin to 25 digits of precision - Dec(0.9489846193555862143484908)
   BigMath.pi(40)          # pi to 40 digits - Dec(3.141592653589793238462643383279502884197)
   BigMath.root(&quot;1.237747e670&quot;, 100, 60)   # 100th root of a very big number.</code></pre>

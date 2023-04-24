@@ -1,0 +1,1970 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>editabletextlist.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: editabletextlist.icn 8838 2021-01-16 19:13:20Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import 
+<a name="12"/>   undo, 
+<a name="13"/>   lang, 
+<a name="14"/>   util, 
+<a name="15"/>   ipl.lists,
+<a name="16"/>   ipl.strings,
+<a name="17"/>   ipl.functional,
+<a name="18"/>   graphics
+<a name="19"/>
+<a name="20"/>#
+<a name="21"/># A scrollable editable text area.  
+<a name="22"/># An Event.CONTENT_CHANGED is generated whenever the contents
+<a name="23"/># are changed by the user, a Event.CURSOR_MOVED when the cursor moves,
+<a name="24"/># and a Event.SELECTION_CHANGED whenver the selection changes.
+<a name="25"/>#
+<a name="26"/>class EditableTextList(LineBasedScrollArea)
+<a name="27"/>   public 
+<a name="28"/>      contents,                                     
+<a name="29"/>      is_editable_flag,        # Are we editable?
+<a name="30"/>      menu_on_rpress_flag,     # Show context menu on mouse right press event?
+<a name="31"/>      move_on_rpress_flag,     # Move on mouse right press event?
+<a name="32"/>      constrain_cursor_on_scroll_flag,
+<a name="33"/>      need_constrain_line,     # Indicate to end_handle whether to constrain_line()
+<a name="34"/>                               # 0=if cursor moved; 1=never; 2=always.
+<a name="35"/>      cursor_x,                #                
+<a name="36"/>      cursor_y,                #                
+<a name="37"/>      mark_x,                  #
+<a name="38"/>      mark_y,                  #
+<a name="39"/>      direction,               #
+<a name="40"/>      long_line,               #
+<a name="41"/>      undo_manager,
+<a name="42"/>      primary,
+<a name="43"/>      old_view_list_size,
+<a name="44"/>      old_mw,
+<a name="45"/>      old_cursor_x,
+<a name="46"/>      old_cursor_y,
+<a name="47"/>      old_mark_x,
+<a name="48"/>      old_mark_y,
+<a name="49"/>      old_region,
+<a name="50"/>      no_drag,                 # Don't allow drag to set the cursor
+<a name="51"/>      view_list,
+<a name="52"/>      view_list_split_width,
+<a name="53"/>      tab_width,
+<a name="54"/>      split_words_flag,
+<a name="55"/>      line_splitter,
+<a name="56"/>      last_split,
+<a name="57"/>      changed,
+<a name="58"/>      primary_selection_owner,
+<a name="59"/>      scroll_ticker,
+<a name="60"/>      scroll_ticker_interval,
+<a name="61"/>      cursor_ticker,
+<a name="62"/>      cursor_on,
+<a name="63"/>      tx,
+<a name="64"/>      tw
+<a name="65"/>
+<a name="66"/>   public get_split(sw)
+<a name="67"/>      local s, i, pos, j, p, l, ll, v
+<a name="68"/>
+<a name="69"/>      if \last_split &amp;
+<a name="70"/>         not(is(line_splitter, WidthLineSplitter) &amp; last_split.width ~=== sw) then
+<a name="71"/>         return last_split
+<a name="72"/>
+<a name="73"/>      l := []
+<a name="74"/>      every i := 1 to *self.contents do {
+<a name="75"/>         pos := 1
+<a name="76"/>         s := self.contents[i]
+<a name="77"/>         every j := line_splitter.split(s, sw) do {
+<a name="78"/>            p := s[pos:j]
+<a name="79"/>            put(l, ViewLine(i, p, pos, j - 1, 
+<a name="80"/>                            text_width_ex(view.cbwin, p,,, self.tab_width)))
+<a name="81"/>            pos := j
+<a name="82"/>         }
+<a name="83"/>         l[-1].last +:= 1
+<a name="84"/>      }
+<a name="85"/>      ll := l[1] | &amp;null
+<a name="86"/>      every v := !l do {
+<a name="87"/>         if v.tw &gt; ll.tw then
+<a name="88"/>            ll := v
+<a name="89"/>      }
+<a name="90"/>      return last_split := TextSplit(sw, l, ll)
+<a name="91"/>  end
+<a name="92"/>
+<a name="93"/>   public override get_default_subject_height(dw)
+<a name="94"/>      local spl
+<a name="95"/>      spl := get_split(dw  - 2 * Gui.TEXT_INSET)
+<a name="96"/>      return get_line_height() * *spl.lines
+<a name="97"/>   end
+<a name="98"/>
+<a name="99"/>   public override get_default_subject_width()
+<a name="100"/>      local spl
+<a name="101"/>      spl := get_split()
+<a name="102"/>      return 2 * Gui.TEXT_INSET + ((\spl.long_line).tw | 0)
+<a name="103"/>   end
+<a name="104"/>
+<a name="105"/>   public override calculate_line_count()
+<a name="106"/>      if /view_list then
+<a name="107"/>         create_view_list()
+<a name="108"/>      return *self.view_list
+<a name="109"/>   end
+<a name="110"/>
+<a name="111"/>   public get_contents()
+<a name="112"/>      return self.contents
+<a name="113"/>   end
+<a name="114"/>
+<a name="115"/>   #
+<a name="116"/>   # Set the undo manager used by this instance.
+<a name="117"/>   #
+<a name="118"/>   public set_undo_manager(u)
+<a name="119"/>      undo_manager := u
+<a name="120"/>      link
+<a name="121"/>   end
+<a name="122"/>
+<a name="123"/>   public override initially()
+<a name="124"/>      LineBasedScrollArea.initially()
+<a name="125"/>      if has_focus() then
+<a name="126"/>         cursor_ticker.start()
+<a name="127"/>   end
+<a name="128"/>   
+<a name="129"/>   public override finally()
+<a name="130"/>      scroll_ticker.stop()
+<a name="131"/>      cursor_ticker.stop()
+<a name="132"/>      LineBasedScrollArea.finally()
+<a name="133"/>      # In case the component changes the contents and is then re-inited.
+<a name="134"/>      clear_split_list()
+<a name="135"/>   end
+<a name="136"/>
+<a name="137"/>   #
+<a name="138"/>   # Useful method to get the contents as a string, with each line
+<a name="139"/>   # separated by the end-of-line character.
+<a name="140"/>   #
+<a name="141"/>   public get_contents_str()
+<a name="142"/>      return cat_lines(self.contents)
+<a name="143"/>   end
+<a name="144"/>
+<a name="145"/>   #
+<a name="146"/>   # Useful method to set the contents from a string in which each line
+<a name="147"/>   # is separated by the end-of-line character.
+<a name="148"/>   #
+<a name="149"/>   public set_contents_str(s)
+<a name="150"/>      set_contents(break_lines(s))
+<a name="151"/>      link
+<a name="152"/>   end
+<a name="153"/>
+<a name="154"/>   #
+<a name="155"/>   # Set the contents of the component.
+<a name="156"/>   #
+<a name="157"/>   # :Parameters :
+<a name="158"/>   # :  `x` - the contents, as a list of strings
+<a name="159"/>   #
+<a name="160"/>   public set_contents(x)
+<a name="161"/>      self.contents := need_list(x)
+<a name="162"/>      contents_changed()
+<a name="163"/>      link
+<a name="164"/>   end
+<a name="165"/>
+<a name="166"/>   #
+<a name="167"/>   # Call this method if the contents list, previously
+<a name="168"/>   # set with `set_contents()`, has changed.
+<a name="169"/>   #
+<a name="170"/>   public contents_changed()
+<a name="171"/>      local t, a
+<a name="172"/>
+<a name="173"/>      if *self.contents = 0 then
+<a name="174"/>         #
+<a name="175"/>         # Must have somewhere for the cursor to go.
+<a name="176"/>         #
+<a name="177"/>         self.contents := [""]
+<a name="178"/>
+<a name="179"/>      #
+<a name="180"/>      # Ensure elements all of the same (text) type
+<a name="181"/>      #
+<a name="182"/>      t := type(text(self.contents[1]))
+<a name="183"/>      if type(a := !self.contents) ~=== t then
+<a name="184"/>         runerr("Contents of EditableTextList must be all string or all ucs", a)
+<a name="185"/>
+<a name="186"/>      if is_live() then {
+<a name="187"/>         clear_split_list()
+<a name="188"/>         clear_mark()
+<a name="189"/>         ensure_valid_cursor()
+<a name="190"/>         compute_and_invalidate()
+<a name="191"/>         constrain_line()
+<a name="192"/>         undo_manager.clear()
+<a name="193"/>      }
+<a name="194"/>      link
+<a name="195"/>   end
+<a name="196"/>   
+<a name="197"/>   public ensure_valid_cursor()
+<a name="198"/>      self.cursor_y &gt;:= *self.contents
+<a name="199"/>      self.cursor_x &gt;:= *self.contents[self.cursor_y] + 1
+<a name="200"/>   end
+<a name="201"/>
+<a name="202"/>   #
+<a name="203"/>   # Convenient function to move the cursor to the given x, y position as though
+<a name="204"/>   # the mouse had been clicked there.
+<a name="205"/>   #
+<a name="206"/>   public move_cursor(x, y, shift, e)
+<a name="207"/>      start_handle(e)
+<a name="208"/>
+<a name="209"/>      # Same as keyboard mark...
+<a name="210"/>      if \shift then {
+<a name="211"/>         /mark_x := cursor_x
+<a name="212"/>         /mark_y := cursor_y
+<a name="213"/>      } else
+<a name="214"/>         clear_mark()
+<a name="215"/>
+<a name="216"/>      set_cursor(x, y)
+<a name="217"/>
+<a name="218"/>      end_handle(e)
+<a name="219"/>      link
+<a name="220"/>   end
+<a name="221"/>
+<a name="222"/>   #
+<a name="223"/>   # Append lines of text and go to the bottom of the content.
+<a name="224"/>   # :Parameters :
+<a name="225"/>   # :  `l` - a list of lines to append
+<a name="226"/>   # :  `max` - optional maximum length of resulting contents
+<a name="227"/>   #
+<a name="228"/>   public log(l, max)
+<a name="229"/>      local n, t, a
+<a name="230"/>      need_list(l)
+<a name="231"/>      max := need_integer(\max)
+<a name="232"/>      # Overwite an initial empty line, otherwise append.
+<a name="233"/>      if *self.contents = 1 &amp; *self.contents[1] = 0 then {
+<a name="234"/>         if *l &gt; \max then
+<a name="235"/>            set_contents(l[-max:0])
+<a name="236"/>         else
+<a name="237"/>            set_contents(l)
+<a name="238"/>         if is_live() then {
+<a name="239"/>            goto_last(get_line_count())
+<a name="240"/>            # Make sure the cursor is valid, and on the screen.
+<a name="241"/>            ensure_valid_cursor()
+<a name="242"/>            constrain_cursor()
+<a name="243"/>         }
+<a name="244"/>      } else {
+<a name="245"/>         # Check type
+<a name="246"/>         t := type(self.contents[1])
+<a name="247"/>         if type(a := !l) ~== t then
+<a name="248"/>            runerr("Type of log list inconsistent with contents - must be all string or all ucs", a)
+<a name="249"/>
+<a name="250"/>         every put(self.contents, !l)
+<a name="251"/>         if is_live() then {
+<a name="252"/>            clear_mark()
+<a name="253"/>            update_view_list(*self.contents - *l + 1, 0, *l)
+<a name="254"/>            if (n := *self.contents - \max) &gt; 0 then {
+<a name="255"/>               every 1 to n do
+<a name="256"/>                  pop(self.contents)
+<a name="257"/>               update_view_list(1, n, 0)
+<a name="258"/>            }
+<a name="259"/>            invalidate_line_count()
+<a name="260"/>            invalidate_subject_width()
+<a name="261"/>            compute_and_invalidate()
+<a name="262"/>            undo_manager.clear()
+<a name="263"/>            goto_last(get_line_count())
+<a name="264"/>            # Make sure the cursor is valid, and on the screen.
+<a name="265"/>            ensure_valid_cursor()
+<a name="266"/>            constrain_cursor()
+<a name="267"/>         } else {
+<a name="268"/>            while *self.contents &gt; \max do
+<a name="269"/>               pop(self.contents)
+<a name="270"/>         }
+<a name="271"/>      }
+<a name="272"/>      link
+<a name="273"/>   end
+<a name="274"/>
+<a name="275"/>   # Similar to `log()`, but log a string, rather than a list of
+<a name="276"/>   # lines.  The string is separated into lines and the first is
+<a name="277"/>   # appended to the last content line; the remaining lines (if any)
+<a name="278"/>   # are appended to the content.
+<a name="279"/>   #
+<a name="280"/>   public log_str(s, max)
+<a name="281"/>      local t, n, fl
+<a name="282"/>
+<a name="283"/>      s := need_text(s)
+<a name="284"/>      max := need_integer(\max)
+<a name="285"/>
+<a name="286"/>      type(self.contents[1]) == type(s) |
+<a name="287"/>         runerr("Type of log_str string inconsistent with contents - must be all string or all ucs", s)
+<a name="288"/>
+<a name="289"/>      n := *contents
+<a name="290"/>      every t := separate_lines(s) do {
+<a name="291"/>         if /fl then {
+<a name="292"/>            contents[-1] ||:= t
+<a name="293"/>            fl := &amp;yes
+<a name="294"/>         } else
+<a name="295"/>            put(contents, t)
+<a name="296"/>      }
+<a name="297"/>      if is_live() then {
+<a name="298"/>         clear_mark()
+<a name="299"/>         update_view_list(n, 1, 1 + *contents - n)
+<a name="300"/>         if (n := *self.contents - \max) &gt; 0 then {
+<a name="301"/>            every 1 to n do
+<a name="302"/>               pop(self.contents)
+<a name="303"/>            update_view_list(1, n, 0)
+<a name="304"/>         }
+<a name="305"/>         invalidate_line_count()
+<a name="306"/>         invalidate_subject_width()
+<a name="307"/>         compute_and_invalidate()
+<a name="308"/>         undo_manager.clear()
+<a name="309"/>         goto_last(get_line_count())
+<a name="310"/>         # Make sure the cursor is valid, and on the screen.
+<a name="311"/>         ensure_valid_cursor()
+<a name="312"/>         constrain_cursor()
+<a name="313"/>      } else {
+<a name="314"/>         while *self.contents &gt; \max do
+<a name="315"/>            pop(self.contents)
+<a name="316"/>      }
+<a name="317"/>      link
+<a name="318"/>   end
+<a name="319"/>
+<a name="320"/>   #
+<a name="321"/>   # Move cursor so that it is in the text area, if possible.  May not be possible
+<a name="322"/>   # if cursor at end of line to the left of the text area.
+<a name="323"/>   #     
+<a name="324"/>   public constrain_cursor()
+<a name="325"/>      local vi, v, s, i, ax, info
+<a name="326"/>      vi := get_view_list_index()
+<a name="327"/>      info := get_line_info() | fail
+<a name="328"/>      if vi &lt; info.first_whole then {
+<a name="329"/>         v := view_list[info.first_whole]
+<a name="330"/>         self.cursor_y := v.index
+<a name="331"/>         self.cursor_x := v.first
+<a name="332"/>      }
+<a name="333"/>      else if vi &gt; info.last_whole then {
+<a name="334"/>         v := view_list[info.last_whole]
+<a name="335"/>         self.cursor_y := v.index
+<a name="336"/>         self.cursor_x := v.first
+<a name="337"/>      }
+<a name="338"/>      else
+<a name="339"/>         v := view_list[vi]
+<a name="340"/>      s := v.str
+<a name="341"/>      i := text_width_ex(view.cbwin, s, 1, cursor_x - v.first + 1, tab_width)
+<a name="342"/>      ax := get_area_x()
+<a name="343"/>      if ax &gt; i then {
+<a name="344"/>         # Put the cursor in the nearest position to the area x
+<a name="345"/>         # offset; then adjust if necessary to ensure it is to the
+<a name="346"/>         # right of ax (in practice the loop should only need one
+<a name="347"/>         # iteration).
+<a name="348"/>         cursor_x := find_view_line_pos(v, ax)
+<a name="349"/>         while cursor_x &lt; v.last &amp;
+<a name="350"/>            ax &gt; text_width_ex(view.cbwin, s, 1, cursor_x - v.first + 1, tab_width)
+<a name="351"/>         do
+<a name="352"/>            cursor_x +:= 1
+<a name="353"/>      } else if ax + tw &lt; i then {
+<a name="354"/>         cursor_x := find_view_line_pos(v, ax + tw)
+<a name="355"/>         while cursor_x &gt; v.first &amp;
+<a name="356"/>            ax + tw &lt; text_width_ex(view.cbwin, s, 1, cursor_x - v.first + 1, tab_width)
+<a name="357"/>         do
+<a name="358"/>            cursor_x -:= 1
+<a name="359"/>      }
+<a name="360"/>   end
+<a name="361"/>
+<a name="362"/>   #
+<a name="363"/>   # Set the editable status of the component.
+<a name="364"/>   #
+<a name="365"/>   public set_is_editable(s)
+<a name="366"/>      self.is_editable_flag := need_flag(s)
+<a name="367"/>      link
+<a name="368"/>   end
+<a name="369"/>
+<a name="370"/>   #
+<a name="371"/>   # Move the cursor on mouse right press?  Only relevant if the context menu is disabled.
+<a name="372"/>   #
+<a name="373"/>   public set_move_on_rpress(s)
+<a name="374"/>      self.move_on_rpress_flag := need_flag(s)
+<a name="375"/>      link
+<a name="376"/>   end
+<a name="377"/>
+<a name="378"/>   #
+<a name="379"/>   # Show the context menu on mouse right press?
+<a name="380"/>   #
+<a name="381"/>   public set_menu_on_rpress(s)
+<a name="382"/>      self.menu_on_rpress_flag := need_flag(s)
+<a name="383"/>      link
+<a name="384"/>   end
+<a name="385"/>
+<a name="386"/>   #
+<a name="387"/>   # Configure whether the cursor is kept within the view when the
+<a name="388"/>   # scrollbar (or wheel) is used; by default no.
+<a name="389"/>   #
+<a name="390"/>   public set_constrain_cursor_on_scroll(s)
+<a name="391"/>      self.constrain_cursor_on_scroll_flag := need_flag(s)
+<a name="392"/>      link
+<a name="393"/>   end
+<a name="394"/>
+<a name="395"/>   #
+<a name="396"/>   # Move the text area displayed so that the cursor is on the screen.
+<a name="397"/>   #
+<a name="398"/>   public constrain_line()
+<a name="399"/>      local vi, v, s, i, ax
+<a name="400"/>      vi := get_view_list_index()
+<a name="401"/>
+<a name="402"/>      ensure_line_visible(vi)
+<a name="403"/>
+<a name="404"/>      v := self.view_list[vi]
+<a name="405"/>      s := v.str
+<a name="406"/>      i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
+<a name="407"/>      ax := get_area_x()
+<a name="408"/>      if ax &gt; i then
+<a name="409"/>         set_area_x(i)
+<a name="410"/>      else if ax + self.tw &lt; i then
+<a name="411"/>         set_area_x(i - self.tw)
+<a name="412"/>   end
+<a name="413"/>
+<a name="414"/>   public handle_cut(e)
+<a name="415"/>      local l
+<a name="416"/>      \self.is_editable_flag | fail
+<a name="417"/>      start_handle(e)
+<a name="418"/>      if l := get_region_list() then {
+<a name="419"/>         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(cat_lines(l)))
+<a name="420"/>         delete_region(e)
+<a name="421"/>      }
+<a name="422"/>      end_handle(e)
+<a name="423"/>   end
+<a name="424"/>
+<a name="425"/>   public handle_copy(e)
+<a name="426"/>      local l
+<a name="427"/>      start_handle(e)
+<a name="428"/>      if l := get_region_list() then
+<a name="429"/>         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(cat_lines(l)))
+<a name="430"/>      end_handle(e)
+<a name="431"/>   end
+<a name="432"/>
+<a name="433"/>   public is_editable()
+<a name="434"/>      succeed \is_editable_flag
+<a name="435"/>   end
+<a name="436"/>
+<a name="437"/>   public has_contents()
+<a name="438"/>      succeed *contents &gt; 1 | *contents[1] &gt; 0
+<a name="439"/>   end
+<a name="440"/>
+<a name="441"/>   public can_undo()
+<a name="442"/>      return undo_manager.can_undo()
+<a name="443"/>   end
+<a name="444"/>
+<a name="445"/>   public can_redo()
+<a name="446"/>      return undo_manager.can_redo()
+<a name="447"/>   end
+<a name="448"/>
+<a name="449"/>   public apply_filter(t)
+<a name="450"/>      local s
+<a name="451"/>      # Apply the filter to the string to paste
+<a name="452"/>      s := ""
+<a name="453"/>      t ? {
+<a name="454"/>         while tab(upto(Gui.PRINTABLE_N)) do
+<a name="455"/>            s ||:= tab(many(Gui.PRINTABLE_N))
+<a name="456"/>      }
+<a name="457"/>      if *s &gt; 0 then
+<a name="458"/>         return s
+<a name="459"/>   end
+<a name="460"/>
+<a name="461"/>   private handle_paste_response(e, target_type, data)
+<a name="462"/>      if is_initialized() then
+<a name="463"/>         insert_string(selection_convert(target_type, \data), e)
+<a name="464"/>   end
+<a name="465"/>
+<a name="466"/>   public handle_paste(e)
+<a name="467"/>      parent_dialog.request_selection(Selection.CLIPBOARD, 
+<a name="468"/>                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+<a name="469"/>                                      lpartial(handle_paste_response, e))
+<a name="470"/>   end
+<a name="471"/>
+<a name="472"/>   #
+<a name="473"/>   # Insert a string as though it had been pasted via the clipboard.
+<a name="474"/>   # Fails if no string was inserted, either because the field is not
+<a name="475"/>   # editable, or the filtered string was empty.
+<a name="476"/>   #
+<a name="477"/>   public insert_string(s, e)
+<a name="478"/>      local ce, ed
+<a name="479"/>
+<a name="480"/>      \self.is_editable_flag | fail
+<a name="481"/>      s := apply_filter(text_convert(s, type(self.contents[1]))) | fail
+<a name="482"/>
+<a name="483"/>      start_handle(e)
+<a name="484"/>      ce := CompoundEdit()
+<a name="485"/>      if has_region() then {
+<a name="486"/>         ed := EditableTextListDeleteRegionEdit(self)
+<a name="487"/>         ed.doit()
+<a name="488"/>         ce.add_edit(ed)
+<a name="489"/>      }
+<a name="490"/>      ed := EditableTextListPasteEdit(self, s)
+<a name="491"/>      ed.doit()
+<a name="492"/>      ce.add_edit(ed)
+<a name="493"/>      ce.close()
+<a name="494"/>      undo_manager.add_edit(ce)
+<a name="495"/>      end_handle(e)
+<a name="496"/>      link
+<a name="497"/>   end
+<a name="498"/>
+<a name="499"/>   public override on_vsb(ev)
+<a name="500"/>      if \constrain_cursor_on_scroll_flag then {
+<a name="501"/>         start_handle(ev)
+<a name="502"/>         constrain_cursor()
+<a name="503"/>         need_constrain_line := 1
+<a name="504"/>         end_handle(ev)
+<a name="505"/>      }
+<a name="506"/>      need_constrain_line := 2
+<a name="507"/>      refresh()
+<a name="508"/>      #
+<a name="509"/>      # Simulate a drag event if appropriate in order to keep the
+<a name="510"/>      # cursor in synch.
+<a name="511"/>      #
+<a name="512"/>      if view.is_held(Mouse.LEFT_PRESS) then
+<a name="513"/>         handle_ldrag(ev)
+<a name="514"/>   end
+<a name="515"/>
+<a name="516"/>   public override on_hsb(ev)
+<a name="517"/>      if \constrain_cursor_on_scroll_flag then {
+<a name="518"/>         start_handle(ev)
+<a name="519"/>         constrain_cursor()
+<a name="520"/>         need_constrain_line := 1
+<a name="521"/>         end_handle(ev)
+<a name="522"/>      }
+<a name="523"/>      need_constrain_line := 2
+<a name="524"/>      refresh()
+<a name="525"/>   end
+<a name="526"/>
+<a name="527"/>   public start_handle(e)
+<a name="528"/>      old_view_list_size := *view_list
+<a name="529"/>      old_mw := long_line.tw
+<a name="530"/>      old_cursor_x := cursor_x
+<a name="531"/>      old_cursor_y := cursor_y
+<a name="532"/>      old_mark_x := mark_x
+<a name="533"/>      old_mark_y := mark_y
+<a name="534"/>      old_region := get_region_list() | &amp;null
+<a name="535"/>      changed := &amp;null
+<a name="536"/>   end
+<a name="537"/>
+<a name="538"/>   public end_handle(e)
+<a name="539"/>      local r, i, cursor_moved, t
+<a name="540"/>
+<a name="541"/>      if r := get_region_list() &amp;
+<a name="542"/>         not equals(primary, r) &amp;
+<a name="543"/>         not view.is_held(Mouse.LEFT_PRESS) then {
+<a name="544"/>         parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
+<a name="545"/>         self.primary := r
+<a name="546"/>      }
+<a name="547"/>
+<a name="548"/>      if \changed then {
+<a name="549"/>         if (*view_list ~= old_view_list_size) | 
+<a name="550"/>            (old_mw ~= long_line.tw) then 
+<a name="551"/>         {
+<a name="552"/>            #
+<a name="553"/>            # Contents changed.  Re-compute all internal fields, ensure on
+<a name="554"/>            # screen and re-display whole object.
+<a name="555"/>            #
+<a name="556"/>            invalidate_line_count()
+<a name="557"/>            invalidate_subject_width()
+<a name="558"/>            compute_and_invalidate()
+<a name="559"/>            self.constrain_line()
+<a name="560"/>         } else {
+<a name="561"/>            self.constrain_line()
+<a name="562"/>            self.refresh()
+<a name="563"/>         }
+<a name="564"/>         cursor_on := -1
+<a name="565"/>      }
+<a name="566"/>
+<a name="567"/>      if (cursor_x ~= old_cursor_x) | (cursor_y ~= old_cursor_y) then {
+<a name="568"/>         if /changed &amp; need_constrain_line ~= 1 then
+<a name="569"/>            constrain_line()
+<a name="570"/>         cursor_on := -1
+<a name="571"/>         cursor_moved := &amp;yes
+<a name="572"/>      } else if need_constrain_line = 2 then
+<a name="573"/>         constrain_line()
+<a name="574"/>      need_constrain_line := 0
+<a name="575"/>
+<a name="576"/>      # Invalidate on cursor/mark changes
+<a name="577"/>      if /changed &amp; 
+<a name="578"/>         (\cursor_moved | (mark_x ~=== old_mark_x) | (mark_y ~=== old_mark_y))\1 &amp; 
+<a name="579"/>         (i := get_line_info()) then 
+<a name="580"/>      {
+<a name="581"/>         t := [get_view_list_index(old_cursor_x, old_cursor_y),
+<a name="582"/>               get_view_list_index()]
+<a name="583"/>         if not has_region() &amp; /old_region then
+<a name="584"/>            # No regions, so just invalidate cursor lines
+<a name="585"/>            every invalidate_line(!t, i)
+<a name="586"/>         else {
+<a name="587"/>            # Have and/or had regions, so invalidate whole range of lines involved
+<a name="588"/>            put(t, get_view_list_index(\old_mark_x, \old_mark_y))
+<a name="589"/>            put(t, get_view_list_index(\mark_x, \mark_y))
+<a name="590"/>            invalidate_lines(min!t, max!t, i)
+<a name="591"/>         }
+<a name="592"/>      }
+<a name="593"/>
+<a name="594"/>      # Fire events
+<a name="595"/>      if \changed then
+<a name="596"/>         fire(Event.CONTENT_CHANGED, e)
+<a name="597"/>      if \cursor_moved then
+<a name="598"/>         fire(Event.CURSOR_MOVED, e)
+<a name="599"/>      unless equals(old_region, r) then
+<a name="600"/>         fire(Event.SELECTION_CHANGED, e)
+<a name="601"/>   end
+<a name="602"/>
+<a name="603"/>   public handle_key(e)
+<a name="604"/>      case e.code of {
+<a name="605"/>         Key.HOME : handle_key_home(e)
+<a name="606"/>         Key.END : handle_key_end(e)
+<a name="607"/>         Key.PGUP : handle_key_page_up(e)
+<a name="608"/>         Key.PGDN : handle_key_page_down(e)
+<a name="609"/>         Key.UP : handle_key_up(e)
+<a name="610"/>         Key.DOWN : handle_key_down(e)
+<a name="611"/>         Key.LEFT : handle_key_left(e)
+<a name="612"/>         Key.RIGHT : handle_key_right(e)
+<a name="613"/>         "\b" : handle_delete_left(e)
+<a name="614"/>         "\r" | "\l": handle_return(e)
+<a name="615"/>         "\^k" : handle_delete_line(e)
+<a name="616"/>         "\^a" : handle_select_all(e)
+<a name="617"/>         "\^e" : handle_end_of_line(e)
+<a name="618"/>         "\d" | "\^d" : handle_delete_right(e)
+<a name="619"/>         "\^x" :  handle_cut(e)
+<a name="620"/>         "\^c" :  handle_copy(e)
+<a name="621"/>         "\^v" :  handle_paste(e)
+<a name="622"/>         Key.INSERT :  if \e.ctrl then handle_copy(e) else if \e.shift then handle_paste(e)
+<a name="623"/>         "\^z" :  handle_undo(e)
+<a name="624"/>         "\^y" :  handle_redo(e)
+<a name="625"/>         default : handle_default(e)
+<a name="626"/>      }
+<a name="627"/>   end
+<a name="628"/>
+<a name="629"/>   #
+<a name="630"/>   # Given a ViewLine v and a pixel offset d in that line (which may
+<a name="631"/>   # extend past the end), calculate the corresponding x cursor
+<a name="632"/>   # position.
+<a name="633"/>   #
+<a name="634"/>   public find_view_line_pos(v, d)
+<a name="635"/>      local s, l, r, m, t1, t2, t3
+<a name="636"/>      s := v.str
+<a name="637"/>      l := v.first
+<a name="638"/>      r := v.last
+<a name="639"/>      while l &lt;= r do {
+<a name="640"/>         m := (l + r) / 2
+<a name="641"/>         t2 := text_width_ex(view.cbwin, s, 1, m - v.first + 1, tab_width)
+<a name="642"/>         if m &gt; v.first &amp;
+<a name="643"/>            t1 := text_width_ex(view.cbwin, s, 1, m - v.first, tab_width) &amp;
+<a name="644"/>            d &lt;= (t1 + t2) / 2
+<a name="645"/>         then
+<a name="646"/>            r := m - 1
+<a name="647"/>         else if m &lt; v.last &amp;
+<a name="648"/>            t3 := text_width_ex(view.cbwin, s, 1, m - v.first + 2, tab_width) &amp;
+<a name="649"/>            d &gt; (t2 + t3) / 2
+<a name="650"/>         then
+<a name="651"/>            l := m + 1
+<a name="652"/>         else
+<a name="653"/>            return m
+<a name="654"/>      }
+<a name="655"/>      syserr("Loop exit in find_view_line_pos()")
+<a name="656"/>   end
+<a name="657"/>
+<a name="658"/>   #
+<a name="659"/>   # Given a ViewLine v and a pixel offset d in that line (which may
+<a name="660"/>   # extend past the end), calculate and set the new cursor_x and
+<a name="661"/>   # cursor_y.
+<a name="662"/>   #
+<a name="663"/>   public set_cursor_in_view_line(v, d)
+<a name="664"/>      self.cursor_y := v.index
+<a name="665"/>      self.cursor_x := find_view_line_pos(v, d)
+<a name="666"/>   end
+<a name="667"/>
+<a name="668"/>   #
+<a name="669"/>   # Set cursor from the given event
+<a name="670"/>   #
+<a name="671"/>   public set_cursor_from_pos(e)
+<a name="672"/>      set_cursor_in_view_line(self.view_list[get_nearest_line_to_pointer(e)],
+<a name="673"/>                              e.x - self.tx + get_area_x())
+<a name="674"/>   end
+<a name="675"/>
+<a name="676"/>   public clear_mark()
+<a name="677"/>      mark_x := mark_y := &amp;null
+<a name="678"/>      link
+<a name="679"/>   end
+<a name="680"/>
+<a name="681"/>   public set_mark(mx, my)
+<a name="682"/>      if my := need_integer(\my) then
+<a name="683"/>         self.mark_y := restrict(my, 1, *contents)
+<a name="684"/>      if mx := need_integer(\mx) then
+<a name="685"/>         self.mark_x := restrict(mx, 1, *contents[self.mark_y] + 1)
+<a name="686"/>      link
+<a name="687"/>   end
+<a name="688"/>
+<a name="689"/>   public set_cursor(cx, cy)
+<a name="690"/>      if cy := need_integer(\cy) then
+<a name="691"/>         self.cursor_y := restrict(cy, 1, *contents)
+<a name="692"/>      if cx := need_integer(\cx) then
+<a name="693"/>         self.cursor_x := restrict(cx, 1, *contents[self.cursor_y] + 1)
+<a name="694"/>      link
+<a name="695"/>   end
+<a name="696"/>
+<a name="697"/>   public has_region()
+<a name="698"/>      succeed \mark_x &amp; (mark_x ~= cursor_x | mark_y ~= cursor_y)
+<a name="699"/>   end
+<a name="700"/>
+<a name="701"/>   public handle_lpress(e)
+<a name="702"/>      start_handle(e)
+<a name="703"/>      # Move to cursor position.
+<a name="704"/>      if \e.shift then {
+<a name="705"/>         /self.mark_y := self.cursor_y
+<a name="706"/>         /self.mark_x := self.cursor_x
+<a name="707"/>         set_cursor_from_pos(e)
+<a name="708"/>      } else {
+<a name="709"/>         set_cursor_from_pos(e)
+<a name="710"/>         case (parent_dialog.get_click_count() - 1) % 3 of {
+<a name="711"/>            0 : {
+<a name="712"/>               self.mark_y := self.cursor_y
+<a name="713"/>               self.mark_x := self.cursor_x
+<a name="714"/>            }
+<a name="715"/>            1 : {
+<a name="716"/>               self.mark_y := self.cursor_y
+<a name="717"/>               self.mark_x := self.cursor_x
+<a name="718"/>               while any(~'\t ', self.contents[self.cursor_y], self.cursor_x) do
+<a name="719"/>                  self.cursor_x +:= 1
+<a name="720"/>               while any(~'\t ', self.contents[self.cursor_y], self.mark_x - 1) do
+<a name="721"/>                  self.mark_x -:= 1
+<a name="722"/>               no_drag := &amp;yes
+<a name="723"/>            }
+<a name="724"/>            2 : {
+<a name="725"/>               self.cursor_x := *self.contents[self.cursor_y] + 1
+<a name="726"/>               self.mark_y := self.cursor_y
+<a name="727"/>               self.mark_x := 1
+<a name="728"/>               no_drag := &amp;yes
+<a name="729"/>            }
+<a name="730"/>         }
+<a name="731"/>      }
+<a name="732"/>      end_handle(e)
+<a name="733"/>   end
+<a name="734"/>
+<a name="735"/>   public create_context_menu(e)
+<a name="736"/>      local m
+<a name="737"/>      m := TextContextMenu(self)
+<a name="738"/>      if *m.children &gt; 0 then
+<a name="739"/>         return m
+<a name="740"/>   end
+<a name="741"/>
+<a name="742"/>   public handle_rpress(e)
+<a name="743"/>      local m, pm
+<a name="744"/>      if \menu_on_rpress_flag then {
+<a name="745"/>         if m := create_context_menu(e) then {
+<a name="746"/>            pm := PopupMenu()
+<a name="747"/>            pm.popup(self, m, e.x, e.y)
+<a name="748"/>         }
+<a name="749"/>      } else if \move_on_rpress_flag then {
+<a name="750"/>         start_handle(e)
+<a name="751"/>         set_cursor_from_pos(e)
+<a name="752"/>         clear_mark()
+<a name="753"/>         end_handle(e)
+<a name="754"/>      }
+<a name="755"/>   end
+<a name="756"/>
+<a name="757"/>   private handle_mpress_response(e, target_type, data)
+<a name="758"/>      local s, ed
+<a name="759"/>      (\data &amp;
+<a name="760"/>       \is_editable_flag &amp;
+<a name="761"/>       is_initialized()) | fail
+<a name="762"/>
+<a name="763"/>      start_handle(e)
+<a name="764"/>
+<a name="765"/>      set_cursor_from_pos(e)
+<a name="766"/>      clear_mark()
+<a name="767"/>      if s := apply_filter(text_convert(selection_convert(target_type, data),
+<a name="768"/>                                        type(self.contents[1]))) then {
+<a name="769"/>         ed := EditableTextListPasteEdit(self, s)
+<a name="770"/>         ed.doit()
+<a name="771"/>         undo_manager.add_edit(ed)
+<a name="772"/>      }
+<a name="773"/>      end_handle(e)
+<a name="774"/>   end
+<a name="775"/>
+<a name="776"/>   public handle_mpress(e)
+<a name="777"/>      parent_dialog.request_selection(Selection.PRIMARY, 
+<a name="778"/>                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+<a name="779"/>                                      lpartial(handle_mpress_response, e))
+<a name="780"/>   end
+<a name="781"/>
+<a name="782"/>   public handle_undo(e)
+<a name="783"/>      \self.is_editable_flag | fail
+<a name="784"/>
+<a name="785"/>      start_handle(e)
+<a name="786"/>      if undo_manager.can_undo() then
+<a name="787"/>         undo_manager.undo()
+<a name="788"/>      end_handle(e)
+<a name="789"/>   end
+<a name="790"/>
+<a name="791"/>   public handle_redo(e)
+<a name="792"/>      \self.is_editable_flag | fail
+<a name="793"/>
+<a name="794"/>      start_handle(e)
+<a name="795"/>      if undo_manager.can_redo() then
+<a name="796"/>         undo_manager.redo()
+<a name="797"/>      end_handle(e)
+<a name="798"/>   end
+<a name="799"/>
+<a name="800"/>   public handle_ldrag(e)
+<a name="801"/>      local vi, v
+<a name="802"/>
+<a name="803"/>      /no_drag | fail
+<a name="804"/>
+<a name="805"/>      start_handle(e)
+<a name="806"/>
+<a name="807"/>      vi := get_view_list_index()
+<a name="808"/>      v := view_list[vi]
+<a name="809"/>
+<a name="810"/>      if vi &gt; 1 &amp; e.y &lt; self.view.y then {
+<a name="811"/>         direction := "up"
+<a name="812"/>         check_scroll_ticker(self.view.y - e.y)
+<a name="813"/>      } else if vi &lt; *view_list &amp; e.y &gt;= self.view.y + self.view.h then {
+<a name="814"/>         direction := "down"
+<a name="815"/>         check_scroll_ticker(e.y - (self.view.y + self.view.h))
+<a name="816"/>      } else if self.cursor_x &gt; v.first &amp; e.x &lt; self.tx then {
+<a name="817"/>         direction := "left"
+<a name="818"/>         check_scroll_ticker(self.tx - e.x)
+<a name="819"/>      } else if self.cursor_x &lt; v.last &amp; e.x &gt;= self.tx + self.tw then {
+<a name="820"/>         direction := "right"
+<a name="821"/>         check_scroll_ticker(e.x - (self.tx + self.tw))
+<a name="822"/>      } else {
+<a name="823"/>         direction := &amp;null
+<a name="824"/>         scroll_ticker.stop()
+<a name="825"/>         set_cursor_from_pos(e)
+<a name="826"/>      }
+<a name="827"/>
+<a name="828"/>      end_handle(e)
+<a name="829"/>   end
+<a name="830"/>
+<a name="831"/>   public check_scroll_ticker(d)
+<a name="832"/>      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+<a name="833"/>      scroll_ticker.change_time(scroll_ticker_interval)
+<a name="834"/>      # Start it (if it isn't already running)
+<a name="835"/>      scroll_ticker.start()
+<a name="836"/>   end
+<a name="837"/>
+<a name="838"/>   public scroll_tick()
+<a name="839"/>      local ax, s, v, vi, i
+<a name="840"/>      repeat {
+<a name="841"/>         start_handle()
+<a name="842"/>
+<a name="843"/>         vi := get_view_list_index()
+<a name="844"/>         
+<a name="845"/>         case self.direction of {
+<a name="846"/>            "up" : {
+<a name="847"/>               if vi &gt; 1 &amp; i := get_line_info() then {
+<a name="848"/>                  vi := i.first_whole - 1
+<a name="849"/>                  vi &lt;:= 1
+<a name="850"/>                  v := view_list[vi]
+<a name="851"/>                  self.cursor_y := v.index
+<a name="852"/>                  self.cursor_x := v.first
+<a name="853"/>               }
+<a name="854"/>            }
+<a name="855"/>            "down" : {
+<a name="856"/>               if vi &lt; *view_list &amp; i := get_line_info() then {
+<a name="857"/>                  vi := i.last_whole + 1
+<a name="858"/>                  vi &gt;:= *view_list
+<a name="859"/>                  v := view_list[vi]
+<a name="860"/>                  self.cursor_y := v.index
+<a name="861"/>                  # Set cursor_x to start of line, not end of line -
+<a name="862"/>                  # this prevents the horizontal scroll bar jiggling
+<a name="863"/>                  # about as we scroll down (as the cursor is
+<a name="864"/>                  # constrained to be visible).
+<a name="865"/>                  self.cursor_x := v.first
+<a name="866"/>               }
+<a name="867"/>            }
+<a name="868"/>            "left" : {
+<a name="869"/>               v := view_list[vi]
+<a name="870"/>               ax := get_area_x()
+<a name="871"/>               s := v.str
+<a name="872"/>               while (self.cursor_x &gt; v.first) &amp; 
+<a name="873"/>                  text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
+<a name="874"/>                                self.tab_width) &gt;= ax do {
+<a name="875"/>                                   self.cursor_x -:= 1
+<a name="876"/>                                }
+<a name="877"/>            }
+<a name="878"/>            "right" : {
+<a name="879"/>               v := view_list[vi]
+<a name="880"/>               ax := get_area_x()
+<a name="881"/>               s := v.str
+<a name="882"/>               while (self.cursor_x &lt; v.last) &amp; 
+<a name="883"/>                  text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
+<a name="884"/>                                self.tab_width) &lt;= ax + self.tw do {
+<a name="885"/>                                   self.cursor_x +:= 1
+<a name="886"/>                                }
+<a name="887"/>            }
+<a name="888"/>         }
+<a name="889"/>
+<a name="890"/>         end_handle()
+<a name="891"/>         scroll_ticker.sleep(scroll_ticker_interval)
+<a name="892"/>      }
+<a name="893"/>   end
+<a name="894"/>
+<a name="895"/>   public handle_lrelease(e)
+<a name="896"/>      start_handle(e)
+<a name="897"/>      #
+<a name="898"/>      # Mouse released after being held down.  Clear flag.  If there
+<a name="899"/>      # is no region (mouse released where it was pressed), then clear
+<a name="900"/>      # the mark.  This prevents selecting when using the scrollbars
+<a name="901"/>      # after release.
+<a name="902"/>      #
+<a name="903"/>      has_region() | clear_mark()
+<a name="904"/>      scroll_ticker.stop()
+<a name="905"/>      no_drag := &amp;null
+<a name="906"/>      end_handle(e)
+<a name="907"/>   end
+<a name="908"/>
+<a name="909"/>   public handle_interrupted()
+<a name="910"/>      if view.is_held(Mouse.LEFT_PRESS) then {
+<a name="911"/>         # Release left press so that end_handle() owns the selection
+<a name="912"/>         parent_dialog.release(view, Mouse.LEFT_PRESS)
+<a name="913"/>         handle_lrelease()
+<a name="914"/>      }
+<a name="915"/>   end
+<a name="916"/>
+<a name="917"/>   public keyboard_mark(e)
+<a name="918"/>      if \e.shift then {
+<a name="919"/>         /mark_x := cursor_x
+<a name="920"/>         /mark_y := cursor_y
+<a name="921"/>      } else
+<a name="922"/>         clear_mark()
+<a name="923"/>   end
+<a name="924"/>
+<a name="925"/>   public handle_start_of_line(e)
+<a name="926"/>      start_handle(e)
+<a name="927"/>      keyboard_mark(e)
+<a name="928"/>      cursor_x := 1
+<a name="929"/>      end_handle(e)
+<a name="930"/>   end
+<a name="931"/>
+<a name="932"/>   public handle_end_of_line(e)
+<a name="933"/>      start_handle(e)
+<a name="934"/>      keyboard_mark(e)
+<a name="935"/>      cursor_x := *contents[cursor_y] + 1
+<a name="936"/>      end_handle(e)
+<a name="937"/>   end
+<a name="938"/>
+<a name="939"/>   public adjust_view_list_index(off)
+<a name="940"/>      local e1, e2, v1, v2
+<a name="941"/>      v1 := get_view_list_index()
+<a name="942"/>      v2 := restrict(v1 + off, 1, *self.view_list)
+<a name="943"/>      if v1 = v2 then
+<a name="944"/>         return
+<a name="945"/>      e1 := view_list[v1]
+<a name="946"/>      e2 := view_list[v2]
+<a name="947"/>      set_cursor_in_view_line(e2, 
+<a name="948"/>                              text_width_ex(view.cbwin, e1.str, 1, self.cursor_x - e1.first + 1, self.tab_width))
+<a name="949"/>   end
+<a name="950"/>
+<a name="951"/>   public handle_key_up(e)
+<a name="952"/>      start_handle(e)
+<a name="953"/>      keyboard_mark(e)
+<a name="954"/>      adjust_view_list_index(-1)
+<a name="955"/>      end_handle(e)
+<a name="956"/>   end
+<a name="957"/>
+<a name="958"/>   public handle_key_home(e)
+<a name="959"/>      start_handle(e)
+<a name="960"/>      keyboard_mark(e)
+<a name="961"/>      if \e.ctrl then
+<a name="962"/>         cursor_y := 1
+<a name="963"/>      cursor_x := 1
+<a name="964"/>      end_handle(e)
+<a name="965"/>   end
+<a name="966"/>
+<a name="967"/>   public handle_key_end(e)
+<a name="968"/>      start_handle(e)
+<a name="969"/>      keyboard_mark(e)
+<a name="970"/>      if \e.ctrl then
+<a name="971"/>         cursor_y := *contents
+<a name="972"/>      cursor_x := *contents[cursor_y] + 1
+<a name="973"/>      end_handle(e)
+<a name="974"/>   end
+<a name="975"/>
+<a name="976"/>   public handle_select_all(e)
+<a name="977"/>      start_handle(e)
+<a name="978"/>      mark_x := mark_y := 1
+<a name="979"/>      cursor_y := *contents
+<a name="980"/>      cursor_x := *contents[cursor_y] + 1
+<a name="981"/>      end_handle(e)
+<a name="982"/>   end
+<a name="983"/>
+<a name="984"/>   public handle_key_down(e)
+<a name="985"/>      start_handle(e)
+<a name="986"/>      keyboard_mark(e)
+<a name="987"/>      adjust_view_list_index(1)
+<a name="988"/>      end_handle(e)
+<a name="989"/>   end
+<a name="990"/>
+<a name="991"/>   public handle_key_left(e)
+<a name="992"/>      start_handle(e)
+<a name="993"/>      keyboard_mark(e)
+<a name="994"/>      if self.cursor_x = 1 then {
+<a name="995"/>         if self.cursor_y &gt; 1 then {
+<a name="996"/>            self.cursor_y -:= 1
+<a name="997"/>            self.cursor_x := *self.contents[self.cursor_y] + 1
+<a name="998"/>         }
+<a name="999"/>      } else
+<a name="1000"/>         self.cursor_x -:= 1
+<a name="1001"/>      end_handle(e)
+<a name="1002"/>   end
+<a name="1003"/>
+<a name="1004"/>   public handle_key_right(e)
+<a name="1005"/>      start_handle(e)
+<a name="1006"/>      keyboard_mark(e)
+<a name="1007"/>      if self.cursor_x = *self.contents[self.cursor_y] + 1 then {
+<a name="1008"/>         if self.cursor_y &lt; *self.contents then {
+<a name="1009"/>            self.cursor_x := 1
+<a name="1010"/>            self.cursor_y +:= 1
+<a name="1011"/>         }
+<a name="1012"/>      } else
+<a name="1013"/>         self.cursor_x +:= 1
+<a name="1014"/>      end_handle(e)
+<a name="1015"/>   end
+<a name="1016"/>
+<a name="1017"/>   public handle_key_page_up(e)
+<a name="1018"/>      start_handle(e)
+<a name="1019"/>      keyboard_mark(e)
+<a name="1020"/>      adjust_view_list_index(-self.view.h / self.line_height)
+<a name="1021"/>      end_handle(e)
+<a name="1022"/>   end
+<a name="1023"/>
+<a name="1024"/>   public handle_key_page_down(e)
+<a name="1025"/>      start_handle(e)
+<a name="1026"/>      keyboard_mark(e)
+<a name="1027"/>      adjust_view_list_index(self.view.h / self.line_height)
+<a name="1028"/>      end_handle(e)
+<a name="1029"/>   end
+<a name="1030"/>
+<a name="1031"/>   public handle_delete_line(e)
+<a name="1032"/>      local ed
+<a name="1033"/>      \self.is_editable_flag | fail
+<a name="1034"/>      start_handle(e)
+<a name="1035"/>      if (cursor_y &lt; *self.contents) | (*self.contents[cursor_y] &gt; 0) then {
+<a name="1036"/>         ed := EditableTextListDeleteLineEdit(self)
+<a name="1037"/>         ed.doit()
+<a name="1038"/>         undo_manager.add_edit(ed)
+<a name="1039"/>      }
+<a name="1040"/>      end_handle(e)
+<a name="1041"/>   end
+<a name="1042"/>
+<a name="1043"/>   #
+<a name="1044"/>   # Get the region as a list of strings, each element representing one line, ie in
+<a name="1045"/>   # the same format as that supplied to `set_contents()`.
+<a name="1046"/>   #
+<a name="1047"/>   public get_region_list()
+<a name="1048"/>      local l
+<a name="1049"/>      has_region() | fail
+<a name="1050"/>
+<a name="1051"/>      if self.mark_y &lt; self.cursor_y then {
+<a name="1052"/>         l := self.contents[self.mark_y + 1:self.cursor_y]
+<a name="1053"/>         push(l, self.contents[self.mark_y][self.mark_x:0])
+<a name="1054"/>         put(l, self.contents[self.cursor_y][1:self.cursor_x])
+<a name="1055"/>      } else if self.mark_y &gt; self.cursor_y then {
+<a name="1056"/>         l := self.contents[self.cursor_y + 1:self.mark_y]
+<a name="1057"/>         push(l, self.contents[self.cursor_y][self.cursor_x:0])
+<a name="1058"/>         put(l, self.contents[self.mark_y][1:self.mark_x])
+<a name="1059"/>      } else {
+<a name="1060"/>         # mark_y = cursor_y
+<a name="1061"/>         l := [self.contents[self.cursor_y][self.cursor_x:self.mark_x]]
+<a name="1062"/>      }
+<a name="1063"/>      return l
+<a name="1064"/>   end
+<a name="1065"/>
+<a name="1066"/>   #
+<a name="1067"/>   # Get the region as a string, with lines separated by the end-of-line character.
+<a name="1068"/>   #
+<a name="1069"/>   public get_region()
+<a name="1070"/>      return cat_lines(get_region_list())
+<a name="1071"/>   end
+<a name="1072"/>
+<a name="1073"/>   public delete_region(e)
+<a name="1074"/>      local ed 
+<a name="1075"/>      ed := EditableTextListDeleteRegionEdit(self)
+<a name="1076"/>      ed.doit()
+<a name="1077"/>      undo_manager.add_edit(ed)
+<a name="1078"/>   end
+<a name="1079"/>
+<a name="1080"/>   public handle_delete_left(e)
+<a name="1081"/>      local ed
+<a name="1082"/>      \self.is_editable_flag | fail
+<a name="1083"/>      start_handle(e)
+<a name="1084"/>      if has_region() then 
+<a name="1085"/>         delete_region(e)
+<a name="1086"/>      else if (self.cursor_x &gt; 1) | (self.cursor_y &gt; 1) then {
+<a name="1087"/>         ed := EditableTextListDeleteLeftEdit(self)
+<a name="1088"/>         ed.doit()
+<a name="1089"/>         undo_manager.add_edit(ed)
+<a name="1090"/>      }
+<a name="1091"/>      end_handle(e)
+<a name="1092"/>   end
+<a name="1093"/>
+<a name="1094"/>   public handle_delete_right(e)
+<a name="1095"/>      local ed
+<a name="1096"/>      \self.is_editable_flag | fail
+<a name="1097"/>      start_handle(e)
+<a name="1098"/>      if has_region() then
+<a name="1099"/>         delete_region(e)
+<a name="1100"/>      else if (self.cursor_x &lt;= *contents[cursor_y]) | (self.cursor_y &lt; *contents) then {
+<a name="1101"/>         ed := EditableTextListDeleteRightEdit(self)
+<a name="1102"/>         ed.doit()
+<a name="1103"/>         undo_manager.add_edit(ed)
+<a name="1104"/>      }
+<a name="1105"/>      end_handle(e)
+<a name="1106"/>   end
+<a name="1107"/>
+<a name="1108"/>   public handle_return(e)
+<a name="1109"/>      local ce, ed
+<a name="1110"/>      \self.is_editable_flag | fail
+<a name="1111"/>      start_handle(e)
+<a name="1112"/>      if has_region() then {
+<a name="1113"/>         ce := CompoundEdit()
+<a name="1114"/>         ed := EditableTextListDeleteRegionEdit(self)
+<a name="1115"/>         ed.doit()
+<a name="1116"/>         ce.add_edit(ed)
+<a name="1117"/>         ed := EditableTextListReturnEdit(self)
+<a name="1118"/>         ed.doit()
+<a name="1119"/>         ce.add_edit(ed)
+<a name="1120"/>         ce.close()
+<a name="1121"/>         undo_manager.add_edit(ce)
+<a name="1122"/>      } else {
+<a name="1123"/>         ed := EditableTextListReturnEdit(self)
+<a name="1124"/>         ed.doit()
+<a name="1125"/>         undo_manager.add_edit(ed)
+<a name="1126"/>      }
+<a name="1127"/>      end_handle(e)
+<a name="1128"/>   end
+<a name="1129"/>
+<a name="1130"/>   public handle_default(e)
+<a name="1131"/>      local ce, ed, ec
+<a name="1132"/>
+<a name="1133"/>      ec := e.code
+<a name="1134"/>
+<a name="1135"/>      if /self.is_editable_flag | not(type(ec) == ("string" | "ucs")) |
+<a name="1136"/>         \e.ctrl | \e.meta | not(any(Gui.PRINTABLE_N, ec)) then
+<a name="1137"/>         fail
+<a name="1138"/>
+<a name="1139"/>      ec := text_convert(ec, type(self.contents[1]))
+<a name="1140"/>
+<a name="1141"/>      start_handle(e)
+<a name="1142"/>      # 
+<a name="1143"/>      # Add the printable character at cursor position
+<a name="1144"/>      #
+<a name="1145"/>      if has_region() then {
+<a name="1146"/>         ce := CompoundEdit().set_liberal(&amp;yes)
+<a name="1147"/>         ed := EditableTextListDeleteRegionEdit(self)
+<a name="1148"/>         ed.doit()
+<a name="1149"/>         ce.add_edit(ed)
+<a name="1150"/>         ed := EditableTextListDefaultEdit(self, ec)
+<a name="1151"/>         ed.doit()
+<a name="1152"/>         ce.add_edit(ed)
+<a name="1153"/>         ce.close()
+<a name="1154"/>         undo_manager.add_edit(ce)
+<a name="1155"/>      } else {
+<a name="1156"/>         ed := EditableTextListDefaultEdit(self, ec)
+<a name="1157"/>         ed.doit()
+<a name="1158"/>         undo_manager.add_edit(ed)
+<a name="1159"/>      }
+<a name="1160"/>      end_handle(e)
+<a name="1161"/>   end
+<a name="1162"/>
+<a name="1163"/>   public override layout()
+<a name="1164"/>      if is(line_splitter, WidthLineSplitter) then
+<a name="1165"/>         clear_view_list()
+<a name="1166"/>      ScrollArea.layout()
+<a name="1167"/>      self.constrain_line()
+<a name="1168"/>   end
+<a name="1169"/>
+<a name="1170"/>   public override set_internal_fields()
+<a name="1171"/>      local had_vsb
+<a name="1172"/>      had_vsb := self.vsb
+<a name="1173"/>      LineBasedScrollArea.set_internal_fields()
+<a name="1174"/>      self.tx := self.view.x + Gui.TEXT_INSET
+<a name="1175"/>      self.tw := self.view.w - 2 * Gui.TEXT_INSET
+<a name="1176"/>      if is(line_splitter, WidthLineSplitter) &amp; had_vsb ~=== self.vsb then {
+<a name="1177"/>         clear_split_list()
+<a name="1178"/>         set_internal_fields()
+<a name="1179"/>      }
+<a name="1180"/>   end
+<a name="1181"/>
+<a name="1182"/>   public override shift(dx, dy)
+<a name="1183"/>      LineBasedScrollArea.shift(dx, dy)
+<a name="1184"/>      self.tx +:= dx
+<a name="1185"/>   end
+<a name="1186"/>
+<a name="1187"/>   public cursor_tick()
+<a name="1188"/>      local t
+<a name="1189"/>      repeat {
+<a name="1190"/>         if should_draw_focus() &amp; self.is_unhidden() then {
+<a name="1191"/>            t := cursor_on
+<a name="1192"/>            cursor_on := if dont_blink(self) then
+<a name="1193"/>               0
+<a name="1194"/>            else
+<a name="1195"/>               (cursor_on + 1) % 3
+<a name="1196"/>            if (t | cursor_on) = 2 then
+<a name="1197"/>               invalidate_line(get_view_list_index())
+<a name="1198"/>         }
+<a name="1199"/>         cursor_ticker.sleep(Gui.CURSOR_BLINK)
+<a name="1200"/>      }
+<a name="1201"/>   end
+<a name="1202"/>
+<a name="1203"/>   public override focus_changed(e) 
+<a name="1204"/>      if is_live() then
+<a name="1205"/>         invalidate_line(get_view_list_index())
+<a name="1206"/>   end
+<a name="1207"/>
+<a name="1208"/>   public override draw()
+<a name="1209"/>      local xp, yp, i, info, r
+<a name="1210"/>
+<a name="1211"/>      r := view.get_cbwin_clip()
+<a name="1212"/>
+<a name="1213"/>      info := get_line_info(r) | fail
+<a name="1214"/>      yp := r.y - info.offset
+<a name="1215"/>      xp := tx - get_area_x()
+<a name="1216"/>
+<a name="1217"/>      #
+<a name="1218"/>      # Write the lines
+<a name="1219"/>      #
+<a name="1220"/>      every i := info.first to info.last do {
+<a name="1221"/>         draw_line(xp, yp, i)
+<a name="1222"/>         yp +:= self.line_height
+<a name="1223"/>      }
+<a name="1224"/>   end
+<a name="1225"/>
+<a name="1226"/>   public override draw_line(xp, yp, i)
+<a name="1227"/>      local si, s, off1, off2, v, r
+<a name="1228"/>
+<a name="1229"/>      v := self.view_list[i]
+<a name="1230"/>      s := v.str
+<a name="1231"/>      si := self.cursor_x - v.first + 1
+<a name="1232"/>      view.cbwin.draw_string(xp, yp + view.cbwin.get_line_ascent(), detab(s, self.tab_width + 1))
+<a name="1233"/>      #
+<a name="1234"/>      # Note use of v.first + *s, rather than v.last.  v.last is
+<a name="1235"/>      # the last permissible cursor pos, rather than the last
+<a name="1236"/>      # permissible char to highlight.  If we have a split line and
+<a name="1237"/>      # it is say wholly selected, using v.last would leave the
+<a name="1238"/>      # last char unhighlighted.
+<a name="1239"/>      #
+<a name="1240"/>      if \mark_y &amp;
+<a name="1241"/>         (r := if (self.mark_y &lt; v.index &lt; self.cursor_y) | (self.mark_y &gt; v.index &gt; self.cursor_y) then {
+<a name="1242"/>                  # Whole line selected
+<a name="1243"/>                  Range(v.first, v.first + (0 &lt; *s))
+<a name="1244"/>               } else if v.index = self.mark_y = self.cursor_y then {
+<a name="1245"/>                  # Part of line
+<a name="1246"/>                  range1(v.first, v.first + *s, self.cursor_x, self.mark_x)
+<a name="1247"/>               } else if v.index = self.mark_y then {
+<a name="1248"/>                  if self.mark_y &lt; self.cursor_y then
+<a name="1249"/>                     range1(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
+<a name="1250"/>                  else
+<a name="1251"/>                     range1(v.first, v.first + *s, 1, self.mark_x)
+<a name="1252"/>               } else if v.index = self.cursor_y then {
+<a name="1253"/>                  if self.mark_y &gt; self.cursor_y then
+<a name="1254"/>                     range1(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
+<a name="1255"/>                  else
+<a name="1256"/>                     range1(v.first, v.first + *s, 1, self.cursor_x)
+<a name="1257"/>               })
+<a name="1258"/>      then {
+<a name="1259"/>         off1 := text_width_ex(view.cbwin, s, 1, r.lo - v.first + 1, self.tab_width)
+<a name="1260"/>         off2 := text_width_ex(view.cbwin, s, 1, r.hi - v.first + 1, self.tab_width)
+<a name="1261"/>         Gui.style.fill_selection_rectangle(view.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
+<a name="1262"/>      }
+<a name="1263"/>
+<a name="1264"/>      if (v.index = \self.cursor_y) &amp; (v.first &lt;= \self.cursor_x &lt;= v.last) then {
+<a name="1265"/>         if should_draw_focus() then {
+<a name="1266"/>            if self.cursor_on ~= 2 then
+<a name="1267"/>               Gui.style.draw_text_cursor(view.cbwin,
+<a name="1268"/>                                          xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+<a name="1269"/>                                          yp + view.cbwin.get_absolute_leading(), 
+<a name="1270"/>                                          view.cbwin.get_font_height())
+<a name="1271"/>         } else if \self.is_editable_flag &amp; \self.accepts_focus_flag then
+<a name="1272"/>            Gui.style.draw_shadow_text_cursor(view.cbwin,
+<a name="1273"/>                                              xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+<a name="1274"/>                                              yp + view.cbwin.get_absolute_leading(), 
+<a name="1275"/>                                              view.cbwin.get_font_height())
+<a name="1276"/>      }
+<a name="1277"/>   end
+<a name="1278"/>   
+<a name="1279"/>   public override calculate_line_height()
+<a name="1280"/>      return view.cbwin.get_line_height()
+<a name="1281"/>   end
+<a name="1282"/>
+<a name="1283"/>   public override keeps(e)
+<a name="1284"/>      # This component keeps all events if editable, but just the four
+<a name="1285"/>      # cursor keys otherwise.
+<a name="1286"/>      succeed \is_editable_flag | member(Key.CURSOR, e.code)
+<a name="1287"/>   end
+<a name="1288"/>
+<a name="1289"/>   public override calculate_subject_width()
+<a name="1290"/>      if /view_list then
+<a name="1291"/>         create_view_list()
+<a name="1292"/>      return self.long_line.tw + 2 * Gui.TEXT_INSET
+<a name="1293"/>   end
+<a name="1294"/>   
+<a name="1295"/>   #
+<a name="1296"/>   # Return the index into view_list containing the content position
+<a name="1297"/>   # x, y, or fail on out of range x or y.  Binary search is used.
+<a name="1298"/>   #
+<a name="1299"/>   public get_view_list_index(x, y)
+<a name="1300"/>      local i, j, mid, v
+<a name="1301"/>      /x := self.cursor_x
+<a name="1302"/>      /y := self.cursor_y
+<a name="1303"/>      # A search is not necessary with wrap mode off, since
+<a name="1304"/>      # view_list[i].index=i for every line.
+<a name="1305"/>      if is(line_splitter, DefaultLineSplitter) then
+<a name="1306"/>         return (v := view_list[y]) &amp; (v.index = y) &amp; (v.first &lt;= x &lt;= v.last) &amp; y
+<a name="1307"/>      i := 1
+<a name="1308"/>      j := *view_list
+<a name="1309"/>      while i &lt;= j do {
+<a name="1310"/>         mid := (i+j) / 2
+<a name="1311"/>         v := view_list[mid]
+<a name="1312"/>         if (v.index = y) &amp; (v.first &lt;= x &lt;= v.last) then
+<a name="1313"/>            return mid
+<a name="1314"/>         if (v.index &lt; y) | (v.index = y &amp; v.last &lt; x) then
+<a name="1315"/>            i := mid + 1
+<a name="1316"/>         else
+<a name="1317"/>            j := mid - 1
+<a name="1318"/>      }
+<a name="1319"/>   end
+<a name="1320"/>
+<a name="1321"/>   #
+<a name="1322"/>   # Create the view_list from the contents.
+<a name="1323"/>   # 
+<a name="1324"/>   public create_view_list()
+<a name="1325"/>      local spl
+<a name="1326"/>      spl := get_split(predict_view_width(w, vsb) - 2 * Gui.TEXT_INSET)
+<a name="1327"/>      view_list := spl.lines
+<a name="1328"/>      view_list_split_width := spl.width
+<a name="1329"/>      long_line := spl.long_line
+<a name="1330"/>   end
+<a name="1331"/>
+<a name="1332"/>   #
+<a name="1333"/>   # Clear the view list, forcing it to be re-created next
+<a name="1334"/>   # time it's needed.
+<a name="1335"/>   # 
+<a name="1336"/>   public clear_split_list()
+<a name="1337"/>      last_split := &amp;null
+<a name="1338"/>      clear_view_list()
+<a name="1339"/>   end
+<a name="1340"/>
+<a name="1341"/>   public clear_view_list()
+<a name="1342"/>      view_list := long_line := &amp;null
+<a name="1343"/>      invalidate_subject_width()
+<a name="1344"/>      invalidate_line_count()
+<a name="1345"/>   end
+<a name="1346"/>
+<a name="1347"/>   #
+<a name="1348"/>   # Run through the view list looking for the longest line.
+<a name="1349"/>   # 
+<a name="1350"/>   public find_long_line()
+<a name="1351"/>      local v
+<a name="1352"/>      long_line := view_list[1]
+<a name="1353"/>      every v := !view_list do {
+<a name="1354"/>         if v.tw &gt; long_line.tw then
+<a name="1355"/>            long_line := v
+<a name="1356"/>      }
+<a name="1357"/>   end
+<a name="1358"/>
+<a name="1359"/>   #
+<a name="1360"/>   # Update the view list, given that the contents have changed.
+<a name="1361"/>   # This takes care to minimize the work that has to be done.  The
+<a name="1362"/>   # first param is an index into the contents list.  The second param
+<a name="1363"/>   # indicates some view_list lines corresponding to those beginning
+<a name="1364"/>   # with index should be removed; the third param says that some should
+<a name="1365"/>   # be added.
+<a name="1366"/>   #
+<a name="1367"/>   # Any subject_width/line_count invalidations are done by the caller (or
+<a name="1368"/>   # end_handle).
+<a name="1369"/>   #
+<a name="1370"/>   public update_view_list(index, del, add)
+<a name="1371"/>      local vi, i, pos, j, v, p, s
+<a name="1372"/>
+<a name="1373"/>      # We allow adding new lines past the end of the current view_list.
+<a name="1374"/>      if del = 0 &amp; index = view_list[-1].index + 1 then
+<a name="1375"/>         vi := *view_list + 1
+<a name="1376"/>      else {
+<a name="1377"/>         vi := get_view_list_index(1, index) | syserr("No such view index: " || index)
+<a name="1378"/>         # Do the deletions
+<a name="1379"/>         while view_list[vi].index &lt;= index + del - 1 do {
+<a name="1380"/>            if view_list[vi] === long_line then
+<a name="1381"/>               long_line := &amp;null
+<a name="1382"/>            delete(view_list, vi)
+<a name="1383"/>         }
+<a name="1384"/>         # Did we just get rid of long_line; if so get it again.
+<a name="1385"/>         if /long_line then
+<a name="1386"/>            find_long_line()
+<a name="1387"/>      }
+<a name="1388"/>
+<a name="1389"/>      # Now do the additions
+<a name="1390"/>      every i := index to index + add - 1 do {
+<a name="1391"/>         pos := 1
+<a name="1392"/>         s := self.contents[i]
+<a name="1393"/>         every j := line_splitter.split(s, view_list_split_width) do {
+<a name="1394"/>            p := s[pos:j]
+<a name="1395"/>            v := ViewLine(i, p, pos, j - 1, text_width_ex(view.cbwin, p,,, self.tab_width))
+<a name="1396"/>            insert(view_list, vi, v)
+<a name="1397"/>            if /long_line | (v.tw &gt; long_line.tw) then
+<a name="1398"/>               long_line := v
+<a name="1399"/>            pos := j
+<a name="1400"/>            vi +:= 1
+<a name="1401"/>         }
+<a name="1402"/>         view_list[vi - 1].last +:= 1
+<a name="1403"/>      }
+<a name="1404"/>
+<a name="1405"/>      #
+<a name="1406"/>      # Adjust index values
+<a name="1407"/>      #
+<a name="1408"/>      if del ~= add then
+<a name="1409"/>         every view_list[vi to *view_list].index +:= (add - del)
+<a name="1410"/> 
+<a name="1411"/>     # Clear the cached split
+<a name="1412"/>      last_split := &amp;null
+<a name="1413"/>   end
+<a name="1414"/>
+<a name="1415"/>   #
+<a name="1416"/>   # Set the word-wrap mode, which should be one of the following
+<a name="1417"/>   # values :-
+<a name="1418"/>   #
+<a name="1419"/>   # &amp;null, "false", "off", "no", meaning don't do word-wrap (the default).
+<a name="1420"/>   #
+<a name="1421"/>   # an integer (eg 20), meaning wrap at that line length.
+<a name="1422"/>   #
+<a name="1423"/>   # "width", meaning wrap at the width of the component.
+<a name="1424"/>   #
+<a name="1425"/>   public set_wrap_mode(s)
+<a name="1426"/>      local wc
+<a name="1427"/>      if /flag(s) then
+<a name="1428"/>         line_splitter := DefaultLineSplitter(self)
+<a name="1429"/>      else if wc := integer(s) then
+<a name="1430"/>         line_splitter := ColumnLineSplitter(self, wc)
+<a name="1431"/>      else if s == "width" then
+<a name="1432"/>         line_splitter := WidthLineSplitter(self)
+<a name="1433"/>      else
+<a name="1434"/>         runerr("Bad wrap mode", s)
+<a name="1435"/>
+<a name="1436"/>      if is_live() then {
+<a name="1437"/>         clear_split_list()
+<a name="1438"/>         compute_and_invalidate()
+<a name="1439"/>         constrain_line()
+<a name="1440"/>      }
+<a name="1441"/>      link
+<a name="1442"/>   end
+<a name="1443"/>
+<a name="1444"/>   #
+<a name="1445"/>   # Indicate, if wrapping, whether to split words or not (default no).
+<a name="1446"/>   #
+<a name="1447"/>   public set_split_words(s)
+<a name="1448"/>      self.split_words_flag := need_flag(s)
+<a name="1449"/>      if is_live() then {
+<a name="1450"/>         clear_split_list()
+<a name="1451"/>         compute_and_invalidate()
+<a name="1452"/>         constrain_line()
+<a name="1453"/>      }
+<a name="1454"/>      link
+<a name="1455"/>   end
+<a name="1456"/>
+<a name="1457"/>   #
+<a name="1458"/>   # Set the tab width to use.  Default is from the style object.
+<a name="1459"/>   #
+<a name="1460"/>   public set_tab_width(n)
+<a name="1461"/>      self.tab_width := need_integer(n, 1)
+<a name="1462"/>      if is_live() then {
+<a name="1463"/>         clear_split_list()
+<a name="1464"/>         compute_and_invalidate()
+<a name="1465"/>         constrain_line()
+<a name="1466"/>      }
+<a name="1467"/>      link
+<a name="1468"/>   end
+<a name="1469"/>
+<a name="1470"/>   public override new()
+<a name="1471"/>      LineBasedScrollArea.new()
+<a name="1472"/>      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+<a name="1473"/>      cursor_ticker := Dispatcher.new_task{cursor_tick()}
+<a name="1474"/>      cursor_on := -1
+<a name="1475"/>      self.set_accepts_focus(&amp;yes)
+<a name="1476"/>      undo_manager := UndoManager()
+<a name="1477"/>      tab_width := Gui.TAB_WIDTH
+<a name="1478"/>      set_contents([])
+<a name="1479"/>      set_wrap_mode("off")
+<a name="1480"/>      self.cursor_x := self.cursor_y := 1
+<a name="1481"/>      self.is_editable_flag := &amp;yes
+<a name="1482"/>      self.need_constrain_line := 0
+<a name="1483"/>      self.menu_on_rpress_flag := &amp;yes
+<a name="1484"/>      self.move_on_rpress_flag := &amp;yes
+<a name="1485"/>      self.primary_selection_owner := EditableTextListPrimarySelectionOwner(self)
+<a name="1486"/>      view.
+<a name="1487"/>         set_pointer("xterm").
+<a name="1488"/>         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
+<a name="1489"/>         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS).
+<a name="1490"/>         connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS).
+<a name="1491"/>         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
+<a name="1492"/>         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+<a name="1493"/>      connect(handle_key, Event.KEY_PRESS)
+<a name="1494"/>      connect(handle_interrupted, Event.INTERRUPTED)
+<a name="1495"/>      connect(create cursor_ticker.start(), Event.GOT_FOCUS)
+<a name="1496"/>      connect(create cursor_ticker.stop(), Event.LOST_FOCUS)
+<a name="1497"/>      return
+<a name="1498"/>   end
+<a name="1499"/>end
+<a name="1500"/>
+<a name="1501"/>class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
+<a name="1502"/>   private const parent
+<a name="1503"/>
+<a name="1504"/>   protected override get_text()
+<a name="1505"/>      return cat_lines(\parent.primary)
+<a name="1506"/>   end
+<a name="1507"/>
+<a name="1508"/>   public override lost_ownership()
+<a name="1509"/>      # Since we may retain ownership after having been disposed of.
+<a name="1510"/>      if parent.is_live() then {
+<a name="1511"/>         parent.start_handle()
+<a name="1512"/>         parent.clear_mark()
+<a name="1513"/>         parent.end_handle()
+<a name="1514"/>      } else
+<a name="1515"/>         parent.clear_mark()
+<a name="1516"/>      parent.primary := &amp;null
+<a name="1517"/>   end
+<a name="1518"/>
+<a name="1519"/>   public new(parent)
+<a name="1520"/>      self.parent := parent
+<a name="1521"/>      return
+<a name="1522"/>   end
+<a name="1523"/>end
+<a name="1524"/>
+<a name="1525"/>class ViewLine()
+<a name="1526"/>   package readable 
+<a name="1527"/>      index, 
+<a name="1528"/>      str,
+<a name="1529"/>      first, 
+<a name="1530"/>      last,
+<a name="1531"/>      tw
+<a name="1532"/>
+<a name="1533"/>   public new(index, str, first, last, tw)
+<a name="1534"/>      self.index := index
+<a name="1535"/>      self.str := str
+<a name="1536"/>      self.first := first
+<a name="1537"/>      self.last := last
+<a name="1538"/>      self.tw := tw
+<a name="1539"/>      return
+<a name="1540"/>   end
+<a name="1541"/>end
+<a name="1542"/>
+<a name="1543"/>class TextSplit()
+<a name="1544"/>   public const 
+<a name="1545"/>      width, 
+<a name="1546"/>      lines, 
+<a name="1547"/>      long_line
+<a name="1548"/>
+<a name="1549"/>   public new(width, lines, long_line)
+<a name="1550"/>      self.width := width
+<a name="1551"/>      self.lines := lines
+<a name="1552"/>      self.long_line := long_line
+<a name="1553"/>      return
+<a name="1554"/>   end
+<a name="1555"/>end
+<a name="1556"/>
+<a name="1557"/>abstract class EditableTextListEdit(UndoableEdit)
+<a name="1558"/>   public const
+<a name="1559"/>      parent
+<a name="1560"/>   public
+<a name="1561"/>      cursor_x, 
+<a name="1562"/>      cursor_y,
+<a name="1563"/>      mark_x,
+<a name="1564"/>      mark_y
+<a name="1565"/>
+<a name="1566"/>   public doit()
+<a name="1567"/>      save()
+<a name="1568"/>      self.redo_impl()
+<a name="1569"/>      parent.changed := &amp;yes
+<a name="1570"/>   end
+<a name="1571"/>
+<a name="1572"/>   public override redo()
+<a name="1573"/>      restore()
+<a name="1574"/>      self.redo_impl()
+<a name="1575"/>      parent.changed := &amp;yes
+<a name="1576"/>   end
+<a name="1577"/>
+<a name="1578"/>   public override undo()
+<a name="1579"/>      self.undo_impl()
+<a name="1580"/>      restore()
+<a name="1581"/>      parent.changed := &amp;yes
+<a name="1582"/>   end
+<a name="1583"/>
+<a name="1584"/>   public abstract redo_impl()
+<a name="1585"/>   public abstract undo_impl()
+<a name="1586"/>
+<a name="1587"/>   public save()
+<a name="1588"/>      self.cursor_x := parent.cursor_x
+<a name="1589"/>      self.cursor_y := parent.cursor_y
+<a name="1590"/>      self.mark_x := parent.mark_x
+<a name="1591"/>      self.mark_y := parent.mark_y
+<a name="1592"/>   end
+<a name="1593"/>
+<a name="1594"/>   public restore()
+<a name="1595"/>      parent.cursor_x := self.cursor_x
+<a name="1596"/>      parent.cursor_y := self.cursor_y
+<a name="1597"/>      parent.mark_x := self.mark_x
+<a name="1598"/>      parent.mark_y := self.mark_y
+<a name="1599"/>   end
+<a name="1600"/>
+<a name="1601"/>   public new(parent)
+<a name="1602"/>      self.parent := parent
+<a name="1603"/>      return
+<a name="1604"/>   end
+<a name="1605"/>end
+<a name="1606"/>
+<a name="1607"/>class EditableTextListDefaultEdit(EditableTextListEdit)
+<a name="1608"/>   public s
+<a name="1609"/>
+<a name="1610"/>   public override add_edit(other)
+<a name="1611"/>      if is(other, gui.EditableTextListDefaultEdit) &amp;
+<a name="1612"/>         (other.cursor_y = self.cursor_y) &amp;
+<a name="1613"/>         (other.cursor_x = self.cursor_x + *s) then {
+<a name="1614"/>            s ||:= other.s
+<a name="1615"/>            return
+<a name="1616"/>      }
+<a name="1617"/>   end
+<a name="1618"/>
+<a name="1619"/>   public override redo_impl()      
+<a name="1620"/>      parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] ||
+<a name="1621"/>                     s || parent.contents[parent.cursor_y][parent.cursor_x:0]
+<a name="1622"/>      parent.cursor_x +:= *s
+<a name="1623"/>      parent.clear_mark()
+<a name="1624"/>      parent.update_view_list(parent.cursor_y, 1, 1)
+<a name="1625"/>   end
+<a name="1626"/>
+<a name="1627"/>   public override undo_impl()
+<a name="1628"/>      parent.contents[self.cursor_y][self.cursor_x +: *s] := ""
+<a name="1629"/>      parent.update_view_list(self.cursor_y, 1, 1)
+<a name="1630"/>   end
+<a name="1631"/>
+<a name="1632"/>   public override new(parent, e)
+<a name="1633"/>      EditableTextListEdit.new(parent)
+<a name="1634"/>      self.s := e
+<a name="1635"/>      return
+<a name="1636"/>   end
+<a name="1637"/>end
+<a name="1638"/>
+<a name="1639"/>class EditableTextListReturnEdit(EditableTextListEdit)
+<a name="1640"/>   public override redo_impl()
+<a name="1641"/>      local s
+<a name="1642"/>      s := parent.contents[parent.cursor_y]
+<a name="1643"/>      parent.contents[parent.cursor_y] := s[1:parent.cursor_x]
+<a name="1644"/>      insert(parent.contents, parent.cursor_y + 1, s[parent.cursor_x:0])
+<a name="1645"/>      parent.update_view_list(parent.cursor_y, 1, 2)
+<a name="1646"/>      parent.cursor_y +:= 1
+<a name="1647"/>      parent.cursor_x := 1
+<a name="1648"/>   end
+<a name="1649"/>
+<a name="1650"/>   public override undo_impl()
+<a name="1651"/>      parent.contents[self.cursor_y] ||:= parent.contents[self.cursor_y + 1]
+<a name="1652"/>      delete(parent.contents, self.cursor_y + 1)
+<a name="1653"/>      parent.update_view_list(self.cursor_y, 2, 1)
+<a name="1654"/>   end
+<a name="1655"/>end
+<a name="1656"/>
+<a name="1657"/>class EditableTextListDeleteRightEdit(EditableTextListEdit)
+<a name="1658"/>   public ch
+<a name="1659"/>
+<a name="1660"/>   public override add_edit(other)
+<a name="1661"/>      if is(other, EditableTextListDeleteRightEdit) &amp;
+<a name="1662"/>         \ch &amp; \other.ch &amp;
+<a name="1663"/>         (cursor_y = other.cursor_y) &amp;
+<a name="1664"/>         (cursor_x = other.cursor_x) then {
+<a name="1665"/>            ch ||:= other.ch
+<a name="1666"/>            return
+<a name="1667"/>      }
+<a name="1668"/>   end
+<a name="1669"/>
+<a name="1670"/>   public override redo_impl()
+<a name="1671"/>      if /ch then {
+<a name="1672"/>         # We know cursor_y &lt; *contents from the handle method above.
+<a name="1673"/>         parent.contents[parent.cursor_y] ||:= parent.contents[parent.cursor_y + 1]
+<a name="1674"/>         delete(parent.contents, parent.cursor_y + 1)
+<a name="1675"/>         parent.update_view_list(parent.cursor_y, 2, 1)
+<a name="1676"/>      } else {
+<a name="1677"/>         # Cursor not at end of line
+<a name="1678"/>         parent.contents[parent.cursor_y][parent.cursor_x +: *ch] := ""
+<a name="1679"/>         parent.update_view_list(parent.cursor_y, 1, 1)
+<a name="1680"/>      }
+<a name="1681"/>      parent.clear_mark()
+<a name="1682"/>   end
+<a name="1683"/>
+<a name="1684"/>   public override undo_impl()
+<a name="1685"/>      local t
+<a name="1686"/>      if /ch then {
+<a name="1687"/>         t := parent.contents[cursor_y][cursor_x:0]
+<a name="1688"/>         parent.contents[cursor_y][cursor_x:0] := ""
+<a name="1689"/>         insert(parent.contents, cursor_y + 1, t)
+<a name="1690"/>         parent.update_view_list(cursor_y, 1, 2)
+<a name="1691"/>      } else {
+<a name="1692"/>         if cursor_x &gt;  *parent.contents[cursor_y] then
+<a name="1693"/>            parent.contents[cursor_y] ||:= ch
+<a name="1694"/>         else
+<a name="1695"/>            parent.contents[cursor_y][cursor_x] := ch || parent.contents[cursor_y][cursor_x]
+<a name="1696"/>         parent.update_view_list(cursor_y, 1, 1)
+<a name="1697"/>      }
+<a name="1698"/>   end
+<a name="1699"/>
+<a name="1700"/>   public override new(parent)
+<a name="1701"/>      EditableTextListEdit.new(parent)
+<a name="1702"/>      if parent.cursor_x &lt; *parent.contents[parent.cursor_y] + 1 then
+<a name="1703"/>         ch := parent.contents[parent.cursor_y][parent.cursor_x]
+<a name="1704"/>      return
+<a name="1705"/>   end
+<a name="1706"/>end
+<a name="1707"/>
+<a name="1708"/>class EditableTextListDeleteLeftEdit(EditableTextListEdit)
+<a name="1709"/>   public ch, cut
+<a name="1710"/>
+<a name="1711"/>   public override add_edit(other)
+<a name="1712"/>      if is(other, EditableTextListDeleteLeftEdit) &amp;
+<a name="1713"/>         \ch &amp; \other.ch &amp;
+<a name="1714"/>         (cursor_y = other.cursor_y) &amp;
+<a name="1715"/>         (cursor_x = other.cursor_x + *ch) then {
+<a name="1716"/>            ch := other.ch || ch
+<a name="1717"/>            return
+<a name="1718"/>      }
+<a name="1719"/>   end
+<a name="1720"/>
+<a name="1721"/>   public override redo_impl()
+<a name="1722"/>      if /ch then {
+<a name="1723"/>         parent.cursor_x := cut
+<a name="1724"/>         parent.contents[parent.cursor_y - 1] ||:= parent.contents[parent.cursor_y]
+<a name="1725"/>         delete(parent.contents, parent.cursor_y)
+<a name="1726"/>         parent.update_view_list(parent.cursor_y - 1, 2, 1)
+<a name="1727"/>         parent.cursor_y -:= 1
+<a name="1728"/>      } else {
+<a name="1729"/>         # parent.cursor_x &gt; 1
+<a name="1730"/>         parent.contents[parent.cursor_y][parent.cursor_x -: *ch] := ""
+<a name="1731"/>         parent.cursor_x -:= *ch
+<a name="1732"/>         parent.update_view_list(parent.cursor_y, 1, 1)
+<a name="1733"/>      }
+<a name="1734"/>      parent.clear_mark()
+<a name="1735"/>   end
+<a name="1736"/>
+<a name="1737"/>   public override undo_impl()
+<a name="1738"/>      local t
+<a name="1739"/>      if /ch then {
+<a name="1740"/>         t :=  parent.contents[cursor_y - 1][cut:0]
+<a name="1741"/>         parent.contents[cursor_y - 1][cut:0] := ""
+<a name="1742"/>         insert(parent.contents, cursor_y, t)
+<a name="1743"/>         parent.update_view_list(cursor_y - 1, 1, 2)
+<a name="1744"/>      } else {
+<a name="1745"/>         if cursor_x - *ch &gt; *parent.contents[cursor_y] then
+<a name="1746"/>            parent.contents[cursor_y] ||:= ch
+<a name="1747"/>         else 
+<a name="1748"/>            parent.contents[cursor_y][cursor_x - *ch] := ch || parent.contents[cursor_y][cursor_x - *ch]
+<a name="1749"/>         parent.update_view_list(cursor_y, 1, 1)
+<a name="1750"/>      }
+<a name="1751"/>   end
+<a name="1752"/>
+<a name="1753"/>   public override new(parent)
+<a name="1754"/>      EditableTextListEdit.new(parent)
+<a name="1755"/>      if parent.cursor_x = 1 then
+<a name="1756"/>         # We know parent.cursor_y &gt; 1 from the handle method
+<a name="1757"/>         cut := *parent.contents[parent.cursor_y - 1] + 1
+<a name="1758"/>      else
+<a name="1759"/>         ch := parent.contents[parent.cursor_y][parent.cursor_x - 1]
+<a name="1760"/>      return
+<a name="1761"/>   end
+<a name="1762"/>end
+<a name="1763"/>
+<a name="1764"/>class EditableTextListDeleteLineEdit(EditableTextListEdit)
+<a name="1765"/>   public s, last
+<a name="1766"/>
+<a name="1767"/>   public override redo_impl()
+<a name="1768"/>      s := parent.contents[parent.cursor_y]
+<a name="1769"/>      if parent.cursor_y = *parent.contents then {
+<a name="1770"/>         parent.contents[parent.cursor_y][1:0] := ""
+<a name="1771"/>         parent.update_view_list(parent.cursor_y, 1, 1)
+<a name="1772"/>         self.last := &amp;yes
+<a name="1773"/>      } else {
+<a name="1774"/>         delete(parent.contents, parent.cursor_y)
+<a name="1775"/>         parent.update_view_list(parent.cursor_y, 1, 0)
+<a name="1776"/>      }
+<a name="1777"/>      parent.cursor_x := 1
+<a name="1778"/>      parent.clear_mark()
+<a name="1779"/>   end
+<a name="1780"/>
+<a name="1781"/>   public override undo_impl()
+<a name="1782"/>      if \self.last then {
+<a name="1783"/>         parent.contents[self.cursor_y] := s
+<a name="1784"/>         parent.update_view_list(self.cursor_y, 1, 1)
+<a name="1785"/>      } else {
+<a name="1786"/>         insert(parent.contents, self.cursor_y, s)
+<a name="1787"/>         parent.update_view_list(self.cursor_y, 0, 1)
+<a name="1788"/>      }
+<a name="1789"/>   end
+<a name="1790"/>end
+<a name="1791"/>
+<a name="1792"/>class EditableTextListDeleteRegionEdit(EditableTextListEdit)
+<a name="1793"/>   public l, pos
+<a name="1794"/>
+<a name="1795"/>   public override redo_impl()
+<a name="1796"/>      l := []
+<a name="1797"/>      if parent.mark_y &lt; parent.cursor_y then {
+<a name="1798"/>         pos := parent.mark_y
+<a name="1799"/>         put(l, parent.contents[parent.mark_y])
+<a name="1800"/>         parent.contents[parent.mark_y] := parent.contents[parent.mark_y][1:parent.mark_x] || parent.contents[parent.cursor_y][parent.cursor_x:0] 
+<a name="1801"/>         every parent.mark_y + 1 to parent.cursor_y do {
+<a name="1802"/>            put(l, parent.contents[parent.mark_y + 1])
+<a name="1803"/>            delete(parent.contents, parent.mark_y + 1)
+<a name="1804"/>         }
+<a name="1805"/>         parent.cursor_x := parent.mark_x
+<a name="1806"/>         parent.cursor_y := parent.mark_y
+<a name="1807"/>      } else if parent.mark_y &gt; parent.cursor_y then {
+<a name="1808"/>         pos := parent.cursor_y
+<a name="1809"/>         put(l,  parent.contents[parent.cursor_y])
+<a name="1810"/>         parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] || parent.contents[parent.mark_y][parent.mark_x:0] 
+<a name="1811"/>         every parent.cursor_y + 1 to parent.mark_y do {
+<a name="1812"/>            put(l, parent.contents[parent.cursor_y + 1])
+<a name="1813"/>            delete(parent.contents, parent.cursor_y + 1)
+<a name="1814"/>         }
+<a name="1815"/>      } else {
+<a name="1816"/>         # parent.mark_y = cursor_y
+<a name="1817"/>         pos := parent.cursor_y
+<a name="1818"/>         put(l, parent.contents[parent.cursor_y])
+<a name="1819"/>         if parent.mark_x &lt; parent.cursor_x then {
+<a name="1820"/>            parent.contents[parent.cursor_y][parent.mark_x:parent.cursor_x] := ""
+<a name="1821"/>            parent.cursor_x := parent.mark_x
+<a name="1822"/>         } else {
+<a name="1823"/>            parent.contents[parent.cursor_y][parent.cursor_x:parent.mark_x] := ""
+<a name="1824"/>         }
+<a name="1825"/>      }
+<a name="1826"/>      parent.update_view_list(pos, *l, 1)
+<a name="1827"/>      parent.clear_mark()
+<a name="1828"/>   end
+<a name="1829"/>
+<a name="1830"/>   public override undo_impl()
+<a name="1831"/>      local n
+<a name="1832"/>      n := *l
+<a name="1833"/>      delete(parent.contents, pos)
+<a name="1834"/>      while insert(parent.contents, pos, pull(l))
+<a name="1835"/>      parent.update_view_list(pos, 1, n)
+<a name="1836"/>   end
+<a name="1837"/>end
+<a name="1838"/>
+<a name="1839"/>class EditableTextListPasteEdit(EditableTextListEdit)
+<a name="1840"/>   public s, pre, n
+<a name="1841"/>
+<a name="1842"/>   public override redo_impl()
+<a name="1843"/>      local t, nl
+<a name="1844"/>
+<a name="1845"/>      n := 0
+<a name="1846"/>      pre := parent.contents[parent.cursor_y]
+<a name="1847"/>
+<a name="1848"/>      s ? repeat {
+<a name="1849"/>         t := tab(upto('\n') | 0)
+<a name="1850"/>         if ="\n" then {
+<a name="1851"/>            if t[-1] == "\r" then
+<a name="1852"/>               t[-1] := ""
+<a name="1853"/>            nl := parent.contents[parent.cursor_y][parent.cursor_x:0]
+<a name="1854"/>            parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] || t
+<a name="1855"/>            insert(parent.contents, parent.cursor_y + 1, nl)
+<a name="1856"/>            n +:= 1
+<a name="1857"/>            parent.cursor_y +:= 1
+<a name="1858"/>            parent.cursor_x := 1
+<a name="1859"/>         } else {
+<a name="1860"/>            parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] || t || parent.contents[parent.cursor_y][parent.cursor_x:0]
+<a name="1861"/>            parent.cursor_x +:= *t
+<a name="1862"/>            break
+<a name="1863"/>         }
+<a name="1864"/>      }
+<a name="1865"/>      parent.update_view_list(self.cursor_y, 1, n + 1)
+<a name="1866"/>   end
+<a name="1867"/>
+<a name="1868"/>   public override undo_impl()
+<a name="1869"/>      parent.contents[self.cursor_y] := pre
+<a name="1870"/>      every 1 to n do
+<a name="1871"/>         delete(parent.contents, self.cursor_y + 1)
+<a name="1872"/>      parent.update_view_list(self.cursor_y, n + 1, 1)
+<a name="1873"/>   end
+<a name="1874"/>
+<a name="1875"/>   public override new(parent, s)
+<a name="1876"/>      EditableTextListEdit.new(parent)
+<a name="1877"/>      self.s := s
+<a name="1878"/>      return
+<a name="1879"/>   end
+<a name="1880"/>end
+<a name="1881"/>
+<a name="1882"/>abstract class LineSplitter()
+<a name="1883"/>   public const parent
+<a name="1884"/>
+<a name="1885"/>   public abstract split(s)
+<a name="1886"/>
+<a name="1887"/>   public new(parent)
+<a name="1888"/>      self.parent := parent
+<a name="1889"/>      return
+<a name="1890"/>   end
+<a name="1891"/>end
+<a name="1892"/>
+<a name="1893"/>class ColumnLineSplitter(LineSplitter)
+<a name="1894"/>   public const wrap_col
+<a name="1895"/>
+<a name="1896"/>   public override split(s)
+<a name="1897"/>      local ch, ds, p
+<a name="1898"/>
+<a name="1899"/>      ds := ""
+<a name="1900"/>      s ? {
+<a name="1901"/>         while ch := move(1) do {
+<a name="1902"/>            ds ||:= ch
+<a name="1903"/>            if *detab(ds, parent.tab_width + 1) &gt; wrap_col then {
+<a name="1904"/>               if *ds &gt; 1 then {
+<a name="1905"/>                  ds[-1] := ""
+<a name="1906"/>                  move(-1)
+<a name="1907"/>               }
+<a name="1908"/>               if /parent.split_words_flag &amp; upto('\t ', ds) then {
+<a name="1909"/>                  while any(~'\t ', ds[-1]) do {
+<a name="1910"/>                     ds[-1] := ""
+<a name="1911"/>                     move(-1)
+<a name="1912"/>                  }
+<a name="1913"/>               }
+<a name="1914"/>               p := &amp;pos
+<a name="1915"/>               suspend p
+<a name="1916"/>               ds := ""
+<a name="1917"/>            }
+<a name="1918"/>
+<a name="1919"/>         }
+<a name="1920"/>         if p ~=== &amp;pos then
+<a name="1921"/>            suspend .&amp;pos
+<a name="1922"/>      }
+<a name="1923"/>   end
+<a name="1924"/>
+<a name="1925"/>   public override new(parent, wrap_col)
+<a name="1926"/>      LineSplitter.new(parent)
+<a name="1927"/>      self.wrap_col := wrap_col
+<a name="1928"/>      return
+<a name="1929"/>   end
+<a name="1930"/>end
+<a name="1931"/>
+<a name="1932"/>class DefaultLineSplitter(LineSplitter)
+<a name="1933"/>   public override split(s)
+<a name="1934"/>      return *s + 1
+<a name="1935"/>   end
+<a name="1936"/>end
+<a name="1937"/>
+<a name="1938"/>class WidthLineSplitter(LineSplitter)
+<a name="1939"/>   public override split(s, width)
+<a name="1940"/>      local ch, ds, p
+<a name="1941"/>      width := need_integer(width)
+<a name="1942"/>      ds := ""
+<a name="1943"/>      s ? {
+<a name="1944"/>         while ch := move(1) do {
+<a name="1945"/>            ds ||:= ch
+<a name="1946"/>            if text_width_ex(parent.view.cbwin, ds,,, parent.tab_width) &gt; width then {
+<a name="1947"/>               if *ds &gt; 1 then {
+<a name="1948"/>                  ds[-1] := ""
+<a name="1949"/>                  move(-1)
+<a name="1950"/>               }
+<a name="1951"/>               if /parent.split_words_flag &amp; upto('\t ', ds) then {
+<a name="1952"/>                  while any(~'\t ', ds[-1]) do {
+<a name="1953"/>                     ds[-1] := ""
+<a name="1954"/>                     move(-1)
+<a name="1955"/>                  }
+<a name="1956"/>               }
+<a name="1957"/>               p := &amp;pos
+<a name="1958"/>               suspend p
+<a name="1959"/>               ds := ""
+<a name="1960"/>            }
+<a name="1961"/>
+<a name="1962"/>         }
+<a name="1963"/>         if p ~=== &amp;pos then
+<a name="1964"/>            suspend .&amp;pos
+<a name="1965"/>      }
+<a name="1966"/>   end
+<a name="1967"/>end
+</pre></body></html>

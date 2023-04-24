@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>repetit.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     repetit.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure find smallest repetition pattern in list
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     March 14, 1995
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure returns the length of the smallest range of values
+<a name="18"/>#  that repeat in a list.  For example, if
+<a name="19"/>#
+<a name="20"/>#	L := [1, 2, 3, 1, 2, 3, 1, 2, 3]
+<a name="21"/>#
+<a name="22"/>#  repetit(L) returns 3.  If there is no repetition, repetit() returns
+<a name="23"/>#  the length of the list.
+<a name="24"/>#
+<a name="25"/>############################################################################
+<a name="26"/>
+<a name="27"/>package ipl.repetit
+<a name="28"/>
+<a name="29"/>procedure repetit(L)
+<a name="30"/>   local c, n, l,  i
+<a name="31"/>
+<a name="32"/>   c := L[1]				# starting value
+<a name="33"/>   l := *L				# end of list
+<a name="34"/>
+<a name="35"/>   n := 2				# initial hypothesis
+<a name="36"/>
+<a name="37"/>   n := \{				# tricky coding -- nonnull on success
+<a name="38"/>      until n &gt;= l do
+<a name="39"/>         if hypothesis(L, n) then break n else {
+<a name="40"/>            n :=  \{			# more tricky coding
+<a name="41"/>               every i := n + 1 to l do
+<a name="42"/>                  if L[i] === c then break i
+<a name="43"/>                } | return l		# no repetition; whole thing - 1
+<a name="44"/>            } | return l
+<a name="45"/>         }
+<a name="46"/>
+<a name="47"/>   return n - 1
+<a name="48"/>
+<a name="49"/>end
+<a name="50"/>
+<a name="51"/>procedure hypothesis(L, n)
+<a name="52"/>   local s, i, j
+<a name="53"/>
+<a name="54"/>   s := *L / n
+<a name="55"/>
+<a name="56"/>   every j := 1 to s do
+<a name="57"/>      every i := 1 to n do
+<a name="58"/>         if L[i] ~=== L[i + (n - 1) * j] then fail
+<a name="59"/>
+<a name="60"/>   return
+<a name="61"/>
+<a name="62"/>end
+</pre></body></html>

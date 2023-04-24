@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SurfacePattern</title></head><body>
+<h1>SurfacePattern</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="cairo.Pattern.html" target="displayFrame">cairo.Pattern</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="cairo-package.html" target="listFrame">cairo</a></dd>
+</dl><p/>
+This class wraps a cairo surface pattern instance.
+<p/><a href="cairo-cairo.icn.html#442" target="displayFrame">Source - cairo.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="cairo.Pattern.html">cairo.Pattern</a>
+<a href="cairo.SurfacePattern.html">cairo.SurfacePattern</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from cairo.Pattern</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="cairo.Pattern.html#close">close()</a>
+<a href="cairo.Pattern.html#get_extend">get_extend()</a>
+<a href="cairo.Pattern.html#get_filter">get_filter()</a>
+<a href="cairo.Pattern.html#get_matrix">get_matrix()</a>
+<a href="cairo.Pattern.html#get_matrix_impl">get_matrix_impl()</a>
+<a href="cairo.Pattern.html#get_type">get_type()</a>
+<a href="cairo.Pattern.html#identity_matrix">identity_matrix()</a>
+<a href="cairo.Pattern.html#set_extend">set_extend()</a>
+<a href="cairo.Pattern.html#set_filter">set_filter()</a>
+<a href="cairo.Pattern.html#set_matrix">set_matrix()</a>
+<a href="cairo.Pattern.html#set_matrix_impl">set_matrix_impl()</a>
+<a href="cairo.Pattern.html#set_ptr">set_ptr()</a>
+<a href="cairo.Pattern.html#to_pattern">to_pattern()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from cairo.Pattern</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="cairo.Pattern.html#ptr">ptr</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#create_for_ptr">create_for_ptr()</a>
+<a href="#get_surface">get_surface()</a>
+<a href="#get_surface_impl">get_surface_impl()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="create_for_ptr"/>
+<h3>create_for_ptr(ptr)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#449" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_surface"/>
+<h3>get_surface()</h3>
+public<p/>
+<dl>
+<dd>
+Return the <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code> used by this pattern; note that a new
+wrapper is returned which must be closed separately to that used
+when the pattern was created.
+<p/><a href="cairo-cairo.icn.html#453" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_surface_impl"/>
+<h3>get_surface_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#461" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#445" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(sur)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance from the given <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code>.
+<p/><a href="cairo-cairo.icn.html#465" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl(sur)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#463" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+</body></html>

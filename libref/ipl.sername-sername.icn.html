@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>sername.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     sername.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce serialized names
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     June 27, 1997
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#  This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  sername(p, s, n, i) produces a series of names of the form
+<a name="18"/>#  p&lt;nnn&gt;s.  If n is given it determines the number of digits in
+<a name="19"/>#  &lt;nnn&gt;.  If i is given it resets the sequence to start with i.  &lt;nnn&gt; is
+<a name="20"/>#  an right-adjusted integer padded with zeros.
+<a name="21"/>#
+<a name="22"/>#  Ordinarily, the arguments only are given on the first call. Subsequent
+<a name="23"/>#  calls without arguments give the next name.
+<a name="24"/>#
+<a name="25"/>#  For example, sername("image", ".gif", 3, 0) produces "image000.gif",
+<a name="26"/>#  and subsequently, sername() produces "image001.gif", image002.gif",
+<a name="27"/>#  and so on.
+<a name="28"/>#
+<a name="29"/>#  The defaults, if sername() is first called without any arguments is
+<a name="30"/>#  as for the call sername("file", 3, 0, "").
+<a name="31"/>#
+<a name="32"/>#  If any argument changes on subsequent calls, all non-null arguments are
+<a name="33"/>#  reset.
+<a name="34"/>#
+<a name="35"/>############################################################################
+<a name="36"/>
+<a name="37"/>package ipl.sername
+<a name="38"/>
+<a name="39"/>procedure sername(p, s, n, i)
+<a name="40"/>   static prefix, suffix, cols, serial, name, first
+<a name="41"/>
+<a name="42"/>   initial {
+<a name="43"/>      prefix := "file"
+<a name="44"/>      suffix := ""
+<a name="45"/>      cols := 3
+<a name="46"/>      serial := 0
+<a name="47"/>      first := serial
+<a name="48"/>      }
+<a name="49"/>
+<a name="50"/>   # See if anything has changed.
+<a name="51"/>
+<a name="52"/>   unless p === prefix &amp; s === suffix &amp; n === cols &amp; first === i then {
+<a name="53"/>      prefix := \p
+<a name="54"/>      suffix := \s
+<a name="55"/>      cols := \n
+<a name="56"/>      first := serial := \i
+<a name="57"/>      }
+<a name="58"/>
+<a name="59"/>   name := prefix || right(serial, cols, "0") || suffix
+<a name="60"/>
+<a name="61"/>   serial +:= 1
+<a name="62"/>
+<a name="63"/>   return name
+<a name="64"/>
+<a name="65"/>end
+</pre></body></html>

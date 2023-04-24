@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>randarea.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     randarea.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to generate random points in areas
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     May 2, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  These procedures generate randomly selected points with specified
+<a name="18"/>#  areas.
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>#
+<a name="22"/>#  Links:  gobject
+<a name="23"/>#
+<a name="24"/>############################################################################
+<a name="25"/>
+<a name="26"/>package ipl.randarea
+<a name="27"/>
+<a name="28"/>import
+<a name="29"/>   ipl.gobject(Point),
+<a name="30"/>   util(Math)
+<a name="31"/>
+<a name="32"/>procedure randrect(x, y, w, h)
+<a name="33"/>
+<a name="34"/>   w := integer(w) | runerr(101, w)
+<a name="35"/>   h := integer(h) | runerr(101, h)
+<a name="36"/>
+<a name="37"/>   x -:= 1
+<a name="38"/>   y -:= 1
+<a name="39"/>   
+<a name="40"/>   suspend Point(x + ?|w, y + ?h)
+<a name="41"/>
+<a name="42"/>end
+<a name="43"/>
+<a name="44"/>procedure randellip(x, y, w, h)
+<a name="45"/>   local r1, r2, xc, yc, xp, yp, xq, yq, theta, rp, r
+<a name="46"/>
+<a name="47"/>   w := integer(w) | runerr(101, w)
+<a name="48"/>   h := integer(h) | runerr(101, h)
+<a name="49"/>
+<a name="50"/>   r1 := w / 2
+<a name="51"/>   r2 := h / 2
+<a name="52"/>   xc := x + r1
+<a name="53"/>   yc := y + r2
+<a name="54"/>
+<a name="55"/>   x -:= 1
+<a name="56"/>   y -:= 1
+<a name="57"/>   
+<a name="58"/>   repeat {
+<a name="59"/>      xq := x + ?w
+<a name="60"/>      yq := y + ?h
+<a name="61"/>      xp := xq - xc
+<a name="62"/>      yp := yq - yc
+<a name="63"/>      theta := -Math.atan(yp, xp)
+<a name="64"/>      rp := Math.sqrt(xp ^ 2 + yp ^ 2)
+<a name="65"/>      r := Math.sqrt((r1 * Math.cos(theta)) ^ 2 + (r2 * Math.sin(theta)) ^ 2)
+<a name="66"/>      if r &gt; rp then suspend Point(xq, yq)
+<a name="67"/>      }
+<a name="68"/>
+<a name="69"/>end
+</pre></body></html>

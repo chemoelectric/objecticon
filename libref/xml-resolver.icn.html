@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>resolver.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: resolver.icn 9111 2021-05-16 10:46:29Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>import util
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># Base class for the resolver called by the parser to resolve external IDs.
+<a name="15"/>#
+<a name="16"/>abstract class Resolver()
+<a name="17"/>   #
+<a name="18"/>   # Resolve the given external ID into a string, or fail if that is
+<a name="19"/>   # not possible.  The `base` may be null, or the returned value from
+<a name="20"/>   # a previous resolution (see `Resolved`).
+<a name="21"/>   #
+<a name="22"/>   public abstract resolve(base, external_id)
+<a name="23"/>end
+<a name="24"/>
+<a name="25"/>#
+<a name="26"/># The result of a call to a `Resolver`.  Returned is a pair, namely a
+<a name="27"/># base url to pass back to the resolver for resolutions within the
+<a name="28"/># content returned, and the content of the external id itself.
+<a name="29"/>#
+<a name="30"/>class Resolved()
+<a name="31"/>   public const
+<a name="32"/>      base
+<a name="33"/>   package readable
+<a name="34"/>      content
+<a name="35"/>
+<a name="36"/>   public new(base, content)
+<a name="37"/>      self.base := base
+<a name="38"/>      self.content := need_string(content)
+<a name="39"/>      return
+<a name="40"/>   end
+<a name="41"/>end
+<a name="42"/>
+<a name="43"/>#
+<a name="44"/># A simple implementation that just returns the empty string as
+<a name="45"/># resolution of any external id.
+<a name="46"/>#
+<a name="47"/>class EmptyResolver(Resolver)
+<a name="48"/>   public override resolve(base, external_id)
+<a name="49"/>      return Resolved(base, "")
+<a name="50"/>   end
+<a name="51"/>end
+<a name="52"/>
+</pre></body></html>

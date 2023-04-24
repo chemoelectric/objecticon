@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>xmlerrorhandler.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: xmlerrorhandler.icn 7415 2019-01-25 16:51:58Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>import io
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># A useful class for handling error/warning/validity messages from the XML parser.
+<a name="15"/>#
+<a name="16"/>class XmlErrorHandler()
+<a name="17"/>   public
+<a name="18"/>      out_file,
+<a name="19"/>      level
+<a name="20"/>
+<a name="21"/>   #
+<a name="22"/>   # Set the output file
+<a name="23"/>   #
+<a name="24"/>   public set_out_file(x)
+<a name="25"/>      self.out_file := x
+<a name="26"/>      link
+<a name="27"/>   end
+<a name="28"/>
+<a name="29"/>   #
+<a name="30"/>   # Set the level to use :-
+<a name="31"/>   #
+<a name="32"/>   # 0 - no output
+<a name="33"/>   # 1 - fatal only
+<a name="34"/>   # 2 - fatal + validity
+<a name="35"/>   # 3 - fatal + validity + warning
+<a name="36"/>   #
+<a name="37"/>   # The default is 3
+<a name="38"/>   #
+<a name="39"/>   public set_level(n)
+<a name="40"/>      self.level := n
+<a name="41"/>      link
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   #
+<a name="45"/>   # Connect the error handler to the given parser.
+<a name="46"/>   # :Parameters :
+<a name="47"/>   # :  `p` - An `XmlParser` instance.
+<a name="48"/>   #
+<a name="49"/>   public connect(p)
+<a name="50"/>      p.connect(self.warning, XmlParser.WARNING_EVENT)
+<a name="51"/>      p.connect(self.validity_error, XmlParser.VALIDITY_ERROR_EVENT)
+<a name="52"/>      p.connect(self.fatal_error, XmlParser.FATAL_ERROR_EVENT)
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   public fatal_error(pd)
+<a name="56"/>      msg_impl(pd, 1, "Fatal error")
+<a name="57"/>   end
+<a name="58"/>
+<a name="59"/>   public validity_error(pd)
+<a name="60"/>      msg_impl(pd, 2, "Validity error")
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   public warning(pd)
+<a name="64"/>      msg_impl(pd, 3, "Warning")
+<a name="65"/>   end
+<a name="66"/>
+<a name="67"/>   private msg_impl(pd, n, pre)
+<a name="68"/>      if level &lt; n then
+<a name="69"/>         return
+<a name="70"/>      write(out_file, pre, ": ", pd.msg, " at:")
+<a name="71"/>      show_stack(pd.stack)
+<a name="72"/>   end
+<a name="73"/>
+<a name="74"/>   public show_stack(stack)
+<a name="75"/>      local x, i, t
+<a name="76"/>      every x := !stack do {
+<a name="77"/>         t := x.subject[1:x.pos]
+<a name="78"/>         i := 1
+<a name="79"/>         every find("\n", t) do
+<a name="80"/>            i +:= 1
+<a name="81"/>         write(out_file, "\t", x.id || ": line " || i)
+<a name="82"/>      }
+<a name="83"/>   end
+<a name="84"/>
+<a name="85"/>   public new(l, o)
+<a name="86"/>      /l := 3
+<a name="87"/>      self.level := l
+<a name="88"/>      self.out_file := o
+<a name="89"/>      return
+<a name="90"/>   end
+<a name="91"/>end
+<a name="92"/>
+</pre></body></html>

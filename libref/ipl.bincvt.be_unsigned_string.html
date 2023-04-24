@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>be_unsigned_string</title></head><body>
+<h1>be_unsigned_string(i)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.bincvt-package.html" target="listFrame">ipl.bincvt</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Returns a string which is a binary representation of non-negative
+integer <code>i</code>, in the fewest number of characters necessary, so
+that for any valid <code>i</code>,
+<pre>
+    be_unsigned(be_unsigned_string(i)) = i
+</pre>
+The output may be shorter than <code><a href="ipl.bincvt.be_signed_string.html" target="displayFrame">be_signed_string</a></code>; for example
+<pre>
+ be_signed_string(200) == "\x00\xc8"
+ be_unsigned_string(200) == "\xc8"
+</pre>
+Obviously the output of this procedure shouldn't be given to
+<code><a href="ipl.bincvt.be_signed.html" target="displayFrame">be_signed</a></code> (the above example of 200 would give a negative result).
+<p/><a href="ipl.bincvt-bincvt.icn.html#136" target="displayFrame">Source - bincvt.icn </a>
+<p/>
+</body></html>

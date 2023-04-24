@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TypeHandler</title></head><body>
+<h1>TypeHandler</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="mail.TextHandler.html">mail.TextHandler</a><br>
+<a href="mail.NoOpTypeHandler.html">mail.NoOpTypeHandler</a><br>
+<a href="mail.MessageHandler.html">mail.MessageHandler</a><br>
+<a href="mail.MultipartHandler.html">mail.MultipartHandler</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="mail-package.html" target="listFrame">mail</a></dd>
+</dl><p/>
+Handles the conversion from decoded content to an object
+<p/><a href="mail-typehandler.icn.html#7" target="displayFrame">Source - typehandler.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#can_handle">can_handle()</a>
+<a href="#convert_from_object">convert_from_object()</a>
+<a href="#convert_to_object">convert_to_object()</a>
+<a href="#init">init()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#TYPE_HANDLERS">TYPE_HANDLERS</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="can_handle"/>
+<h3>can_handle(ct)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Succeed if this object can handle the given <code><a href="mail.ContentType.html" target="displayFrame">ContentType</a></code>
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>ct</code> - the <code><a href="mail.ContentType.html" target="displayFrame">ContentType</a></code>
+</dd>
+</dl>
+<p/><a href="mail-typehandler.icn.html#18" target="displayFrame">Source - typehandler.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_from_object"/>
+<h3>convert_from_object(m, obj)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Create string data from the given object
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>m</code> - the <code><a href="mail.Message.html" target="displayFrame">Message</a></code>
+</dd>
+<dd>
+<code>obj</code> - the object to convert
+</dd>
+</dl>
+<p/><a href="mail-typehandler.icn.html#35" target="displayFrame">Source - typehandler.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_to_object"/>
+<h3>convert_to_object(m, data)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Convert the given data to an object
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>m</code> - the <code><a href="mail.Message.html" target="displayFrame">Message</a></code>
+</dd>
+<dd>
+<code>data</code> - the string sourcedata
+</dd>
+</dl>
+<p/><a href="mail-typehandler.icn.html#26" target="displayFrame">Source - typehandler.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="mail-typehandler.icn.html#14" target="displayFrame">Source - typehandler.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="TYPE_HANDLERS"/>
+<h3>TYPE_HANDLERS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="mail-typehandler.icn.html#11" target="displayFrame">Source - typehandler.icn </a>
+</dd>
+</dl><hr>
+</body></html>

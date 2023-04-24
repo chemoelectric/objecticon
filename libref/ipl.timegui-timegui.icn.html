@@ -1,0 +1,544 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>timegui.icn</title></head><body><pre>
+<a name="1"/>package ipl.timegui
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   gui, util, lang
+<a name="5"/>
+<a name="6"/>package procedure estimate_width(cbwin, fmt)
+<a name="7"/>   local s
+<a name="8"/>   s := map(Time(2000, 1, 1).format(fmt), &amp;letters, repl("M", 26) || repl("m", 26)) || " "
+<a name="9"/>   return cbwin.text_width(s)
+<a name="10"/>end
+<a name="11"/>
+<a name="12"/>#
+<a name="13"/># A component for choosing a date (day, month and year), represented
+<a name="14"/># as a `Time` instance.
+<a name="15"/>#
+<a name="16"/>class DateField(DropDown)
+<a name="17"/>   private readable
+<a name="18"/>      format,
+<a name="19"/>      last_val
+<a name="20"/>
+<a name="21"/>   private got_date(ev)
+<a name="22"/>      assign_value(popup.get_value(), ev)
+<a name="23"/>      close_all()
+<a name="24"/>   end
+<a name="25"/>
+<a name="26"/>   public override create_popup()
+<a name="27"/>      return Calendar(last_val).connect(got_date, Event.VALUE_CHANGED)
+<a name="28"/>   end
+<a name="29"/>
+<a name="30"/>   public override create_view()
+<a name="31"/>      return DropDownTextField()
+<a name="32"/>   end
+<a name="33"/>
+<a name="34"/>   public override initially()
+<a name="35"/>      DropDown.initially()
+<a name="36"/>      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
+<a name="37"/>   end
+<a name="38"/>
+<a name="39"/>   public override do_increment(ev)
+<a name="40"/>      assign_value(last_val.set_mday(last_val.mday + 1), ev, &amp;yes)
+<a name="41"/>   end
+<a name="42"/>
+<a name="43"/>   public override do_decrement(ev)
+<a name="44"/>      assign_value(last_val.set_mday(last_val.mday - 1), ev, &amp;yes)
+<a name="45"/>   end
+<a name="46"/>
+<a name="47"/>   # Set the format for the input string to be converted to/from a
+<a name="48"/>   # `Time` instance.  By default, "dd-MMM-yyyy".
+<a name="49"/>   #
+<a name="50"/>   public set_format(f)
+<a name="51"/>      self.format := f
+<a name="52"/>      set_value(last_val)
+<a name="53"/>      link
+<a name="54"/>   end
+<a name="55"/>
+<a name="56"/>   # Return the value (as a `Time`), or fail if the input is not
+<a name="57"/>   # currently valid.
+<a name="58"/>   #
+<a name="59"/>   public get_value()
+<a name="60"/>      return Time.parse(view.get_contents(), format)
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   # Set the value from the given `Time` instance.
+<a name="64"/>   #
+<a name="65"/>   public set_value(x)
+<a name="66"/>      local s
+<a name="67"/>      s := x.format(format)
+<a name="68"/>      view.set_contents(s)
+<a name="69"/>      if is_live() then
+<a name="70"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="71"/>      last_val := clone(x)
+<a name="72"/>      link
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   # Set the value from the given `Time` instance, firing events
+<a name="76"/>   #
+<a name="77"/>   public assign_value(x, ev, coalesce)
+<a name="78"/>      view.assign_contents(x.format(format),, ev, coalesce)
+<a name="79"/>      link
+<a name="80"/>   end
+<a name="81"/>
+<a name="82"/>   public on_textfield(ev, src, type)
+<a name="83"/>      if last_val := get_value() then
+<a name="84"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="85"/>      else
+<a name="86"/>         view.set_fg(Style.ERROR_COLOR).reset()
+<a name="87"/>      # Fire the event with self as source.
+<a name="88"/>      fire(type, ev)
+<a name="89"/>   end
+<a name="90"/>
+<a name="91"/>   # Create a new instance optionally with the given initial value of
+<a name="92"/>   # the field, as a `Time` instance.
+<a name="93"/>   #
+<a name="94"/>   public override new(val)
+<a name="95"/>      DropDown.new()
+<a name="96"/>      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+<a name="97"/>      /val := Time()
+<a name="98"/>      format := "dd'-'MMM'-'yyyy"
+<a name="99"/>      set_value(val)
+<a name="100"/>      return
+<a name="101"/>   end
+<a name="102"/>end
+<a name="103"/>
+<a name="104"/>#
+<a name="105"/># A component for choosing a time (hours, minutes and optionally
+<a name="106"/># seconds), represented as a `Time` instance.
+<a name="107"/>#
+<a name="108"/>class TimeField(Spin)
+<a name="109"/>   private readable
+<a name="110"/>      format,
+<a name="111"/>      last_val
+<a name="112"/>
+<a name="113"/>   public override create_view()
+<a name="114"/>      return SpinTextField()
+<a name="115"/>   end
+<a name="116"/>
+<a name="117"/>   public override do_increment(ev)
+<a name="118"/>      if find("ss", format) then
+<a name="119"/>         assign_value(last_val.set_sec(last_val.sec + 1), ev, &amp;yes)
+<a name="120"/>      else
+<a name="121"/>         assign_value(last_val.set_min(last_val.min + 1), ev, &amp;yes)
+<a name="122"/>   end
+<a name="123"/>
+<a name="124"/>   public override do_decrement(ev)
+<a name="125"/>      if find("ss", format) then
+<a name="126"/>         assign_value(last_val.set_sec(last_val.sec - 1), ev, &amp;yes)
+<a name="127"/>      else
+<a name="128"/>         assign_value(last_val.set_min(last_val.min + 1), ev, &amp;yes)
+<a name="129"/>   end
+<a name="130"/>
+<a name="131"/>   # Return the value (as a `Time`), or fail if the input is not
+<a name="132"/>   # currently valid.
+<a name="133"/>   #
+<a name="134"/>   public get_value()
+<a name="135"/>      return Time.parse(view.get_contents(), format)
+<a name="136"/>   end
+<a name="137"/>
+<a name="138"/>   # Set the value from the given `Time` instance.
+<a name="139"/>   #
+<a name="140"/>   public set_value(x)
+<a name="141"/>      local s
+<a name="142"/>      s := x.format(format)
+<a name="143"/>      view.set_contents(s)
+<a name="144"/>      if is_live() then
+<a name="145"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="146"/>      last_val := clone(x)
+<a name="147"/>      link
+<a name="148"/>   end
+<a name="149"/>
+<a name="150"/>   # Set the value from the given `Time` instance, firing events.
+<a name="151"/>   #
+<a name="152"/>   public assign_value(x, ev, coalesce)
+<a name="153"/>      view.assign_contents(x.format(format),, ev, coalesce)
+<a name="154"/>      link
+<a name="155"/>   end
+<a name="156"/>
+<a name="157"/>   public on_textfield(ev, src, type)
+<a name="158"/>      if last_val := get_value() then
+<a name="159"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="160"/>      else
+<a name="161"/>         view.set_fg(Style.ERROR_COLOR).reset()
+<a name="162"/>      # Fire the event with self as source.
+<a name="163"/>      fire(type, ev)
+<a name="164"/>   end
+<a name="165"/>
+<a name="166"/>   # Set the format for the input string to be converted to/from a
+<a name="167"/>   # `Time` instance.  By default, "HH:mm:ss".
+<a name="168"/>   #
+<a name="169"/>   public set_format(f)
+<a name="170"/>      self.format := f
+<a name="171"/>      set_value(last_val)
+<a name="172"/>      link
+<a name="173"/>   end
+<a name="174"/>
+<a name="175"/>   public override initially()
+<a name="176"/>      Spin.initially()
+<a name="177"/>      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
+<a name="178"/>   end
+<a name="179"/>
+<a name="180"/>   # Create a new instance optionally with the given initial value of
+<a name="181"/>   # the field, as a `Time` instance.
+<a name="182"/>   #
+<a name="183"/>   public override new(val)
+<a name="184"/>      Spin.new()
+<a name="185"/>      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+<a name="186"/>      /val := Time()
+<a name="187"/>      format := "HH':'mm':'ss"
+<a name="188"/>      set_value(val)
+<a name="189"/>      return
+<a name="190"/>   end
+<a name="191"/>end
+<a name="192"/>
+<a name="193"/>#
+<a name="194"/># A component for input of a `Timezone` instance.
+<a name="195"/>#
+<a name="196"/>class TimezoneField(EditList)
+<a name="197"/>   private readable
+<a name="198"/>      last_val
+<a name="199"/>
+<a name="200"/>   # Return the value (as a `Timezone`), or fail if the input is not
+<a name="201"/>   # currently valid.
+<a name="202"/>   #
+<a name="203"/>   public get_value()
+<a name="204"/>      return Timezone.get_known_timezone(view.get_contents())
+<a name="205"/>   end
+<a name="206"/>
+<a name="207"/>   # Set the value from the given `Timezone` instance.
+<a name="208"/>   #
+<a name="209"/>   public set_value(x)
+<a name="210"/>      local s
+<a name="211"/>      s := x.get_id()
+<a name="212"/>      set_contents(s)
+<a name="213"/>      if is_live() then
+<a name="214"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="215"/>      last_val := x
+<a name="216"/>      link
+<a name="217"/>   end
+<a name="218"/>
+<a name="219"/>   public override on_textfield(ev, src, type)
+<a name="220"/>      if last_val := get_value() then
+<a name="221"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="222"/>      else
+<a name="223"/>         view.set_fg(Style.ERROR_COLOR).reset()
+<a name="224"/>      EditList.on_textfield(ev, src, type)
+<a name="225"/>   end
+<a name="226"/>
+<a name="227"/>   # Create a new instance optionally with the given initial value of
+<a name="228"/>   # the field, as a `Timezone` instance.
+<a name="229"/>   #
+<a name="230"/>   public override new(val)
+<a name="231"/>      local l
+<a name="232"/>      EditList.new()
+<a name="233"/>      view.set_filter(&amp;digits ++ &amp;ucase ++ '+\-')
+<a name="234"/>      /val := Timezone.UTC_TIMEZONE
+<a name="235"/>      l := []
+<a name="236"/>      every put(l, (!Timezone.KNOWN_TIMEZONES).id)
+<a name="237"/>      set_selection_list(sort(l))
+<a name="238"/>      set_value(val)
+<a name="239"/>      return
+<a name="240"/>   end
+<a name="241"/>end
+<a name="242"/>
+<a name="243"/># A component for selecting a year/week number combination.
+<a name="244"/>#
+<a name="245"/>class WeekField(DropDown)
+<a name="246"/>   private readable
+<a name="247"/>      format,
+<a name="248"/>      last_val
+<a name="249"/>
+<a name="250"/>   private got_date(ev)
+<a name="251"/>      local t
+<a name="252"/>      t := popup.get_value()
+<a name="253"/>      t.set_mday(t.mday - (t.wday + 5) % 7)
+<a name="254"/>      assign_value(t, ev)
+<a name="255"/>      close_all()
+<a name="256"/>   end
+<a name="257"/>
+<a name="258"/>   public override create_popup()
+<a name="259"/>      return Calendar(last_val).set_week_mode(&amp;yes).connect(got_date, Event.VALUE_CHANGED)
+<a name="260"/>   end
+<a name="261"/>
+<a name="262"/>   public override create_view()
+<a name="263"/>      return DropDownTextField()
+<a name="264"/>   end
+<a name="265"/>
+<a name="266"/>   public override initially()
+<a name="267"/>      DropDown.initially()
+<a name="268"/>      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
+<a name="269"/>   end
+<a name="270"/>
+<a name="271"/>   public override do_increment(ev)
+<a name="272"/>      assign_value(last_val.set_mday(last_val.mday + 7), ev, &amp;yes)
+<a name="273"/>   end
+<a name="274"/>
+<a name="275"/>   public override do_decrement(ev)
+<a name="276"/>      assign_value(last_val.set_mday(last_val.mday - 7), ev, &amp;yes)
+<a name="277"/>   end
+<a name="278"/>
+<a name="279"/>   # Return the value (as a `Time`, being the first day of the
+<a name="280"/>   # selected week), or fail if the input is not currently valid.
+<a name="281"/>   #
+<a name="282"/>   public get_value()
+<a name="283"/>      local w, y
+<a name="284"/>      trim(Text.lower(view.get_contents())) ? {
+<a name="285"/>         (y := integer(tab(many(&amp;digits))) &amp;
+<a name="286"/>          1000 &lt;= y &lt;= 9999 &amp;
+<a name="287"/>          tab(many(' ')) &amp;
+<a name="288"/>          ="week" &amp;
+<a name="289"/>          tab(many(' ')) &amp;
+<a name="290"/>          w := integer(tab(many(&amp;digits))) &amp;
+<a name="291"/>          1 &lt;= w &lt;= 53 &amp;
+<a name="292"/>          pos(0)) | fail
+<a name="293"/>      }
+<a name="294"/>      return Time.from_week_date(y, w)
+<a name="295"/>   end
+<a name="296"/>
+<a name="297"/>   # Set the value from the given `Time` instance.
+<a name="298"/>   #
+<a name="299"/>   public set_value(x)
+<a name="300"/>      local s
+<a name="301"/>      s := x.format(format)
+<a name="302"/>      view.set_contents(s)
+<a name="303"/>      if is_live() then
+<a name="304"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="305"/>      last_val := clone(x)
+<a name="306"/>      link
+<a name="307"/>   end
+<a name="308"/>
+<a name="309"/>   # Set the value from the given `Time` instance, firing events.
+<a name="310"/>   #
+<a name="311"/>   public assign_value(x, ev, coalesce)
+<a name="312"/>      view.assign_contents(x.format(format),, ev, coalesce)
+<a name="313"/>      link
+<a name="314"/>   end
+<a name="315"/>
+<a name="316"/>   public on_textfield(ev, src, type)
+<a name="317"/>      if last_val := get_value() then
+<a name="318"/>         view.remove_wattrib(WAttrib.FG).reset()
+<a name="319"/>      else
+<a name="320"/>         view.set_fg(Style.ERROR_COLOR).reset()
+<a name="321"/>      # Fire the event with self as source.
+<a name="322"/>      fire(type, ev)
+<a name="323"/>   end
+<a name="324"/>
+<a name="325"/>   # Create a new instance optionally with the given initial value of
+<a name="326"/>   # the field, as a `Time` instance.
+<a name="327"/>   #
+<a name="328"/>   public override new(val)
+<a name="329"/>      DropDown.new()
+<a name="330"/>      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+<a name="331"/>      /val := Time()
+<a name="332"/>      format := "vvvv 'week' ww"
+<a name="333"/>      set_value(val)
+<a name="334"/>      return
+<a name="335"/>   end
+<a name="336"/>end
+<a name="337"/>
+<a name="338"/># A `List` populated with the months of the year.
+<a name="339"/>#
+<a name="340"/>class MonthField(List)
+<a name="341"/>   public override new()
+<a name="342"/>      List.new()
+<a name="343"/>      set_selection_list(Time.LOCAL_MONTHS[1:13])
+<a name="344"/>      return
+<a name="345"/>   end
+<a name="346"/>end
+<a name="347"/>
+<a name="348"/># A `RangeSpin` with the range of four-digit years.
+<a name="349"/>#
+<a name="350"/>class YearField(RangeSpin)
+<a name="351"/>   public override new()
+<a name="352"/>      RangeSpin.new()
+<a name="353"/>      set_range(1000, 9999)
+<a name="354"/>      return
+<a name="355"/>   end
+<a name="356"/>end
+<a name="357"/>
+<a name="358"/># A button used by `Calendar`
+<a name="359"/>#
+<a name="360"/>class DayButton(TextButton)
+<a name="361"/>   private readable
+<a name="362"/>      time
+<a name="363"/>   public override new(t)
+<a name="364"/>      TextButton.new()
+<a name="365"/>      self.time := clone(t)
+<a name="366"/>      set_constraint("x_fill", &amp;yes)
+<a name="367"/>      set_border(EmptyBorder())
+<a name="368"/>      set_label(t.mday)
+<a name="369"/>      set_no_click_focus(&amp;yes)
+<a name="370"/>      return
+<a name="371"/>   end
+<a name="372"/>end
+<a name="373"/>
+<a name="374"/># A button used by `Calendar`
+<a name="375"/>#
+<a name="376"/>class WeekButton(TextButton)
+<a name="377"/>   private readable
+<a name="378"/>      time
+<a name="379"/>   public override new(t)
+<a name="380"/>      TextButton.new()
+<a name="381"/>      self.time := clone(t)
+<a name="382"/>      set_constraint("x_fill", &amp;yes)
+<a name="383"/>      set_border(EmptyBorder())
+<a name="384"/>      set_label(t.get_week_date().week)
+<a name="385"/>      set_no_click_focus(&amp;yes)
+<a name="386"/>      return
+<a name="387"/>   end
+<a name="388"/>end
+<a name="389"/>
+<a name="390"/># A dropdown calendar component.
+<a name="391"/>#
+<a name="392"/>class Calendar(Component)
+<a name="393"/>   private readable
+<a name="394"/>      curr,
+<a name="395"/>      week_mode_flag
+<a name="396"/>   private
+<a name="397"/>      buttons,
+<a name="398"/>      month,
+<a name="399"/>      year,
+<a name="400"/>      showing
+<a name="401"/>
+<a name="402"/>   private on_month_change()
+<a name="403"/>      showing.set_month(month.get_selection())
+<a name="404"/>      update()
+<a name="405"/>   end
+<a name="406"/>
+<a name="407"/>   private on_year_change()
+<a name="408"/>      local i
+<a name="409"/>      if i := year.get_value() then {
+<a name="410"/>         showing.set_year(i)
+<a name="411"/>         update()
+<a name="412"/>      }
+<a name="413"/>   end
+<a name="414"/>
+<a name="415"/>   private update()
+<a name="416"/>      curr.normalize_zone()
+<a name="417"/>      showing.normalize_zone()
+<a name="418"/>      month.set_selection(showing.month)
+<a name="419"/>      year.set_value(showing.year)
+<a name="420"/>      update_buttons()
+<a name="421"/>   end
+<a name="422"/>
+<a name="423"/>   public get_value()
+<a name="424"/>      return .curr
+<a name="425"/>   end
+<a name="426"/>
+<a name="427"/>   private day_press(ev, src)
+<a name="428"/>      if compare(curr, src.time) then
+<a name="429"/>         return
+<a name="430"/>      curr := src.time
+<a name="431"/>      showing := clone(curr).set_mday(1)
+<a name="432"/>      update()
+<a name="433"/>      fire(Event.VALUE_CHANGED, ev)
+<a name="434"/>   end
+<a name="435"/>
+<a name="436"/>   private update_buttons()
+<a name="437"/>      local i
+<a name="438"/>      i := get_index(buttons)
+<a name="439"/>      remove(buttons)
+<a name="440"/>      buttons := setup_buttons()
+<a name="441"/>      add(buttons, i)
+<a name="442"/>      if is_live() then {
+<a name="443"/>         reset_layout()
+<a name="444"/>         layout()
+<a name="445"/>         invalidate()
+<a name="446"/>      }
+<a name="447"/>   end
+<a name="448"/>
+<a name="449"/>   private compare(t1, t2)
+<a name="450"/>      succeed if /week_mode_flag then
+<a name="451"/>         (t1.year = t2.year &amp; t1.month = t2.month &amp; t1.mday = t2.mday)
+<a name="452"/>      else {
+<a name="453"/>         t1 := t1.get_week_date()
+<a name="454"/>         t2 := t2.get_week_date()
+<a name="455"/>         (t1.year = t2.year &amp; t1.week = t2.week)
+<a name="456"/>      }
+<a name="457"/>   end
+<a name="458"/>
+<a name="459"/>   private setup_buttons()
+<a name="460"/>      local p, t, w, b, s, bg
+<a name="461"/>      t := clone(showing)
+<a name="462"/>      t.mday = 1 | syserr("Showing mday wrong")
+<a name="463"/>      # First Monday on or before 1st of displayed month.
+<a name="464"/>      t.set_mday(1 - (t.wday + 5) % 7)
+<a name="465"/>      p := Panel().
+<a name="466"/>         set_layout(GridLayout().set_doi(0).set_dii(0)).
+<a name="467"/>         set_constraint("eol", &amp;yes)
+<a name="468"/>
+<a name="469"/>      if \week_mode_flag then
+<a name="470"/>         p.add(Label().
+<a name="471"/>               set_border(EmptyBorder()).
+<a name="472"/>               set_label("Week"))
+<a name="473"/>
+<a name="474"/>      every s := Time.LOCAL_WEEK_DAYS[(9 to 14) | 8] do
+<a name="475"/>         p.add(Label().
+<a name="476"/>               set_border(EmptyBorder()).
+<a name="477"/>               set_label(s))
+<a name="478"/>      p.children[-1].set_constraint("eol", &amp;yes)
+<a name="479"/>      p.add(Line().set_constraint("eol", &amp;yes).set_constraint("w", if \week_mode_flag then 8 else 7).set_constraint("x_fill", &amp;yes).set_width(100))
+<a name="480"/>      bg := ButtonGroup()
+<a name="481"/>
+<a name="482"/>      every w := 1 to 6 do {
+<a name="483"/>         if \week_mode_flag then {
+<a name="484"/>            b := WeekButton(t).connect(day_press, Event.ACTION)
+<a name="485"/>            p.add(b)
+<a name="486"/>         }
+<a name="487"/>         every 1 to 7 do {
+<a name="488"/>            b := DayButton(t)
+<a name="489"/>            if t.month = showing.month then {
+<a name="490"/>               if t.wday = 1 then
+<a name="491"/>                  b.set_fg("red")
+<a name="492"/>            } else
+<a name="493"/>               b.set_fg("grey")
+<a name="494"/>            b.connect(day_press, Event.ACTION)
+<a name="495"/>            if compare(curr, t) then
+<a name="496"/>               b.set_bg("pale blue")
+<a name="497"/>            bg.add(b)
+<a name="498"/>            p.add(b)
+<a name="499"/>            t.set_mday(t.mday + 1)
+<a name="500"/>         }
+<a name="501"/>         b.set_constraint("eol", &amp;yes)
+<a name="502"/>      }
+<a name="503"/>      return p
+<a name="504"/>   end
+<a name="505"/>
+<a name="506"/>   public set_week_mode(s)
+<a name="507"/>      self.week_mode_flag := need_flag(s)
+<a name="508"/>      update()
+<a name="509"/>      link
+<a name="510"/>   end
+<a name="511"/>
+<a name="512"/>   public override display()
+<a name="513"/>      border.draw(self.cbwin, x, y, w, h)
+<a name="514"/>      self.display_children()
+<a name="515"/>   end
+<a name="516"/>
+<a name="517"/>   public override new(val)
+<a name="518"/>      local p
+<a name="519"/>      Component.new()
+<a name="520"/>      /val := Time()
+<a name="521"/>      curr := clone(val).edit_fields(,,, 0, 0, 0)
+<a name="522"/>      showing := clone(curr).set_mday(1)
+<a name="523"/>      p := Component().
+<a name="524"/>         set_layout(GridLayout().set_doi(0)).
+<a name="525"/>         set_constraint("eol", &amp;yes)
+<a name="526"/>      month := MonthField().
+<a name="527"/>         connect(on_month_change, Event.SELECTION_CHANGED).
+<a name="528"/>         set_selection(curr.month)
+<a name="529"/>      p.add(month)
+<a name="530"/>      year := YearField().
+<a name="531"/>         connect(on_year_change, Event.CONTENT_CHANGED).
+<a name="532"/>         set_value(curr.year)
+<a name="533"/>      p.add(year)
+<a name="534"/>      add(p)
+<a name="535"/>      add(buttons := setup_buttons())
+<a name="536"/>      set_layout(GridLayout())
+<a name="537"/>      set_border(BevelledBorder())
+<a name="538"/>      return
+<a name="539"/>   end
+<a name="540"/>end
+<a name="541"/>
+</pre></body></html>

@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Connectable</title></head><body>
+<h1>Connectable</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="parser.Parser.html">parser.Parser</a><br>
+<a href="xml.XmlParser.html">xml.XmlParser</a><br>
+<a href="parser.Preprocessor.html">parser.Preprocessor</a><br>
+<a href="net.NetClient.html">net.NetClient</a><br>
+<a href="parser.SymbolTable.html">parser.SymbolTable</a><br>
+<a href="gui.MenuComponent.html">gui.MenuComponent</a><br>
+<a href="gui.HasUseWheel.html">gui.HasUseWheel</a><br>
+<a href="parser.Lex.html">parser.Lex</a><br>
+<a href="gui.Component.html">gui.Component</a><br>
+<a href="parser.YY.html">parser.YY</a><br>
+<a href="gui.CheckBoxGroup.html">gui.CheckBoxGroup</a><br>
+<a href="gui.CheckBoxPTableColumn.html">gui.CheckBoxPTableColumn</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+</dl><p/>
+A class which provides a listener list facility.
+<p/><a href="util-connectable.icn.html#63" target="displayFrame">Source - connectable.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#connect">connect()</a>
+<a href="#connect_n">connect_n()</a>
+<a href="#disconnect_impl">disconnect_impl()</a>
+<a href="#fire">fire()</a>
+<a href="#gen_listener_types">gen_listener_types()</a>
+<a href="#gen_listeners">gen_listeners()</a>
+<a href="#get_last_listener">get_last_listener()</a>
+<a href="#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#last_listener">last_listener</a>
+<a href="#listeners">listeners</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="connect"/>
+<h3>connect(proc, type, pos)</h3>
+public<p/>
+<dl>
+<dd>
+Create and connect a <code><a href="util.Listener.html" target="displayFrame">Listener</a></code> to this object.  To get the actual <code><a href="util.Listener.html" target="displayFrame">Listener</a></code>
+instance added, use the variable <code><a href="util.Connectable.html#last_listener">last_listener</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>proc</code> - The procedure or other invocable to call on an event.
+</dd>
+<dd>
+<code>type</code> - The particular event to listen for; <code>&amp;null</code> means all events
+</dd>
+<dd>
+<code>pos</code> - The position in the listener list for the type, default 0.
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+self
+</dd>
+</dl>
+<p/><a href="util-connectable.icn.html#91" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="connect_n"/>
+<h3>connect_n(proc, type, pos, n)</h3>
+public<p/>
+<dl>
+<dd>
+This is like <code><a href="util.Connectable.html#connect">connect</a></code>, but the listener is automatically disconnected
+after it is fired <code>n</code> times.  <code>n</code> defaults to 1.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+self
+</dd>
+</dl>
+<p/><a href="util-connectable.icn.html#112" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="disconnect_impl"/>
+<h3>disconnect_impl(e)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="util-connectable.icn.html#135" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="fire"/>
+<h3>fire(type, param)</h3>
+public<p/>
+<dl>
+<dd>
+Fire an event to listeners of the given type.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>type</code> - The particular event type to fire.
+</dd>
+<dd>
+<code>param</code> - The arbitrary parameter to pass to listeners
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+self
+</dd>
+</dl>
+<p/><a href="util-connectable.icn.html#74" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_listener_types"/>
+<h3>gen_listener_types()</h3>
+public<p/>
+<dl>
+<dd>
+Generate the event types currently being listened for.
+<p/><a href="util-connectable.icn.html#153" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_listeners"/>
+<h3>gen_listeners(type)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the listeners for the given event type
+<p/><a href="util-connectable.icn.html#146" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="get_last_listener"/>
+<h3>get_last_listener()</h3>
+public<p/>
+<dl>
+<dd>
+This returns the last <code><a href="util.Listener.html" target="displayFrame">Listener</a></code> instance added with <code><a href="util.Connectable.html#connect">connect</a></code>.
+<p/><a href="util-connectable.icn.html#128" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="util-connectable.icn.html#160" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="last_listener"/>
+<h3>last_listener</h3>
+private readable<p/>
+<dl>
+<dd>
+This variable contains the last <code><a href="util.Listener.html" target="displayFrame">Listener</a></code> added with <code><a href="util.Connectable.html#connect">connect()</a></code>.
+<p/><a href="util-connectable.icn.html#70" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+<a name="listeners"/>
+<h3>listeners</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="util-connectable.icn.html#67" target="displayFrame">Source - connectable.icn </a>
+</dd>
+</dl><hr>
+</body></html>

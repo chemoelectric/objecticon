@@ -1,0 +1,359 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>System</title></head><body>
+<h1>System</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="posix-package.html" target="listFrame">posix</a></dd>
+</dl><p/>
+<p/><a href="posix-system.icn.html#12" target="displayFrame">Source - system.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#environ">environ()</a>
+<a href="#exec">exec()</a>
+<a href="#execve">execve()</a>
+<a href="#fork">fork()</a>
+<a href="#getcwd">getcwd()</a>
+<a href="#getegid">getegid()</a>
+<a href="#getenv">getenv()</a>
+<a href="#geteuid">geteuid()</a>
+<a href="#getgid">getgid()</a>
+<a href="#getgr">getgr()</a>
+<a href="#getgr_impl">getgr_impl()</a>
+<a href="#getgroups">getgroups()</a>
+<a href="#getpgid">getpgid()</a>
+<a href="#getpid">getpid()</a>
+<a href="#getppid">getppid()</a>
+<a href="#getpw">getpw()</a>
+<a href="#getpw_impl">getpw_impl()</a>
+<a href="#getsid">getsid()</a>
+<a href="#getuid">getuid()</a>
+<a href="#kill">kill()</a>
+<a href="#setenv">setenv()</a>
+<a href="#setgid">setgid()</a>
+<a href="#setpgid">setpgid()</a>
+<a href="#setsid">setsid()</a>
+<a href="#setuid">setuid()</a>
+<a href="#uname">uname()</a>
+<a href="#uname_impl">uname_impl()</a>
+<a href="#unsetenv">unsetenv()</a>
+<a href="#wait">wait()</a>
+<a href="#wait_impl">wait_impl()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="environ"/>
+<h3>environ()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return a list of the environment values as key=value strings
+<p/><a href="posix-system.icn.html#66" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="exec"/>
+<h3>exec(cmd, args, env)</h3>
+public static<p/>
+<dl>
+<dd>
+This provides a slightly easier to use interface to <code><a href="posix.System.html#execve">execve</a></code>.
+The first argument is searched on the PATH and if found pushed
+onto the arg list (making the arg0 of the target program).  Then
+<code><a href="posix.System.html#execve">execve</a></code> is called.  For example :-
+<pre>
+   System.exec("ls", ["-l", "/home"])
+</pre>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>cmd</code> - the name of the command
+</dd>
+<dd>
+<code>args</code> - the arg list, excluding the command name.  Defaults to []
+</dd>
+<dd>
+<code>env</code> - the env list, defaults to the current environment
+if omitted
+</dd>
+</dl>
+<p/><a href="posix-system.icn.html#13" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="execve"/>
+<h3>execve(f, args, env)</h3>
+public static native<p/>
+<dl>
+<dd>
+Replace the executing Icon program with a new program, using the
+execve system call.  The first parameter is the file to execute,
+the second parameter is a list of strings which must have at least
+one parameter, and the third optional parameter is also a list of
+strings, which provide the environment variables - if omitted then
+the current program's environment is passed (obtained via the 
+environ variable).  For example :-
+<pre>
+         System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
+                                  ["ABC=DEF", "NUM=123"])
+</pre>
+<p/><a href="posix-system.icn.html#34" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="fork"/>
+<h3>fork()</h3>
+public static native<p/>
+<dl>
+<dd>
+Spawn a new identical process.
+<p/><a href="posix-system.icn.html#47" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getcwd"/>
+<h3>getcwd(pid)</h3>
+public static<p/>
+<dl>
+<dd>
+Get current working directory of the given process
+<p/><a href="posix-system.icn.html#195" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getegid"/>
+<h3>getegid()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the effective group ID of the calling process.
+<p/><a href="posix-system.icn.html#95" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getenv"/>
+<h3>getenv(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return contents of environment variable s.
+<p/><a href="posix-system.icn.html#69" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="geteuid"/>
+<h3>geteuid()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the effective user ID of the calling process.
+<p/><a href="posix-system.icn.html#89" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getgid"/>
+<h3>getgid()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the real group ID of the calling process.
+<p/><a href="posix-system.icn.html#92" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getgr"/>
+<h3>getgr(v)</h3>
+public static<p/>
+<dl>
+<dd>
+Return a <code><a href="posix.Group.html" target="displayFrame">Group</a></code> structure given either a group id (as an
+integer), or a string group name.
+<p/><a href="posix-system.icn.html#110" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getgr_impl"/>
+<h3>getgr_impl(v)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="posix-system.icn.html#102" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getgroups"/>
+<h3>getgroups()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the supplementary group IDs of the calling process
+<p/><a href="posix-system.icn.html#98" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getpgid"/>
+<h3>getpgid(pid)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the process group ID for a process
+<p/><a href="posix-system.icn.html#132" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getpid"/>
+<h3>getpid()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the process ID of the calling process.
+<p/><a href="posix-system.icn.html#58" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getppid"/>
+<h3>getppid()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the process ID of the parent of the calling process.
+<p/><a href="posix-system.icn.html#61" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getpw"/>
+<h3>getpw(v)</h3>
+public static<p/>
+<dl>
+<dd>
+Return a <code><a href="posix.Passwd.html" target="displayFrame">Passwd</a></code> structure given either a user id (as an
+integer), or a string user name.
+<p/><a href="posix-system.icn.html#104" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getpw_impl"/>
+<h3>getpw_impl(v)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="posix-system.icn.html#101" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getsid"/>
+<h3>getsid(id)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the session ID of the process with the given process ID
+<p/><a href="posix-system.icn.html#126" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="getuid"/>
+<h3>getuid()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the real user ID of the calling process.
+<p/><a href="posix-system.icn.html#86" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="kill"/>
+<h3>kill(pid, signal)</h3>
+public static native<p/>
+<dl>
+<dd>
+Send a signal to a process.
+<p/><a href="posix-system.icn.html#50" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="setenv"/>
+<h3>setenv(name, value)</h3>
+public static native<p/>
+<dl>
+<dd>
+Set an environment variable.
+<p/><a href="posix-system.icn.html#72" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="setgid"/>
+<h3>setgid(gid)</h3>
+public static native<p/>
+<dl>
+<dd>
+Set the effective group ID of the calling process.
+<p/><a href="posix-system.icn.html#119" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="setpgid"/>
+<h3>setpgid(pid, pgid)</h3>
+public static native<p/>
+<dl>
+<dd>
+Set process group ID for job control
+<p/><a href="posix-system.icn.html#129" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="setsid"/>
+<h3>setsid()</h3>
+public static native<p/>
+<dl>
+<dd>
+Creates a session and sets the process group ID, returning the
+new process group ID of the calling process.
+<p/><a href="posix-system.icn.html#122" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="setuid"/>
+<h3>setuid(uid)</h3>
+public static native<p/>
+<dl>
+<dd>
+Set the effective user ID of the calling process.
+<p/><a href="posix-system.icn.html#116" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="uname"/>
+<h3>uname()</h3>
+public static<p/>
+<dl>
+<dd>
+Get name and information about current kernel.  A UtsName object is returned, with
+fields corresponding to the posix utsname structure.
+<p/><a href="posix-system.icn.html#78" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="uname_impl"/>
+<h3>uname_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="posix-system.icn.html#84" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="unsetenv"/>
+<h3>unsetenv(name)</h3>
+public static native<p/>
+<dl>
+<dd>
+Unset an environment variable.
+<p/><a href="posix-system.icn.html#75" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="wait"/>
+<h3>wait(pid, options)</h3>
+public static<p/>
+<dl>
+<dd>
+Wait for process to terminate or stop.
+<p/><a href="posix-system.icn.html#53" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+<a name="wait_impl"/>
+<h3>wait_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="posix-system.icn.html#64" target="displayFrame">Source - system.icn </a>
+</dd>
+</dl><hr>
+</body></html>

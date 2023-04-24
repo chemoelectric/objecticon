@@ -57,7 +57,7 @@
 <pre><code>lsxdg -?</code></pre>
 <p>to get a list of the various query commands; these are described in detail below.</p>
 <h1 id="base-directories">Base directories</h1>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.BaseDir.html"><code>xdg.BaseDir</code></a> class provides some static methods to determine the XDG base directories, as described in <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html" class="uri">https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html</a>.</p>
+<p>The <a href="libref/index.html?xdg.BaseDir.html"><code>xdg.BaseDir</code></a> class provides some static methods to determine the XDG base directories, as described in <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html" class="uri">https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html</a>.</p>
 <p>Run</p>
 <pre><code>lsxdg dirs</code></pre>
 <p>to see the various directory settings. Example output might be :-</p>
@@ -69,9 +69,9 @@ Config Home: /home/rparlett/.config
 Config Dirs: /etc/xdg</code></pre>
 <p>The “(C)” indicates a directory which will use a “mimeinfo.cache” file if present; this is described further <a href="#mimeinfo.cache">below</a>.</p>
 <h1 id="mime-types">Mime types</h1>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html"><code>xdg.Mime</code></a> class provides static methods to lookup mime information. The relevant specification is <a href="https://specifications.freedesktop.org/shared-mime-info-spec/shared-mime-info-spec-latest.html" class="uri">https://specifications.freedesktop.org/shared-mime-info-spec/shared-mime-info-spec-latest.html</a>.</p>
+<p>The <a href="libref/index.html?xdg.Mime.html"><code>xdg.Mime</code></a> class provides static methods to lookup mime information. The relevant specification is <a href="https://specifications.freedesktop.org/shared-mime-info-spec/shared-mime-info-spec-latest.html" class="uri">https://specifications.freedesktop.org/shared-mime-info-spec/shared-mime-info-spec-latest.html</a>.</p>
 <h2 id="from-file-name-to-mime-type">From file name to mime type</h2>
-<p>The most basic method, <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23get_mime_type_for_file"><code>xdg.Mime.get_mime_type_for_file()</code></a>, maps a file name (just the name, not a path) to a mime type. Note that the content of a file is not examined; in fact it makes no difference whether the file even exists. The derivation depends solely on the name itself. Thus, the sections in the above specification relating to “magic” data are not implemented by the <code>xdg</code> package.</p>
+<p>The most basic method, <a href="libref/index.html?xdg.Mime.html%23get_mime_type_for_file"><code>xdg.Mime.get_mime_type_for_file()</code></a>, maps a file name (just the name, not a path) to a mime type. Note that the content of a file is not examined; in fact it makes no difference whether the file even exists. The derivation depends solely on the name itself. Thus, the sections in the above specification relating to “magic” data are not implemented by the <code>xdg</code> package.</p>
 <p>The <code>mime</code> command of <code>lsxdg</code> shows the output for a given name or names :-</p>
 <pre><code>$ lsxdg mime junk.pdf junk.jpg README Makefile junk
 junk.pdf: application/pdf
@@ -80,7 +80,7 @@ README: text/x-readme
 Makefile: text/x-makefile</code></pre>
 <p>Note that the last one, “junk”, gave no result, meaning <code>get_mime_type_for_file()</code> failed because no mime type could be deduced from that name.</p>
 <h2 id="alternative-mime-types">Alternative mime types</h2>
-<p>Each mime type may have alternative mime types. Each alternative is either equivalent, or a broader type than the original. <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23alternative_mime_types"><code>xdg.Mime.alternative_mime_types()</code></a> generates the alternatives for a mime type, and <code>lsxdg</code> may be used to see the results :-</p>
+<p>Each mime type may have alternative mime types. Each alternative is either equivalent, or a broader type than the original. <a href="libref/index.html?xdg.Mime.html%23alternative_mime_types"><code>xdg.Mime.alternative_mime_types()</code></a> generates the alternatives for a mime type, and <code>lsxdg</code> may be used to see the results :-</p>
 <pre><code>$ lsxdg alt-mime application/xml
 application/xml
 text/xml
@@ -89,12 +89,12 @@ application/octet-stream</code></pre>
 <p>Note that the original input is the first result generated. The method tries to generate the other results in a reasonable order, with the closest alternatives first, and the most general last.</p>
 <h2 id="icon-names">Icon names</h2>
 <p>The <code>Mime</code> class also maps mime types to icon names. These are distinct from actual icon files. The further mapping from icon names to icon files depends on the particular icon theme in use, and is described below.</p>
-<p>The specification describes two icon mappings - “icons” and “generic icons”. These mappings are retrieved with the methods <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_icons"><code>xdg.Mime.gen_icons()</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_generic_icons"><code>xdg.Mime.gen_generic_icons()</code></a> respectively. <code>lsxdg</code> has two corresponding commands :-</p>
+<p>The specification describes two icon mappings - “icons” and “generic icons”. These mappings are retrieved with the methods <a href="libref/index.html?xdg.Mime.html%23gen_icons"><code>xdg.Mime.gen_icons()</code></a> and <a href="libref/index.html?xdg.Mime.html%23gen_generic_icons"><code>xdg.Mime.gen_generic_icons()</code></a> respectively. <code>lsxdg</code> has two corresponding commands :-</p>
 <pre><code>$ lsxdg icons video/webm
 video-x-generic
 $ lsxdg generic-icons application/x-archive
 package-x-generic</code></pre>
-<p>More useful is the <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_all_icons"><code>xdg.Mime.gen_all_icons()</code></a> which combines both of the above methods, and adds between them a default icon name based on the mime type name itself. <code>lsxdg</code> has a corresponding command :-</p>
+<p>More useful is the <a href="libref/index.html?xdg.Mime.html%23gen_all_icons"><code>xdg.Mime.gen_all_icons()</code></a> which combines both of the above methods, and adds between them a default icon name based on the mime type name itself. <code>lsxdg</code> has a corresponding command :-</p>
 <pre><code>$ lsxdg all-icons video/webm
 video-x-generic
 video-webm
@@ -103,24 +103,24 @@ application-x-archive
 package-x-generic</code></pre>
 <p>Note how, in the <code>video/webm</code> example above, the name from the “icons” entry comes before the default name (<code>video-webm</code>), and thus overrides it when searching for an actual icon file.</p>
 <h1 id="icon-themes">Icon themes</h1>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.IconTheme.html"><code>xdg.IconTheme</code></a> class provides static methods to find icon files from the icon names described in the last section. The relevant specification is <a href="https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html" class="uri">https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html</a></p>
+<p>The <a href="libref/index.html?xdg.IconTheme.html"><code>xdg.IconTheme</code></a> class provides static methods to find icon files from the icon names described in the last section. The relevant specification is <a href="https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html" class="uri">https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html</a></p>
 <h2 id="specifying-a-theme">Specifying a theme</h2>
 <p>The environment variable <code>OI_THEME</code> can be used to specify the theme to use. Themes are searched for in the “icons” subdirectory of the data directories. To check the theme has been found, use</p>
 <pre><code>lsxdg theme</code></pre>
 <p>which will report the name of the theme in use.</p>
 <p>If no theme is specified with <code>OI_THEME</code>, then, if present, the “oxygen” or “gnome” themes are used. As a final fallback, “hicolor” is used.</p>
 <h2 id="icon-names-to-files">Icon names to files</h2>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.IconTheme.html%23find_icon"><code>xdg.IconTheme.find_icon()</code></a> method searches for an icon of a particular name, size and scale. The latter setting is optional, and defaults to <a href="GuiPackage.html#scaling">the gui package’s scale setting.</a>. <code>lsxdg</code> may be used to see the results of this method, as follows :-</p>
+<p>The <a href="libref/index.html?xdg.IconTheme.html%23find_icon"><code>xdg.IconTheme.find_icon()</code></a> method searches for an icon of a particular name, size and scale. The latter setting is optional, and defaults to <a href="GuiPackage.html#scaling">the gui package’s scale setting.</a>. <code>lsxdg</code> may be used to see the results of this method, as follows :-</p>
 <pre><code>$ lsxdg find-icon application-pdf 35
 /usr/share/icons/oxygen/base/32x32/mimetypes/application-pdf.png</code></pre>
 <h2 id="file-names-to-icon-files">File names to icon files</h2>
-<p>To combine the mapping from file names to icon names described in the previous section, with the mapping from icon names to icon files described in this section, the method <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23find_icon_for_file"><code>xdg.Mime.find_icon_for_file()</code></a> can be used. <code>lsxdg</code> may again be used to test this method :-</p>
+<p>To combine the mapping from file names to icon names described in the previous section, with the mapping from icon names to icon files described in this section, the method <a href="libref/index.html?xdg.Mime.html%23find_icon_for_file"><code>xdg.Mime.find_icon_for_file()</code></a> can be used. <code>lsxdg</code> may again be used to test this method :-</p>
 <pre><code>$ lsxdg icon-file junk.pdf 35
 /usr/share/icons/oxygen/base/32x32/mimetypes/application-pdf.png</code></pre>
 <h1 id="desktop-entries">Desktop entries</h1>
-<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html"><code>xdg.Mime</code></a> class described above also provides methods to lookup desktop entries. These are “.desktop” files, each of which contains information about a particular application. The relevant specification in this case is <a href="https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html" class="uri">https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html</a>.</p>
+<p>The <a href="libref/index.html?xdg.Mime.html"><code>xdg.Mime</code></a> class described above also provides methods to lookup desktop entries. These are “.desktop” files, each of which contains information about a particular application. The relevant specification in this case is <a href="https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html" class="uri">https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html</a>.</p>
 <h2 id="application-associations">Application associations</h2>
-<p>The method <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_desktop_entries"><code>xdg.Mime.gen_desktop_entries()</code></a> generates the desktop entries for a given mime type. <code>lsxdg</code> can be used to show the results as follows :-</p>
+<p>The method <a href="libref/index.html?xdg.Mime.html%23gen_desktop_entries"><code>xdg.Mime.gen_desktop_entries()</code></a> generates the desktop entries for a given mime type. <code>lsxdg</code> can be used to show the results as follows :-</p>
 <pre><code>$ lsxdg de application/pdf
 object xdg.DesktopEntry#6(
    name=u&quot;Okular&quot;
@@ -144,7 +144,7 @@ object xdg.DesktopEntry#9(
 )
 ... etc</code></pre>
 <p>The results are generated in “preferred order”, with the most preferred coming first.</p>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_all_desktop_entries"><code>xdg.Mime.gen_all_desktop_entries()</code></a> is like the above, but extends the results by including those additional desktop entries for any alternative mime types. The corresponding <code>lsxdg</code> command is <code>all-de</code>. So, for example we can contrast :-</p>
+<p><a href="libref/index.html?xdg.Mime.html%23gen_all_desktop_entries"><code>xdg.Mime.gen_all_desktop_entries()</code></a> is like the above, but extends the results by including those additional desktop entries for any alternative mime types. The corresponding <code>lsxdg</code> command is <code>all-de</code>. So, for example we can contrast :-</p>
 <pre><code>$ lsxdg de application/xml
 object xdg.DesktopEntry#1(
    name=u&quot;Firefox Web Browser&quot;
@@ -200,10 +200,10 @@ object xdg.DesktopEntry#3(
 )
 ... etc, for more text editors and viewers</code></pre>
 <p>Note how the second command includes more general, but still useful, commands relating to <code>application/xml</code>’s parent type of <code>text/plain</code>.</p>
-<p>Two further useful methods use the last method with file names. <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_desktop_entries_for_file"><code>xdg.Mime.gen_desktop_entries_for_file()</code></a> takes a file (not a path), finds its mime type, and then generates the results of <code>gen_all_desktop_entries()</code>. The corresponding <code>lsxdg</code> command is <code>de-file</code>. Thus :-</p>
+<p>Two further useful methods use the last method with file names. <a href="libref/index.html?xdg.Mime.html%23gen_desktop_entries_for_file"><code>xdg.Mime.gen_desktop_entries_for_file()</code></a> takes a file (not a path), finds its mime type, and then generates the results of <code>gen_all_desktop_entries()</code>. The corresponding <code>lsxdg</code> command is <code>de-file</code>. Thus :-</p>
 <pre><code>$ lsxdg de-file junk.xml</code></pre>
 <p>will generate the same results as the second command shown above.</p>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_desktop_entries_for_path"><code>xdg.Mime.gen_desktop_entries_for_path()</code></a>, is similar, but takes a file path (instead of a simple name), and checks whether it is a directory. If so, it generates the desktop entries for the special mime type <code>inode/directory</code>; otherwise it takes the last path element and applies it to <code>gen_desktop_entries_for_file()</code>. The corresponding <code>lsxdg</code> command is <code>de-path</code> :-</p>
+<p><a href="libref/index.html?xdg.Mime.html%23gen_desktop_entries_for_path"><code>xdg.Mime.gen_desktop_entries_for_path()</code></a>, is similar, but takes a file path (instead of a simple name), and checks whether it is a directory. If so, it generates the desktop entries for the special mime type <code>inode/directory</code>; otherwise it takes the last path element and applies it to <code>gen_desktop_entries_for_file()</code>. The corresponding <code>lsxdg</code> command is <code>de-path</code> :-</p>
 <pre><code>$ lsxdg de-path /
 object xdg.DesktopEntry#2(
    name=u&quot;Google Chrome&quot;
@@ -426,7 +426,7 @@ $ lsxdg find-icon junk 32
 /home/rparlett/.local/share/icons/junk.png</code></pre>
 <h1 id="refreshing">Refreshing</h1>
 <p>After changes have been made to the underlying XDG database files, the various cached values in the <code>xdg</code> classes may be out of date. To reset them, two methods are provided :-</p>
-<p><a href="http://objecticon.sourceforge.net/libref/index.html?xdg.IconTheme.html%23refresh"><code>xdg.IconTheme.refresh()</code></a> resets everything connected with the icon theme mapping from icon names to files; and <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23refresh"><code>xdg.Mime.refresh()</code></a> resets all other mime type and desktop file data.</p>
+<p><a href="libref/index.html?xdg.IconTheme.html%23refresh"><code>xdg.IconTheme.refresh()</code></a> resets everything connected with the icon theme mapping from icon names to files; and <a href="libref/index.html?xdg.Mime.html%23refresh"><code>xdg.Mime.refresh()</code></a> resets all other mime type and desktop file data.</p>
 <a href="index.html">Contents</a>
 </body>
 </html>

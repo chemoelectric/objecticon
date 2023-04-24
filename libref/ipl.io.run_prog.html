@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>run_prog</title></head><body>
+<h1>run_prog(prog, params, env)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.io-package.html" target="listFrame">ipl.io</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+A simple helper to run a program <code>prog</code> with the given optional
+parameter list and environment, and capture and return its output as
+a string.  If the program exits with an error status code, then the
+procedure fails and sets <code>&amp;why</code> appropriately.
+<p/>
+Notes :-
+<ul>
+<li>
+This procedure only works on UNIX platforms.
+</li>
+<li>
+stdin and stderr are both set to <code>/dev/null</code>.
+</li>
+<li>
+The shell isn't invoked (unlike <code><a href="io.open.html" target="displayFrame">io.open(..., "pr")</a></code>); so
+no shell syntax may be used.
+</li>
+<li>
+The PATH is used to search for <code>prog</code>.
+<p/>
+</li>
+</ul>
+Example :-
+<pre>
+   s := run_prog("ls", ["-l", "/"])
+</pre>
+<p/><a href="ipl.io-iomisc.icn.html#116" target="displayFrame">Source - iomisc.icn </a>
+<p/>
+</body></html>

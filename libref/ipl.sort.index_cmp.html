@@ -1,0 +1,19 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>index_cmp</title></head><body>
+<h1>index_cmp(i, f)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.sort-package.html" target="listFrame">ipl.sort</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Return a compare function which applies the comparator function <code>f</code> to the
+<code>i</code>th field of each item.  <code>f</code> defaults to <code><a href="lang.Internal.html#compare">Internal.compare</a></code>.
+<p/>
+For example :-
+<pre>
+    l := [ [1,54,2], [4,56,23], [4325,1,23], [123,4576,23]]
+    # sort by the middle element of each item
+    qsort(l, index_cmp(2))
+</pre>
+<p/><a href="ipl.sort-sort.icn.html#229" target="displayFrame">Source - sort.icn </a>
+<p/>
+</body></html>

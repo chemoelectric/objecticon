@@ -1,0 +1,1086 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>textfield.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: textfield.icn 8842 2021-01-16 23:59:28Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import undo, util, graphics, ipl.functional
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># A class for a single input line of text.  The text can
+<a name="15"/># scroll within the area specified.  By default, a sunken
+<a name="16"/># border surrounds the text area; this can be changed by
+<a name="17"/># `set_border()`.
+<a name="18"/>#
+<a name="19"/># The horizontal size should be normally set by the `set_size()`
+<a name="20"/># method to provide a comfortable input width.
+<a name="21"/>#
+<a name="22"/># An `Event.ACTION` is generated when return is pressed,
+<a name="23"/># `Event.CONTENT_CHANGED` whenever the contents are changed,
+<a name="24"/># `Event.CURSOR_MOVED` when the cursor moves, and
+<a name="25"/># `Event.SELECTION_CHANGED` whenever the selection changes.
+<a name="26"/>#
+<a name="27"/># Example :-
+<a name="28"/># ~
+<a name="29"/>#   t := TextField()
+<a name="30"/>#   t.set_pos(50, 250)
+<a name="31"/>#   # Vertical size will default
+<a name="32"/>#   t.set_size(100)
+<a name="33"/>#   t.set_contents("Initial string")
+<a name="34"/>#   self.add(t)
+<a name="35"/># ~
+<a name="36"/>class TextField(Component)
+<a name="37"/>   public 
+<a name="38"/>      filter,                  # Cset for filtering characters
+<a name="39"/>      is_editable_flag,        # Are we editable?
+<a name="40"/>      menu_on_rpress_flag,     # Show context menu on mouse right press event?
+<a name="41"/>      move_on_rpress_flag,     # Move on mouse right press event?
+<a name="42"/>      contents,                #                
+<a name="43"/>      going_left,
+<a name="44"/>      cursor,                  #              
+<a name="45"/>      mark,
+<a name="46"/>      tx,                      #          
+<a name="47"/>      tw,                      #
+<a name="48"/>      displaychar,             # char to print on screen
+<a name="49"/>      placeholder,
+<a name="50"/>      undo_manager,
+<a name="51"/>      primary,
+<a name="52"/>      old_cursor,
+<a name="53"/>      old_mark,
+<a name="54"/>      old_region,
+<a name="55"/>      no_drag,                 # Don't allow drag to set the cursor
+<a name="56"/>      changed,
+<a name="57"/>      loff,
+<a name="58"/>      primary_selection_owner,
+<a name="59"/>      scroll_ticker,
+<a name="60"/>      scroll_ticker_interval,
+<a name="61"/>      cursor_ticker,
+<a name="62"/>      cursor_on
+<a name="63"/>
+<a name="64"/>   #
+<a name="65"/>   # Set the displaychar attribute
+<a name="66"/>   #
+<a name="67"/>   public set_displaychar(c)
+<a name="68"/>      displaychar := need_text(c)
+<a name="69"/>      (*displaychar = 1) | runerr("Single character string expected", displaychar)
+<a name="70"/>      link
+<a name="71"/>   end
+<a name="72"/>
+<a name="73"/>   #
+<a name="74"/>   # Set the placeholder attribute
+<a name="75"/>   #
+<a name="76"/>   public set_placeholder(s)
+<a name="77"/>      placeholder := need_text(s)
+<a name="78"/>      link
+<a name="79"/>   end
+<a name="80"/>
+<a name="81"/>   #
+<a name="82"/>   # Set a filter on the characters allowed to be input to the text field.  For example :-
+<a name="83"/>   # ~
+<a name="84"/>   #   # Permit only hexadecimal characters as input
+<a name="85"/>   #   set_filter('0987654321abcdefABCDEF')
+<a name="86"/>   # ~
+<a name="87"/>   # :Parameters :
+<a name="88"/>   # :  `c` - The cset of permissible characters.
+<a name="89"/>   public set_filter(c)
+<a name="90"/>      self.filter := need_cset(c) ** Gui.PRINTABLE_1
+<a name="91"/>      link
+<a name="92"/>   end
+<a name="93"/>
+<a name="94"/>   #
+<a name="95"/>   # Set the editable status of the component.
+<a name="96"/>   #
+<a name="97"/>   public set_is_editable(s)
+<a name="98"/>      self.is_editable_flag := need_flag(s)
+<a name="99"/>      link
+<a name="100"/>   end
+<a name="101"/>
+<a name="102"/>   #
+<a name="103"/>   # Move the cursor on mouse right press?  Only relevant if the context menu is disabled.
+<a name="104"/>   #
+<a name="105"/>   public set_move_on_rpress(s)
+<a name="106"/>      self.move_on_rpress_flag := need_flag(s)
+<a name="107"/>      link
+<a name="108"/>   end
+<a name="109"/>
+<a name="110"/>   #
+<a name="111"/>   # Show the context menu on mouse right press?
+<a name="112"/>   #
+<a name="113"/>   public set_menu_on_rpress(s)
+<a name="114"/>      self.menu_on_rpress_flag := need_flag(s)
+<a name="115"/>      link
+<a name="116"/>   end
+<a name="117"/>
+<a name="118"/>   #
+<a name="119"/>   # Return the present contents of the text field.
+<a name="120"/>   #
+<a name="121"/>   public get_contents()
+<a name="122"/>      return self.contents
+<a name="123"/>   end
+<a name="124"/>
+<a name="125"/>   #
+<a name="126"/>   # Set the undo manager used by this instance.
+<a name="127"/>   #
+<a name="128"/>   public set_undo_manager(u)
+<a name="129"/>      undo_manager := u
+<a name="130"/>      link
+<a name="131"/>   end
+<a name="132"/>
+<a name="133"/>   public override get_default_height()
+<a name="134"/>      return self.cbwin.get_line_height() + border.get_total_height()
+<a name="135"/>   end
+<a name="136"/>
+<a name="137"/>   public override get_default_width()
+<a name="138"/>      return self.cbwin.text_width(get_view()) + border.get_total_width()
+<a name="139"/>   end
+<a name="140"/>
+<a name="141"/>   public override layout()
+<a name="142"/>      self.tx := self.x + border.get_l_inset()
+<a name="143"/>      self.tw := self.w - border.get_total_width()
+<a name="144"/>      constrain_line()
+<a name="145"/>   end
+<a name="146"/>
+<a name="147"/>   public override shift(dx, dy)
+<a name="148"/>      Component.shift(dx, dy)
+<a name="149"/>      self.tx +:= dx
+<a name="150"/>   end
+<a name="151"/>
+<a name="152"/>   #
+<a name="153"/>   # Set the contents of the field.  If not invoked then
+<a name="154"/>   # the initial content is the empty string.
+<a name="155"/>   # :Parameters :
+<a name="156"/>   # :  `x` - The contents
+<a name="157"/>   #
+<a name="158"/>   public set_contents(x)
+<a name="159"/>      /x := ""
+<a name="160"/>      self.contents := need_text(x)
+<a name="161"/>      self.cursor := *self.contents + 1
+<a name="162"/>      self.loff := 0
+<a name="163"/>      clear_mark()
+<a name="164"/>      if is_live() then {
+<a name="165"/>         self.invalidate()
+<a name="166"/>         constrain_line()
+<a name="167"/>         undo_manager.clear()
+<a name="168"/>      }
+<a name="169"/>      link
+<a name="170"/>   end
+<a name="171"/>
+<a name="172"/>   #
+<a name="173"/>   # Set the contents of the field, allowing the user to undo the
+<a name="174"/>   # change, and firing events on the change.
+<a name="175"/>   #
+<a name="176"/>   # :Parameters :
+<a name="177"/>   # :  `x` - The new contents
+<a name="178"/>   # :  `pos` - The new cursor position, default *x + 1
+<a name="179"/>   # :  `e` - The event causing the change
+<a name="180"/>   # :  `coalesce` - Allow this operation to be coalesced with others 
+<a name="181"/>   #            by the undo manager.
+<a name="182"/>   #
+<a name="183"/>   public assign_contents(x, pos, e, coalesce)
+<a name="184"/>      local ed
+<a name="185"/>      x := need_text(\x) | ""
+<a name="186"/>      pos := need_integer(\pos, 1, *x + 1) | *x + 1
+<a name="187"/>      need_flag(coalesce)
+<a name="188"/>      start_handle(e)
+<a name="189"/>      if self.contents == x then {
+<a name="190"/>         clear_mark()
+<a name="191"/>         cursor := pos
+<a name="192"/>      } else {
+<a name="193"/>         ed := TextFieldAssignEdit(self, x, pos, coalesce)
+<a name="194"/>         ed.doit()
+<a name="195"/>         undo_manager.add_edit(ed)
+<a name="196"/>      }
+<a name="197"/>      end_handle(e)
+<a name="198"/>      link
+<a name="199"/>   end
+<a name="200"/>
+<a name="201"/>   public start_handle(e)
+<a name="202"/>      old_cursor := cursor
+<a name="203"/>      old_mark := mark
+<a name="204"/>      old_region := get_region() | &amp;null
+<a name="205"/>      changed := &amp;null
+<a name="206"/>   end
+<a name="207"/>
+<a name="208"/>   public end_handle(e)
+<a name="209"/>      local r
+<a name="210"/>      if r := get_region() &amp;
+<a name="211"/>         primary ~=== r &amp;
+<a name="212"/>         not is_held(Mouse.LEFT_PRESS) then {
+<a name="213"/>         parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
+<a name="214"/>         self.primary := r
+<a name="215"/>      }
+<a name="216"/>      if \changed then {
+<a name="217"/>         self.constrain_line()
+<a name="218"/>         self.invalidate()
+<a name="219"/>         cursor_on := -1
+<a name="220"/>         fire(Event.CONTENT_CHANGED, e)
+<a name="221"/>      }
+<a name="222"/>      if old_cursor ~= cursor then {
+<a name="223"/>         self.constrain_line()
+<a name="224"/>         self.invalidate()
+<a name="225"/>         cursor_on := -1
+<a name="226"/>         fire(Event.CURSOR_MOVED, e)
+<a name="227"/>      }
+<a name="228"/>      if old_mark ~=== mark then {
+<a name="229"/>         self.invalidate()
+<a name="230"/>      }
+<a name="231"/>      if old_region ~=== r then {
+<a name="232"/>         fire(Event.SELECTION_CHANGED, e)
+<a name="233"/>      }
+<a name="234"/>   end
+<a name="235"/>
+<a name="236"/>   #
+<a name="237"/>   # Convenient function to move the cursor to the given position.
+<a name="238"/>   #
+<a name="239"/>   public move_cursor(x, shift, e)
+<a name="240"/>      start_handle(e)
+<a name="241"/>
+<a name="242"/>      # Same as keyboard mark...
+<a name="243"/>      if \shift then
+<a name="244"/>         /mark := cursor
+<a name="245"/>      else
+<a name="246"/>         mark := &amp;null
+<a name="247"/>
+<a name="248"/>      set_cursor(x)
+<a name="249"/>
+<a name="250"/>      end_handle(e)
+<a name="251"/>      link
+<a name="252"/>   end
+<a name="253"/>
+<a name="254"/>   public handle_lpress(e)
+<a name="255"/>      start_handle(e)
+<a name="256"/>      if \e.shift then {
+<a name="257"/>         /self.mark := self.cursor
+<a name="258"/>         self.cursor := whereis_x(e)
+<a name="259"/>      } else {
+<a name="260"/>         case (parent_dialog.get_click_count() - 1) % 3 of {
+<a name="261"/>            0 : {
+<a name="262"/>               self.cursor := whereis_x(e)
+<a name="263"/>               self.mark := self.cursor
+<a name="264"/>            }
+<a name="265"/>            1 : {
+<a name="266"/>               self.cursor := self.mark := whereis_x(e)
+<a name="267"/>               while any(~' ', self.contents, self.cursor) do
+<a name="268"/>                  self.cursor +:= 1
+<a name="269"/>               while any(~' ', self.contents, self.mark - 1) do
+<a name="270"/>                  self.mark -:= 1
+<a name="271"/>               no_drag := &amp;yes
+<a name="272"/>            }
+<a name="273"/>            2 : {
+<a name="274"/>               self.cursor := *self.contents + 1
+<a name="275"/>               self.mark := 1
+<a name="276"/>               no_drag := &amp;yes
+<a name="277"/>            }
+<a name="278"/>         }
+<a name="279"/>      }
+<a name="280"/>      end_handle(e)
+<a name="281"/>   end
+<a name="282"/>
+<a name="283"/>   public create_context_menu(e)
+<a name="284"/>      local m
+<a name="285"/>      m := TextContextMenu(self)
+<a name="286"/>      if *m.children &gt; 0 then
+<a name="287"/>         return m
+<a name="288"/>   end
+<a name="289"/>
+<a name="290"/>   public handle_rpress(e)
+<a name="291"/>      local m, pm
+<a name="292"/>      if \menu_on_rpress_flag then {
+<a name="293"/>         if m := create_context_menu(e) then {
+<a name="294"/>            pm := PopupMenu()
+<a name="295"/>            pm.popup(self, m, e.x, e.y)
+<a name="296"/>         }
+<a name="297"/>      } else if \move_on_rpress_flag then {
+<a name="298"/>         start_handle(e)
+<a name="299"/>         self.cursor := whereis_x(e)
+<a name="300"/>         clear_mark()
+<a name="301"/>         end_handle(e)
+<a name="302"/>      }
+<a name="303"/>   end
+<a name="304"/>
+<a name="305"/>   private handle_mpress_response(e, target_type, data)
+<a name="306"/>      local s, ed
+<a name="307"/>      (\data &amp;
+<a name="308"/>       \is_editable_flag &amp;
+<a name="309"/>       is_initialized()) | fail
+<a name="310"/>
+<a name="311"/>      start_handle(e)
+<a name="312"/>      self.cursor := whereis_x(e)
+<a name="313"/>      clear_mark()
+<a name="314"/>      if s := apply_filter(text_convert(selection_convert(target_type, data), 
+<a name="315"/>                                        type(self.contents))) then {
+<a name="316"/>         ed := TextFieldPasteEdit(self, s)
+<a name="317"/>         ed.doit()
+<a name="318"/>         undo_manager.add_edit(ed)
+<a name="319"/>      }
+<a name="320"/>      end_handle(e)
+<a name="321"/>   end
+<a name="322"/>
+<a name="323"/>   public handle_mpress(e)
+<a name="324"/>      parent_dialog.request_selection(Selection.PRIMARY, 
+<a name="325"/>                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+<a name="326"/>                                      lpartial(handle_mpress_response, e))
+<a name="327"/>   end
+<a name="328"/>
+<a name="329"/>   public whereis_x(e)
+<a name="330"/>      return find_cursor_pos(cbwin, get_view(), e.x - self.tx + loff)
+<a name="331"/>   end
+<a name="332"/>
+<a name="333"/>   public handle_ldrag(e)
+<a name="334"/>      local p
+<a name="335"/>
+<a name="336"/>      /no_drag | fail
+<a name="337"/>
+<a name="338"/>      start_handle(e)
+<a name="339"/>      p := self.cursor
+<a name="340"/>
+<a name="341"/>      # Start ticking if to the left/right, otherwise stop ticking
+<a name="342"/>      if e.x &lt; self.tx then {
+<a name="343"/>         self.going_left := &amp;yes
+<a name="344"/>         check_scroll_ticker(self.tx - e.x)
+<a name="345"/>      } else if e.x &gt;= self.tx + self.tw then {
+<a name="346"/>         self.going_left := &amp;null
+<a name="347"/>         check_scroll_ticker(e.x - (self.tx + self.tw))
+<a name="348"/>      } else {
+<a name="349"/>         self.cursor := whereis_x(e)
+<a name="350"/>         scroll_ticker.stop()
+<a name="351"/>      }
+<a name="352"/>      end_handle(e)
+<a name="353"/>   end
+<a name="354"/>
+<a name="355"/>   public check_scroll_ticker(d)
+<a name="356"/>      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+<a name="357"/>      scroll_ticker.change_time(scroll_ticker_interval)
+<a name="358"/>      # Start it (if it isn't already running)
+<a name="359"/>      scroll_ticker.start()
+<a name="360"/>   end
+<a name="361"/>
+<a name="362"/>   #
+<a name="363"/>   # Move the text area displayed so that the cursor is on the screen.
+<a name="364"/>   #
+<a name="365"/>   public constrain_line()
+<a name="366"/>      local s, i
+<a name="367"/>      s := get_view()
+<a name="368"/>      i := self.cbwin.text_width(s[1:self.cursor])
+<a name="369"/>
+<a name="370"/>      # Constrain loff so that the cursor is on the screen
+<a name="371"/>      if loff &gt; i then
+<a name="372"/>         loff := i
+<a name="373"/>      else if loff + self.tw &lt; i then
+<a name="374"/>         loff := i - self.tw
+<a name="375"/>
+<a name="376"/>      # Now try to use as much of tw as we can, by minimizing loff
+<a name="377"/>      i := self.cbwin.text_width(s) 
+<a name="378"/>      if i - self.tw &lt; loff then
+<a name="379"/>         loff := max(0, i - self.tw)
+<a name="380"/>   end
+<a name="381"/>
+<a name="382"/>   public scroll_tick()
+<a name="383"/>      local s
+<a name="384"/>      repeat {
+<a name="385"/>         start_handle()
+<a name="386"/>         s := get_view()
+<a name="387"/>         if \going_left then {
+<a name="388"/>            while self.cursor &gt; 1 &amp;
+<a name="389"/>               self.cbwin.text_width(s[1:self.cursor]) &gt;= loff do
+<a name="390"/>               self.cursor -:= 1
+<a name="391"/>         } else {
+<a name="392"/>            while self.cursor &lt;= *s &amp;
+<a name="393"/>               self.cbwin.text_width(s[1:self.cursor]) &lt;= loff + self.tw do
+<a name="394"/>               self.cursor +:= 1
+<a name="395"/>         }
+<a name="396"/>         end_handle()
+<a name="397"/>         scroll_ticker.sleep(scroll_ticker_interval)
+<a name="398"/>      }
+<a name="399"/>   end
+<a name="400"/>
+<a name="401"/>   public handle_lrelease(e)
+<a name="402"/>      start_handle(e)
+<a name="403"/>      # For consistency with editabletextlist we clear_mark if no region.
+<a name="404"/>      has_region() | clear_mark()
+<a name="405"/>      scroll_ticker.stop()
+<a name="406"/>      no_drag := &amp;null
+<a name="407"/>      end_handle(e)
+<a name="408"/>   end
+<a name="409"/>
+<a name="410"/>   public handle_interrupted()
+<a name="411"/>      if is_held(Mouse.LEFT_PRESS) then {
+<a name="412"/>         # Release left press so that end_handle() owns the selection
+<a name="413"/>         parent_dialog.release(self, Mouse.LEFT_PRESS)
+<a name="414"/>         handle_lrelease()
+<a name="415"/>      }
+<a name="416"/>   end
+<a name="417"/>
+<a name="418"/>   public clear_mark()
+<a name="419"/>      self.mark := &amp;null
+<a name="420"/>      link
+<a name="421"/>   end
+<a name="422"/>
+<a name="423"/>   public set_mark(m)
+<a name="424"/>      self.mark := restrict(need_integer(m), 1, *contents + 1)
+<a name="425"/>      link
+<a name="426"/>   end
+<a name="427"/>
+<a name="428"/>   public set_cursor(c)
+<a name="429"/>      self.cursor := restrict(need_integer(c), 1, *contents + 1)
+<a name="430"/>      link
+<a name="431"/>   end
+<a name="432"/>
+<a name="433"/>   public override initially()
+<a name="434"/>      Component.initially()
+<a name="435"/>      if has_focus() then
+<a name="436"/>         cursor_ticker.start()
+<a name="437"/>   end
+<a name="438"/>
+<a name="439"/>   public override finally()
+<a name="440"/>      scroll_ticker.stop()
+<a name="441"/>      cursor_ticker.stop()
+<a name="442"/>      Component.finally()
+<a name="443"/>   end
+<a name="444"/>
+<a name="445"/>   #
+<a name="446"/>   # Delete
+<a name="447"/>   #
+<a name="448"/>   public handle_delete_left(e)
+<a name="449"/>      local ed
+<a name="450"/>
+<a name="451"/>      \self.is_editable_flag | fail
+<a name="452"/>
+<a name="453"/>      start_handle(e)
+<a name="454"/>      if has_region() then
+<a name="455"/>         delete_region(e)
+<a name="456"/>      else if self.cursor &gt; 1 then {
+<a name="457"/>         ed := TextFieldDeleteLeftEdit(self)
+<a name="458"/>         ed.doit()
+<a name="459"/>         undo_manager.add_edit(ed)
+<a name="460"/>      }
+<a name="461"/>      end_handle(e)
+<a name="462"/>   end
+<a name="463"/>
+<a name="464"/>   public handle_return(e)
+<a name="465"/>      fire(Event.ACTION, e)
+<a name="466"/>   end
+<a name="467"/>
+<a name="468"/>   public keyboard_mark(e)
+<a name="469"/>      if \e.shift then
+<a name="470"/>         /mark := cursor
+<a name="471"/>      else
+<a name="472"/>         mark := &amp;null
+<a name="473"/>   end
+<a name="474"/>
+<a name="475"/>   public handle_key_right(e)
+<a name="476"/>      start_handle(e)
+<a name="477"/>      keyboard_mark(e)
+<a name="478"/>      self.cursor := (*self.contents + 1 &gt;= self.cursor + 1)
+<a name="479"/>      end_handle(e)
+<a name="480"/>   end
+<a name="481"/>
+<a name="482"/>   public handle_key_left(e)
+<a name="483"/>      start_handle(e)
+<a name="484"/>      keyboard_mark(e)
+<a name="485"/>      self.cursor := (0 &lt; self.cursor - 1)
+<a name="486"/>      end_handle(e)
+<a name="487"/>   end
+<a name="488"/>
+<a name="489"/>   public handle_key_home(e)
+<a name="490"/>      start_handle(e)
+<a name="491"/>      keyboard_mark(e)
+<a name="492"/>      self.cursor := 1
+<a name="493"/>      end_handle(e)
+<a name="494"/>   end
+<a name="495"/>
+<a name="496"/>   public handle_key_end(e)
+<a name="497"/>      start_handle(e)
+<a name="498"/>      keyboard_mark(e)
+<a name="499"/>      self.cursor := *self.contents + 1
+<a name="500"/>      end_handle(e)
+<a name="501"/>   end
+<a name="502"/>
+<a name="503"/>   public handle_delete_line(e)
+<a name="504"/>      local ed
+<a name="505"/>
+<a name="506"/>      \self.is_editable_flag | fail
+<a name="507"/>
+<a name="508"/>      start_handle(e)
+<a name="509"/>      if *self.contents &gt; 0 then {
+<a name="510"/>         ed := TextFieldDeleteLineEdit(self)
+<a name="511"/>         ed.doit()
+<a name="512"/>         undo_manager.add_edit(ed)
+<a name="513"/>      }
+<a name="514"/>      end_handle(e)
+<a name="515"/>   end
+<a name="516"/>
+<a name="517"/>   public handle_delete_right(e)
+<a name="518"/>      local ed
+<a name="519"/>
+<a name="520"/>      \self.is_editable_flag | fail
+<a name="521"/>
+<a name="522"/>      start_handle(e)
+<a name="523"/>      if has_region() then
+<a name="524"/>         delete_region(e)
+<a name="525"/>      else if self.cursor &lt;= *self.contents then {
+<a name="526"/>         ed := TextFieldDeleteRightEdit(self)
+<a name="527"/>         ed.doit()
+<a name="528"/>         undo_manager.add_edit(ed)
+<a name="529"/>      }
+<a name="530"/>      end_handle(e)
+<a name="531"/>   end
+<a name="532"/>
+<a name="533"/>   public handle_select_all(e)
+<a name="534"/>      start_handle(e)
+<a name="535"/>      if *self.contents &gt; 0 then {
+<a name="536"/>         self.cursor := *self.contents + 1
+<a name="537"/>         self.mark := 1
+<a name="538"/>      }
+<a name="539"/>      end_handle(e)
+<a name="540"/>   end
+<a name="541"/>
+<a name="542"/>   public handle_end_of_line(e)
+<a name="543"/>      start_handle(e)
+<a name="544"/>      keyboard_mark(e)
+<a name="545"/>      self.cursor := *self.contents + 1
+<a name="546"/>      end_handle(e)
+<a name="547"/>   end
+<a name="548"/>
+<a name="549"/>   public handle_start_of_line(e)
+<a name="550"/>      start_handle(e)
+<a name="551"/>      keyboard_mark(e)
+<a name="552"/>      self.cursor := 1
+<a name="553"/>      end_handle(e)
+<a name="554"/>   end
+<a name="555"/>
+<a name="556"/>   public handle_cut(e)
+<a name="557"/>      local s
+<a name="558"/>      \self.is_editable_flag | fail
+<a name="559"/>      start_handle(e)
+<a name="560"/>      if s := get_region() then {
+<a name="561"/>         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+<a name="562"/>         delete_region(e)
+<a name="563"/>      }
+<a name="564"/>      end_handle(e)
+<a name="565"/>   end
+<a name="566"/>
+<a name="567"/>   public handle_copy(e)
+<a name="568"/>      local s
+<a name="569"/>      start_handle(e)
+<a name="570"/>      if s := get_region() then
+<a name="571"/>         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+<a name="572"/>      end_handle(e)
+<a name="573"/>   end
+<a name="574"/>
+<a name="575"/>   public is_editable()
+<a name="576"/>      succeed \is_editable_flag
+<a name="577"/>   end
+<a name="578"/>
+<a name="579"/>   public has_contents()
+<a name="580"/>      succeed *contents &gt; 0
+<a name="581"/>   end
+<a name="582"/>
+<a name="583"/>   public can_undo()
+<a name="584"/>      return undo_manager.can_undo()
+<a name="585"/>   end
+<a name="586"/>
+<a name="587"/>   public can_redo()
+<a name="588"/>      return undo_manager.can_redo()
+<a name="589"/>   end
+<a name="590"/>
+<a name="591"/>   public override keeps(e)
+<a name="592"/>      succeed member(Key.CURSOR_H, e.code)
+<a name="593"/>   end
+<a name="594"/>
+<a name="595"/>   public apply_filter(t)
+<a name="596"/>      local s
+<a name="597"/>      # Apply the filter to the string to paste
+<a name="598"/>      s := ""
+<a name="599"/>      t ? {
+<a name="600"/>         while tab(upto(filter)) do
+<a name="601"/>            s ||:= tab(many(filter))
+<a name="602"/>      }
+<a name="603"/>      if *s &gt; 0 then
+<a name="604"/>         return s
+<a name="605"/>   end
+<a name="606"/>
+<a name="607"/>   private handle_paste_response(e, target_type, data)
+<a name="608"/>      if is_initialized() then
+<a name="609"/>         insert_string(selection_convert(target_type, \data), e)
+<a name="610"/>   end
+<a name="611"/>
+<a name="612"/>   public handle_paste(e)
+<a name="613"/>      parent_dialog.request_selection(Selection.CLIPBOARD, 
+<a name="614"/>                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+<a name="615"/>                                      lpartial(handle_paste_response, e))
+<a name="616"/>   end
+<a name="617"/>
+<a name="618"/>   #
+<a name="619"/>   # Insert a string as though it had been pasted via the clipboard.
+<a name="620"/>   # Fails if no string was inserted, either because the field is not
+<a name="621"/>   # editable, or the filtered string was empty.
+<a name="622"/>   #
+<a name="623"/>   public insert_string(s, e)
+<a name="624"/>      local ce, ed
+<a name="625"/>
+<a name="626"/>      \self.is_editable_flag | fail
+<a name="627"/>      s := apply_filter(text_convert(s, type(self.contents))) | fail
+<a name="628"/>
+<a name="629"/>      start_handle(e)
+<a name="630"/>      ce := CompoundEdit()
+<a name="631"/>      if has_region() then {
+<a name="632"/>         ed := TextFieldDeleteRegionEdit(self)
+<a name="633"/>         ed.doit()
+<a name="634"/>         ce.add_edit(ed)
+<a name="635"/>      }
+<a name="636"/>      ed := TextFieldPasteEdit(self, s)
+<a name="637"/>      ed.doit()
+<a name="638"/>      ce.add_edit(ed)
+<a name="639"/>      ce.close()
+<a name="640"/>      undo_manager.add_edit(ce)
+<a name="641"/>      end_handle(e)
+<a name="642"/>      link
+<a name="643"/>   end
+<a name="644"/>
+<a name="645"/>   public handle_default(e)
+<a name="646"/>      local ce, ed, ec
+<a name="647"/>
+<a name="648"/>      ec := e.code
+<a name="649"/>      if /self.is_editable_flag | not(type(ec) == ("string" | "ucs")) |
+<a name="650"/>         \e.ctrl | \e.meta | not(any(filter, ec)) then
+<a name="651"/>         fail
+<a name="652"/>
+<a name="653"/>      ec := text_convert(ec, type(self.contents))
+<a name="654"/>
+<a name="655"/>      start_handle(e)
+<a name="656"/>      # 
+<a name="657"/>      # Add the printable character at cursor position
+<a name="658"/>      #
+<a name="659"/>      if has_region() then {
+<a name="660"/>         ce := CompoundEdit().set_liberal(&amp;yes)
+<a name="661"/>         ed := TextFieldDeleteRegionEdit(self)
+<a name="662"/>         ed.doit()
+<a name="663"/>         ce.add_edit(ed)
+<a name="664"/>         ed := TextFieldDefaultEdit(self, ec)
+<a name="665"/>         ed.doit()
+<a name="666"/>         ce.add_edit(ed)
+<a name="667"/>         ce.close()
+<a name="668"/>         undo_manager.add_edit(ce)
+<a name="669"/>      } else {
+<a name="670"/>         ed := TextFieldDefaultEdit(self, ec)
+<a name="671"/>         ed.doit()
+<a name="672"/>         undo_manager.add_edit(ed)
+<a name="673"/>      }
+<a name="674"/>      end_handle(e)
+<a name="675"/>   end
+<a name="676"/>
+<a name="677"/>   public handle_undo(e)
+<a name="678"/>      \self.is_editable_flag | fail
+<a name="679"/>
+<a name="680"/>      start_handle(e)
+<a name="681"/>      if undo_manager.can_undo() then
+<a name="682"/>         undo_manager.undo()
+<a name="683"/>      end_handle(e)
+<a name="684"/>   end
+<a name="685"/>
+<a name="686"/>   public handle_redo(e)
+<a name="687"/>      \self.is_editable_flag | fail
+<a name="688"/>
+<a name="689"/>      start_handle(e)
+<a name="690"/>      if undo_manager.can_redo() then
+<a name="691"/>         undo_manager.redo()
+<a name="692"/>      end_handle(e)
+<a name="693"/>   end
+<a name="694"/>
+<a name="695"/>   public handle_key(e)
+<a name="696"/>      case e.code of {
+<a name="697"/>         "\b" : handle_delete_left(e)
+<a name="698"/>         "\r" | "\l": handle_return(e)
+<a name="699"/>         "\^k" : handle_delete_line(e)
+<a name="700"/>         Key.HOME : handle_key_home(e)
+<a name="701"/>         Key.END : handle_key_end(e)
+<a name="702"/>         Key.RIGHT : handle_key_right(e)
+<a name="703"/>         Key.LEFT : handle_key_left(e)
+<a name="704"/>         "\^a" : handle_select_all(e)
+<a name="705"/>         "\^e" : handle_end_of_line(e)
+<a name="706"/>         "\d" | "\^d" : handle_delete_right(e)
+<a name="707"/>         "\^x" :  handle_cut(e)
+<a name="708"/>         "\^c" :  handle_copy(e)
+<a name="709"/>         "\^v" :  handle_paste(e)
+<a name="710"/>         Key.INSERT :  if \e.ctrl then handle_copy(e) else if \e.shift then handle_paste(e)
+<a name="711"/>         "\^z" :  handle_undo(e)
+<a name="712"/>         "\^y" :  handle_redo(e)
+<a name="713"/>         default : handle_default(e)
+<a name="714"/>      }
+<a name="715"/>   end
+<a name="716"/>
+<a name="717"/>   public get_region() 
+<a name="718"/>      if has_region() then
+<a name="719"/>         return contents[self.cursor:self.mark]
+<a name="720"/>   end
+<a name="721"/>
+<a name="722"/>   public delete_region(e)
+<a name="723"/>      local ed
+<a name="724"/>      ed := TextFieldDeleteRegionEdit(self)
+<a name="725"/>      ed.doit()
+<a name="726"/>      undo_manager.add_edit(ed)
+<a name="727"/>   end
+<a name="728"/>
+<a name="729"/>   public has_region()
+<a name="730"/>      succeed \self.mark ~= self.cursor
+<a name="731"/>   end
+<a name="732"/>
+<a name="733"/>   public get_view()
+<a name="734"/>      return if \displaychar then
+<a name="735"/>         repl(displaychar, *contents)
+<a name="736"/>      else
+<a name="737"/>         contents
+<a name="738"/>   end
+<a name="739"/>
+<a name="740"/>   public cursor_tick()
+<a name="741"/>      local t
+<a name="742"/>      repeat {
+<a name="743"/>         if should_draw_focus() &amp; is_unhidden() then 
+<a name="744"/>         {
+<a name="745"/>            t := cursor_on
+<a name="746"/>            cursor_on := if dont_blink(self) then
+<a name="747"/>               0
+<a name="748"/>            else
+<a name="749"/>               (cursor_on + 1) % 3
+<a name="750"/>            if (t | cursor_on) = 2 then
+<a name="751"/>               invalidate()
+<a name="752"/>         }
+<a name="753"/>         cursor_ticker.sleep(Gui.CURSOR_BLINK)
+<a name="754"/>      }
+<a name="755"/>   end
+<a name="756"/>
+<a name="757"/>   public override display()
+<a name="758"/>      local fh, s, mp, np, y1, off1, off2, W
+<a name="759"/>
+<a name="760"/>      fh := self.cbwin.get_font_height()
+<a name="761"/>      y1 := self.y + (self.h - fh) / 2
+<a name="762"/>      s := get_view()
+<a name="763"/>      if *s = 0 &amp; \placeholder then {
+<a name="764"/>         use {
+<a name="765"/>            W := Gui.style.get_shadow_clone(cbwin),
+<a name="766"/>            W.draw_string(self.tx, y1 + W.get_font_ascent(), placeholder)
+<a name="767"/>         }
+<a name="768"/>      } else
+<a name="769"/>         cbwin.draw_string(self.tx - loff, y1 + cbwin.get_font_ascent(), s)
+<a name="770"/>
+<a name="771"/>      if has_region() then {
+<a name="772"/>         mp := self.mark
+<a name="773"/>         if mp &gt; cursor then {
+<a name="774"/>            np := mp
+<a name="775"/>            mp := cursor
+<a name="776"/>         } else
+<a name="777"/>            np := cursor
+<a name="778"/>         off1 := self.cbwin.text_width(s[1:mp])
+<a name="779"/>         off2 := self.cbwin.text_width(s[1:np])
+<a name="780"/>         Gui.style.fill_selection_rectangle(self.cbwin,
+<a name="781"/>                                            self.tx - loff + off1,
+<a name="782"/>                                            y1, 
+<a name="783"/>                                            off2 - off1,
+<a name="784"/>                                            fh)
+<a name="785"/>      }
+<a name="786"/>
+<a name="787"/>      #
+<a name="788"/>      # If has focus display box cursor, else display outline cursor
+<a name="789"/>      #
+<a name="790"/>      if should_draw_focus() then {
+<a name="791"/>         if self.cursor_on ~= 2 then
+<a name="792"/>            Gui.style.draw_text_cursor(self.cbwin,
+<a name="793"/>                                       self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
+<a name="794"/>      } else if \self.is_editable_flag &amp; \self.accepts_focus_flag then
+<a name="795"/>         Gui.style.draw_shadow_text_cursor(self.cbwin,
+<a name="796"/>                                           self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
+<a name="797"/>
+<a name="798"/>      border.draw_rect(self.cbwin, self)
+<a name="799"/>   end
+<a name="800"/>
+<a name="801"/>   public override new()
+<a name="802"/>      Component.new()
+<a name="803"/>      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+<a name="804"/>      cursor_ticker := Dispatcher.new_task{cursor_tick()}
+<a name="805"/>      cursor_on := -1
+<a name="806"/>      undo_manager := UndoManager()
+<a name="807"/>      filter := Gui.PRINTABLE_1
+<a name="808"/>      self.accepts_focus_flag := &amp;yes
+<a name="809"/>      self.set_contents("")
+<a name="810"/>      self.set_border(CompoundBorder().
+<a name="811"/>                          set_outer(SunkenBorder()).
+<a name="812"/>                          set_inner(EmptyBorder().
+<a name="813"/>                                    set_l_inset(Gui.TEXT_INSET).
+<a name="814"/>                                    set_r_inset(Gui.TEXT_INSET)))
+<a name="815"/>      self.is_editable_flag := &amp;yes
+<a name="816"/>      self.menu_on_rpress_flag := &amp;yes
+<a name="817"/>      self.move_on_rpress_flag := &amp;yes
+<a name="818"/>      self.set_constraint("x_fill", &amp;yes)
+<a name="819"/>      self.set_constraint("x_align", Align.L)
+<a name="820"/>      self.set_constraint("x_weight", 1.0)
+<a name="821"/>      set_pointer("xterm")
+<a name="822"/>      self.loff := 0
+<a name="823"/>      self.primary_selection_owner := TextFieldPrimarySelectionOwner(self)
+<a name="824"/>      connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
+<a name="825"/>      connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
+<a name="826"/>      connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
+<a name="827"/>      connect(handle_ldrag, Event.MOUSE_LEFT_DRAG)
+<a name="828"/>      connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+<a name="829"/>      connect(handle_key, Event.KEY_PRESS)
+<a name="830"/>      connect(handle_interrupted, Event.INTERRUPTED)
+<a name="831"/>      connect(create cursor_ticker.start(), Event.GOT_FOCUS)
+<a name="832"/>      connect(create cursor_ticker.stop(), Event.LOST_FOCUS)
+<a name="833"/>      return
+<a name="834"/>   end
+<a name="835"/>end
+<a name="836"/>
+<a name="837"/>class TextFieldPrimarySelectionOwner(TextSelectionOwner)
+<a name="838"/>   private const parent
+<a name="839"/>
+<a name="840"/>   protected override get_text()
+<a name="841"/>      return \parent.primary
+<a name="842"/>   end
+<a name="843"/>
+<a name="844"/>   public override lost_ownership()
+<a name="845"/>      # Since we may retain ownership after having been disposed of.
+<a name="846"/>      if parent.is_live() then {
+<a name="847"/>         parent.start_handle()
+<a name="848"/>         parent.clear_mark()
+<a name="849"/>         parent.end_handle()
+<a name="850"/>      } else
+<a name="851"/>         parent.clear_mark()
+<a name="852"/>      parent.primary := &amp;null
+<a name="853"/>   end
+<a name="854"/>
+<a name="855"/>   public new(parent)
+<a name="856"/>      self.parent := parent
+<a name="857"/>      return
+<a name="858"/>   end
+<a name="859"/>end
+<a name="860"/>
+<a name="861"/>abstract class TextFieldEdit(UndoableEdit)
+<a name="862"/>   public const
+<a name="863"/>      parent
+<a name="864"/>   public
+<a name="865"/>      cursor, 
+<a name="866"/>      mark
+<a name="867"/>
+<a name="868"/>   public doit()
+<a name="869"/>      save()
+<a name="870"/>      self.redo_impl()
+<a name="871"/>      parent.changed := &amp;yes
+<a name="872"/>   end
+<a name="873"/>
+<a name="874"/>   public override redo()
+<a name="875"/>      restore()
+<a name="876"/>      self.redo_impl()
+<a name="877"/>      parent.changed := &amp;yes
+<a name="878"/>   end
+<a name="879"/>
+<a name="880"/>   public override undo()
+<a name="881"/>      self.undo_impl()
+<a name="882"/>      restore()
+<a name="883"/>      parent.changed := &amp;yes
+<a name="884"/>   end
+<a name="885"/>
+<a name="886"/>   public abstract redo_impl()
+<a name="887"/>   public abstract undo_impl()
+<a name="888"/>
+<a name="889"/>   public save()
+<a name="890"/>      self.cursor := parent.cursor
+<a name="891"/>      self.mark := parent.mark
+<a name="892"/>   end
+<a name="893"/>
+<a name="894"/>   public restore()
+<a name="895"/>      parent.cursor := self.cursor
+<a name="896"/>      parent.mark := self.mark
+<a name="897"/>   end
+<a name="898"/>
+<a name="899"/>   public new(parent)
+<a name="900"/>      self.parent := parent
+<a name="901"/>      return
+<a name="902"/>   end
+<a name="903"/>end
+<a name="904"/>
+<a name="905"/>class TextFieldDeleteRightEdit(TextFieldEdit)
+<a name="906"/>   public ch
+<a name="907"/>
+<a name="908"/>   public override add_edit(other)
+<a name="909"/>      if is(other, TextFieldDeleteRightEdit) &amp;
+<a name="910"/>         (cursor = other.cursor) then 
+<a name="911"/>      {
+<a name="912"/>         ch ||:= other.ch
+<a name="913"/>         return
+<a name="914"/>      }
+<a name="915"/>   end
+<a name="916"/>
+<a name="917"/>   public override redo_impl()
+<a name="918"/>      parent.contents[parent.cursor +: *ch] := ""
+<a name="919"/>      parent.clear_mark()
+<a name="920"/>   end
+<a name="921"/>
+<a name="922"/>   public override undo_impl()
+<a name="923"/>      if cursor &gt; *parent.contents then
+<a name="924"/>         parent.contents ||:= ch
+<a name="925"/>      else
+<a name="926"/>         parent.contents[cursor] := ch || parent.contents[cursor]
+<a name="927"/>   end
+<a name="928"/>
+<a name="929"/>   public override new(parent)
+<a name="930"/>      TextFieldEdit.new(parent)
+<a name="931"/>      ch := parent.contents[parent.cursor]
+<a name="932"/>      return
+<a name="933"/>   end
+<a name="934"/>end
+<a name="935"/>
+<a name="936"/>class TextFieldDeleteLeftEdit(TextFieldEdit)
+<a name="937"/>   public ch
+<a name="938"/>
+<a name="939"/>   public override add_edit(other)
+<a name="940"/>      if is(other, TextFieldDeleteLeftEdit) &amp;
+<a name="941"/>         (cursor = other.cursor + *ch) then
+<a name="942"/>      {
+<a name="943"/>         ch := other.ch || ch
+<a name="944"/>         return
+<a name="945"/>      }
+<a name="946"/>   end
+<a name="947"/>
+<a name="948"/>   public override redo_impl()
+<a name="949"/>      parent.contents[parent.cursor -: *ch] := ""
+<a name="950"/>      parent.cursor -:= *ch
+<a name="951"/>      parent.clear_mark()
+<a name="952"/>   end
+<a name="953"/>
+<a name="954"/>   public override undo_impl()
+<a name="955"/>      if cursor - *ch &gt; *parent.contents then
+<a name="956"/>         parent.contents ||:= ch
+<a name="957"/>      else
+<a name="958"/>         parent.contents[cursor - *ch] := ch || parent.contents[cursor - *ch]
+<a name="959"/>   end
+<a name="960"/>
+<a name="961"/>   public override new(parent)
+<a name="962"/>      TextFieldEdit.new(parent)
+<a name="963"/>      ch := parent.contents[parent.cursor - 1]
+<a name="964"/>      return
+<a name="965"/>   end
+<a name="966"/>end
+<a name="967"/>
+<a name="968"/>class TextFieldDeleteRegionEdit(TextFieldEdit)
+<a name="969"/>   public pre
+<a name="970"/>
+<a name="971"/>   public override redo_impl()
+<a name="972"/>      if parent.mark &lt; parent.cursor then {
+<a name="973"/>         pre := parent.contents[parent.mark:parent.cursor]
+<a name="974"/>         parent.contents[parent.mark:parent.cursor] := ""
+<a name="975"/>         parent.cursor := parent.mark
+<a name="976"/>      } else {
+<a name="977"/>         pre := parent.contents[parent.cursor:parent.mark]
+<a name="978"/>         parent.contents[parent.cursor:parent.mark] := ""
+<a name="979"/>      }
+<a name="980"/>      parent.clear_mark()
+<a name="981"/>   end
+<a name="982"/>
+<a name="983"/>   public override undo_impl()
+<a name="984"/>      if self.mark &lt; self.cursor then
+<a name="985"/>         parent.contents := parent.contents[1:self.mark] || pre || parent.contents[self.mark:0]
+<a name="986"/>      else
+<a name="987"/>         parent.contents := parent.contents[1:self.cursor] || pre || parent.contents[self.cursor:0]
+<a name="988"/>   end
+<a name="989"/>end
+<a name="990"/>
+<a name="991"/>class TextFieldPasteEdit(TextFieldEdit)
+<a name="992"/>   public s
+<a name="993"/>
+<a name="994"/>   public override redo_impl()
+<a name="995"/>      parent.contents := parent.contents[1:parent.cursor] || s || parent.contents[parent.cursor:0]
+<a name="996"/>      parent.cursor +:= *s
+<a name="997"/>   end
+<a name="998"/>
+<a name="999"/>   public override undo_impl()
+<a name="1000"/>      parent.contents[self.cursor +: *s] := ""
+<a name="1001"/>   end
+<a name="1002"/>
+<a name="1003"/>   public override new(parent, s)
+<a name="1004"/>      TextFieldEdit.new(parent)
+<a name="1005"/>      self.s := s
+<a name="1006"/>      return
+<a name="1007"/>   end
+<a name="1008"/>end
+<a name="1009"/>
+<a name="1010"/>class TextFieldDefaultEdit(TextFieldEdit)
+<a name="1011"/>   public s
+<a name="1012"/>
+<a name="1013"/>   public override add_edit(other)
+<a name="1014"/>      if is(other, gui.TextFieldDefaultEdit) &amp;
+<a name="1015"/>         (other.cursor = self.cursor + *s) then {
+<a name="1016"/>            s ||:= other.s
+<a name="1017"/>            return
+<a name="1018"/>      }
+<a name="1019"/>   end
+<a name="1020"/>
+<a name="1021"/>   public override redo_impl()
+<a name="1022"/>      parent.contents := parent.contents[1:parent.cursor] || s || parent.contents[parent.cursor:0]
+<a name="1023"/>      parent.cursor +:= *s
+<a name="1024"/>      parent.clear_mark()
+<a name="1025"/>   end
+<a name="1026"/>
+<a name="1027"/>   public override undo_impl()
+<a name="1028"/>      parent.contents[self.cursor +: *s] := ""
+<a name="1029"/>   end
+<a name="1030"/>
+<a name="1031"/>   public override new(parent, e)
+<a name="1032"/>      TextFieldEdit.new(parent)
+<a name="1033"/>      s := e
+<a name="1034"/>      return
+<a name="1035"/>   end
+<a name="1036"/>end
+<a name="1037"/>
+<a name="1038"/>class TextFieldDeleteLineEdit(TextFieldEdit)
+<a name="1039"/>   public pre
+<a name="1040"/>
+<a name="1041"/>   public override redo_impl()
+<a name="1042"/>      pre := parent.contents
+<a name="1043"/>      parent.contents[1:0] := ""     # Preserves text type of contents
+<a name="1044"/>      parent.cursor := 1
+<a name="1045"/>      parent.clear_mark()
+<a name="1046"/>   end
+<a name="1047"/>
+<a name="1048"/>   public override undo_impl()
+<a name="1049"/>      parent.contents := pre
+<a name="1050"/>   end
+<a name="1051"/>end
+<a name="1052"/>
+<a name="1053"/>class TextFieldAssignEdit(TextFieldEdit)
+<a name="1054"/>   public s, pos, pre
+<a name="1055"/>   public const coalesce
+<a name="1056"/>
+<a name="1057"/>   public override add_edit(other)
+<a name="1058"/>      if \coalesce &amp; is(other, gui.TextFieldAssignEdit) &amp; \other.coalesce then {
+<a name="1059"/>         self.s := other.s
+<a name="1060"/>         self.pos := other.pos
+<a name="1061"/>         return
+<a name="1062"/>      }
+<a name="1063"/>   end
+<a name="1064"/>
+<a name="1065"/>   public override redo_impl()
+<a name="1066"/>      pre := parent.contents
+<a name="1067"/>      parent.contents := s
+<a name="1068"/>      parent.cursor := pos
+<a name="1069"/>      parent.clear_mark()
+<a name="1070"/>   end
+<a name="1071"/>
+<a name="1072"/>   public override undo_impl()
+<a name="1073"/>      parent.contents := pre
+<a name="1074"/>   end
+<a name="1075"/>
+<a name="1076"/>   public override new(parent, s, pos, coalesce)
+<a name="1077"/>      TextFieldEdit.new(parent)
+<a name="1078"/>      self.s := s
+<a name="1079"/>      self.pos := pos
+<a name="1080"/>      self.coalesce := coalesce
+<a name="1081"/>      return
+<a name="1082"/>   end
+<a name="1083"/>end
+</pre></body></html>

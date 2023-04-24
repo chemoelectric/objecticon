@@ -1,0 +1,891 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>filegui.icn</title></head><body><pre>
+<a name="1"/>package ipl.filegui
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   ipl.sort,
+<a name="5"/>   ipl.strings,
+<a name="6"/>   ipl.pdco,
+<a name="7"/>   gui,
+<a name="8"/>   io,
+<a name="9"/>   xdg,
+<a name="10"/>   util,
+<a name="11"/>   lang
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># A subclass of `ListEntry` which provides fields for storing some
+<a name="15"/># cached data for an icon and the standard case name.
+<a name="16"/>#
+<a name="17"/>class ListEntryWithIcon(ListEntry)
+<a name="18"/>   package readable
+<a name="19"/>      icon
+<a name="20"/>   private
+<a name="21"/>      sc_name
+<a name="22"/>
+<a name="23"/>   #
+<a name="24"/>   # Get the result of applying `Files.standard_case()` to the name; the
+<a name="25"/>   # result is cached.
+<a name="26"/>   #
+<a name="27"/>   public standard_case()
+<a name="28"/>      /sc_name := Files.standard_case(name)
+<a name="29"/>      return .sc_name
+<a name="30"/>   end
+<a name="31"/>end
+<a name="32"/>
+<a name="33"/>#
+<a name="34"/># A subclass of `ListEntryWithIcon` which additionally stores an
+<a name="35"/># annotated name, with added date or size information.
+<a name="36"/>#
+<a name="37"/>class AnnotatedListEntryWithIcon(ListEntryWithIcon)
+<a name="38"/>   package readable
+<a name="39"/>      annotation
+<a name="40"/>
+<a name="41"/>   public annotate_name()
+<a name="42"/>      annotation := name
+<a name="43"/>      link
+<a name="44"/>   end
+<a name="45"/>
+<a name="46"/>   public annotate_date(now)
+<a name="47"/>      local t, tf
+<a name="48"/>      /now := Time.get_system_seconds()
+<a name="49"/>      t := lstat.mtime
+<a name="50"/>      tf := if now - t &gt; 180 * 86400 then
+<a name="51"/>         Time(t + Time.SYSTEM_BASE_OFFSET).format("NNN d yyyy")
+<a name="52"/>      else
+<a name="53"/>         Time(t + Time.SYSTEM_BASE_OFFSET).format("NNN d HH:mm")
+<a name="54"/>      annotation := name || " (" || tf || ")"
+<a name="55"/>      link
+<a name="56"/>   end
+<a name="57"/>
+<a name="58"/>   public annotate_size()
+<a name="59"/>      local z, zf
+<a name="60"/>      z := lstat.size
+<a name="61"/>      zf := if z &lt; 1024 then
+<a name="62"/>         Format.numeric_to_string(z, 0, ',') || "B"
+<a name="63"/>      else if z &lt; 1024*1024 then
+<a name="64"/>         Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
+<a name="65"/>      else
+<a name="66"/>         Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
+<a name="67"/>      annotation := name || " (" || zf || ")"
+<a name="68"/>      link
+<a name="69"/>   end
+<a name="70"/>end
+<a name="71"/>
+<a name="72"/>class AnnotatedIconFilesItemPaint(IconFilesItemPaint)
+<a name="73"/>   public override get_string(data)
+<a name="74"/>      return data.annotation
+<a name="75"/>   end
+<a name="76"/>end
+<a name="77"/>
+<a name="78"/>class ColorFilesItemPaint(CachedClone, ItemPaint)
+<a name="79"/>   protected override make_clone(W)
+<a name="80"/>      return W.clone()
+<a name="81"/>   end
+<a name="82"/>
+<a name="83"/>   public get_color(data)
+<a name="84"/>      local st
+<a name="85"/>      st := data.lstat
+<a name="86"/>      return case st.mode_str[1] of {
+<a name="87"/>         "d" : "purple"
+<a name="88"/>         "l" : "cyan"
+<a name="89"/>         "p" : "orange"
+<a name="90"/>         "s" : "dark gray"
+<a name="91"/>         "b" : "gray"
+<a name="92"/>         "c" : "gray"
+<a name="93"/>         default : {
+<a name="94"/>            if st.mode_str[-7] == ("x" | "s") then
+<a name="95"/>               "green"
+<a name="96"/>            else case Text.lower(string(Files.get_extension(data.name))) of {
+<a name="97"/>               "cmd"|"exe"|"com"|"btm"|"bat" : "green"
+<a name="98"/>               "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "red"
+<a name="99"/>               "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "blue"
+<a name="100"/>               "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "pink" 
+<a name="101"/>            }
+<a name="102"/>         }
+<a name="103"/>      } | "black"
+<a name="104"/>   end
+<a name="105"/>
+<a name="106"/>   public get_string(data)
+<a name="107"/>      return data.name
+<a name="108"/>   end
+<a name="109"/>
+<a name="110"/>   public override get_width(W, data)
+<a name="111"/>      return W.text_width(get_string(data))
+<a name="112"/>   end
+<a name="113"/>
+<a name="114"/>   public override get_constant_height(W)
+<a name="115"/>      return W.get_line_height()
+<a name="116"/>   end
+<a name="117"/>
+<a name="118"/>   public override get_size(W, data)
+<a name="119"/>      return Size(get_width(W, data), W.get_line_height())
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   public override draw(W, data, x, y)
+<a name="123"/>      W := get_clone(W).set_fg(get_color(data))
+<a name="124"/>      W.draw_string(x, y + W.get_line_ascent(), get_string(data))
+<a name="125"/>   end
+<a name="126"/>
+<a name="127"/>   public override finally()
+<a name="128"/>      close()
+<a name="129"/>   end
+<a name="130"/>end
+<a name="131"/>
+<a name="132"/>$if _PNG
+<a name="133"/>$load PDF_16 "fileicons/pdf.png"
+<a name="134"/>$load IMAGE_16 "fileicons/image.png"
+<a name="135"/>$load VIDEO_16 "fileicons/video.png"
+<a name="136"/>$load ARCHIVE_16 "fileicons/archive.png"
+<a name="137"/>$load AUDIO_16 "fileicons/audio.png"
+<a name="138"/>$load EXE_16 "fileicons/exe.png"
+<a name="139"/>$load CHARDEVICE_16 "fileicons/chardevice.png"
+<a name="140"/>$load BLOCKDEVICE_16 "fileicons/blockdevice.png"
+<a name="141"/>$load SYMLINK_16 "fileicons/symlink.png"
+<a name="142"/>$load SOCKET_16 "fileicons/socket.png"
+<a name="143"/>$load PIPE_16 "fileicons/pipe.png"
+<a name="144"/>$load HTML_16 "fileicons/html.png"
+<a name="145"/>$load TEXT_16 "fileicons/text.png"
+<a name="146"/>$load FILE_16 "fileicons/file.png"
+<a name="147"/>$load FOLDER_16 "fileicons/folder.png"
+<a name="148"/>$else
+<a name="149"/>$load PDF_16 "fileicons/pdf.gif"
+<a name="150"/>$load IMAGE_16 "fileicons/image.gif"
+<a name="151"/>$load VIDEO_16 "fileicons/video.gif"
+<a name="152"/>$load ARCHIVE_16 "fileicons/archive.gif"
+<a name="153"/>$load AUDIO_16 "fileicons/audio.gif"
+<a name="154"/>$load EXE_16 "fileicons/exe.gif"
+<a name="155"/>$load CHARDEVICE_16 "fileicons/chardevice.gif"
+<a name="156"/>$load BLOCKDEVICE_16 "fileicons/blockdevice.gif"
+<a name="157"/>$load SYMLINK_16 "fileicons/symlink.gif"
+<a name="158"/>$load SOCKET_16 "fileicons/socket.gif"
+<a name="159"/>$load PIPE_16 "fileicons/pipe.gif"
+<a name="160"/>$load HTML_16 "fileicons/html.gif"
+<a name="161"/>$load TEXT_16 "fileicons/text.gif"
+<a name="162"/>$load FILE_16 "fileicons/file.gif"
+<a name="163"/>$load FOLDER_16 "fileicons/folder.gif"
+<a name="164"/>$endif
+<a name="165"/>
+<a name="166"/>#
+<a name="167"/># An `ItemPaint` which adds an appropriate icon to each lines displayed.  The data should be
+<a name="168"/># `ListEntryWithIcon` instances.
+<a name="169"/>#
+<a name="170"/>class IconFilesItemPaint(ItemPaint)
+<a name="171"/>   public static const ICON_SIZE
+<a name="172"/>
+<a name="173"/>   private static init()
+<a name="174"/>      ICON_SIZE := env_scale("OI_GUI_FILE_ICON_SIZE") | scale(16)
+<a name="175"/>      ImageCache.
+<a name="176"/>         name_image("fi.PDF_16", PDF_16).
+<a name="177"/>         name_image("fi.IMAGE_16", IMAGE_16).
+<a name="178"/>         name_image("fi.VIDEO_16", VIDEO_16).
+<a name="179"/>         name_image("fi.ARCHIVE_16", ARCHIVE_16).
+<a name="180"/>         name_image("fi.AUDIO_16", AUDIO_16).
+<a name="181"/>         name_image("fi.EXE_16", EXE_16).
+<a name="182"/>         name_image("fi.CHARDEVICE_16", CHARDEVICE_16).
+<a name="183"/>         name_image("fi.BLOCKDEVICE_16", BLOCKDEVICE_16).
+<a name="184"/>         name_image("fi.SYMLINK_16", SYMLINK_16).
+<a name="185"/>         name_image("fi.SOCKET_16", SOCKET_16).
+<a name="186"/>         name_image("fi.PIPE_16", PIPE_16).
+<a name="187"/>         name_image("fi.HTML_16", HTML_16).
+<a name="188"/>         name_image("fi.TEXT_16", TEXT_16).
+<a name="189"/>         name_image("fi.FILE_16", FILE_16).
+<a name="190"/>         name_image("fi.FOLDER_16", FOLDER_16)
+<a name="191"/>
+<a name="192"/>      try_xdg("fi.folder", "folder", "fi.FOLDER_16")
+<a name="193"/>      try_xdg("fi.symlink", "emblem-symbolic-link", "fi.SYMLINK_16")
+<a name="194"/>      try_xdg("fi.exe", "application-x-executable", "fi.EXE_16")
+<a name="195"/>      resize("fi.pdf", "fi.PDF_16")
+<a name="196"/>      resize("fi.image", "fi.IMAGE_16")
+<a name="197"/>      resize("fi.video", "fi.VIDEO_16")
+<a name="198"/>      resize("fi.archive", "fi.ARCHIVE_16")
+<a name="199"/>      resize("fi.audio", "fi.AUDIO_16")
+<a name="200"/>      resize("fi.chardevice", "fi.CHARDEVICE_16")
+<a name="201"/>      resize("fi.blockdevice", "fi.BLOCKDEVICE_16")
+<a name="202"/>      resize("fi.socket", "fi.SOCKET_16")
+<a name="203"/>      resize("fi.pipe", "fi.PIPE_16")
+<a name="204"/>      resize("fi.html", "fi.HTML_16")
+<a name="205"/>      resize("fi.text", "fi.TEXT_16")
+<a name="206"/>      resize("fi.file", "fi.FILE_16")
+<a name="207"/>   end
+<a name="208"/>
+<a name="209"/>   private static resize(dest, src)
+<a name="210"/>      ImageCache.copy_key_with_resize(dest, src, ICON_SIZE, ICON_SIZE)
+<a name="211"/>   end
+<a name="212"/>
+<a name="213"/>   private static try_xdg(key, icon, alt)
+<a name="214"/>      local k
+<a name="215"/>      k := IconTheme.find_icon_and_cache(icon, ICON_SIZE,, &amp;yes) |
+<a name="216"/>         ImageCache.get_key_with_resize(alt, ICON_SIZE, ICON_SIZE) |
+<a name="217"/>         runerr("Failed to get key to setup file icons: " || &amp;why)
+<a name="218"/>      ImageCache.copy_key(key, k)
+<a name="219"/>   end
+<a name="220"/>
+<a name="221"/>   public override get_width(W, data)
+<a name="222"/>      return ICON_SIZE + Gui.TEXT_INSET + W.text_width(get_string(data))
+<a name="223"/>   end
+<a name="224"/>
+<a name="225"/>   public override get_constant_height(W)
+<a name="226"/>      return max(W.get_line_height(), 2 * Gui.Y_INSET + ICON_SIZE)
+<a name="227"/>   end
+<a name="228"/>
+<a name="229"/>   public override get_size(W, data)
+<a name="230"/>      return Size(get_width(W, data), get_constant_height(W))
+<a name="231"/>   end
+<a name="232"/>
+<a name="233"/>   public get_string(data)
+<a name="234"/>      return data.name
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   public get_xdg_for_file(f)
+<a name="238"/>      return Mime.find_icon_for_file_and_cache(f, ICON_SIZE,, &amp;yes) | 
+<a name="239"/>             IconTheme.find_icon_and_cache("text-x-generic", ICON_SIZE,, &amp;yes)
+<a name="240"/>   end
+<a name="241"/>
+<a name="242"/>   public get_icon(data)
+<a name="243"/>      local st, k
+<a name="244"/>      st := data.lstat
+<a name="245"/>      k := case st.mode_str[1] of {
+<a name="246"/>         "d" : "fi.folder"
+<a name="247"/>         "l" : "fi.symlink"
+<a name="248"/>         "s" : "fi.socket"
+<a name="249"/>         "p" : "fi.pipe"
+<a name="250"/>         "b" : "fi.blockdevice"
+<a name="251"/>         "c" : "fi.chardevice"
+<a name="252"/>         default : {
+<a name="253"/>            if st.mode_str[-7] == ("x" | "s") then
+<a name="254"/>               "fi.exe"
+<a name="255"/>            else {
+<a name="256"/>               get_xdg_for_file(data.name) | case Text.lower(string(Files.get_extension(data.name))) of {
+<a name="257"/>                  "pdf": "fi.pdf"
+<a name="258"/>                  "cmd"|"exe"|"com"|"btm"|"bat" : "fi.exe"
+<a name="259"/>                  "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "fi.archive"
+<a name="260"/>                  "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm"|"svg"|"svgz": "fi.image"
+<a name="261"/>                  "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "fi.video"
+<a name="262"/>                  "mp3"|"wav"|"mid"|"rm": "fi.audio"
+<a name="263"/>                  "htm"|"html": "fi.html"
+<a name="264"/>                  "txt"|"doc"|"rtf": "fi.text"
+<a name="265"/>               }
+<a name="266"/>            }
+<a name="267"/>         }
+<a name="268"/>      } | "fi.file"
+<a name="269"/>      return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
+<a name="270"/>   end
+<a name="271"/>
+<a name="272"/>   public override draw(W, data, x, y, w, h)
+<a name="273"/>      local i, d
+<a name="274"/>      if is(data, ListEntryWithIcon) then {
+<a name="275"/>         unless i := \data.icon then
+<a name="276"/>            i := data.icon := get_icon(data)
+<a name="277"/>      } else
+<a name="278"/>         i := get_icon(data)
+<a name="279"/>      i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
+<a name="280"/>      d := ICON_SIZE + Gui.TEXT_INSET
+<a name="281"/>      x +:= d
+<a name="282"/>      w -:= d
+<a name="283"/>      W.draw_string(x, y + (h + W.get_font_ascent() - W.get_font_descent()) / 2,
+<a name="284"/>                    limit_text(W, get_string(data), w))
+<a name="285"/>   end
+<a name="286"/>end
+<a name="287"/>
+<a name="288"/>#
+<a name="289"/># An `ItemPaint` for a string list of directories, which adds a folder
+<a name="290"/># icon to each line displayed.
+<a name="291"/>#
+<a name="292"/>#
+<a name="293"/>class StringDirItemPaint(IconFilesItemPaint)
+<a name="294"/>   public override get_string(data)
+<a name="295"/>      return data
+<a name="296"/>   end
+<a name="297"/>
+<a name="298"/>   public override get_icon(data)
+<a name="299"/>      return ImageCache.get("fi.folder")
+<a name="300"/>   end
+<a name="301"/>end
+<a name="302"/>
+<a name="303"/>#
+<a name="304"/># A `SuggestField` for selecting files.
+<a name="305"/>#
+<a name="306"/>class FileSuggestField(SuggestField)
+<a name="307"/>   public
+<a name="308"/>      cwd,
+<a name="309"/>      matches,
+<a name="310"/>      prefix,
+<a name="311"/>      dir_list,
+<a name="312"/>      dir_list_name,
+<a name="313"/>      directories_only_flag,
+<a name="314"/>      show_hidden_files_flag,
+<a name="315"/>      pats
+<a name="316"/>
+<a name="317"/>   public set_directories_only(s)
+<a name="318"/>      self.directories_only_flag := need_flag(s)
+<a name="319"/>      link
+<a name="320"/>   end
+<a name="321"/>
+<a name="322"/>   public set_show_hidden_files(s)
+<a name="323"/>      self.show_hidden_files_flag := need_flag(s)
+<a name="324"/>      link
+<a name="325"/>   end
+<a name="326"/>
+<a name="327"/>   # Set the "cwd" from which relative paths are resolved.  May be
+<a name="328"/>   # `&amp;null`, in which case the true cwd is used.
+<a name="329"/>   #
+<a name="330"/>   # :Parameters :
+<a name="331"/>   # :  `d` - something convertible to a `FilePath`, or &amp;null.
+<a name="332"/>   #
+<a name="333"/>   public set_cwd(d)
+<a name="334"/>      self.cwd := need_FilePath(\d).absolute() | &amp;null
+<a name="335"/>      link
+<a name="336"/>   end
+<a name="337"/>
+<a name="338"/>   # Return an absolute `FilePath` (based on `cwd`) representing the
+<a name="339"/>   # current contents.
+<a name="340"/>   #
+<a name="341"/>   public get_path()
+<a name="342"/>      return FilePath(contents).absolute(cwd)
+<a name="343"/>   end
+<a name="344"/>
+<a name="345"/>   # Set a list of `ipl.wildcard.Wildcard` instances to use as
+<a name="346"/>   # patterns to filter the files displayed; may be `&amp;null`, in
+<a name="347"/>   # which case no filtering is done.
+<a name="348"/>   #
+<a name="349"/>   public set_patterns(l)
+<a name="350"/>      pats := l
+<a name="351"/>      link
+<a name="352"/>   end
+<a name="353"/>
+<a name="354"/>   # Clear any cached values of the directory list.
+<a name="355"/>   #
+<a name="356"/>   public refresh()
+<a name="357"/>      dir_list := dir_list_name := &amp;null
+<a name="358"/>      link
+<a name="359"/>   end
+<a name="360"/>
+<a name="361"/>   private match_entry(e)
+<a name="362"/>      local n
+<a name="363"/>      n := e.name
+<a name="364"/>      if /show_hidden_files_flag &amp; Files.is_hidden(n) then
+<a name="365"/>         fail
+<a name="366"/>      if e.stat.mode_str[1] == "d" then {
+<a name="367"/>         unless Files.is_relative_dir(n) then
+<a name="368"/>            return
+<a name="369"/>      } else {
+<a name="370"/>         n := e.standard_case()
+<a name="371"/>         if /directories_only_flag &amp; (/pats | (!pats).match_all(n)) then
+<a name="372"/>            return
+<a name="373"/>      }
+<a name="374"/>   end
+<a name="375"/>
+<a name="376"/>   private do_dir_list(p)
+<a name="377"/>      local s
+<a name="378"/>      s := p.canonical().str()
+<a name="379"/>      if dir_list_name ~=== s then {
+<a name="380"/>         dir_list := qsort(Files.ucs_list(s, ListEntryWithIcon), Files.name_cmp) | []
+<a name="381"/>         dir_list_name := s
+<a name="382"/>      }
+<a name="383"/>   end
+<a name="384"/>
+<a name="385"/>   #
+<a name="386"/>   # Calculate the matches list and prefix string from the current
+<a name="387"/>   # contents.  A new contents can then be calculated by simply
+<a name="388"/>   # appending the prefix to the name of a member of the matches list.
+<a name="389"/>   #
+<a name="390"/>   private calc_matches()
+<a name="391"/>      local path, s, t
+<a name="392"/>      # Note that we don't take canonical() here; that is done in
+<a name="393"/>      # do_dir_list() above, since we use path.parent() below.
+<a name="394"/>      # (Consider cwd=/tmp and we input "."; path is then /tmp/.)
+<a name="395"/>      path := get_path()
+<a name="396"/>      matches := []
+<a name="397"/>      if *contents = 0 | any(Files.PATH_SPECIALS, contents[-1]) then {
+<a name="398"/>         do_dir_list(path)
+<a name="399"/>         every t := !dir_list do {
+<a name="400"/>            if match_entry(t) then
+<a name="401"/>               put(matches, t)
+<a name="402"/>         }
+<a name="403"/>         prefix := contents
+<a name="404"/>      } else {
+<a name="405"/>         do_dir_list(path.parent())
+<a name="406"/>         s := Files.standard_case(path.get(-1))
+<a name="407"/>         every t := !dir_list do {
+<a name="408"/>            if match_entry(t) &amp; match(s, t.standard_case()) then
+<a name="409"/>               put(matches, t)
+<a name="410"/>         }
+<a name="411"/>         prefix := contents[1:-*s]
+<a name="412"/>      }
+<a name="413"/>   end
+<a name="414"/>
+<a name="415"/>   protected override do_request()
+<a name="416"/>      calc_matches()
+<a name="417"/>      # No point in a list which is a copy of what we already have
+<a name="418"/>      if *matches = 1 &amp; endswith(Files.standard_case(contents),
+<a name="419"/>                                 matches[1].standard_case()) then
+<a name="420"/>         return []
+<a name="421"/>      return matches
+<a name="422"/>   end
+<a name="423"/>
+<a name="424"/>   public override convert_element(o)
+<a name="425"/>      if /directories_only_flag &amp; o.stat.mode_str[1] == "d" then
+<a name="426"/>         return prefix || o.name || Files.PATH_SEPARATOR
+<a name="427"/>      else
+<a name="428"/>         return prefix || o.name
+<a name="429"/>   end
+<a name="430"/>
+<a name="431"/>   public override create_popup()
+<a name="432"/>      return ItemPaintList().
+<a name="433"/>         set_item_paint(IconFilesItemPaint()).
+<a name="434"/>         set_item_border(EmptyBorder().
+<a name="435"/>                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+<a name="436"/>                            set_x_align(Align.L))
+<a name="437"/>   end
+<a name="438"/>
+<a name="439"/>   #
+<a name="440"/>   # Get the longest common initial name from the matches list.  Eg if
+<a name="441"/>   # we have ["mark", "mary", "marion"], we get "mar".
+<a name="442"/>   #
+<a name="443"/>   private get_longest_prefix()
+<a name="444"/>      return coprefix(ipl.pdco.List{(!matches).name}) | u""
+<a name="445"/>   end
+<a name="446"/>
+<a name="447"/>   public override handle_tab(e)
+<a name="448"/>      local t, o, l
+<a name="449"/>      if \popup then {
+<a name="450"/>         if \select_using_enter_flag &amp; o := popup.object_get_cursor() then {
+<a name="451"/>            # Tab has been pressed with the cursor in the list.
+<a name="452"/>            # Insert the name (with a trailing / for a directory)
+<a name="453"/>            t := prefix || if o.stat.mode_str[1] == "d" then
+<a name="454"/>               o.name || Files.PATH_SEPARATOR
+<a name="455"/>            else
+<a name="456"/>               o.name
+<a name="457"/>            assign_contents(t,, e)
+<a name="458"/>            if /changed then
+<a name="459"/>               keep_closed()
+<a name="460"/>         } else {
+<a name="461"/>            # Calculate the string we could insert.  If not
+<a name="462"/>            # directories-only, and we have a single directory, append
+<a name="463"/>            # a /.  So for example
+<a name="464"/>            # "/ho" + tab -&gt; "/home/" rather than "/home"
+<a name="465"/>            t := prefix || if /directories_only_flag &amp; *matches = 1 &amp; matches[1].stat.mode_str[1] == "d" then
+<a name="466"/>               matches[1].name || Files.PATH_SEPARATOR
+<a name="467"/>            else
+<a name="468"/>               get_longest_prefix()
+<a name="469"/>
+<a name="470"/>            # If the calculated string is longer than what we have,
+<a name="471"/>            # insert it.  Otherwise, if we have selected from the list
+<a name="472"/>            # then trigger a change to refresh the list.  If in
+<a name="473"/>            # directories only mode, append a "/"; this will show the
+<a name="474"/>            # next dir.  So for example "/ho", press tab, choose "/home",
+<a name="475"/>            # press tab again to set to "/home/" and show its contents.
+<a name="476"/>
+<a name="477"/>            if *contents &lt; *t then
+<a name="478"/>               assign_contents(t,, e)
+<a name="479"/>            else if *popup.get_selections() = 1 then {
+<a name="480"/>               if /directories_only_flag then
+<a name="481"/>                  on_change(e)
+<a name="482"/>               else
+<a name="483"/>                  assign_contents(contents || Files.PATH_SEPARATOR,, e)
+<a name="484"/>            } else
+<a name="485"/>               keep_closed()
+<a name="486"/>         }
+<a name="487"/>      } else {
+<a name="488"/>         # As above, calculate the string we could insert.
+<a name="489"/>         l := do_request(&amp;yes)
+<a name="490"/>         t := prefix || if /directories_only_flag &amp; *matches = 1 &amp; matches[1].stat.mode_str[1] == "d" then
+<a name="491"/>            matches[1].name || Files.PATH_SEPARATOR
+<a name="492"/>         else
+<a name="493"/>            get_longest_prefix()
+<a name="494"/>
+<a name="495"/>         # Again as above, insert the string if it's longer.
+<a name="496"/>         # Otherwise trigger a change.  The only special case is if we
+<a name="497"/>         # are in directories mode and press tab whilst contents is an
+<a name="498"/>         # unambiguous directory; in this case append a /, which will
+<a name="499"/>         # show its contents.  Eg "/home" + tab -&gt; set to "/home/" and
+<a name="500"/>         # list contents.
+<a name="501"/>         if *contents &lt; *t then {
+<a name="502"/>            assign_contents(t,, e)
+<a name="503"/>            if *l &gt; 1 then
+<a name="504"/>               open_popup(l)
+<a name="505"/>         } else if *contents = *t &amp; \directories_only_flag &amp; *matches = 1 &amp; matches[1].stat.mode_str[1] == "d" then
+<a name="506"/>            assign_contents(t || Files.PATH_SEPARATOR,, e)
+<a name="507"/>         else
+<a name="508"/>            open_popup(l)
+<a name="509"/>      }
+<a name="510"/>   end
+<a name="511"/>
+<a name="512"/>   public override new()
+<a name="513"/>      SuggestField.new()
+<a name="514"/>      self.set_contents(u"")
+<a name="515"/>      set_direction(Direction.DOWN)
+<a name="516"/>      return
+<a name="517"/>   end
+<a name="518"/>end
+<a name="519"/>
+<a name="520"/># The border used to highlight which element of the path the mouse is
+<a name="521"/># over.
+<a name="522"/>#
+<a name="523"/>package class FileTrailBorder(LineBorder)
+<a name="524"/>   public override draw(W, x, y, w, h)
+<a name="525"/>      local W2
+<a name="526"/>      use {
+<a name="527"/>         W2 := Gui.style.get_dashed_clone(W),
+<a name="528"/>         W2.draw_rectangle(x, y, w, h, line_width)
+<a name="529"/>      }
+<a name="530"/>   end
+<a name="531"/>end
+<a name="532"/>
+<a name="533"/>#
+<a name="534"/># A directory button in the FileTrail - everything other than "/" elements.
+<a name="535"/>#
+<a name="536"/>class FileTrailButton(TextButton)
+<a name="537"/>   private readable p, tt
+<a name="538"/>
+<a name="539"/>   private changed()
+<a name="540"/>      parent.on_change(p.ucs())
+<a name="541"/>   end
+<a name="542"/>
+<a name="543"/>   # Set whether this element is disabled for input and displays "..."
+<a name="544"/>   # rather than its normal filename.  If f is set, then spc gives the
+<a name="545"/>   # amount of space available for the filename.  If null, it means
+<a name="546"/>   # the whole area is available, but we need to end with dots anyway.
+<a name="547"/>   #
+<a name="548"/>   package set_dots(f, spc)
+<a name="549"/>      local s
+<a name="550"/>      if /f then {
+<a name="551"/>         set_is_shaded(&amp;no)
+<a name="552"/>         set_label(p.get(-1))
+<a name="553"/>         set_tooltip()
+<a name="554"/>      } else {
+<a name="555"/>         # Get the filename, but with dots at the end.
+<a name="556"/>         s := p.get(-1)
+<a name="557"/>         if *s &lt; 3 then
+<a name="558"/>            s := u"..."
+<a name="559"/>         else
+<a name="560"/>            s[-3:0] := u"..."
+<a name="561"/>         while *s &gt; 3 &amp; cbwin.text_width(s) &gt; \spc do
+<a name="562"/>            s[-4:0] := u"..."
+<a name="563"/>         set_is_shaded(&amp;yes)
+<a name="564"/>         set_label(s)
+<a name="565"/>         set_tooltip(tt)
+<a name="566"/>      }
+<a name="567"/>   end
+<a name="568"/>
+<a name="569"/>   public override new(p, tt)
+<a name="570"/>      TextButton.new()
+<a name="571"/>      self.p := p
+<a name="572"/>      self.tt := tt
+<a name="573"/>      set_dots()
+<a name="574"/>      set_accepts_focus(&amp;no)
+<a name="575"/>      set_draw_own_shading(&amp;yes)
+<a name="576"/>      set_border(CompoundBorder().
+<a name="577"/>                 set_outer(FileTrailBorder().set_line_width(Gui.DASHED_WIDTH)).
+<a name="578"/>                 set_inner(EmptyBorder().
+<a name="579"/>                           set_l_inset(Gui.TEXT_INSET).
+<a name="580"/>                           set_r_inset(Gui.TEXT_INSET)).
+<a name="581"/>                 set_x_align(Align.L))
+<a name="582"/>      set_border_whilst_entered(&amp;yes)
+<a name="583"/>      connect(changed, Event.ACTION)
+<a name="584"/>      return
+<a name="585"/>   end
+<a name="586"/>end
+<a name="587"/>
+<a name="588"/>#
+<a name="589"/># A drop-down list in the FileTrail (shown by a "/" element).
+<a name="590"/>#
+<a name="591"/>class FileTrailList(ButtonOnlyList)
+<a name="592"/>   private readable 
+<a name="593"/>      p,        # The FilePath giving the path to this point
+<a name="594"/>      child     # The optional child to the right, for setting the selection in the popup
+<a name="595"/>
+<a name="596"/>   public override create_button()
+<a name="597"/>      local l
+<a name="598"/>      l := if p.size() = 1 then p.str() else Files.PATH_SEPARATOR
+<a name="599"/>      return TextButton().set_label(l)
+<a name="600"/>   end
+<a name="601"/>
+<a name="602"/>   public override create_popup()
+<a name="603"/>      return ItemPaintList().
+<a name="604"/>         set_item_paint(IconFilesItemPaint()).
+<a name="605"/>         set_item_border(EmptyBorder().
+<a name="606"/>                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+<a name="607"/>                            set_x_align(Align.L))
+<a name="608"/>   end
+<a name="609"/>
+<a name="610"/>   private match_entry(e)
+<a name="611"/>      local n
+<a name="612"/>      (e.stat.mode_str[1] == "d") | fail
+<a name="613"/>      n := e.name
+<a name="614"/>      if (/parent.show_hidden_files_flag &amp; Files.is_hidden(n)) | Files.is_relative_dir(n) then
+<a name="615"/>         fail
+<a name="616"/>      return
+<a name="617"/>   end
+<a name="618"/>
+<a name="619"/>   protected override open_popup(ev)
+<a name="620"/>      local e, i, l
+<a name="621"/>      l := []
+<a name="622"/>      every e := !Files.ucs_list(p.str(), ListEntryWithIcon) do {
+<a name="623"/>         if match_entry(e) then
+<a name="624"/>            put(l, e)
+<a name="625"/>      }
+<a name="626"/>      if *l = 0 then
+<a name="627"/>         fail
+<a name="628"/>      qsort(l, Files.name_cmp)
+<a name="629"/>      # Clear the selection, but set the cursor as though selection was
+<a name="630"/>      # set.  This is so we get an event even if we've clicked on the
+<a name="631"/>      # child directory (if any).  Unless we represent the parent of the
+<a name="632"/>      # FileTrail's cd, then this does represent a change of dir (namely
+<a name="633"/>      # to a parent dir of the FileTrail's cd).  FileTrail will then
+<a name="634"/>      # decided whether this represents a change and whether or not to
+<a name="635"/>      # fire to the owner.
+<a name="636"/>      set_selection_list(l)
+<a name="637"/>      set_selection()
+<a name="638"/>      ButtonOnlyList.open_popup(ev) | fail
+<a name="639"/>      b.set_border_whilst_entered(&amp;no)
+<a name="640"/>      if i := Positions{(!l).name, \child} then
+<a name="641"/>         popup.
+<a name="642"/>            set_cursor(i).
+<a name="643"/>            center_line(i)
+<a name="644"/>   end
+<a name="645"/>
+<a name="646"/>   private changed()
+<a name="647"/>      local o
+<a name="648"/>      o := object_get_selection()
+<a name="649"/>      parent.on_change(p.child(o.name).ucs())
+<a name="650"/>   end
+<a name="651"/>
+<a name="652"/>   public override new(p, child)
+<a name="653"/>      self.p := p
+<a name="654"/>      self.child := child
+<a name="655"/>      ButtonOnlyList.new()
+<a name="656"/>      set_accepts_focus(&amp;no)
+<a name="657"/>      set_selection_list([])
+<a name="658"/>      clear_constraints()
+<a name="659"/>      b.set_border_whilst_entered(&amp;yes).
+<a name="660"/>         set_border(CompoundBorder().
+<a name="661"/>                          set_outer(FileTrailBorder().set_line_width(Gui.DASHED_WIDTH)).
+<a name="662"/>                          set_inner(EmptyBorder().
+<a name="663"/>                                    set_l_inset(Gui.TEXT_INSET).
+<a name="664"/>                                    set_r_inset(Gui.TEXT_INSET)))
+<a name="665"/>      connect(changed, Event.SELECTION_CHANGED)
+<a name="666"/>      connect(create b.set_border_whilst_entered(&amp;yes), Event.POPUP_CLOSED)
+<a name="667"/>      return
+<a name="668"/>   end
+<a name="669"/>end
+<a name="670"/>
+<a name="671"/># A component for displaying a path as a series of buttons which
+<a name="672"/># select an element of the path, or popup a list of sibling
+<a name="673"/># directories.  A `FileTrail.DIR_CHANGED_EVENT` event is fired
+<a name="674"/># when a directory is selected.
+<a name="675"/>#
+<a name="676"/>class FileTrail(Component)
+<a name="677"/>   private
+<a name="678"/>      path_str
+<a name="679"/>   package
+<a name="680"/>      show_hidden_files_flag
+<a name="681"/>
+<a name="682"/>   public static const
+<a name="683"/>      DIR_CHANGED_EVENT
+<a name="684"/>
+<a name="685"/>   private static init()
+<a name="686"/>      DIR_CHANGED_EVENT := "dir changed"
+<a name="687"/>   end
+<a name="688"/>
+<a name="689"/>   package on_change(s)
+<a name="690"/>      if s ~== path_str then
+<a name="691"/>         fire(DIR_CHANGED_EVENT, s)
+<a name="692"/>   end
+<a name="693"/>
+<a name="694"/>   # Configure whether or not to show hidden files in the directory
+<a name="695"/>   # lists.
+<a name="696"/>   #
+<a name="697"/>   public set_show_hidden_files(s)
+<a name="698"/>      self.show_hidden_files_flag := need_flag(s)
+<a name="699"/>      link
+<a name="700"/>   end
+<a name="701"/>
+<a name="702"/>   public override layout()
+<a name="703"/>      reset_all()
+<a name="704"/>      Component.layout()
+<a name="705"/>      check_limits()
+<a name="706"/>   end
+<a name="707"/>
+<a name="708"/>   # Set all the children back to their original state, as though we
+<a name="709"/>   # have enough space to display everything.
+<a name="710"/>   private reset_all()
+<a name="711"/>      local c
+<a name="712"/>      every c := !children do {
+<a name="713"/>         c.set_is_hidden(&amp;no)
+<a name="714"/>         if is(c, FileTrailButton) then
+<a name="715"/>            c.set_dots(&amp;no)
+<a name="716"/>      }
+<a name="717"/>   end
+<a name="718"/>
+<a name="719"/>   # Go through the children to see at what point one cannot be fully
+<a name="720"/>   # displayed, and adjust accordingly to show a "..." element.
+<a name="721"/>   private check_limits()
+<a name="722"/>      local c, i, r, spc
+<a name="723"/>      every c := children[i := 1 to *children] do {
+<a name="724"/>         # Calculate the intersection with this component - may fail
+<a name="725"/>         # if the child is completely obscured.
+<a name="726"/>         r := intersect(c) | &amp;null
+<a name="727"/>         if /r | (r.w &lt; c.w) then {
+<a name="728"/>            # c is fully or partially obscured; everything to the
+<a name="729"/>            # right of c is fully obscured, everything to the left is
+<a name="730"/>            # fully visible.
+<a name="731"/>            if is(c, FileTrailList) then {
+<a name="732"/>               # c is a FileTrailList element; hide it and set the
+<a name="733"/>               # FileTrailButton to the left (if any) to end with "..."
+<a name="734"/>               c.set_is_hidden(&amp;yes)
+<a name="735"/>               children[i - 1].set_dots(&amp;yes)
+<a name="736"/>            } else if (spc := (\r).w - (c.border.l_inset + cbwin.text_width("..."))) &gt; 0 then {
+<a name="737"/>               # c is a FileTrailButton and has enough room to show
+<a name="738"/>               # the "..." itself, and perhaps some of the filename.
+<a name="739"/>               c.set_dots(&amp;yes, spc)
+<a name="740"/>            } else {
+<a name="741"/>               # c is a FileTrailButton but hasn't enough room to show
+<a name="742"/>               # the "..." itself.  So hide it, the FileTrailList to
+<a name="743"/>               # the left, and show the dots in the FileTrailButton
+<a name="744"/>               # two places to the left.
+<a name="745"/>               c.set_is_hidden(&amp;yes)
+<a name="746"/>               children[i - 1].set_is_hidden(&amp;yes)
+<a name="747"/>               children[i - 2].set_dots(&amp;yes)
+<a name="748"/>            }
+<a name="749"/>            break
+<a name="750"/>         }
+<a name="751"/>      }
+<a name="752"/>   end
+<a name="753"/>
+<a name="754"/>   public create_trail_list(p, child)
+<a name="755"/>      return FileTrailList(p, child)
+<a name="756"/>   end
+<a name="757"/>
+<a name="758"/>   public create_trail_button(p, tt)
+<a name="759"/>      return FileTrailButton(p, tt)
+<a name="760"/>   end
+<a name="761"/>
+<a name="762"/>   # Set the path to show to the given (ucs) string.  If the path is
+<a name="763"/>   # not absolute, then it is converted to an absolute path, all
+<a name="764"/>   # elements of which must be ucs, or failure occurs.
+<a name="765"/>   #
+<a name="766"/>   # :Parameters :
+<a name="767"/>   # :  `p` - something convertible to a `FilePath`.
+<a name="768"/>   #
+<a name="769"/>   public set_path(p)
+<a name="770"/>      local f, i, g
+<a name="771"/>      # Ensure all elements are ucs.
+<a name="772"/>      f := need_FilePath(p).canonical().ucs_path() | fail
+<a name="773"/>      remove_all()
+<a name="774"/>      path_str := f.ucs()
+<a name="775"/>      every i := 2 to f.size() do {
+<a name="776"/>         g := f.slice(1, i)
+<a name="777"/>         if i &gt; 2 then
+<a name="778"/>            add(create_trail_button(g, f.slice(i - 1, 0).ucs()))
+<a name="779"/>         add(create_trail_list(g, f.get(i)))
+<a name="780"/>      }
+<a name="781"/>      if f.size() &gt; 1 then
+<a name="782"/>         add(create_trail_button(f, f.get(-1)))
+<a name="783"/>      # The rightmost element takes up the rest of the space to give
+<a name="784"/>      # left alignment.
+<a name="785"/>      add(create_trail_list(f).
+<a name="786"/>            set_constraint("x_align", Align.L).
+<a name="787"/>            set_constraint("x_weight", 1.0))
+<a name="788"/>      if is_live() then {
+<a name="789"/>         reset_layout()
+<a name="790"/>         layout()
+<a name="791"/>         invalidate()
+<a name="792"/>      }
+<a name="793"/>      link
+<a name="794"/>   end
+<a name="795"/>
+<a name="796"/>   public override new()
+<a name="797"/>      Component.new()
+<a name="798"/>      set_layout(GridLayout().set_dii(0).set_doi(0))
+<a name="799"/>      set_constraint("x_fill", &amp;yes)
+<a name="800"/>      set_constraint("x_align", Align.L)
+<a name="801"/>      set_constraint("x_weight", 1.0)
+<a name="802"/>      # Set a path so that the component sizes correctly.
+<a name="803"/>      set_path(FilePath(Files.get_roots()))
+<a name="804"/>      return
+<a name="805"/>   end
+<a name="806"/>end
+<a name="807"/>
+<a name="808"/>#
+<a name="809"/># A dialog for renaming a file.
+<a name="810"/>#
+<a name="811"/>class RenameDialog(NameDialog)
+<a name="812"/>   private
+<a name="813"/>      p
+<a name="814"/>
+<a name="815"/>   public override on_okay_button(ev)
+<a name="816"/>      local s
+<a name="817"/>      s := name_field.get_contents()
+<a name="818"/>      if upto(Files.PATH_SPECIALS, s) then
+<a name="819"/>         msg("Invalid character in filename entered")
+<a name="820"/>      else if p.size() = 1 then
+<a name="821"/>         msg("Can't rename a root directory")
+<a name="822"/>      else {
+<a name="823"/>         s := p.sibling(s).ucs()
+<a name="824"/>         if Files.access(s) then
+<a name="825"/>            msg("File already exists")
+<a name="826"/>         else if Files.rename(p.str(), s) then {
+<a name="827"/>            result := s
+<a name="828"/>            dispose()
+<a name="829"/>         }
+<a name="830"/>         else
+<a name="831"/>            msg("Failed: " || &amp;why)
+<a name="832"/>      }
+<a name="833"/>   end
+<a name="834"/>
+<a name="835"/>   public override init_dialog()
+<a name="836"/>      local s, x
+<a name="837"/>      s := name_field.get_contents()
+<a name="838"/>      # Start with text selected, but not the extension.
+<a name="839"/>      name_field.move_cursor(1).move_cursor(*s + 1, &amp;yes)
+<a name="840"/>      if not Files.is_directory(p.str()) &amp; x := Files.get_extension(s) then
+<a name="841"/>         name_field.move_cursor(*s - *x, &amp;yes)
+<a name="842"/>   end
+<a name="843"/>
+<a name="844"/>   # The constructor requires a non-empty ucs string, being the file to be renamed.
+<a name="845"/>   public override new(s)
+<a name="846"/>      s := need_ucs(s)
+<a name="847"/>      p := FilePath(s).canonical()
+<a name="848"/>      NameDialog.new(p.get(-1))
+<a name="849"/>      set_label("Rename file")
+<a name="850"/>      name_field.set_size(scale(350))
+<a name="851"/>      return
+<a name="852"/>   end
+<a name="853"/>end
+<a name="854"/>
+<a name="855"/>#
+<a name="856"/># A dialog for creating a new directory
+<a name="857"/>#
+<a name="858"/>class NewDirectoryDialog(NameDialog)
+<a name="859"/>   private
+<a name="860"/>      p
+<a name="861"/>
+<a name="862"/>   public override on_okay_button(ev)
+<a name="863"/>      local s
+<a name="864"/>      s := name_field.get_contents()
+<a name="865"/>      if upto(Files.PATH_SPECIALS, s) then {
+<a name="866"/>         msg("Invalid character in filename entered")
+<a name="867"/>         fail
+<a name="868"/>      }
+<a name="869"/>      s := p.child(s).ucs()
+<a name="870"/>      if Files.mkdir(s) then {
+<a name="871"/>         result := s
+<a name="872"/>         dispose()
+<a name="873"/>      }
+<a name="874"/>      else
+<a name="875"/>         msg("Failed: " || &amp;why)
+<a name="876"/>   end
+<a name="877"/>
+<a name="878"/>   # The constructor requires a ucs string, being the directory in
+<a name="879"/>   # which the new directory is to be created.
+<a name="880"/>   public override new(s)
+<a name="881"/>      s := need_ucs(s)
+<a name="882"/>      p := FilePath(s)
+<a name="883"/>      NameDialog.new()
+<a name="884"/>      set_label("New directory")
+<a name="885"/>      name_field.set_size(scale(350))
+<a name="886"/>      return
+<a name="887"/>   end
+<a name="888"/>end
+</pre></body></html>

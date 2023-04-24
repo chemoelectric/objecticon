@@ -1,0 +1,901 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Pattern</title></head><body>
+<h1>Pattern</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="ipl.regexp-package.html" target="listFrame">ipl.regexp</a></dd>
+</dl><p/>
+This is a kit of procedures to deal with UNIX-like regular expression
+patterns.
+<p/>
+These procedures are interesting partly because of the "recursive
+suspension" (or "suspensive recursion" :-) technique used to simulate
+conjunction of an arbitrary number of computed expressions (see
+notes, below).
+<p/>
+Create a regexp pattern with default options using the constructor :-
+<p/>
+p := Pattern(re)
+<p/>
+The public search methods are:
+<p/>
+p.match(s,i1,i2) : i3,i4,...,iN
+p.find(s,i1,i2) : i3,i4,...,iN
+<p/>
+Alternatively, create a Pattern instance with custom options as follows :-
+<p/>
+p := Pattern().
+set_word_chars('whatever you like').
+set_leftmost_shortest(&amp;yes).
+parse(re)
+<p/>
+Note that setter methods cannot be called after a string has been parsed
+into the regular expression - you have to create a new instance.
+<p/>
+###########################################################################
+<p/>
+match() produces the sequence of positions in "s" past a substring
+starting at "i1" that matches "pattern", but fails if there is no
+such position.  Similar to match(), but is capable of generating
+multiple positions.
+<p/>
+find() produces the sequence of positions in "s" where substrings
+begin that match "pattern", but fails if there is no such position.
+Similar to find().  Each position is produced only once, even if
+several possible matches are possible at that position.
+<p/>
+Default values of s, i1, and i2 are handled as for Icon's built-in
+string scanning procedures such as match().
+<p/>
+###########################################################################
+<p/>
+Patttern(s)
+<p/>
+Creates a pattern from pattern string "s", but fails if
+the pattern string is not syntactically correct.
+<p/>
+###########################################################################
+<p/>
+p.set_case_dependent(flag)
+<p/>
+Set mode for case-independent or case-dependent matching.  The initial
+mode is case-dependent.
+<p/>
+###########################################################################
+<p/>
+Accessible Global Variables
+<p/>
+After a match, the strings matched by parenthesized regular
+expressions are left in a list which can be retrieved by the
+method "p.get_paren_groups()", and can be accessed by
+subscripting in using the same number as the \N construct.
+<p/>
+If it is desired that regular expression format be similar to UNIX
+filename generation patterns but still retain the power of full
+regular expressions, make the following assignments prior to
+compiling the pattern string:
+<p/>
+p.set_arb_string("*")     # Defaults to ".*"
+<p/>
+The sets of characters (csets) that define a word, digits, and white
+space can be modified.  The following assignments can be made before
+compiling the pattern string.  The character sets are captured when
+the pattern is compiled, so changing them after pattern compilation
+will not alter the behavior of matches unless the pattern string is
+recompiled.
+<p/>
+p.set_word_chars('whatever you like')
+# Defaults to &amp;letters ++ &amp;digits ++ "_"
+p.set_digit_chars(&amp;digits ++ 'ABCDEFabcdef')
+# Defaults to &amp;digits
+p.set_space_chars('whatever you like')
+# Defaults to ' \t\v\n\r\f'
+<p/>
+###########################################################################
+<p/>
+Characters compiled into patterns can be passed through a
+user-supplied filter procedure, set via p.set_filter()
+The filtering is done before the characters are bound
+into the pattern.  The filter proc is passed one argument, the string
+to filter, and it must return the filtered string as its result.  If
+the filter proc fails, the string will be used unfiltered.  The
+filter proc is called with an argument of either type string (for
+characters in the pattern) or cset (for character classes [...]).
+<p/>
+Filtering is done only as the pattern is compiled.  Any filtering of
+strings to be matched must be explicitly done.
+<p/>
+###########################################################################
+<p/>
+By default, individual pattern elements are matched in a "leftmost-
+longest-first" sequence, which is the order observed by perl, egrep,
+and most other regular expression matchers.  If the order of matching
+is not important a performance improvement might be seen if pattern
+elements are matched in "shortest-first" order.  The following global
+variable setting causes the matcher to operate in leftmost-shortest-
+first order.
+<p/>
+p.set_leftmost_shortest(&amp;yes)
+<p/>
+###########################################################################
+<p/>
+In the case of patterns containing alternation, find() will
+generally not produce positions in increasing order, but will produce
+all positions from the first term of the alternation (in increasing
+order) followed by all positions from the second (in increasing
+order).  If it is necessary that the positions be generated in
+strictly increasing order, with no duplicates, call
+<p/>
+p.set_ordered(&amp;yes)
+<p/>
+If the ordered option is chosen, there is a *small* penalty in
+efficiency in some cases.
+<p/>
+###########################################################################
+<p/>
+Regular Expression Characters and Features Supported
+<p/>
+The regular expression format supported by procedures in this file
+model very closely those supported by the UNIX "egrep" program, with
+modifications as described in the Perl programming language
+definition.  Following is a brief description of the special
+characters used in regular expressions.  In the description, the
+abbreviation RE means regular expression.
+<p/>
+c            An ordinary character (not one of the special characters
+discussed below) is a one-character RE that matches that
+character.
+<p/>
+\c           A backslash followed by any special character is a one-
+character RE that matches the special character itself.
+<p/>
+Note that backslash escape sequences representing
+non-graphic characters are not supported directly
+by these procedures.  Of course, strings coded in an
+Icon program will have such escapes handled by the
+Icon translator.  If such escapes must be supported
+in strings read from the run-time environment (e.g.
+files), they will have to be converted by other means,
+such as the Icon Program Library procedure "escape()".
+<p/>
+.            A period is a one-character RE that matches any
+character.
+<p/>
+[string]     A non-empty string enclosed in square brackets is a one-
+character RE that matches any *one* character of that
+string.  If, the first character is "^" (circumflex),
+the RE matches any character not in the remaining
+characters of the string.  The "-" (minus), when between
+two other characters, may be used to indicate a range of
+consecutive ASCII characters (e.g. [0-9] is equivalent to
+[0123456789]).  Other special characters stand for
+themselves in a bracketed string.
+<p/>
+<ul>
+<li>
+Matches zero or more occurrences of the RE to its left.
+<p/>
+</li>
+</ul>
++            Matches one or more occurrences of the RE to its left.
+<p/>
+?            Matches zero or one occurrences of the RE to its left.
+<p/>
+{N}          Matches exactly N occurrences of the RE to its left.
+<p/>
+{N,}         Matches at least N occurrences of the RE to its left.
+<p/>
+{N,M}        Matches at least N occurrences but at most M occurrences
+of the RE to its left.
+<p/>
+^            A caret at the beginning of an entire RE constrains
+that RE to match an initial substring of the subject
+string.
+<p/>
+$            A currency symbol at the end of an entire RE constrains
+that RE to match a final substring of the subject string.
+<p/>
+|            Alternation: two REs separated by "|" match either a
+match for the first or a match for the second.
+<p/>
+()           A RE enclosed in parentheses matches a match for the
+regular expression (parenthesized groups are used
+for grouping, and for accessing the matched string
+subsequently in the match using the \N expression).
+<p/>
+\N           Where N is a digit in the range 1-9, matches the same
+string of characters as was matched by a parenthesized
+RE to the left in the same RE.  The sub-expression
+specified is that beginning with the Nth occurrence
+of "(" counting from the left.  E.g., ^(.*)\1$ matches
+a string consisting of two consecutive occurrences of
+the same string.
+<p/>
+###########################################################################
+<p/>
+Extensions beyond UNIX egrep
+<p/>
+The following extensions to UNIX REs, as specified in the Perl
+programming language, are supported.
+<p/>
+\w           Matches any alphanumeric (including "_").
+\W           Matches any non-alphanumeric.
+<p/>
+\b           Matches only at a word-boundary (word defined as a string
+of alphanumerics as in \w).
+\B           Matches only non-word-boundaries.
+<p/>
+\s           Matches any white-space character.
+\S           Matches any non-white-space character.
+<p/>
+\d           Matches any digit [0-9].
+\D           Matches any non-digit.
+<p/>
+\w, \W, \s, \S, \d, \D can be used within [string] REs.
+<p/>
+###########################################################################
+<p/>
+Notes on computed conjunction expressions by "suspensive recursion"
+<p/>
+A conjunction expression of an arbitrary number of terms can be
+computed in a looping fashion by the following recursive technique:
+<p/>
+procedure Conjunct(v)
+if &lt;there is another term to be appended to the conjunction&gt; then
+suspend Conjunct(&lt;the next term expression&gt;)
+else
+suspend v
+end
+<p/>
+The argument "v" is needed for producing the value of the last term
+as the value of the conjunction expression, accurately modeling Icon
+conjunction.  If the value of the conjunction is not needed, the
+technique can be slightly simplified by eliminating "v":
+<p/>
+procedure ConjunctAndProduceNull()
+if &lt;there is another term to be appended to the conjunction&gt; then
+suspend ConjunctAndProduceNull(&lt;the next term expression&gt;)
+else
+suspend
+end
+<p/>
+Note that &lt;the next term expression&gt; must still remain in the suspend
+expression to test for failure of the term, although its value is not
+passed to the recursive invocation.  This could have been coded as
+<p/>
+suspend &lt;the next term expression&gt; &amp; ConjunctAndProduceNull()
+<p/>
+but wouldn't have been as provocative.
+<p/>
+Since the computed conjunctions in this program are evaluated only for
+their side effects, the second technique is used in two situations:
+<p/>
+(1)     To compute the conjunction of all of the elements in the
+regular expression pattern list (Re_match1()).
+<p/>
+(2)     To evaluate the "exactly N times" and "N to M times"
+control operations (Re_NTimes()).
+<p/><a href="ipl.regexp-regexp.icn.html#41" target="displayFrame">Source - regexp.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#check_open">check_open()</a>
+<a href="#check_plist">check_plist()</a>
+<a href="#find">find()</a>
+<a href="#get_paren_group">get_paren_group()</a>
+<a href="#get_paren_groups">get_paren_groups()</a>
+<a href="#match">match()</a>
+<a href="#match_all">match_all()</a>
+<a href="#new">new()</a>
+<a href="#parse">parse()</a>
+<a href="#Re_Alt">Re_Alt()</a>
+<a href="#Re_Arb">Re_Arb()</a>
+<a href="#Re_ArbNo">Re_ArbNo()</a>
+<a href="#Re_c_any">Re_c_any()</a>
+<a href="#Re_c_tabmatch">Re_c_tabmatch()</a>
+<a href="#Re_c_upto">Re_c_upto()</a>
+<a href="#Re_cset">Re_cset()</a>
+<a href="#Re_match1">Re_match1()</a>
+<a href="#Re_MatchParenGroup">Re_MatchParenGroup()</a>
+<a href="#Re_MatchReg">Re_MatchReg()</a>
+<a href="#Re_NonWordBoundary">Re_NonWordBoundary()</a>
+<a href="#Re_NOrMoreTimes">Re_NOrMoreTimes()</a>
+<a href="#Re_NTimes">Re_NTimes()</a>
+<a href="#Re_NToMTimes">Re_NToMTimes()</a>
+<a href="#Re_OneOrMore">Re_OneOrMore()</a>
+<a href="#Re_pat1">Re_pat1()</a>
+<a href="#Re_prevTok">Re_prevTok()</a>
+<a href="#Re_result_merge">Re_result_merge()</a>
+<a href="#Re_skip">Re_skip()</a>
+<a href="#Re_string">Re_string()</a>
+<a href="#Re_TabAny">Re_TabAny()</a>
+<a href="#Re_TabMatch">Re_TabMatch()</a>
+<a href="#Re_tok_match">Re_tok_match()</a>
+<a href="#Re_tok_match1">Re_tok_match1()</a>
+<a href="#Re_WordBoundary">Re_WordBoundary()</a>
+<a href="#Re_ZeroOrOneTimes">Re_ZeroOrOneTimes()</a>
+<a href="#set_any_string">set_any_string()</a>
+<a href="#set_arb_string">set_arb_string()</a>
+<a href="#set_case_dependent">set_case_dependent()</a>
+<a href="#set_digit_chars">set_digit_chars()</a>
+<a href="#set_filter">set_filter()</a>
+<a href="#set_leftmost_shortest">set_leftmost_shortest()</a>
+<a href="#set_ordered">set_ordered()</a>
+<a href="#set_space_chars">set_space_chars()</a>
+<a href="#set_word_chars">set_word_chars()</a>
+<a href="#untab">untab()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#parenNbr">parenNbr</a>
+<a href="#plist">plist</a>
+<a href="#Re__any">Re__any</a>
+<a href="#Re__find">Re__find</a>
+<a href="#Re__tabmatch">Re__tabmatch</a>
+<a href="#Re__upto">Re__upto</a>
+<a href="#Re_AnyString">Re_AnyString</a>
+<a href="#Re_ArbString">Re_ArbString</a>
+<a href="#Re_Digits">Re_Digits</a>
+<a href="#Re_Filter">Re_Filter</a>
+<a href="#Re_LeftmostShortest">Re_LeftmostShortest</a>
+<a href="#Re_NonDigits">Re_NonDigits</a>
+<a href="#Re_NonSpace">Re_NonSpace</a>
+<a href="#Re_NonWordChars">Re_NonWordChars</a>
+<a href="#Re_Ordered">Re_Ordered</a>
+<a href="#Re_ParenGroups">Re_ParenGroups</a>
+<a href="#Re_Space">Re_Space</a>
+<a href="#Re_WordChars">Re_WordChars</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="check_open"/>
+<h3>check_open()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#321" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="check_plist"/>
+<h3>check_plist()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#325" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="find"/>
+<h3>find(s, i1, i2)</h3>
+public<p/>
+<dl>
+<dd>
+Produce the sequence of positions in s where strings begin that match
+the pattern, but fails if there is no such position.  Similar
+to find().
+<p/><a href="ipl.regexp-regexp.icn.html#655" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="get_paren_group"/>
+<h3>get_paren_group(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#329" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="get_paren_groups"/>
+<h3>get_paren_groups()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#333" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="match"/>
+<h3>match(s, i1, i2)</h3>
+public<p/>
+<dl>
+<dd>
+####################  Matching Engine Procedures  ########################
+<p/>
+Produce the sequence of positions in s past a string starting at
+i1 that matches the pattern, but fails if there is no such
+position.  Similar to match(), but is capable of generating
+multiple positions.
+<p/><a href="ipl.regexp-regexp.icn.html#610" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="match_all"/>
+<h3>match_all(s, i1, i2)</h3>
+public<p/>
+<dl>
+<dd>
+Like <code><a href="ipl.regexp.Pattern.html#match">match()</a></code> above, but only succeed if the entire string
+<code>s[i1:i2]</code> matches the pattern.
+<p/><a href="ipl.regexp-regexp.icn.html#629" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(s)</h3>
+public<p/>
+<dl>
+<dd>
+##################  Pattern Translation Procedures  ###################
+<p/>
+Create new instance with regular expression string {s}.  If {s} is omitted, it
+must be set subsequently via {parse(s)}.  If any setter methods are to be used,
+{s} must be omitted, and the setters called before {parse()}.
+<p/><a href="ipl.regexp-regexp.icn.html#405" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the regular expression pattern for this instance.  May be
+called several times if desired.
+<p/><a href="ipl.regexp-regexp.icn.html#424" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_Alt"/>
+<h3>Re_Alt(tokList1, tokList2)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#913" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_Arb"/>
+<h3>Re_Arb(tokList, i)</h3>
+private<p/>
+<dl>
+<dd>
+######################  Matching Procedures #######################
+<p/><a href="ipl.regexp-regexp.icn.html#793" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_ArbNo"/>
+<h3>Re_ArbNo(tok)</h3>
+private<p/>
+<dl>
+<dd>
+##################  Control Operation Procedures  ###################
+<p/><a href="ipl.regexp-regexp.icn.html#860" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_c_any"/>
+<h3>Re_c_any(c)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#930" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_c_tabmatch"/>
+<h3>Re_c_tabmatch(s)</h3>
+private static<p/>
+<dl>
+<dd>
+##################  Case Independence Procedures  ###################
+<p/><a href="ipl.regexp-regexp.icn.html#924" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_c_upto"/>
+<h3>Re_c_upto(c)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#934" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_cset"/>
+<h3>Re_cset()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#550" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_match1"/>
+<h3>Re_match1(tokList, i)</h3>
+private<p/>
+<dl>
+<dd>
+s1,s2,...,sN
+<p/><a href="ipl.regexp-regexp.icn.html#643" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_MatchParenGroup"/>
+<h3>Re_MatchParenGroup(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#851" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_MatchReg"/>
+<h3>Re_MatchReg(tokList, groupNbr)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#812" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_NonWordBoundary"/>
+<h3>Re_NonWordBoundary()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#840" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_NOrMoreTimes"/>
+<h3>Re_NOrMoreTimes(tok, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#887" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_NTimes"/>
+<h3>Re_NTimes(tok, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#895" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_NToMTimes"/>
+<h3>Re_NToMTimes(tok, n, m)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#879" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_OneOrMore"/>
+<h3>Re_OneOrMore(tok)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#871" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_pat1"/>
+<h3>Re_pat1(level)</h3>
+private<p/>
+<dl>
+<dd>
+L
+<p/><a href="ipl.regexp-regexp.icn.html#480" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_prevTok"/>
+<h3>Re_prevTok(plist)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#528" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_result_merge"/>
+<h3>Re_result_merge(e1, e2)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#756" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_skip"/>
+<h3>Re_skip(tokList, i)</h3>
+private<p/>
+<dl>
+<dd>
+#########  Heuristic Code for Matching Arbitrary Characters  ##########
+s1,s2,...,sN
+<p/><a href="ipl.regexp-regexp.icn.html#715" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_string"/>
+<h3>Re_string(level)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#583" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_TabAny"/>
+<h3>Re_TabAny(C)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#804" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_TabMatch"/>
+<h3>Re_TabMatch(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#920" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_tok_match"/>
+<h3>Re_tok_match(tok, tokList, i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#674" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_tok_match1"/>
+<h3>Re_tok_match1(tok, tokList, i)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#693" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_WordBoundary"/>
+<h3>Re_WordBoundary()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#829" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_ZeroOrOneTimes"/>
+<h3>Re_ZeroOrOneTimes(tok)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#905" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_any_string"/>
+<h3>set_any_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#398" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_arb_string"/>
+<h3>set_arb_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#392" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_case_dependent"/>
+<h3>set_case_dependent(f)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#349" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_digit_chars"/>
+<h3>set_digit_chars(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#385" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_filter"/>
+<h3>set_filter(p)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#365" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_leftmost_shortest"/>
+<h3>set_leftmost_shortest(f)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#343" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ordered"/>
+<h3>set_ordered(f)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#337" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_space_chars"/>
+<h3>set_space_chars(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#378" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="set_word_chars"/>
+<h3>set_word_chars(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#371" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="untab"/>
+<h3>untab(origPos)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#776" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="parenNbr"/>
+<h3>parenNbr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#319" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="plist"/>
+<h3>plist</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#310" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re__any"/>
+<h3>Re__any</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#318" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re__find"/>
+<h3>Re__find</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#318" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re__tabmatch"/>
+<h3>Re__tabmatch</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#318" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re__upto"/>
+<h3>Re__upto</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#318" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_AnyString"/>
+<h3>Re_AnyString</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#316" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_ArbString"/>
+<h3>Re_ArbString</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#316" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_Digits"/>
+<h3>Re_Digits</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#315" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_Filter"/>
+<h3>Re_Filter</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#312" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_LeftmostShortest"/>
+<h3>Re_LeftmostShortest</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#317" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_NonDigits"/>
+<h3>Re_NonDigits</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#315" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_NonSpace"/>
+<h3>Re_NonSpace</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#314" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_NonWordChars"/>
+<h3>Re_NonWordChars</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#313" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_Ordered"/>
+<h3>Re_Ordered</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#312" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_ParenGroups"/>
+<h3>Re_ParenGroups</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#312" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_Space"/>
+<h3>Re_Space</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#314" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+<a name="Re_WordChars"/>
+<h3>Re_WordChars</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.regexp-regexp.icn.html#313" target="displayFrame">Source - regexp.icn </a>
+</dd>
+</dl><hr>
+</body></html>

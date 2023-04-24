@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>patword.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     patword.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to find letter patterns
+<a name="6"/>#
+<a name="7"/>#	Author:   Kenneth Walker
+<a name="8"/>#
+<a name="9"/>#	Date:     December 2, 1995
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#     The procedure patword(s) returns a letter pattern in which each
+<a name="18"/>#  different character in s is assigned a letter.  For example,
+<a name="19"/>#  patword("structural") returns "abcdebdcfg".
+<a name="20"/>#
+<a name="21"/>############################################################################
+<a name="22"/>
+<a name="23"/>package ipl.patword
+<a name="24"/>
+<a name="25"/>procedure patword(s)
+<a name="26"/>    local numbering, orderS, orderset, patlbls
+<a name="27"/>    static labels, revnum
+<a name="28"/>
+<a name="29"/>    initial {
+<a name="30"/>	labels := &amp;lcase || &amp;lcase
+<a name="31"/>	revnum := reverse(&amp;cset)
+<a name="32"/>	}
+<a name="33"/>
+<a name="34"/># First map each character of s into another character, such that the
+<a name="35"/># the new characters are in increasing order left to right (note that
+<a name="36"/># the map function chooses the rightmost character of its second
+<a name="37"/># argument, so things must be reversed.
+<a name="38"/>#
+<a name="39"/># Next map each of these new characters into contiguous letters.
+<a name="40"/>
+<a name="41"/>    numbering := revnum[1 : *s + 1] | runerr("Word too long")
+<a name="42"/>    orderS := map(s, reverse(s), numbering)
+<a name="43"/>    orderset := string(cset(orderS))
+<a name="44"/>    patlbls := labels[1 : *orderset + 1] | runerr("Too many characters")
+<a name="45"/>
+<a name="46"/>    return map(orderS, orderset, patlbls)
+<a name="47"/>
+<a name="48"/>end
+</pre></body></html>

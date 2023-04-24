@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>GlobalName</title></head><body>
+<h1>GlobalName</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+This class represents a global name, ie one which has been
+created using XML namespaces.   It has two parts, a local_name and
+a URI.  The URI is &amp;null if the global name is the same as
+the local name.
+<p/>
+For example with the XML fragment
+<p/>
+&lt;SOAP-ENV:Envelope
+xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+<p/>
+the global name of the element would be the instance
+<p/>
+GlobalName("Envelope", "http://schemas.xmlsoap.org/soap/envelope/")
+<p/><a href="xml-globalname.icn.html#11" target="displayFrame">Source - globalname.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_local_name">get_local_name()</a>
+<a href="#get_uri">get_uri()</a>
+<a href="#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#local_name">local_name</a>
+<a href="#uri">uri</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_local_name"/>
+<h3>get_local_name()</h3>
+public<p/>
+<dl>
+<dd>
+Return the original tag local_name
+<p/>
+<p/><a href="xml-globalname.icn.html#31" target="displayFrame">Source - globalname.icn </a>
+</dd>
+</dl><hr>
+<a name="get_uri"/>
+<h3>get_uri()</h3>
+public<p/>
+<dl>
+<dd>
+Return the URI obtained during namespace processing.  For a global name
+which is just a local name, then this is &amp;null.
+<p/><a href="xml-globalname.icn.html#38" target="displayFrame">Source - globalname.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(local_name, uri)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-globalname.icn.html#46" target="displayFrame">Source - globalname.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="local_name"/>
+<h3>local_name</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-globalname.icn.html#28" target="displayFrame">Source - globalname.icn </a>
+</dd>
+</dl><hr>
+<a name="uri"/>
+<h3>uri</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-globalname.icn.html#29" target="displayFrame">Source - globalname.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>quotedprintablehandler.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: quotedprintablehandler.icn 8996 2021-03-24 07:27:53Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package mail
+<a name="6"/>
+<a name="7"/>import util, lang
+<a name="8"/>
+<a name="9"/>#
+<a name="10"/># Handles the quoted-printable encoding of a message
+<a name="11"/>#
+<a name="12"/>class QuotedPrintableHandler(EncodingHandler)
+<a name="13"/>   public static const 
+<a name="14"/>      QUOTED_PRINTABLE_CHARS
+<a name="15"/>
+<a name="16"/>   private static init()
+<a name="17"/>      QUOTED_PRINTABLE_CHARS := '\x20-\x3c\x3e-\x7e'
+<a name="18"/>   end
+<a name="19"/>
+<a name="20"/>   private res, ll
+<a name="21"/>
+<a name="22"/>   public override can_handle(enc)
+<a name="23"/>      succeed Text.lower(enc) == "quoted-printable"
+<a name="24"/>   end
+<a name="25"/>
+<a name="26"/>   public override encode_data(m, data)
+<a name="27"/>      local s
+<a name="28"/>
+<a name="29"/>      res := ""
+<a name="30"/>      ll := 0
+<a name="31"/>
+<a name="32"/>      data ? {
+<a name="33"/>         until pos(0) do {
+<a name="34"/>            if s := tab(many(QUOTED_PRINTABLE_CHARS)) then {
+<a name="35"/>               if pos(0) &amp; any(' \t', s[-1]) then {
+<a name="36"/>                  put(s[1:-1])
+<a name="37"/>                  escape(s[-1])
+<a name="38"/>               } else {
+<a name="39"/>                  put(s)
+<a name="40"/>               }
+<a name="41"/>            } else if ="\r\n" then {
+<a name="42"/>               nl()
+<a name="43"/>            } else {
+<a name="44"/>               escape(move(1))
+<a name="45"/>            }
+<a name="46"/>         }
+<a name="47"/>      }
+<a name="48"/>
+<a name="49"/>      return res
+<a name="50"/>   end
+<a name="51"/>
+<a name="52"/>   private escape(ch)
+<a name="53"/>      local t
+<a name="54"/>      t := "=" || Format.int_to_string(ord(ch), 16, 2)
+<a name="55"/>      if ll &gt; 72 then {
+<a name="56"/>         res ||:= "="
+<a name="57"/>         nl()
+<a name="58"/>      }
+<a name="59"/>      res ||:= t
+<a name="60"/>      ll +:= 3
+<a name="61"/>      return
+<a name="62"/>   end
+<a name="63"/>
+<a name="64"/>   private nl()
+<a name="65"/>      res ||:= "\r\n"
+<a name="66"/>      ll := 0
+<a name="67"/>      return
+<a name="68"/>   end
+<a name="69"/>
+<a name="70"/>   private put(s)
+<a name="71"/>      local lim
+<a name="72"/>      repeat {
+<a name="73"/>         lim := 75 - ll
+<a name="74"/>         if *s &gt; lim then {
+<a name="75"/>            res ||:= s[1:lim+1] || "="
+<a name="76"/>            nl()
+<a name="77"/>            s := s[lim+1:0]
+<a name="78"/>         } else {
+<a name="79"/>            res ||:= s
+<a name="80"/>            ll +:= *s
+<a name="81"/>            return
+<a name="82"/>         }
+<a name="83"/>      }
+<a name="84"/>   end
+<a name="85"/>
+<a name="86"/>   public override decode_data(m, data) 
+<a name="87"/>      local res
+<a name="88"/>      res := ""
+<a name="89"/>      data ? {
+<a name="90"/>         while res ||:= tab(upto('\r=')) do {
+<a name="91"/>            if any('=') then {
+<a name="92"/>               move(1)
+<a name="93"/>               # If not a soft line break, then unescape the =XX format.
+<a name="94"/>               unless ="\r\n" then
+<a name="95"/>                  res ||:= char(Format.string_to_int(move(2))) | return error("Bad quoted-printable data")
+<a name="96"/>            } else
+<a name="97"/>               res ||:= ="\r\n" | return error("Bad quoted-printable data")
+<a name="98"/>         }
+<a name="99"/>         return res || tab(0)
+<a name="100"/>      }
+<a name="101"/>   end
+<a name="102"/>end
+</pre></body></html>

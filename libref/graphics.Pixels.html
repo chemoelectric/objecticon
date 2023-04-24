@@ -1,0 +1,730 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Pixels</title></head><body>
+<h1>Pixels</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.ObjectClone.html" target="displayFrame">lang.ObjectClone</a><br>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+<a href="lang.Unencodable.html" target="displayFrame">lang.Unencodable</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="graphics-package.html" target="listFrame">graphics</a></dd>
+</dl><p/>
+This object contains pixel data either read from a file, extracted
+from a Window, or created from scratch.  The data is stored in
+various underlying formats depending on the source.
+<p/><a href="graphics-graphics.icn.html#16" target="displayFrame">Source - graphics.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="graphics.Pixels.html">graphics.Pixels</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#clone">clone()</a>
+<a href="#clone_impl">clone_impl()</a>
+<a href="#close">close()</a>
+<a href="#convert">convert()</a>
+<a href="#convert_impl">convert_impl()</a>
+<a href="#copy_pixel">copy_pixel()</a>
+<a href="#copy_to">copy_to()</a>
+<a href="#create_for_ptr">create_for_ptr()</a>
+<a href="#filter">filter()</a>
+<a href="#gen">gen()</a>
+<a href="#gen_impl">gen_impl()</a>
+<a href="#gen_rgba">gen_rgba()</a>
+<a href="#gen_rgba_impl">gen_rgba_impl()</a>
+<a href="#get">get()</a>
+<a href="#get_alpha_depth">get_alpha_depth()</a>
+<a href="#get_color_depth">get_color_depth()</a>
+<a href="#get_data">get_data()</a>
+<a href="#get_format">get_format()</a>
+<a href="#get_height">get_height()</a>
+<a href="#get_palette">get_palette()</a>
+<a href="#get_palette_index">get_palette_index()</a>
+<a href="#get_palette_rgba">get_palette_rgba()</a>
+<a href="#get_palette_rgba_impl">get_palette_rgba_impl()</a>
+<a href="#get_palette_size">get_palette_size()</a>
+<a href="#get_references">get_references()</a>
+<a href="#get_rgba">get_rgba()</a>
+<a href="#get_rgba_impl">get_rgba_impl()</a>
+<a href="#get_size">get_size()</a>
+<a href="#get_width">get_width()</a>
+<a href="#init">init()</a>
+<a href="#load_palette">load_palette()</a>
+<a href="#new">new()</a>
+<a href="#new_blank_impl">new_blank_impl()</a>
+<a href="#new_open_impl">new_open_impl()</a>
+<a href="#object_clone">object_clone()</a>
+<a href="#object_output">object_output()</a>
+<a href="#scale_to">scale_to()</a>
+<a href="#set">set()</a>
+<a href="#set_data">set_data()</a>
+<a href="#set_palette">set_palette()</a>
+<a href="#set_palette_index">set_palette_index()</a>
+<a href="#set_palette_rgba">set_palette_rgba()</a>
+<a href="#set_rgba">set_rgba()</a>
+<a href="#shared_copy">shared_copy()</a>
+<a href="#shared_copy_impl">shared_copy_impl()</a>
+<a href="#to_file">to_file()</a>
+<a href="#x_range">x_range()</a>
+<a href="#y_range">y_range()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#A16">A16</a>
+<a href="#A8">A8</a>
+<a href="#ABGR32">ABGR32</a>
+<a href="#AG16">AG16</a>
+<a href="#BGR24">BGR24</a>
+<a href="#G16">G16</a>
+<a href="#G8">G8</a>
+<a href="#GA16">GA16</a>
+<a href="#GA32">GA32</a>
+<a href="#PALETTE1">PALETTE1</a>
+<a href="#PALETTE2">PALETTE2</a>
+<a href="#PALETTE4">PALETTE4</a>
+<a href="#PALETTE8">PALETTE8</a>
+<a href="#ptr">ptr</a>
+<a href="#RGB24">RGB24</a>
+<a href="#RGB48">RGB48</a>
+<a href="#RGBA32">RGBA32</a>
+<a href="#RGBA64">RGBA64</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="clone"/>
+<h3>clone()</h3>
+public<p/>
+<dl>
+<dd>
+Return a new instance which is an exact copy of this instance.
+No data is shared.
+<p/><a href="graphics-graphics.icn.html#250" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="clone_impl"/>
+<h3>clone_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#287" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Dispose of the object, freeing the memory used by the block
+<p/><a href="graphics-graphics.icn.html#107" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="convert"/>
+<h3>convert(format)</h3>
+public<p/>
+<dl>
+<dd>
+Convert this instance to one of the same dimensions in the given
+format.  The format may not be a paletted format (since no
+palette would have been set up).
+<p/><a href="graphics-graphics.icn.html#258" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_impl"/>
+<h3>convert_impl(format)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#285" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_pixel"/>
+<h3>copy_pixel(x1, y1, dest, x2, y2)</h3>
+public native<p/>
+<dl>
+<dd>
+Copy a single pixel from this instance to another.
+<p/><a href="graphics-graphics.icn.html#169" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_to"/>
+<h3>copy_to(x1, y1, width, height, dest, x2, y2)</h3>
+public native<p/>
+<dl>
+<dd>
+Copy a rectangular area from this instance to another.
+<p/><a href="graphics-graphics.icn.html#174" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="create_for_ptr"/>
+<h3>create_for_ptr(ptr)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#295" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="filter"/>
+<h3>filter(x, y, width, height, filter)</h3>
+public native<p/>
+<dl>
+<dd>
+Filter the given set of pixels according to the given filter
+spec.
+<p/><a href="graphics-graphics.icn.html#186" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen(x, y, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+Generate all the pixels in the given rectangle, which defaults to
+the whole image.  The pixels are generated left to right and from
+top to bottom, as <code><a href="graphics.XYPixel.html" target="displayFrame">XYPixel</a></code> records, which give the x, y position
+and color string of each pixel.  NB - the same record is
+suspended each time.
+<p/><a href="graphics-graphics.icn.html#156" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_impl"/>
+<h3>gen_impl(x, y, width, height, con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#167" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_rgba"/>
+<h3>gen_rgba(x, y, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+Generate all the pixels in the given rectangle, which defaults to
+the whole image.  The pixels are generated left to right and from
+top to bottom, as <code><a href="graphics.XYColor.html" target="displayFrame">XYColor</a></code> records, which give the x, y position
+and rgba color values of each pixel.  NB - the same record is
+suspended each time.
+<p/><a href="graphics-graphics.icn.html#143" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_rgba_impl"/>
+<h3>gen_rgba_impl(x, y, width, height, con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#154" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get"/>
+<h3>get(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Get the pixel at the given position as an Icon colour string;
+indices run from 0 to width-1 and 0 to height-1 respectively.
+<p/><a href="graphics-graphics.icn.html#80" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_alpha_depth"/>
+<h3>get_alpha_depth()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the number of bits of alpha depth (zero if the format
+doesn't support storage of an alpha channel).
+<p/><a href="graphics-graphics.icn.html#197" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_color_depth"/>
+<h3>get_color_depth()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the number of bits of color depth.
+<p/><a href="graphics-graphics.icn.html#203" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_data"/>
+<h3>get_data()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the raw underlying data as a string.
+<p/><a href="graphics-graphics.icn.html#118" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_format"/>
+<h3>get_format()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the format of the underlying data, which will be one of the
+constant values listed above, or a platform-specific value.
+<p/><a href="graphics-graphics.icn.html#112" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_height"/>
+<h3>get_height()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the height of the block
+<p/><a href="graphics-graphics.icn.html#68" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_palette"/>
+<h3>get_palette(i)</h3>
+public native<p/>
+<dl>
+<dd>
+Get the palette entry at index i as an icon colour value.
+<p/><a href="graphics-graphics.icn.html#230" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_palette_index"/>
+<h3>get_palette_index(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Get the palette index contained at the given pixel location.
+<p/><a href="graphics-graphics.icn.html#240" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_palette_rgba"/>
+<h3>get_palette_rgba(i)</h3>
+public<p/>
+<dl>
+<dd>
+Get the palette entry at index i, as a <code><a href="graphics.Color.html" target="displayFrame">Color</a></code> record.  This and
+similar methods give a runerr unless the format is PALETTEx.  The
+number of palette entries depends on the format; eg PALETTE4 has
+2^4=16 possible entries, indexed 0..15.
+<p/><a href="graphics-graphics.icn.html#213" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_palette_rgba_impl"/>
+<h3>get_palette_rgba_impl(i, con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#223" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_palette_size"/>
+<h3>get_palette_size()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the palette size, or fail if this is not a PALETTE format.
+<p/><a href="graphics-graphics.icn.html#208" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_references"/>
+<h3>get_references()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the number of references to the underlying data.
+<p/><a href="graphics-graphics.icn.html#276" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_rgba"/>
+<h3>get_rgba(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Get the given pixel as an <code><a href="graphics.Color.html" target="displayFrame">Color</a></code> record, giving the rgba values.
+<p/><a href="graphics-graphics.icn.html#93" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_rgba_impl"/>
+<h3>get_rgba_impl(x, y, con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#100" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_size"/>
+<h3>get_size()</h3>
+public<p/>
+<dl>
+<dd>
+Get the size, as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record.
+<p/><a href="graphics-graphics.icn.html#73" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_width"/>
+<h3>get_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the width of the block
+<p/><a href="graphics-graphics.icn.html#63" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#43" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="load_palette"/>
+<h3>load_palette(pal)</h3>
+public native<p/>
+<dl>
+<dd>
+Set entries in the palette according to one of the standard
+palettes (c1,c2 etc).  Only allowed for PALETTE8 format.
+<p/><a href="graphics-graphics.icn.html#289" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(a[])</h3>
+public<p/>
+<dl>
+<dd>
+The constructor for Pixels takes two formats.  With one parameter
+a new instance is created based on the given image string, which
+can be raw image data, or a filename.
+<p/>
+With two parameters, a blank instance is created of the given
+width and height; an optional third parameter provides the format
+(the default is <code><a href="graphics.Pixels.html#RGBA64">RGBA64</a></code>).  The underlying data is allocated and
+set to zero.
+<p/><a href="graphics-graphics.icn.html#312" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="new_blank_impl"/>
+<h3>new_blank_impl(width, height, format)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#303" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="new_open_impl"/>
+<h3>new_open_impl(s)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#302" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="object_clone"/>
+<h3>object_clone()</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectClone.html#object_clone">object_clone()</a> in <a href="lang.ObjectClone.html" target="displayFrame">lang.ObjectClone</a></dd>
+<dd>
+<p/><a href="graphics-graphics.icn.html#281" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+<p/><a href="graphics-graphics.icn.html#305" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="scale_to"/>
+<h3>scale_to(x1, y1, width1, height1, dest, x2, y2, width2, height2)</h3>
+public native<p/>
+<dl>
+<dd>
+Copy a rectangular area from this instance to another, scaling
+the result to fit in the destination rectangle.
+<p/><a href="graphics-graphics.icn.html#179" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set"/>
+<h3>set(x, y, v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the pixel to the given Icon colour string value.  Note that
+the value actually stored may only be an approximation of the
+value given, depending on the underlying data format.
+<p/><a href="graphics-graphics.icn.html#86" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_data"/>
+<h3>set_data(s)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the raw underlying data from a string, padding with zeroes if
+the string is too short.
+<p/><a href="graphics-graphics.icn.html#123" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_palette"/>
+<h3>set_palette(i, v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the palette entry at index i to the given icon colour value.
+<p/><a href="graphics-graphics.icn.html#235" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_palette_index"/>
+<h3>set_palette_index(x, y, i)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the palette index contained at the given pixel location.
+<p/><a href="graphics-graphics.icn.html#245" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_palette_rgba"/>
+<h3>set_palette_rgba(i, r, g, b, a)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the palette entry at index i to the given rgba values.
+<p/><a href="graphics-graphics.icn.html#225" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_rgba"/>
+<h3>set_rgba(x, y, r, g, b, a)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the given pixel to the given rgba integer values.
+<p/><a href="graphics-graphics.icn.html#102" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="shared_copy"/>
+<h3>shared_copy()</h3>
+public<p/>
+<dl>
+<dd>
+Return a new <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> instance which shares the data of this
+instance.  The underlying data is freed when the last enclosing
+<code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> is closed.
+<p/><a href="graphics-graphics.icn.html#267" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="shared_copy_impl"/>
+<h3>shared_copy_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#286" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="to_file"/>
+<h3>to_file(fname)</h3>
+public native<p/>
+<dl>
+<dd>
+Encode the image to a file.
+<p/><a href="graphics-graphics.icn.html#192" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="x_range"/>
+<h3>x_range()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to generate 0 to get_width() - 1
+<p/><a href="graphics-graphics.icn.html#129" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="y_range"/>
+<h3>y_range()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to generate 0 to get_height() - 1
+<p/><a href="graphics-graphics.icn.html#136" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="A16"/>
+<h3>A16</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#26" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="A8"/>
+<h3>A8</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#25" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="ABGR32"/>
+<h3>ABGR32</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#30" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="AG16"/>
+<h3>AG16</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#35" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="BGR24"/>
+<h3>BGR24</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#28" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="G16"/>
+<h3>G16</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#36" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="G8"/>
+<h3>G8</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#33" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="GA16"/>
+<h3>GA16</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#34" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="GA32"/>
+<h3>GA32</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#37" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="PALETTE1"/>
+<h3>PALETTE1</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#38" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="PALETTE2"/>
+<h3>PALETTE2</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#39" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="PALETTE4"/>
+<h3>PALETTE4</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#40" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="PALETTE8"/>
+<h3>PALETTE8</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#41" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="ptr"/>
+<h3>ptr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#21" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="RGB24"/>
+<h3>RGB24</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#27" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="RGB48"/>
+<h3>RGB48</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#31" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="RGBA32"/>
+<h3>RGBA32</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#29" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="RGBA64"/>
+<h3>RGBA64</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#32" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+</body></html>

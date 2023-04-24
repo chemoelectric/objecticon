@@ -1,0 +1,621 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Dec</title></head><body>
+<h1>Dec</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a><br>
+<a href="lang.ObjectHash.html" target="displayFrame">lang.ObjectHash</a><br>
+<a href="lang.ObjectEquals.html" target="displayFrame">lang.ObjectEquals</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+</dl><p/>
+A class representing arbitrary precision decimal numbers.  A decimal
+is stored as an integer <code><a href="numbers.Dec.html#i">i</a></code> and an exponent <code><a href="numbers.Dec.html#e">e</a></code>, so that the number
+represented is :-
+<pre>
+    i * 10^e
+</pre>
+<p/>
+All instances are immutable and are stored in a normalized form, so
+that two instances representing the same number always have the same
+integer and exponent.
+<p/><a href="numbers-numbers.icn.html#624" target="displayFrame">Source - numbers.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="numbers.Number.html">numbers.Number</a>
+<a href="numbers.RealNumber.html">numbers.RealNumber</a>
+<a href="numbers.Dec.html">numbers.Dec</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#object_output">object_output()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from numbers.Number</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.Number.html#REAL_DIGS">REAL_DIGS</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from numbers.RealNumber</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="numbers.RealNumber.html#abs">abs()</a>
+<a href="numbers.RealNumber.html#cmp">cmp()</a>
+<a href="numbers.RealNumber.html#sub_sign">sub_sign()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#add_exact">add_exact()</a>
+<a href="#add_round">add_round()</a>
+<a href="#calc_p10">calc_p10()</a>
+<a href="#calc_p10p2">calc_p10p2()</a>
+<a href="#decimal">decimal()</a>
+<a href="#div">div()</a>
+<a href="#div_exact">div_exact()</a>
+<a href="#div_round">div_round()</a>
+<a href="#init">init()</a>
+<a href="#integer">integer()</a>
+<a href="#mul">mul()</a>
+<a href="#ndig">ndig()</a>
+<a href="#neg">neg()</a>
+<a href="#new">new()</a>
+<a href="#normalize">normalize()</a>
+<a href="#object_equals">object_equals()</a>
+<a href="#object_hash">object_hash()</a>
+<a href="#parse">parse()</a>
+<a href="#precision">precision()</a>
+<a href="#rational">rational()</a>
+<a href="#real">real()</a>
+<a href="#reduce">reduce()</a>
+<a href="#round">round()</a>
+<a href="#round_dp">round_dp()</a>
+<a href="#round_impl">round_impl()</a>
+<a href="#sign">sign()</a>
+<a href="#str">str()</a>
+<a href="#sub">sub()</a>
+<a href="#trunc">trunc()</a>
+<a href="#trunc_dp">trunc_dp()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cp">cp</a>
+<a href="#e">e</a>
+<a href="#i">i</a>
+<a href="#p10">p10</a>
+<a href="#p10p2">p10p2</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#add">add()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Add this decimal to another.  If <code>rnd</code> is omitted, then the
+result is exact, otherwise it is rounded so that result is the
+same as calling <code><a href="numbers.Dec.html#add">add</a></code> and then <code><a href="numbers.Dec.html#round">round</a></code> separately (combining the
+two operations is more efficient for numbers that differ greatly).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#805" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="add_exact"/>
+<h3>add_exact(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#822" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="add_round"/>
+<h3>add_round(big, rnd)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#841" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="calc_p10"/>
+<h3>calc_p10(n)</h3>
+private static<p/>
+<dl>
+<dd>
+Return 10^n for integer n.  This is rather faster than evaluating
+10^n, especially for larger n.
+<p/><a href="numbers-numbers.icn.html#666" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="calc_p10p2"/>
+<h3>calc_p10p2(n)</h3>
+private static<p/>
+<dl>
+<dd>
+Return 10^(2^n) for integer n.
+<p/><a href="numbers-numbers.icn.html#660" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="decimal"/>
+<h3>decimal(rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#decimal">decimal()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+If <code>rnd</code> is given return this instance so rounded, otherwise
+return self.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#1104" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="div"/>
+<h3>div(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#div">div()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Divide this decimal by another.
+<p/>
+If <code><a href="numbers.Round.html" target="displayFrame">Round</a></code> <code>rnd</code> is given, then the result is rounded accordingly.
+<p/>
+If <code>rnd</code> is omitted, and the division can be expressed exactly
+without rounding, then the result is exact; otherwise this method
+fails.
+<p/>
+For example, <code><a href="numbers.Dec.html" target="displayFrame">Dec(1234).div(Dec(1024))</a></code> can be expressed
+precisely and results in <code><a href="numbers.Dec.html" target="displayFrame">Dec(1.205078125)</a></code>, whereas
+<code><a href="numbers.Dec.html" target="displayFrame">Dec(1234).div(Dec(6))</a></code> cannot, and fails.  With a rounding
+parameter of 5 however, it will succeed with <code><a href="numbers.Dec.html" target="displayFrame">Dec(205.67)</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#998" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="div_exact"/>
+<h3>div_exact(x)</h3>
+private<p/>
+<dl>
+<dd>
+Return this number divided by <code>x</code> if it can be divided exactly,
+or fail if it cannot.
+<p/><a href="numbers-numbers.icn.html#1025" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="div_round"/>
+<h3>div_round(x, rnd)</h3>
+private<p/>
+<dl>
+<dd>
+Return this number divided by <code>x</code>, with rounding <code>rnd</code>.
+<p/><a href="numbers-numbers.icn.html#1058" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#647" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="integer"/>
+<h3>integer()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#integer">integer()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Convert to an integer, truncating any fractional part.
+<p/><a href="numbers-numbers.icn.html#1114" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="mul"/>
+<h3>mul(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#mul">mul()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Multiply this decimal by another.  The optional <code>rnd</code> is just for
+consistency with the other binary arithmetic methods; it just has
+the same effect as calling <code><a href="numbers.Dec.html#round">round</a></code> separately on the result.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#895" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="ndig"/>
+<h3>ndig(n)</h3>
+private static<p/>
+<dl>
+<dd>
+Return the number of decimal digits in integer n (returns the same
+value as *abs(n), but faster for large n).
+<p/><a href="numbers-numbers.icn.html#682" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="neg"/>
+<h3>neg()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#neg">neg()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Return this decimal negated.
+<p/><a href="numbers-numbers.icn.html#883" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance.  If <code>x</code> and <code>y</code> are given, then they must
+both be integers representing the integer and exponent
+respectively.  Otherwise, if only <code>x</code> is given, then <code>x</code> may be :-
+<p/>
+<ul>
+<li>
+an integer, which produces a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> of corresponding value, with
+a zero exponent.
+</li>
+<li>
+another <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>, which gives a copy of it
+</li>
+<li>
+a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> instance, which produces the corresponding exact
+decimal value if the <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> is so expressible, but fails if it
+is not.
+</li>
+<li>
+a string, which is parsed.  If it contains a "/" then it
+represents a rational, which must be expressible as an exact
+decimal, or the constructor fails.  Otherwise it is parsed as a
+decimal number, possibly in scientific notation.  If the string
+cannot be parsed, the constructor fails.
+<p/>
+</li>
+</ul>
+On failure, <code>&amp;why</code> is set indicating the reason.
+<p/>
+Examples :-
+<pre>
+  Dec("1/4")      # ok, Dec(0.25)
+  Dec("1/3")      # fails
+  Dec("123e100")  # ok  1.23e+102
+  Dec(123)        # ok
+  Dec("rubbish")  # fails
+</pre>
+<p/><a href="numbers-numbers.icn.html#1166" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="normalize"/>
+<h3>normalize()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#1157" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="object_equals"/>
+<h3>object_equals(x)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectEquals.html#object_equals">object_equals()</a> in <a href="lang.ObjectEquals.html" target="displayFrame">lang.ObjectEquals</a></dd>
+<dd>
+<p/><a href="numbers-numbers.icn.html#652" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="object_hash"/>
+<h3>object_hash()</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectHash.html#object_hash">object_hash()</a> in <a href="lang.ObjectHash.html" target="displayFrame">lang.ObjectHash</a></dd>
+<dd>
+<p/><a href="numbers-numbers.icn.html#656" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(x)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#1127" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="precision"/>
+<h3>precision()</h3>
+public<p/>
+<dl>
+<dd>
+Return the precision of this number, which is the number of
+digits in the integer part of the number.
+<p/><a href="numbers-numbers.icn.html#912" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="rational"/>
+<h3>rational()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#rational">rational()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Convert to a <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code>.
+<p/><a href="numbers-numbers.icn.html#1090" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="real"/>
+<h3>real()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#real">real()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Convert to a real, or fail if the number is out of the allowable
+range of that type.
+<p/><a href="numbers-numbers.icn.html#1098" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="reduce"/>
+<h3>reduce()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#reduce">reduce()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Returns self
+<p/><a href="numbers-numbers.icn.html#1122" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="round"/>
+<h3>round(rnd)</h3>
+public<p/>
+<dl>
+<dd>
+Round this decimal
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#948" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="round_dp"/>
+<h3>round_dp(dp)</h3>
+public<p/>
+<dl>
+<dd>
+Round to the given number of decimal places; for example 123.456
+rounded to 1 decimal place would be 123.5
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>dp</code> - an integer
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#920" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="round_impl"/>
+<h3>round_impl(rnd, chop)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#957" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sign"/>
+<h3>sign()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.RealNumber.html#sign">sign()</a> in <a href="numbers.RealNumber.html" target="displayFrame">numbers.RealNumber</a></dd>
+<dd>
+Return the sign of this decimal.
+<p/><a href="numbers-numbers.icn.html#889" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str(f, dp)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#str">str()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Convert to a string.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> -  A cset of flags.  If c contains 'e' then the output is
+in scientific notation.  'E' is the same, but uses a
+a capital "E" in the result. If c contains ',' then commas
+are introduced into the non-fractional part of the number;
+if c contains '+' then a leading + is added to positive
+numbers.  If c contains 's' then trailing fractional
+zeroes are replaced with spaces, whilst 'z' means drop
+such zeroes altogether.
+</dd>
+<dd>
+<code>dp</code>   The number of decimal places to produce (default all
+significant places).
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#722" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sub"/>
+<h3>sub(x, rnd)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="numbers.Number.html#sub">sub()</a> in <a href="numbers.Number.html" target="displayFrame">numbers.Number</a></dd>
+<dd>
+Subtract another decimal from this one.  This negates <code>x</code> and
+calls <code><a href="numbers.Dec.html#add">add()</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - null, or something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#872" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="trunc"/>
+<h3>trunc(prec)</h3>
+public<p/>
+<dl>
+<dd>
+Truncate to the given precision.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>prec</code> - an integer
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#930" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="trunc_dp"/>
+<h3>trunc_dp(dp)</h3>
+public<p/>
+<dl>
+<dd>
+Truncate to the given number of decimal places.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>dp</code> - an integer
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#939" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="cp"/>
+<h3>cp</h3>
+private<p/>
+<dl>
+<dd>
+Cached calculation of precision
+<p/><a href="numbers-numbers.icn.html#642" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="e"/>
+<h3>e</h3>
+public const<p/>
+<dl>
+<dd>
+The exponent part of the decimal
+<p/><a href="numbers-numbers.icn.html#639" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="i"/>
+<h3>i</h3>
+public const<p/>
+<dl>
+<dd>
+The integer part of the decimal
+<p/><a href="numbers-numbers.icn.html#637" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="p10"/>
+<h3>p10</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#645" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="p10p2"/>
+<h3>p10p2</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#645" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+</body></html>

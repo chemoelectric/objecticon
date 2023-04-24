@@ -1,0 +1,1036 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>HttpClient</title></head><body>
+<h1>HttpClient</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="net.NetClient.html" target="displayFrame">net.NetClient</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="http-package.html" target="listFrame">http</a></dd>
+</dl><p/>
+An http client
+<p/><a href="http-httpclient.icn.html#78" target="displayFrame">Source - httpclient.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="net.NetClient.html">net.NetClient</a>
+<a href="http.HttpClient.html">http.HttpClient</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from net.NetClient</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="net.NetClient.html#avoid_addr">avoid_addr()</a>
+<a href="net.NetClient.html#choose_addr">choose_addr()</a>
+<a href="net.NetClient.html#close">close()</a>
+<a href="net.NetClient.html#close_connection">close_connection()</a>
+<a href="net.NetClient.html#dns_background_query">dns_background_query()</a>
+<a href="net.NetClient.html#dns_query">dns_query()</a>
+<a href="net.NetClient.html#dns_query_impl">dns_query_impl()</a>
+<a href="net.NetClient.html#do_poll">do_poll()</a>
+<a href="net.NetClient.html#error_dont_retry">error_dont_retry()</a>
+<a href="net.NetClient.html#establish_http_proxy_connection">establish_http_proxy_connection()</a>
+<a href="net.NetClient.html#establish_proxy_connection">establish_proxy_connection()</a>
+<a href="net.NetClient.html#establish_socks5_proxy_connection">establish_socks5_proxy_connection()</a>
+<a href="net.NetClient.html#exact_str">exact_str()</a>
+<a href="net.NetClient.html#expect_line">expect_line()</a>
+<a href="net.NetClient.html#expect_str">expect_str()</a>
+<a href="net.NetClient.html#improve_why">improve_why()</a>
+<a href="net.NetClient.html#ip_to_addr">ip_to_addr()</a>
+<a href="net.NetClient.html#is_connected">is_connected()</a>
+<a href="net.NetClient.html#open_connection">open_connection()</a>
+<a href="net.NetClient.html#quietly_close_connection">quietly_close_connection()</a>
+<a href="net.NetClient.html#read_line">read_line()</a>
+<a href="net.NetClient.html#read_str">read_str()</a>
+<a href="net.NetClient.html#recv">recv()</a>
+<a href="net.NetClient.html#reset_dont_retry">reset_dont_retry()</a>
+<a href="net.NetClient.html#send">send()</a>
+<a href="net.NetClient.html#set_ip_version">set_ip_version()</a>
+<a href="net.NetClient.html#set_path">set_path()</a>
+<a href="net.NetClient.html#set_port">set_port()</a>
+<a href="net.NetClient.html#set_proxy">set_proxy()</a>
+<a href="net.NetClient.html#set_proxy_auth">set_proxy_auth()</a>
+<a href="net.NetClient.html#set_proxy_type">set_proxy_type()</a>
+<a href="net.NetClient.html#set_server">set_server()</a>
+<a href="net.NetClient.html#set_ssl">set_ssl()</a>
+<a href="net.NetClient.html#set_ssl_verify">set_ssl_verify()</a>
+<a href="net.NetClient.html#set_timeout">set_timeout()</a>
+<a href="net.NetClient.html#socks5_string">socks5_string()</a>
+<a href="net.NetClient.html#ssl_maybe_poll">ssl_maybe_poll()</a>
+<a href="net.NetClient.html#valid_port">valid_port()</a>
+<a href="net.NetClient.html#validate_settings">validate_settings()</a>
+<a href="net.NetClient.html#whyf_dont_retry">whyf_dont_retry()</a>
+<a href="net.NetClient.html#write_line">write_line()</a>
+<a href="net.NetClient.html#write_lines">write_lines()</a>
+<a href="net.NetClient.html#write_str">write_str()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from net.NetClient</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="net.NetClient.html#avoid">avoid</a>
+<a href="net.NetClient.html#AVOID_TIMEOUT">AVOID_TIMEOUT</a>
+<a href="net.NetClient.html#CLOSED_EVENT">CLOSED_EVENT</a>
+<a href="net.NetClient.html#CONNECTED_EVENT">CONNECTED_EVENT</a>
+<a href="net.NetClient.html#CONNECTING_EVENT">CONNECTING_EVENT</a>
+<a href="net.NetClient.html#connection">connection</a>
+<a href="net.NetClient.html#dont_retry_flag">dont_retry_flag</a>
+<a href="net.NetClient.html#FOREGROUND_DNS">FOREGROUND_DNS</a>
+<a href="net.NetClient.html#ip_version">ip_version</a>
+<a href="net.NetClient.html#path">path</a>
+<a href="net.NetClient.html#port">port</a>
+<a href="net.NetClient.html#proxy">proxy</a>
+<a href="net.NetClient.html#proxy_auth">proxy_auth</a>
+<a href="net.NetClient.html#proxy_type">proxy_type</a>
+<a href="net.NetClient.html#READ_LINE_EVENT">READ_LINE_EVENT</a>
+<a href="net.NetClient.html#READ_STRING_EVENT">READ_STRING_EVENT</a>
+<a href="net.NetClient.html#sbuff">sbuff</a>
+<a href="net.NetClient.html#server">server</a>
+<a href="net.NetClient.html#ssl_connection">ssl_connection</a>
+<a href="net.NetClient.html#ssl_flag">ssl_flag</a>
+<a href="net.NetClient.html#ssl_verify_flag">ssl_verify_flag</a>
+<a href="net.NetClient.html#ssl_want_shutdown">ssl_want_shutdown</a>
+<a href="net.NetClient.html#timeout">timeout</a>
+<a href="net.NetClient.html#WRITING_LINE_EVENT">WRITING_LINE_EVENT</a>
+<a href="net.NetClient.html#WRITING_STRING_EVENT">WRITING_STRING_EVENT</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#abort">abort()</a>
+<a href="#add_request_headers">add_request_headers()</a>
+<a href="#add_some">add_some()</a>
+<a href="#capitalize_header">capitalize_header()</a>
+<a href="#close_inflater">close_inflater()</a>
+<a href="#create_cookie_header">create_cookie_header()</a>
+<a href="#create_digest_authorization_header">create_digest_authorization_header()</a>
+<a href="#domain_keys">domain_keys()</a>
+<a href="#dump_cookies">dump_cookies()</a>
+<a href="#get_authentications">get_authentications()</a>
+<a href="#get_cookies">get_cookies()</a>
+<a href="#get_http_error">get_http_error()</a>
+<a href="#get_length">get_length()</a>
+<a href="#get_read">get_read()</a>
+<a href="#get_request">get_request()</a>
+<a href="#get_response">get_response()</a>
+<a href="#handle_authentication">handle_authentication()</a>
+<a href="#handle_redirect">handle_redirect()</a>
+<a href="#init">init()</a>
+<a href="#maybe_close_connection">maybe_close_connection()</a>
+<a href="#maybe_open_connection">maybe_open_connection()</a>
+<a href="#maybe_set_authorization_header">maybe_set_authorization_header()</a>
+<a href="#new">new()</a>
+<a href="#on_http_error">on_http_error()</a>
+<a href="#open_inflater">open_inflater()</a>
+<a href="#parse_and_convert_quoted_string">parse_and_convert_quoted_string()</a>
+<a href="#parse_cookie_string">parse_cookie_string()</a>
+<a href="#parse_generic_header">parse_generic_header()</a>
+<a href="#parse_quoted_string">parse_quoted_string()</a>
+<a href="#read_chunked">read_chunked()</a>
+<a href="#read_data">read_data()</a>
+<a href="#read_headers">read_headers()</a>
+<a href="#read_length">read_length()</a>
+<a href="#read_to_eof">read_to_eof()</a>
+<a href="#retrieve">retrieve()</a>
+<a href="#retrieve_page">retrieve_page()</a>
+<a href="#set_authentications">set_authentications()</a>
+<a href="#set_cookies">set_cookies()</a>
+<a href="#set_gzip">set_gzip()</a>
+<a href="#set_http_version">set_http_version()</a>
+<a href="#set_keep_alive">set_keep_alive()</a>
+<a href="#set_retries">set_retries()</a>
+<a href="#set_retry_while_data">set_retry_while_data()</a>
+<a href="#set_user_agent">set_user_agent()</a>
+<a href="#setup_basic_authentication">setup_basic_authentication()</a>
+<a href="#setup_digest_authentication">setup_digest_authentication()</a>
+<a href="#store_cookies">store_cookies()</a>
+<a href="#tryone">tryone()</a>
+<a href="#valid_cookie">valid_cookie()</a>
+<a href="#write_request">write_request()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#abort_flag">abort_flag</a>
+<a href="#ABORTED_EVENT">ABORTED_EVENT</a>
+<a href="#auth">auth</a>
+<a href="#auth_scheme">auth_scheme</a>
+<a href="#authentications">authentications</a>
+<a href="#basic_auth_header">basic_auth_header</a>
+<a href="#BEGIN_EVENT">BEGIN_EVENT</a>
+<a href="#cnonce">cnonce</a>
+<a href="#COMPLETE_EVENT">COMPLETE_EVENT</a>
+<a href="#cookies">cookies</a>
+<a href="#FAILED_EVENT">FAILED_EVENT</a>
+<a href="#FOUND_GZIP">FOUND_GZIP</a>
+<a href="#gzip_flag">gzip_flag</a>
+<a href="#ha1">ha1</a>
+<a href="#HEADERS_EVENT">HEADERS_EVENT</a>
+<a href="#http_error">http_error</a>
+<a href="#HTTP_ERROR_EVENT">HTTP_ERROR_EVENT</a>
+<a href="#HTTP_SUCCESS_EVENT">HTTP_SUCCESS_EVENT</a>
+<a href="#http_version">http_version</a>
+<a href="#inflater_stream">inflater_stream</a>
+<a href="#keep_alive_flag">keep_alive_flag</a>
+<a href="#length">length</a>
+<a href="#nonce">nonce</a>
+<a href="#nonce_count">nonce_count</a>
+<a href="#opaque">opaque</a>
+<a href="#previous_response">previous_response</a>
+<a href="#PROGRESS_EVENT">PROGRESS_EVENT</a>
+<a href="#qop">qop</a>
+<a href="#read">read</a>
+<a href="#realm">realm</a>
+<a href="#redir_set">redir_set</a>
+<a href="#request">request</a>
+<a href="#response">response</a>
+<a href="#retries">retries</a>
+<a href="#retry_while_data_flag">retry_while_data_flag</a>
+<a href="#RETRYING_EVENT">RETRYING_EVENT</a>
+<a href="#some_data_flag">some_data_flag</a>
+<a href="#TOKEN_CHAR">TOKEN_CHAR</a>
+<a href="#user_agent">user_agent</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="abort"/>
+<h3>abort()</h3>
+public<p/>
+<dl>
+<dd>
+Abort the current request.
+<p/><a href="http-httpclient.icn.html#229" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="add_request_headers"/>
+<h3>add_request_headers(l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#250" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="add_some"/>
+<h3>add_some(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#1135" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="capitalize_header"/>
+<h3>capitalize_header(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Helper function to put a header string into the conventional
+capitalization used in HTTP; eg "abc-DEF" -&gt; "Abc-Def".
+<p/><a href="http-httpclient.icn.html#237" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="close_inflater"/>
+<h3>close_inflater()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#991" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="create_cookie_header"/>
+<h3>create_cookie_header()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#696" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="create_digest_authorization_header"/>
+<h3>create_digest_authorization_header()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#449" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="domain_keys"/>
+<h3>domain_keys(s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/>
+Given a domain name, generate all the valid matching cookie domain
+values.
+<p/><a href="http-httpclient.icn.html#678" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="dump_cookies"/>
+<h3>dump_cookies()</h3>
+public<p/>
+<dl>
+<dd>
+Useful debug function
+<p/>
+<p/><a href="http-httpclient.icn.html#732" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="get_authentications"/>
+<h3>get_authentications()</h3>
+public<p/>
+<dl>
+<dd>
+Get the authentications table.
+<p/><a href="http-httpclient.icn.html#198" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="get_cookies"/>
+<h3>get_cookies()</h3>
+public<p/>
+<dl>
+<dd>
+Get the cookies table.
+<p/><a href="http-httpclient.icn.html#183" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="get_http_error"/>
+<h3>get_http_error()</h3>
+public<p/>
+<dl>
+<dd>
+After invoking retrieve(), this method can be used to determine
+whether a failure was caused by a network failure or an HTTP failure
+(for example 404 not found).  In the former case this method fails; in
+the latter case the error string is returned.
+<p/><a href="http-httpclient.icn.html#753" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="get_length"/>
+<h3>get_length()</h3>
+public<p/>
+<dl>
+<dd>
+Return the length of the current download, or fail if unknown
+<p/><a href="http-httpclient.icn.html#1121" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="get_read"/>
+<h3>get_read()</h3>
+public<p/>
+<dl>
+<dd>
+Return the number of bytes read so far, or fail if request has not begun to read
+<p/><a href="http-httpclient.icn.html#1128" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="get_request"/>
+<h3>get_request()</h3>
+public<p/>
+<dl>
+<dd>
+Get the current HttpRequest
+<p/><a href="http-httpclient.icn.html#213" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="get_response"/>
+<h3>get_response()</h3>
+public<p/>
+<dl>
+<dd>
+Get the current HttpResponse.  It generally only makes sense to
+examine this after an HTTP error, since otherwise it may be
+incomplete.
+<p/><a href="http-httpclient.icn.html#220" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_authentication"/>
+<h3>handle_authentication()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#367" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_redirect"/>
+<h3>handle_redirect(sc)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#324" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#95" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="maybe_close_connection"/>
+<h3>maybe_close_connection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="http-httpclient.icn.html#893" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="maybe_open_connection"/>
+<h3>maybe_open_connection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="http-httpclient.icn.html#763" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="maybe_set_authorization_header"/>
+<h3>maybe_set_authorization_header()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#567" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="net.NetClient.html#new">new()</a> in <a href="net.NetClient.html" target="displayFrame">net.NetClient</a></dd>
+<dd>
+<p/><a href="http-httpclient.icn.html#1146" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="on_http_error"/>
+<h3>on_http_error(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#748" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="open_inflater"/>
+<h3>open_inflater()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#1002" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_and_convert_quoted_string"/>
+<h3>parse_and_convert_quoted_string()</h3>
+public static<p/>
+<dl>
+<dd>
+As <code><a href="http.HttpClient.html#parse_quoted_string">parse_quoted_string()</a></code> above, but returns the string without
+the surrounding quotes, and any escape sequences converted.
+<p/><a href="http-httpclient.icn.html#547" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_cookie_string"/>
+<h3>parse_cookie_string(s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#577" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_generic_header"/>
+<h3>parse_generic_header(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Parse a string <code>s</code> as a generic header consisting of key-values.
+The keys are comprised of <code><a href="http.HttpClient.html#TOKEN_CHAR">TOKEN_CHAR</a></code>s, as are the values,
+unless enclosed in double quotes.  Examples of <code>s</code> :-
+<pre>
+     a=100 b=200; c="hello world"
+     x="backslash escapes \" are allowed"
+</pre>
+<p/><a href="http-httpclient.icn.html#499" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_quoted_string"/>
+<h3>parse_quoted_string()</h3>
+public static<p/>
+<dl>
+<dd>
+Parse a string in double quotes; a scan must be in progress with
+&amp;pos at a ".  &amp;pos will be moved beyond the terminating quote.
+<p/>
+The whole matched string including enclosing quotes is returned.
+<p/><a href="http-httpclient.icn.html#526" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_chunked"/>
+<h3>read_chunked()</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="http-httpclient.icn.html#1050" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_data"/>
+<h3>read_data()</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="http-httpclient.icn.html#1022" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_headers"/>
+<h3>read_headers()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#963" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_length"/>
+<h3>read_length()</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+<p/><a href="http-httpclient.icn.html#1102" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read_to_eof"/>
+<h3>read_to_eof()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#1086" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="retrieve"/>
+<h3>retrieve(request)</h3>
+public<p/>
+<dl>
+<dd>
+Retrieve the given <code><a href="http.HttpRequest.html" target="displayFrame">HttpRequest</a></code> request, or fail if that
+is not possible.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>request</code> - an <code><a href="http.HttpRequest.html" target="displayFrame">HttpRequest</a></code> instance
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+an <code><a href="http.HttpResponse.html" target="displayFrame">HttpResponse</a></code> object.
+</dd>
+</dl>
+<p/><a href="http-httpclient.icn.html#265" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="retrieve_page"/>
+<h3>retrieve_page()</h3>
+private<p/>
+<dl>
+<dd>
+Retrieve the current request; doesn't handle redirects and so
+on - these are handled by the caller, retrieve().
+<p/>
+<p/><a href="http-httpclient.icn.html#780" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_authentications"/>
+<h3>set_authentications(m)</h3>
+public<p/>
+<dl>
+<dd>
+Set the authentications table.
+<p/><a href="http-httpclient.icn.html#190" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cookies"/>
+<h3>set_cookies(m)</h3>
+public<p/>
+<dl>
+<dd>
+Set the cookies table.
+<p/><a href="http-httpclient.icn.html#175" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_gzip"/>
+<h3>set_gzip(s)</h3>
+public<p/>
+<dl>
+<dd>
+A flag value.  When set, indicates that gzip compression may be used, if available.
+<p/><a href="http-httpclient.icn.html#205" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_http_version"/>
+<h3>set_http_version(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the http version to use; by default "1.1"
+<p/><a href="http-httpclient.icn.html#141" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_keep_alive"/>
+<h3>set_keep_alive(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure whether the client uses the keep-alive feature (the
+default is yes).
+<p/><a href="http-httpclient.icn.html#157" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_retries"/>
+<h3>set_retries(retries)</h3>
+public<p/>
+<dl>
+<dd>
+Set the number of retries to use, with <code>&amp;null</code> meaning
+retry indefinitely.  The default is two.
+<p/><a href="http-httpclient.icn.html#256" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_retry_while_data"/>
+<h3>set_retry_while_data(s)</h3>
+public<p/>
+<dl>
+<dd>
+This flag indicates that after a timeout, the retries count should
+be reset if any data was received.
+<p/><a href="http-httpclient.icn.html#166" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="set_user_agent"/>
+<h3>set_user_agent(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the user-agent identification
+<p/><a href="http-httpclient.icn.html#149" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_basic_authentication"/>
+<h3>setup_basic_authentication()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#409" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_digest_authentication"/>
+<h3>setup_digest_authentication(t)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#414" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="store_cookies"/>
+<h3>store_cookies()</h3>
+private<p/>
+<dl>
+<dd>
+Store any cookie values in the current page's header.
+<p/>
+<p/><a href="http-httpclient.icn.html#651" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="tryone"/>
+<h3>tryone()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#835" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="valid_cookie"/>
+<h3>valid_cookie(c)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#619" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="write_request"/>
+<h3>write_request()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#903" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="abort_flag"/>
+<h3>abort_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#136" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ABORTED_EVENT"/>
+<h3>ABORTED_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#89" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="auth"/>
+<h3>auth</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#124" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="auth_scheme"/>
+<h3>auth_scheme</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#125" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="authentications"/>
+<h3>authentications</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#135" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="basic_auth_header"/>
+<h3>basic_auth_header</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#126" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="BEGIN_EVENT"/>
+<h3>BEGIN_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#84" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="cnonce"/>
+<h3>cnonce</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#129" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="COMPLETE_EVENT"/>
+<h3>COMPLETE_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#85" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="cookies"/>
+<h3>cookies</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#134" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="FAILED_EVENT"/>
+<h3>FAILED_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#86" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="FOUND_GZIP"/>
+<h3>FOUND_GZIP</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#93" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="gzip_flag"/>
+<h3>gzip_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#138" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="ha1"/>
+<h3>ha1</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#131" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="HEADERS_EVENT"/>
+<h3>HEADERS_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#91" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="http_error"/>
+<h3>http_error</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#120" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="HTTP_ERROR_EVENT"/>
+<h3>HTTP_ERROR_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#88" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="HTTP_SUCCESS_EVENT"/>
+<h3>HTTP_SUCCESS_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#87" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="http_version"/>
+<h3>http_version</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#119" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="inflater_stream"/>
+<h3>inflater_stream</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#139" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="keep_alive_flag"/>
+<h3>keep_alive_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#121" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="length"/>
+<h3>length</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#117" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="nonce"/>
+<h3>nonce</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#127" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="nonce_count"/>
+<h3>nonce_count</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#128" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="opaque"/>
+<h3>opaque</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#130" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="previous_response"/>
+<h3>previous_response</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#114" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="PROGRESS_EVENT"/>
+<h3>PROGRESS_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#92" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="qop"/>
+<h3>qop</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#132" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="read"/>
+<h3>read</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#118" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="realm"/>
+<h3>realm</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#133" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="redir_set"/>
+<h3>redir_set</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#123" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="request"/>
+<h3>request</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#112" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="response"/>
+<h3>response</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#113" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="retries"/>
+<h3>retries</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#115" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="retry_while_data_flag"/>
+<h3>retry_while_data_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#116" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="RETRYING_EVENT"/>
+<h3>RETRYING_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#90" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="some_data_flag"/>
+<h3>some_data_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#137" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="TOKEN_CHAR"/>
+<h3>TOKEN_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#83" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+<a name="user_agent"/>
+<h3>user_agent</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httpclient.icn.html#122" target="displayFrame">Source - httpclient.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>RandomFromStream</title></head><body>
+<h1>RandomFromStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="ipl.random.RandomWithModulus.html" target="displayFrame">ipl.random.RandomWithModulus</a><br>
+<a href="util.HasCloseUnderlying.html" target="displayFrame">util.HasCloseUnderlying</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.random-package.html" target="listFrame">ipl.random</a></dd>
+</dl><p/>
+A random number generator which generates numbers based on random
+data from a <code><a href="io.Stream.html" target="displayFrame">io.Stream</a></code>.
+<p/>
+For example to produce 64-bit integers from <code>/dev/urandom</code> :-
+<pre>
+  r := RandomFromStream(open("/dev/urandom"), 8)
+</pre>
+<p/><a href="ipl.random-random.icn.html#326" target="displayFrame">Source - random.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="ipl.random.Random.html">ipl.random.Random</a>
+<a href="ipl.random.RandomWithModulus.html">ipl.random.RandomWithModulus</a>
+<a href="ipl.random.RandomFromStream.html">ipl.random.RandomFromStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from ipl.random.Random</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.random.Random.html#choose">choose()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from ipl.random.RandomWithModulus</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.random.RandomWithModulus.html#gen">gen()</a>
+<a href="ipl.random.RandomWithModulus.html#get_n">get_n()</a>
+<a href="ipl.random.RandomWithModulus.html#init">init()</a>
+<a href="ipl.random.RandomWithModulus.html#mod32">mod32()</a>
+<a href="ipl.random.RandomWithModulus.html#mod64">mod64()</a>
+<a href="ipl.random.RandomWithModulus.html#range">range()</a>
+<a href="ipl.random.RandomWithModulus.html#real">real()</a>
+<a href="ipl.random.RandomWithModulus.html#set_real_range">set_real_range()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from ipl.random.RandomWithModulus</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.random.RandomWithModulus.html#a1">a1</a>
+<a href="ipl.random.RandomWithModulus.html#m">m</a>
+<a href="ipl.random.RandomWithModulus.html#MAX_REAL_RANGE">MAX_REAL_RANGE</a>
+<a href="ipl.random.RandomWithModulus.html#n1">n1</a>
+<a href="ipl.random.RandomWithModulus.html#p1">p1</a>
+<a href="ipl.random.RandomWithModulus.html#rf">rf</a>
+<a href="ipl.random.RandomWithModulus.html#rr">rr</a>
+<a href="ipl.random.RandomWithModulus.html#s1">s1</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#get">get()</a>
+<a href="#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#c">c</a>
+<a href="#src">src</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Close the underlying <code><a href="io.Stream.html" target="displayFrame">io.Stream</a></code>.
+<p/><a href="ipl.random-random.icn.html#347" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="get"/>
+<h3>get()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.random.RandomWithModulus.html#get">get()</a> in <a href="ipl.random.RandomWithModulus.html" target="displayFrame">ipl.random.RandomWithModulus</a></dd>
+<dd>
+<p/><a href="ipl.random-random.icn.html#338" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(src, c)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.random.RandomWithModulus.html#new">new()</a> in <a href="ipl.random.RandomWithModulus.html" target="displayFrame">ipl.random.RandomWithModulus</a></dd>
+<dd>
+Create an instance using <code><a href="io.Stream.html" target="displayFrame">io.Stream</a></code> <code>src</code> and reading <code>c</code>
+(default 4) bytes at a time.  The modulus is thus <code>2 ^ (8*c)</code>.
+<p/><a href="ipl.random-random.icn.html#355" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="c"/>
+<h3>c</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.random-random.icn.html#336" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+<a name="src"/>
+<h3>src</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.random-random.icn.html#336" target="displayFrame">Source - random.icn </a>
+</dd>
+</dl><hr>
+</body></html>

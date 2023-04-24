@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>FilterStreamBase</title></head><body>
+<h1>FilterStreamBase</h1>
+<dl>
+<dt>Type :</dt><dd>package abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.Stream.html" target="displayFrame">io.Stream</a><br>
+<a href="io.HasBgProc.html" target="displayFrame">io.HasBgProc</a><br>
+<a href="util.HasCloseUnderlying.html" target="displayFrame">util.HasCloseUnderlying</a><br>
+<a href="io.HasTask.html" target="displayFrame">io.HasTask</a><br>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="io.FilterOutputStream.html">io.FilterOutputStream</a><br>
+<a href="io.FilterInputStream.html">io.FilterInputStream</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+Base class for FilterOutputStream and FilterInputStream
+<p/><a href="io-streams.icn.html#1662" target="displayFrame">Source - streams.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="io.HasBgProc.html">io.HasBgProc</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.FilterStreamBase.html">io.FilterStreamBase</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#do_wait">do_wait()</a>
+<a href="io.HasBgProc.html#get_exit_info">get_exit_info()</a>
+<a href="io.HasBgProc.html#get_pid">get_pid()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#exit_info">exit_info</a>
+<a href="io.HasBgProc.html#pid">pid</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+<a href="util.HasMode.html#get_mode">get_mode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasClose</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html#close">close()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#in">in()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#out">out()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close_cerr">close_cerr()</a>
+<a href="#close_cin">close_cin()</a>
+<a href="#close_cout">close_cout()</a>
+<a href="#do_poll">do_poll()</a>
+<a href="#setup">setup()</a>
+<a href="#succeeded">succeeded()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#cerr">cerr</a>
+<a href="#cin">cin</a>
+<a href="#cmd">cmd</a>
+<a href="#cout">cout</a>
+<a href="#err_sink">err_sink</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close_cerr"/>
+<h3>close_cerr()</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1735" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="close_cin"/>
+<h3>close_cin()</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1727" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="close_cout"/>
+<h3>close_cout()</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1743" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="do_poll"/>
+<h3>do_poll()</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1688" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="setup"/>
+<h3>setup(cmd, args, env, err_sink)</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1751" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="succeeded"/>
+<h3>succeeded()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient function to check that the command exited
+successfully.  If it did, this function returns, otherwise it
+fails and sets <code>&amp;why</code> appropriately, based on the exit code and
+stderr output.  The error sink must be set to a <code><a href="io.StringStream.html" target="displayFrame">StringStream</a></code> to
+use this function.
+<p/><a href="io-streams.icn.html#1674" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="cerr"/>
+<h3>cerr</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1672" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="cin"/>
+<h3>cin</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1670" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="cmd"/>
+<h3>cmd</h3>
+protected const<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1667" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="cout"/>
+<h3>cout</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1671" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="err_sink"/>
+<h3>err_sink</h3>
+protected const<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1668" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MimeHeaders</title></head><body>
+<h1>MimeHeaders</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="mail.Message.html">mail.Message</a><br>
+<a href="http.HttpRequest.html">http.HttpRequest</a><br>
+<a href="http.HttpResponse.html">http.HttpResponse</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+</dl><p/>
+Base class for an object which has headers (Message, and HTTP response
+and request objects).
+<p/><a href="util-mimeheaders.icn.html#5" target="displayFrame">Source - mimeheaders.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_header">add_header()</a>
+<a href="#gen_header_entries">gen_header_entries()</a>
+<a href="#gen_header_keys">gen_header_keys()</a>
+<a href="#gen_headers">gen_headers()</a>
+<a href="#get_catenated_headers">get_catenated_headers()</a>
+<a href="#get_first_header">get_first_header()</a>
+<a href="#get_headers">get_headers()</a>
+<a href="#has_header">has_header()</a>
+<a href="#new">new()</a>
+<a href="#set_header">set_header()</a>
+<a href="#show_headers">show_headers()</a>
+<a href="#unset_header">unset_header()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#headers">headers</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_header"/>
+<h3>add_header(key, val)</h3>
+public<p/>
+<dl>
+<dd>
+Add a header with the given key, after any existing ones with the same key
+<p/><a href="util-mimeheaders.icn.html#83" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_header_entries"/>
+<h3>gen_header_entries()</h3>
+public<p/>
+<dl>
+<dd>
+Generate a list of sorted key-entrylist header pairs.
+<p/><a href="util-mimeheaders.icn.html#30" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_header_keys"/>
+<h3>gen_header_keys()</h3>
+public<p/>
+<dl>
+<dd>
+Generate the header keys in sorted order.
+<p/><a href="util-mimeheaders.icn.html#23" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_headers"/>
+<h3>gen_headers(key)</h3>
+public<p/>
+<dl>
+<dd>
+Generate all the headers for the key, or fail if the key has no headers
+<dl>
+<dt>
+Generates :
+</dt>
+<dd>
+all the headers for the key
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if no headers for the key have been defined
+</dd>
+</dl>
+<p/><a href="util-mimeheaders.icn.html#56" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="get_catenated_headers"/>
+<h3>get_catenated_headers(key, delim)</h3>
+public<p/>
+<dl>
+<dd>
+Get all the headers matching the given key as a string separated
+by the given delimeter, which defaults to ","
+<dl>
+<dt>
+Fails :
+</dt>
+<dd>
+if there is no header with the given key
+</dd>
+</dl>
+<p/><a href="util-mimeheaders.icn.html#67" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="get_first_header"/>
+<h3>get_first_header(key)</h3>
+public<p/>
+<dl>
+<dd>
+A convenience function to get the first header matching the given key, or fail
+<p/><a href="util-mimeheaders.icn.html#37" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="get_headers"/>
+<h3>get_headers(key)</h3>
+public<p/>
+<dl>
+<dd>
+Get all the headers for the key, or fail if the key has no headers
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a list of all the headers for the key.  This will always be
+a non-empty list.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+if no headers for the key have been defined
+</dd>
+</dl>
+<p/><a href="util-mimeheaders.icn.html#44" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="has_header"/>
+<h3>has_header(key)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff there is a header with the given key.
+<p/><a href="util-mimeheaders.icn.html#110" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="util-mimeheaders.icn.html#117" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="set_header"/>
+<h3>set_header(key, val)</h3>
+public<p/>
+<dl>
+<dd>
+Set a header with the given key; any existing headers with the same key
+are removed.
+<p/><a href="util-mimeheaders.icn.html#93" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="show_headers"/>
+<h3>show_headers()</h3>
+public<p/>
+<dl>
+<dd>
+Show the header table (useful debug)
+<p/><a href="util-mimeheaders.icn.html#13" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<a name="unset_header"/>
+<h3>unset_header(key)</h3>
+public<p/>
+<dl>
+<dd>
+Unset the header(s) for the given key
+<p/><a href="util-mimeheaders.icn.html#102" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="headers"/>
+<h3>headers</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="util-mimeheaders.icn.html#10" target="displayFrame">Source - mimeheaders.icn </a>
+</dd>
+</dl><hr>
+</body></html>

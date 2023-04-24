@@ -1,0 +1,33 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>rev_find</title></head><body>
+<h1>rev_find(s1, s2, i, j)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.scan-package.html" target="listFrame">ipl.scan</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Search backwards for s1 in s2[i:j].  For each match, the position
+just to the right of the match is generated.
+<p/>
+If no parameters are defaulted, the sequence generated is equivalent
+to
+<pre>
+     find(s1, s2, i, j) + *s1
+</pre>
+but in reverse order.
+<p/>
+Defaults:
+<p/>
+<ul>
+<li>
+<code>s2</code> - <code>&amp;subject</code>
+</li>
+<li>
+<code>i</code> - <code>&amp;pos</code> if <code>s</code> is defaulted, otherwise <code>0</code>
+</li>
+<li>
+<code>j</code> - <code>1</code> 
+</li>
+</ul>
+<p/><a href="ipl.scan-scan.icn.html#976" target="displayFrame">Source - scan.icn </a>
+<p/>
+</body></html>

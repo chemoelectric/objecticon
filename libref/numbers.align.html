@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>align</title></head><body>
+<h1>align(x, y)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Take two arbitrary values and returns two equivalent values which are
+of the same class.  An <code><a href="numbers.Align.html" target="displayFrame">Align</a></code> record is returned.
+<p/>
+First <code>need</code> is used to convert <code>x</code> and <code>y</code> from simple types
+(integer and real) and strings into a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>, <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> or <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>.  Then,
+if the <code>x</code> and <code>y</code> aren't of the same resulting type, one of them is
+converted so their types are the same.  Any conversion made will be
+exact.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>, <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> or <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>
+</dd>
+<dd>
+<code>y</code> - something convertible to <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>, <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> or <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>
+</dd>
+</dl>
+<p/><a href="numbers-numbers.icn.html#1339" target="displayFrame">Source - numbers.icn </a>
+<p/>
+</body></html>

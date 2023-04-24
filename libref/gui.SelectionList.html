@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SelectionList</title></head><body>
+<h1>SelectionList</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.Circulate.html">gui.Circulate</a><br>
+<a href="gui.SelectionSpin.html">gui.SelectionSpin</a><br>
+<a href="gui.SelectionDropDown.html">gui.SelectionDropDown</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+<p/><a href="gui-selectionlist.icn.html#7" target="displayFrame">Source - selectionlist.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#apply_selection">apply_selection()</a>
+<a href="#constrain_selection">constrain_selection()</a>
+<a href="#decrement_selection">decrement_selection()</a>
+<a href="#get_selection">get_selection()</a>
+<a href="#increment_selection">increment_selection()</a>
+<a href="#object_get_selection">object_get_selection()</a>
+<a href="#object_set_selection">object_set_selection()</a>
+<a href="#set_selection">set_selection()</a>
+<a href="#set_selection_list">set_selection_list()</a>
+<a href="#set_selection_list_only">set_selection_list_only()</a>
+<a href="#set_selection_only">set_selection_only()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#selection">selection</a>
+<a href="#selection_list">selection_list</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="apply_selection"/>
+<h3>apply_selection(ev)</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-selectionlist.icn.html#129" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="constrain_selection"/>
+<h3>constrain_selection()</h3>
+public<p/>
+<dl>
+<dd>
+Keep the selection within the bounds of the contents.
+<p/><a href="gui-selectionlist.icn.html#37" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="decrement_selection"/>
+<h3>decrement_selection(ev)</h3>
+public<p/>
+<dl>
+<dd>
+Helper function to decrement the selection.  If the selection
+list is empty, it does nothing and fails; otherwise the selection
+is decremented, wrapping around at the start of the selection list.
+<p/><a href="gui-selectionlist.icn.html#116" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="get_selection"/>
+<h3>get_selection()</h3>
+public<p/>
+<dl>
+<dd>
+Return an integer corresponding to the item in the list
+presently selected.
+<p/><a href="gui-selectionlist.icn.html#50" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="increment_selection"/>
+<h3>increment_selection(ev)</h3>
+public<p/>
+<dl>
+<dd>
+Helper function to increment the selection.  If the selection
+list is empty, it does nothing and fails; otherwise the selection
+is incremented, wrapping around at the end of the selection list.
+<p/><a href="gui-selectionlist.icn.html#103" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="object_get_selection"/>
+<h3>object_get_selection()</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to get the item in the selection list currently selected.
+<p/><a href="gui-selectionlist.icn.html#58" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="object_set_selection"/>
+<h3>object_set_selection(o)</h3>
+public<p/>
+<dl>
+<dd>
+Convenient method to set the selection to the given object.  Fails
+if the item is not in the list, returns the index selected otherwise.
+<p/><a href="gui-selectionlist.icn.html#65" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="set_selection"/>
+<h3>set_selection(x, ev)</h3>
+public<p/>
+<dl>
+<dd>
+Set the selected item.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - An index into the list of selectable items.
+</dd>
+</dl>
+<p/><a href="gui-selectionlist.icn.html#25" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="set_selection_list"/>
+<h3>set_selection_list(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the list selection items to the list x.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - The list of items
+</dd>
+</dl>
+<p/><a href="gui-selectionlist.icn.html#12" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="set_selection_list_only"/>
+<h3>set_selection_list_only(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the selection list, and constrain the selection, but do not
+synchronize by calling <code><a href="gui.SelectionList.html#apply_selection">apply_selection</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - The list of items
+</dd>
+</dl>
+<p/><a href="gui-selectionlist.icn.html#77" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="set_selection_only"/>
+<h3>set_selection_only(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the selected item, and constrain that selection, but do not
+synchronize by calling <code><a href="gui.SelectionList.html#apply_selection">apply_selection</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - An index into the list of selectable items.
+</dd>
+</dl>
+<p/><a href="gui-selectionlist.icn.html#90" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="selection"/>
+<h3>selection</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-selectionlist.icn.html#9" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+<a name="selection_list"/>
+<h3>selection_list</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-selectionlist.icn.html#10" target="displayFrame">Source - selectionlist.icn </a>
+</dd>
+</dl><hr>
+</body></html>

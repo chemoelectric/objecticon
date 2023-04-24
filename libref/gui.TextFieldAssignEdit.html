@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TextFieldAssignEdit</title></head><body>
+<h1>TextFieldAssignEdit</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.TextFieldEdit.html" target="displayFrame">gui.TextFieldEdit</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+<p/><a href="gui-textfield.icn.html#1053" target="displayFrame">Source - textfield.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="undo.UndoableEdit.html">undo.UndoableEdit</a>
+<a href="gui.TextFieldEdit.html">gui.TextFieldEdit</a>
+<a href="gui.TextFieldAssignEdit.html">gui.TextFieldAssignEdit</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from undo.UndoableEdit</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="undo.UndoableEdit.html#get_desc">get_desc()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.TextFieldEdit</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.TextFieldEdit.html#doit">doit()</a>
+<a href="gui.TextFieldEdit.html#redo">redo()</a>
+<a href="gui.TextFieldEdit.html#restore">restore()</a>
+<a href="gui.TextFieldEdit.html#save">save()</a>
+<a href="gui.TextFieldEdit.html#undo">undo()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.TextFieldEdit</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.TextFieldEdit.html#cursor">cursor</a>
+<a href="gui.TextFieldEdit.html#mark">mark</a>
+<a href="gui.TextFieldEdit.html#parent">parent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_edit">add_edit()</a>
+<a href="#new">new()</a>
+<a href="#redo_impl">redo_impl()</a>
+<a href="#undo_impl">undo_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#coalesce">coalesce</a>
+<a href="#pos">pos</a>
+<a href="#pre">pre</a>
+<a href="#s">s</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_edit"/>
+<h3>add_edit(other)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.UndoableEdit.html#add_edit">add_edit()</a> in <a href="undo.UndoableEdit.html" target="displayFrame">undo.UndoableEdit</a></dd>
+<dd>
+<p/><a href="gui-textfield.icn.html#1057" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(parent, s, pos, coalesce)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.TextFieldEdit.html#new">new()</a> in <a href="gui.TextFieldEdit.html" target="displayFrame">gui.TextFieldEdit</a></dd>
+<dd>
+<p/><a href="gui-textfield.icn.html#1076" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+<a name="redo_impl"/>
+<h3>redo_impl()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.TextFieldEdit.html#redo_impl">redo_impl()</a> in <a href="gui.TextFieldEdit.html" target="displayFrame">gui.TextFieldEdit</a></dd>
+<dd>
+<p/><a href="gui-textfield.icn.html#1065" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+<a name="undo_impl"/>
+<h3>undo_impl()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.TextFieldEdit.html#undo_impl">undo_impl()</a> in <a href="gui.TextFieldEdit.html" target="displayFrame">gui.TextFieldEdit</a></dd>
+<dd>
+<p/><a href="gui-textfield.icn.html#1072" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="coalesce"/>
+<h3>coalesce</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="gui-textfield.icn.html#1055" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+<a name="pos"/>
+<h3>pos</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textfield.icn.html#1054" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+<a name="pre"/>
+<h3>pre</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textfield.icn.html#1054" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+<a name="s"/>
+<h3>s</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-textfield.icn.html#1054" target="displayFrame">Source - textfield.icn </a>
+</dd>
+</dl><hr>
+</body></html>

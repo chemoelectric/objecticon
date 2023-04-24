@@ -1,0 +1,350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>HtmlParser</title></head><body>
+<h1>HtmlParser</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+An HTML parser.
+<p/><a href="xml-htmlparser.icn.html#62" target="displayFrame">Source - htmlparser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#do_remove_entities">do_remove_entities()</a>
+<a href="#find_open_tag">find_open_tag()</a>
+<a href="#init">init()</a>
+<a href="#is_standalone_tag">is_standalone_tag()</a>
+<a href="#match_entity">match_entity()</a>
+<a href="#move_past_end_tag">move_past_end_tag()</a>
+<a href="#move_to_node">move_to_node()</a>
+<a href="#parse">parse()</a>
+<a href="#parse_comment">parse_comment()</a>
+<a href="#parse_doctype">parse_doctype()</a>
+<a href="#parse_element">parse_element()</a>
+<a href="#parse_node">parse_node()</a>
+<a href="#parse_pubid_literal">parse_pubid_literal()</a>
+<a href="#parse_system_literal">parse_system_literal()</a>
+<a href="#parse_tag">parse_tag()</a>
+<a href="#remove_entities">remove_entities()</a>
+<a href="#set_debug_recovery">set_debug_recovery()</a>
+<a href="#should_close_tag">should_close_tag()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#debug_recovery_flag">debug_recovery_flag</a>
+<a href="#DELIM">DELIM</a>
+<a href="#ENTITIES">ENTITIES</a>
+<a href="#IDCHARS">IDCHARS</a>
+<a href="#IDINTRO">IDINTRO</a>
+<a href="#KEYCHARS">KEYCHARS</a>
+<a href="#KEYINTRO">KEYINTRO</a>
+<a href="#node_stack">node_stack</a>
+<a href="#PUBID_CHAR">PUBID_CHAR</a>
+<a href="#SPACE">SPACE</a>
+<a href="#STANDALONE">STANDALONE</a>
+<a href="#TAG_INFO">TAG_INFO</a>
+<a href="#utf8_flag">utf8_flag</a>
+<a href="#VALCHARS">VALCHARS</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="do_remove_entities"/>
+<h3>do_remove_entities(s)</h3>
+private<p/>
+<dl>
+<dd>
+Remove the entity characters from a string.
+<p/><a href="xml-htmlparser.icn.html#541" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="find_open_tag"/>
+<h3>find_open_tag(other)</h3>
+private<p/>
+<dl>
+<dd>
+Succeed if and only if the given (closing) tag has a matching
+open tag in the node stack.
+<p/><a href="xml-htmlparser.icn.html#339" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#86" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_standalone_tag"/>
+<h3>is_standalone_tag(name)</h3>
+public static<p/>
+<dl>
+<dd>
+Succeed if and only if the tag name is a standalone tag, ie it has no
+matching closing tag.
+<p/><a href="xml-htmlparser.icn.html#563" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="match_entity"/>
+<h3>match_entity()</h3>
+private<p/>
+<dl>
+<dd>
+Match an entity character, eg "&amp;#xff;", returning the matched character value.
+<p/><a href="xml-htmlparser.icn.html#520" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="move_past_end_tag"/>
+<h3>move_past_end_tag(start_tag)</h3>
+private<p/>
+<dl>
+<dd>
+Move past the next end tag to match the given start tag,
+regardless of intervening content
+<p/><a href="xml-htmlparser.icn.html#474" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="move_to_node"/>
+<h3>move_to_node()</h3>
+private<p/>
+<dl>
+<dd>
+Move to the next node (tag, comment, doctype), or end of file.
+<p/><a href="xml-htmlparser.icn.html#493" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s)</h3>
+public<p/>
+<dl>
+<dd>
+Parse the string s returning an HtmlDocument object.
+<p/><a href="xml-htmlparser.icn.html#193" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_comment"/>
+<h3>parse_comment()</h3>
+private<p/>
+<dl>
+<dd>
+http://dev.w3.org/html5/markup/syntax.html#comments
+<p/>
+Assume "&lt;!" already matched.
+<p/><a href="xml-htmlparser.icn.html#406" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_doctype"/>
+<h3>parse_doctype()</h3>
+private<p/>
+<dl>
+<dd>
+DOCTYPE
+<p/>
+Assume "&lt;!DOCTYPE" already matched.
+<p/><a href="xml-htmlparser.icn.html#354" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_element"/>
+<h3>parse_element(start_tag)</h3>
+private<p/>
+<dl>
+<dd>
+Parse and return an Element, given the starting tag
+<p/><a href="xml-htmlparser.icn.html#253" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_node"/>
+<h3>parse_node()</h3>
+private<p/>
+<dl>
+<dd>
+Parse the current input into an <code><a href="xml.Node.html" target="displayFrame">Node</a></code>
+<p/><a href="xml-htmlparser.icn.html#240" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_pubid_literal"/>
+<h3>parse_pubid_literal()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#392" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_system_literal"/>
+<h3>parse_system_literal()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#384" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_tag"/>
+<h3>parse_tag()</h3>
+private<p/>
+<dl>
+<dd>
+Normal tag
+<p/><a href="xml-htmlparser.icn.html#424" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_entities"/>
+<h3>remove_entities(s)</h3>
+public static<p/>
+<dl>
+<dd>
+Remove the entity characters from a string.
+<p/><a href="xml-htmlparser.icn.html#553" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_debug_recovery"/>
+<h3>set_debug_recovery(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#188" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="should_close_tag"/>
+<h3>should_close_tag(other)</h3>
+private<p/>
+<dl>
+<dd>
+Succeed if and only if the tag implicitly closes when the other (opening)
+tag is encountered at the same level.
+<p/><a href="xml-htmlparser.icn.html#322" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="debug_recovery_flag"/>
+<h3>debug_recovery_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#71" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="DELIM"/>
+<h3>DELIM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#79" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="ENTITIES"/>
+<h3>ENTITIES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#82" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="IDCHARS"/>
+<h3>IDCHARS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#75" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="IDINTRO"/>
+<h3>IDINTRO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#74" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="KEYCHARS"/>
+<h3>KEYCHARS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#77" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="KEYINTRO"/>
+<h3>KEYINTRO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#76" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="node_stack"/>
+<h3>node_stack</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#66" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="PUBID_CHAR"/>
+<h3>PUBID_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#83" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="SPACE"/>
+<h3>SPACE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#80" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="STANDALONE"/>
+<h3>STANDALONE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#81" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="TAG_INFO"/>
+<h3>TAG_INFO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#84" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="utf8_flag"/>
+<h3>utf8_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#70" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="VALCHARS"/>
+<h3>VALCHARS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-htmlparser.icn.html#78" target="displayFrame">Source - htmlparser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,244 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>senten1.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     senten1.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to generate sentences
+<a name="6"/>#
+<a name="7"/>#	Author:   Peter A. Bigot
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/># sentence(f) generates the English sentences encountered in a file.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/># The following rules describe what a 'sentence' is.
+<a name="22"/># 
+<a name="23"/># * A sentence begins with a capital letter.
+<a name="24"/># 
+<a name="25"/># * A sentence ends with one or more of '.!?', subject to other
+<a name="26"/>#   constraints.
+<a name="27"/># 
+<a name="28"/># * If a period is immediately followed by:
+<a name="29"/>#   - a digit
+<a name="30"/>#   - a letter
+<a name="31"/>#   - one of ',;:'
+<a name="32"/>#   it is not a sentence end.
+<a name="33"/># 
+<a name="34"/># * If a period is followed (with intervening space) by a lower case
+<a name="35"/>#   letter, it is not a sentence end (assume it's part of an abbreviation).
+<a name="36"/>#
+<a name="37"/># * The sequence '...' does not end a sentence.  The sequence '....' does.
+<a name="38"/># 
+<a name="39"/># * If a sentence end character appears after more opening parens than
+<a name="40"/>#   closing parens in a given sequence, it is not the end of that
+<a name="41"/>#   particular sentence. (I.e., full sentences in a parenthetical remark
+<a name="42"/>#   in an enclosing sentence are considered part of the enclosing
+<a name="43"/>#   sentence.  Their grammaticality is in question, anyway.) (It also
+<a name="44"/>#   helps with attributions and abbreviations that would fail outside
+<a name="45"/>#   the parens.)
+<a name="46"/>#
+<a name="47"/># * No attempt is made to ensure balancing of double-quoted (") material.
+<a name="48"/># 
+<a name="49"/># * When scanning for a sentence start, material which does not conform is
+<a name="50"/>#   discarded.
+<a name="51"/># 
+<a name="52"/># * Corollary: Quotes or parentheses which enclose a sentence are not
+<a name="53"/>#   considered part of it.
+<a name="54"/># 
+<a name="55"/># * An end-of-line on input is replaced by a space unless the last
+<a name="56"/>#   character of the line is 'a-' (where 'a' is any letter), in which case
+<a name="57"/>#   the hyphen is deleted.
+<a name="58"/>#
+<a name="59"/># * Leading and trailing space (tab, space, newline) chars are removed
+<a name="60"/>#   from each line of the input.
+<a name="61"/>#
+<a name="62"/># * If a blank line is encountered on input while scanning a sentence,
+<a name="63"/>#   the scan is aborted and search for a new sentence begins (rationale:
+<a name="64"/>#   ignore section and chapter headers separated from text by newlines).
+<a name="65"/>#
+<a name="66"/># * Most titles before names would fail the above constraints.  They are
+<a name="67"/>#   special-cased.
+<a name="68"/>#
+<a name="69"/># * This does NOT handle when a person uses their middle initial.  To do
+<a name="70"/>#   so would rule out sentences such as 'It was I.',  Six of one, half-dozen
+<a name="71"/>#   of the other--I made my choice.
+<a name="72"/>#
+<a name="73"/># * Note that ':' does not end a sentence.  This is a stylistic choice,
+<a name="74"/>#   and can be modified by simply adding ':' to sentend below.
+<a name="75"/>#
+<a name="76"/>############################################################################
+<a name="77"/>
+<a name="78"/>package ipl.senten1
+<a name="79"/>
+<a name="80"/>import
+<a name="81"/>   io(read)
+<a name="82"/>
+<a name="83"/>procedure sentence(infile)
+<a name="84"/>   local
+<a name="85"/>      line,                     # Line read from input, beginning could be sent.
+<a name="86"/>      sentence,                 # A possible sentence
+<a name="87"/>      lstend,                   # Position in line of last checked sentence end
+<a name="88"/>      possentp,                 # Boolean: non-null if line mod context =  sent.
+<a name="89"/>      spaceskip,                # Spaces betwen EOSent and next char (context)
+<a name="90"/>      nextch,                   # Next char after EOSent
+<a name="91"/>      cnt,                       # Balanced count of parens in possible sent.
+<a name="92"/>      t,
+<a name="93"/>      newline
+<a name="94"/>   static
+<a name="95"/>      sentend,                  # Cset for sentence end chars
+<a name="96"/>      wspace,                   # White space characters
+<a name="97"/>      noperend,                 # Chars which, after period, don't end sentence
+<a name="98"/>      titles                    # Titles that can appear before names.
+<a name="99"/>   initial {
+<a name="100"/>      sentend := '.?!'          # Initial value for sentend
+<a name="101"/>      wspace := ' \t\n'         # Space chars
+<a name="102"/>      noperend := &amp;digits ++ &amp;letters ++ ',:;' # No-end after period chars
+<a name="103"/>      titles := ["Mr.", "Mrs.", "Ms.", "Dr.", "Prof.", "Pres."]
+<a name="104"/>      }
+<a name="105"/>
+<a name="106"/>   line := ""
+<a name="107"/>   # Repeat scanning for and suspending sentences until input fails.
+<a name="108"/>   repeat {
+<a name="109"/>      # Try to find the start of a sentence in the current input string.
+<a name="110"/>      # If there are none, read more from file; fail if file exhausted.
+<a name="111"/>      # Trim trailing space from line (leading skipped by sentence start)
+<a name="112"/>      until line ?:= (tab (upto (&amp;ucase)) &amp; tab (0)) do {
+<a name="113"/>         line := trim (read (infile), wspace) | fail
+<a name="114"/>         }
+<a name="115"/>
+<a name="116"/>      # Find the sentence end.  If there's no viable candidate, read more
+<a name="117"/>      # from input.  Set the last end position to the first char in the
+<a name="118"/>      # sentence.
+<a name="119"/>      lstend := 1
+<a name="120"/>      possentp := &amp;null
+<a name="121"/>      repeat {
+<a name="122"/>         line ? {
+<a name="123"/>            # Skip up to new stuff (scanned in previous lines).
+<a name="124"/>            sentence := tab (lstend)
+<a name="125"/>            while sentence ||:= tab (upto (sentend)) do {
+<a name="126"/>               sentence ||:= tab (many (sentend))
+<a name="127"/>               
+<a name="128"/>               # Verify end-of-sentence.  Assume it doesn't pass.
+<a name="129"/>               possentp := &amp;null
+<a name="130"/>               
+<a name="131"/>               # Check for sentence end conformance.  See what follows it: put
+<a name="132"/>               # that in nextch, and the intervening space before it in
+<a name="133"/>               # spaceskip.
+<a name="134"/>               # Note hack to scan in remainder of line w/o changing &amp;pos.
+<a name="135"/>               nextch := &amp;null
+<a name="136"/>               every tab (0) ? {
+<a name="137"/>                  spaceskip := tab (many (wspace)) | ""
+<a name="138"/>                  nextch := move (1)
+<a name="139"/>                  }
+<a name="140"/>                  
+<a name="141"/>               if /nextch then {
+<a name="142"/>                  # Don't have enough context to ensure a proper sentence end.
+<a name="143"/>                  # Read more, but let readers know that this could be a
+<a name="144"/>                  # sentence end (e.g., in case of EOF on input).
+<a name="145"/>                  possentp := 1
+<a name="146"/>                  break
+<a name="147"/>                  }
+<a name="148"/>               
+<a name="149"/>               # Save position of last checked sentence end, so we don't try to
+<a name="150"/>               # recheck this one.
+<a name="151"/>               lstend := &amp;pos
+<a name="152"/>               
+<a name="153"/>               # .&lt;noperend&gt; doesn't end a sentence.
+<a name="154"/>               if (sentence [-1] == '.' &amp;
+<a name="155"/>                   spaceskip == "" &amp;
+<a name="156"/>                   any (noperend, nextch)) then {
+<a name="157"/>                  next
+<a name="158"/>                  }
+<a name="159"/>               
+<a name="160"/>               # .&lt;spc&gt;&lt;lcase&gt; doesn't end sentence
+<a name="161"/>               if (sentence [-1] == '.' &amp;
+<a name="162"/>                   any (&amp;lcase, nextch)) then {
+<a name="163"/>                  next
+<a name="164"/>                  }
+<a name="165"/>
+<a name="166"/>               # ... doesn't end sentence. .... does.
+<a name="167"/>               if (sentence [-3:0] == "..." &amp;
+<a name="168"/>                   sentence [-4] ~== ".") then {
+<a name="169"/>                  next
+<a name="170"/>                  }
+<a name="171"/>
+<a name="172"/>               # Number of ')' must be &gt;= number '(' in sentence.
+<a name="173"/>               sentence ? {
+<a name="174"/>                  cnt := 0
+<a name="175"/>                  while tab (upto ('()')) do {
+<a name="176"/>                     if ="(" then {
+<a name="177"/>                        cnt +:= 1
+<a name="178"/>                        }
+<a name="179"/>                     else {
+<a name="180"/>                        =")"
+<a name="181"/>                        cnt -:= 1
+<a name="182"/>                        }
+<a name="183"/>                     }
+<a name="184"/>                  }
+<a name="185"/>               if (cnt &gt; 0) then {
+<a name="186"/>                  next
+<a name="187"/>                  }
+<a name="188"/>
+<a name="189"/>               # Special case titles that appear before names (otherwise look
+<a name="190"/>               # like sentence ends).
+<a name="191"/>               every t := ! titles do {
+<a name="192"/>                  if (t == sentence [- *t:0]) then {
+<a name="193"/>                     # Break every, next in sentence-end search repeat
+<a name="194"/>                     break next
+<a name="195"/>                     }
+<a name="196"/>                  }
+<a name="197"/>
+<a name="198"/>               # This is a sentence.  Replace the line with what follows the
+<a name="199"/>               # sentence, and break out of the sentence-end-search loop.
+<a name="200"/>               line := tab (0)
+<a name="201"/>               break break
+<a name="202"/>               }
+<a name="203"/>            }
+<a name="204"/>         # There is no valid sentence end so far.  Remove a trailing hyphen
+<a name="205"/>         # from the current line, or add a word-separating space.
+<a name="206"/>         if line [-1] == "-" &amp; any (&amp;letters, line [-2]) then {
+<a name="207"/>            line := line [1:-1]
+<a name="208"/>            }
+<a name="209"/>         else {
+<a name="210"/>            line ||:= " "
+<a name="211"/>            }
+<a name="212"/>
+<a name="213"/>         # Read another line.  If can't, then fail--but suspend sentence first
+<a name="214"/>         # if it _could_ be a sentence end.  Trim leading and trailing spaces
+<a name="215"/>         # from the new line--if it's empty, toss the line so far and restart;
+<a name="216"/>         # otherwise, tack it onto the end of the current line.
+<a name="217"/>         unless newline := read (infile) then {
+<a name="218"/>            if \possentp then {
+<a name="219"/>               suspend (sentence)
+<a name="220"/>               }
+<a name="221"/>            fail
+<a name="222"/>            }
+<a name="223"/>         if any (wspace, newline) then {
+<a name="224"/>            newline ?:= (tab (many (wspace)), tab (0))
+<a name="225"/>            }
+<a name="226"/>         newline := trim (newline, wspace)
+<a name="227"/>         if (*newline = 0) then {
+<a name="228"/>            if \possentp then {
+<a name="229"/>               suspend (sentence)
+<a name="230"/>               }
+<a name="231"/>            line := ""
+<a name="232"/>            # Break EOS check, next beginning-of-sent scan
+<a name="233"/>            break next
+<a name="234"/>            }
+<a name="235"/>         line ||:= newline
+<a name="236"/>         }
+<a name="237"/>
+<a name="238"/>      # Suspend the sentence, then loop back for more.
+<a name="239"/>      suspend sentence
+<a name="240"/>      }
+<a name="241"/>   end # procedure sentence
+</pre></body></html>

@@ -1,0 +1,430 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>linddefs.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     linddefs.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce table of L-systems
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     November 22, 1997
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure produces a table of L-systems.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  Links:  lindrec
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>
+<a name="25"/>package ipl.linddefs
+<a name="26"/>
+<a name="27"/>import
+<a name="28"/>   ipl.lindrec(lsys_0l)
+<a name="29"/>
+<a name="30"/>procedure linddefs()
+<a name="31"/>   local linden
+<a name="32"/>
+<a name="33"/>   linden := table()
+<a name="34"/>
+<a name="35"/>   linden["fibbush"] := lsys_0l("", table(), 0, 90)
+<a name="36"/>   linden["fibbush"].rewrite["A"] := "[B/////'B///////'B]"
+<a name="37"/>   linden["fibbush"].rewrite["B"] := "[&amp;IL!A]"
+<a name="38"/>   linden["fibbush"].rewrite["I"] := "FL"
+<a name="39"/>   linden["fibbush"].rewrite["F"] := "F/////I"
+<a name="40"/>   linden["fibbush"].rewrite["L"] := "['''^^{-F+F+F-|-F+F+F}]"
+<a name="41"/>   linden["fibbush"].gener := 3
+<a name="42"/>   linden["fibbush"].length := 3
+<a name="43"/>   linden["fibbush"].axiom := "A"
+<a name="44"/>   linden["fibbush"].angle := 22.5
+<a name="45"/>   linden["ebush"] := lsys_0l("", table(), 0, 90)
+<a name="46"/>   linden["ebush"].rewrite["P"] := "I+[P+O]--//[--L]I[++L]-[PO]++PO"
+<a name="47"/>   linden["ebush"].rewrite["I"] := "FS[//&amp;&amp;L][//^^L]FS"
+<a name="48"/>   linden["ebush"].rewrite["S"] := "SFS"
+<a name="49"/>   linden["ebush"].rewrite["L"] := "['{+f-ff-f+|+f-ff-f}]"
+<a name="50"/>   linden["ebush"].rewrite["O"] := "[&amp;&amp;&amp;D`/W////W////W////W////W]"
+<a name="51"/>   linden["ebush"].rewrite["D"] := "FF"
+<a name="52"/>   linden["ebush"].rewrite["W"] := "[`^F][{&amp;&amp;&amp;&amp;-f+f|-f+f}]"
+<a name="53"/>   linden["ebush"].axiom := "P"
+<a name="54"/>   linden["ebush"].angle := 18.0
+<a name="55"/>   linden["ebush"].gener := 3
+<a name="56"/>   linden["ebush"].length := 3
+<a name="57"/>   linden["bush"] := lsys_0l("", table(), 0, 90)
+<a name="58"/>   linden["bush"].rewrite["F"] := "FF-[-F+F+F]+[+F-F-F]"
+<a name="59"/>   linden["bush"].axiom := "++++F"
+<a name="60"/>   linden["bush"].angle := 22.5
+<a name="61"/>   linden["cesaro"] := lsys_0l("", table(), 0, 90)
+<a name="62"/>   linden["cesaro"].rewrite["X"] := "----F!X!++++++++F!X!----"
+<a name="63"/>   linden["cesaro"].rewrite["F"] := ""
+<a name="64"/>   linden["cesaro"].gener := 10
+<a name="65"/>   linden["cesaro"].length := 3
+<a name="66"/>   linden["cesaro"].axiom := "FX"
+<a name="67"/>   linden["cesaro"].angle := 10.58823529
+<a name="68"/>   linden["curve1"] := lsys_0l("", table(), 0, 90)
+<a name="69"/>   linden["curve1"].rewrite["F"] := "FF-F-F-F-F-F+F"
+<a name="70"/>   linden["curve1"].axiom := "F-F-F-F-"
+<a name="71"/>   linden["curve1"].angle := 90.0
+<a name="72"/>   linden["curve2"] := lsys_0l("", table(), 0, 90)
+<a name="73"/>   linden["curve2"].rewrite["F"] := "FF-F+F-F-FF"
+<a name="74"/>   linden["curve2"].axiom := "F-F-F-F-"
+<a name="75"/>   linden["curve2"].angle := 90.0
+<a name="76"/>   linden["curve3"] := lsys_0l("", table(), 0, 90)
+<a name="77"/>   linden["curve3"].rewrite["F"] := "F-FF--F-F"
+<a name="78"/>   linden["curve3"].axiom := "F-F-F-F-"
+<a name="79"/>   linden["curve3"].angle := 90.0
+<a name="80"/>   linden["curve4"] := lsys_0l("", table(), 0, 90)
+<a name="81"/>   linden["curve4"].rewrite["X"] := "YF+XF+Y"
+<a name="82"/>   linden["curve4"].rewrite["Y"] := "XF-YF-X"
+<a name="83"/>   linden["curve4"].axiom := "YF"
+<a name="84"/>   linden["curve4"].angle := 60.0
+<a name="85"/>   linden["curve4"].gener := 5
+<a name="86"/>   linden["dragon"] := lsys_0l("", table(), 0, 90)
+<a name="87"/>   linden["dragon"].rewrite["X"] := "-FX++FY-"
+<a name="88"/>   linden["dragon"].rewrite["Y"] := "+FX--FY+"
+<a name="89"/>   linden["dragon"].rewrite["F"] := ""
+<a name="90"/>   linden["dragon"].axiom := "FX"
+<a name="91"/>   linden["dragon"].angle := 45.0
+<a name="92"/>   linden["dragon"].gener := 10
+<a name="93"/>   linden["dragon1"] := lsys_0l("", table(), 0, 90)
+<a name="94"/>   linden["dragon1"].rewrite["r"] := "-Fl-r"
+<a name="95"/>   linden["dragon1"].rewrite["l"] := "l+rF+"
+<a name="96"/>   linden["dragon1"].axiom := "Fl"
+<a name="97"/>   linden["dragon1"].gener := 14
+<a name="98"/>   linden["dragonc"] := lsys_0l("", table(), 0, 90)
+<a name="99"/>   linden["dragonc"].rewrite["X"] := "X-YF-"
+<a name="100"/>   linden["dragonc"].rewrite["Y"] := "+FX+Y"
+<a name="101"/>   linden["dragonc"].axiom := "X"
+<a name="102"/>   linden["dragonc"].angle := 90.0
+<a name="103"/>   linden["dragonc"].gener := 10
+<a name="104"/>   linden["fass1"] := lsys_0l("", table(), 0, 90)
+<a name="105"/>   linden["fass1"].rewrite["R"] := "-LFLF+RFRFR+F+RF-LFL-FR"
+<a name="106"/>   linden["fass1"].rewrite["L"] := "LF+RFR+FL-F-LFLFL-FRFR+"
+<a name="107"/>   linden["fass1"].axiom := "-L"
+<a name="108"/>   linden["fass1"].angle := 90.0
+<a name="109"/>   linden["fass2"] := lsys_0l("", table(), 0, 90)
+<a name="110"/>   linden["fass2"].rewrite["R"] := "-LFLFLF+RFR+FL-F-LF+RFR+FLF+RFRF-LFL-FRFR"
+<a name="111"/>   linden["fass2"].rewrite["L"] := "LFLF+RFR+FLFL-FRF-LFL-FR+F+RF-LFL-FRFRFR+"
+<a name="112"/>   linden["fass2"].axiom := "-L"
+<a name="113"/>   linden["fass2"].angle := 90.0
+<a name="114"/>   linden["flake3"] := lsys_0l("", table(), 0, 90)
+<a name="115"/>   linden["flake3"].rewrite["X"] := "++FXFY--FX--FY"
+<a name="116"/>   linden["flake3"].rewrite["Y"] := "FYFX+++FYFX++FX++FYFX|+FX--FY--FXFY++"
+<a name="117"/>   linden["flake3"].rewrite["F"] := ""
+<a name="118"/>   linden["flake3"].axiom := "FX"
+<a name="119"/>   linden["flake3"].angle := 30.0
+<a name="120"/>   linden["flake3"].gener := 10
+<a name="121"/>   linden["hilbert"] := lsys_0l("", table(), 0, 90)
+<a name="122"/>   linden["hilbert"].rewrite["X"] := "-YF+XFX+FY-"
+<a name="123"/>   linden["hilbert"].rewrite["Y"] := "+XF-YFY-FX+"
+<a name="124"/>   linden["hilbert"].axiom := "X"
+<a name="125"/>   linden["hilbert"].angle := 90.0
+<a name="126"/>   linden["hilbert"].gener := 10
+<a name="127"/>   linden["island1"] := lsys_0l("", table(), 0, 90)
+<a name="128"/>   linden["island1"].rewrite["F"] := "FFFF-F+F+F-F[-FF+F+FF+F]FF"
+<a name="129"/>   linden["island1"].axiom := "F+F+F+F"
+<a name="130"/>   linden["island1"].angle := 90.0
+<a name="131"/>   linden["island2"] := lsys_0l("", table(), 0, 90)
+<a name="132"/>   linden["island2"].rewrite["F"] := "F+F-FF-F-FF++FF-F+FF+F+FF--FFF"
+<a name="133"/>   linden["island2"].axiom := "F+F+F+F"
+<a name="134"/>   linden["island2"].angle := 90.0
+<a name="135"/>   linden["island2"].gener := 4
+<a name="136"/>   linden["island2"].length := 2
+<a name="137"/>   linden["koch1"] := lsys_0l("", table(), 0, 90)
+<a name="138"/>   linden["koch1"].rewrite["F"] := "F+F--F+F"
+<a name="139"/>   linden["koch1"].axiom := "F--F--F"
+<a name="140"/>   linden["koch1"].angle := 60.0
+<a name="141"/>   linden["koch1"].gener := 4
+<a name="142"/>   linden["koch1"].length := 4
+<a name="143"/>   linden["koch2"] := lsys_0l("", table(), 0, 90)
+<a name="144"/>   linden["koch2"].rewrite["F"] := "-F+++F---F+"
+<a name="145"/>   linden["koch2"].axiom := "F---F---F---F"
+<a name="146"/>   linden["koch2"].angle := 30.0
+<a name="147"/>   linden["koch2"].gener := 6
+<a name="148"/>   linden["koch2"].length := 4
+<a name="149"/>   linden["koch3"] := lsys_0l("", table(), 0, 90)
+<a name="150"/>   linden["koch3"].rewrite["F"] := "F-F+F+FF-F-F+F"
+<a name="151"/>   linden["koch3"].axiom := "F-F-F-F"
+<a name="152"/>   linden["koch3"].angle := 90.0
+<a name="153"/>   linden["koch3"].gener := 6
+<a name="154"/>   linden["koch3"].length := 4
+<a name="155"/>   linden["koch4"] := lsys_0l("", table(), 0, 90)
+<a name="156"/>   linden["koch4"].rewrite["F"] := "+F--F++F-"
+<a name="157"/>   linden["koch4"].axiom := "F++++F++++F"
+<a name="158"/>   linden["koch4"].angle := 30.0
+<a name="159"/>   linden["koch4"].gener := 5
+<a name="160"/>   linden["koch4"].length := 3
+<a name="161"/>   linden["koch5"] := lsys_0l("", table(), 0, 90)
+<a name="162"/>   linden["koch5"].rewrite["F"] := "F+F-F-FFF+F+F-F"
+<a name="163"/>   linden["koch5"].axiom := "F+F+F+F"
+<a name="164"/>   linden["koch5"].angle := 90.0
+<a name="165"/>   linden["koch6"] := lsys_0l("", table(), 0, 90)
+<a name="166"/>   linden["koch6"].rewrite["F"] := "F-FF+FF+F+F-F-FF+F+F-F-FF-FF+F"
+<a name="167"/>   linden["koch6"].axiom := "F+F+F+F"
+<a name="168"/>   linden["koch6"].angle := 90.0
+<a name="169"/>   linden["koch7"] := lsys_0l("", table(), 0, 90)
+<a name="170"/>   linden["koch7"].rewrite["F"] := "F+F-F+F+F"
+<a name="171"/>   linden["koch7"].axiom := "F+F+F+F"
+<a name="172"/>   linden["koch7"].gener := 4
+<a name="173"/>   linden["koch8"] := lsys_0l("", table(), 0, 90)
+<a name="174"/>   linden["koch8"].rewrite["F"] := "F+F--F+F"
+<a name="175"/>   linden["koch8"].axiom := "F"
+<a name="176"/>   linden["koch8"].angle := 60.0
+<a name="177"/>   linden["lakeisle"] := lsys_0l("", table(), 0, 90)
+<a name="178"/>   linden["lakeisle"].rewrite["F"] := "F-f+FF-F-FF-Ff-FF+f-FF+F+FF+Ff+FFF"
+<a name="179"/>   linden["lakeisle"].rewrite["f"] := "ffffff"
+<a name="180"/>   linden["lakeisle"].axiom := "F-F-F-F"
+<a name="181"/>   linden["lakeisle"].gener := 2
+<a name="182"/>   linden["leaf1"] := lsys_0l("", table(), 0, 90)
+<a name="183"/>   linden["leaf1"].rewrite["H"] := "J"
+<a name="184"/>   linden["leaf1"].rewrite["P"] := "X"
+<a name="185"/>   linden["leaf1"].rewrite["X"] := "F[+AAAA]FY"
+<a name="186"/>   linden["leaf1"].rewrite["E"] := "H"
+<a name="187"/>   linden["leaf1"].rewrite["B"] := "E"
+<a name="188"/>   linden["leaf1"].rewrite["J"] := "Y"
+<a name="189"/>   linden["leaf1"].rewrite["O"] := "P"
+<a name="190"/>   linden["leaf1"].rewrite["A"] := "N"
+<a name="191"/>   linden["leaf1"].rewrite["Y"] := "F[-BBBB]FX"
+<a name="192"/>   linden["leaf1"].rewrite["N"] := "O"
+<a name="193"/>   linden["leaf1"].axiom := "X"
+<a name="194"/>   linden["leaf1"].angle := 45.0
+<a name="195"/>   linden["leaf1"].gener := 10
+<a name="196"/>   linden["leaf2"] := lsys_0l("", table(), 0, 90)
+<a name="197"/>   linden["leaf2"].rewrite["X"] := "A"
+<a name="198"/>   linden["leaf2"].rewrite["B"] := "F[-Y]FA"
+<a name="199"/>   linden["leaf2"].rewrite["A"] := "F[+X]BF"
+<a name="200"/>   linden["leaf2"].rewrite["Y"] := "B"
+<a name="201"/>   linden["leaf2"].axiom := "A"
+<a name="202"/>   linden["leaf2"].angle := 45.0
+<a name="203"/>   linden["leaf2"].gener := 14
+<a name="204"/>   linden["peano1"] := lsys_0l("", table(), 0, 90)
+<a name="205"/>   linden["peano1"].rewrite["F"] := "F-F+F+F+F-F-F-F+F"
+<a name="206"/>   linden["peano1"].axiom := "F-F-F-F"
+<a name="207"/>   linden["peano1"].angle := 90.0
+<a name="208"/>   linden["peano2"] := lsys_0l("", table(), 0, 90)
+<a name="209"/>   linden["peano2"].rewrite["X"] := "XY-F-FXY++F++FXY"
+<a name="210"/>   linden["peano2"].rewrite["Y"] := "-F-FXY"
+<a name="211"/>   linden["peano2"].axiom := "FXY++F++FXY++F"
+<a name="212"/>   linden["peano2"].angle := 45.0
+<a name="213"/>   linden["peano2"].gener := 4
+<a name="214"/>   linden["peano2"].length := 7
+<a name="215"/>   linden["peano3"] := lsys_0l("", table(), 0, 90)
+<a name="216"/>   linden["peano3"].rewrite["X"] := "XFYFX+F+YFXFY-F-XFYFX"
+<a name="217"/>   linden["peano3"].rewrite["Y"] := "YFXFY-F-XFYFX+F+YFXFY"
+<a name="218"/>   linden["peano3"].axiom := "X"
+<a name="219"/>   linden["peano3"].angle := 90.0
+<a name="220"/>   linden["penrose1"] := lsys_0l("", table(), 0, 90)
+<a name="221"/>   linden["penrose1"].rewrite["X"] := "+YF--ZF[---WF--XF]+"
+<a name="222"/>   linden["penrose1"].rewrite["Z"] := "--YF++++WF[+ZF++++XF]--XF"
+<a name="223"/>   linden["penrose1"].rewrite["W"] := "YF++ZF----XF[-YF----WF]++"
+<a name="224"/>   linden["penrose1"].rewrite["Y"] := "-WF++XF[+++YF++ZF]-"
+<a name="225"/>   linden["penrose1"].rewrite["F"] := ""
+<a name="226"/>   linden["penrose1"].axiom := "+WF--XF---YF--ZF"
+<a name="227"/>   linden["penrose1"].angle := 36.0
+<a name="228"/>   linden["penrose2"] := lsys_0l("", table(), 0, 90)
+<a name="229"/>   linden["penrose2"].rewrite["X"] := "+YF--ZF[---WF--XF]+"
+<a name="230"/>   linden["penrose2"].rewrite["Z"] := "--YF++++WF[+ZF++++XF]--XF"
+<a name="231"/>   linden["penrose2"].rewrite["W"] := "YF++ZF----XF[-YF----WF]++"
+<a name="232"/>   linden["penrose2"].rewrite["Y"] := "-WF++XF[+++YF++ZF]-"
+<a name="233"/>   linden["penrose2"].rewrite["F"] := ""
+<a name="234"/>   linden["penrose2"].axiom := "++ZF----XF-YF----WF"
+<a name="235"/>   linden["penrose2"].angle := 36.0
+<a name="236"/>   linden["penrose2"].gener := 5
+<a name="237"/>   linden["penrose2"].length := 10
+<a name="238"/>   linden["penrose3"] := lsys_0l("", table(), 0, 90)
+<a name="239"/>   linden["penrose3"].rewrite["X"] := "+YF--ZF[---WF--XF]+"
+<a name="240"/>   linden["penrose3"].rewrite["Z"] := "--YF++++WF[+ZF++++XF]--XF"
+<a name="241"/>   linden["penrose3"].rewrite["W"] := "YF++ZF----XF[-YF----WF]++"
+<a name="242"/>   linden["penrose3"].rewrite["Y"] := "-WF++XF[+++YF++ZF]-"
+<a name="243"/>   linden["penrose3"].rewrite["F"] := ""
+<a name="244"/>   linden["penrose3"].axiom := "[X]++[X]++[X]++[X]++[X]"
+<a name="245"/>   linden["penrose3"].angle := 36.0
+<a name="246"/>   linden["penrose3"].gener := 5
+<a name="247"/>   linden["penrose3"].length := 10
+<a name="248"/>   linden["penrose4"] := lsys_0l("", table(), 0, 90)
+<a name="249"/>   linden["penrose4"].rewrite["X"] := "+YF--ZF[---WF--XF]+"
+<a name="250"/>   linden["penrose4"].rewrite["Z"] := "--YF++++WF[+ZF++++XF]--XF"
+<a name="251"/>   linden["penrose4"].rewrite["W"] := "YF++ZF----XF[-YF----WF]++"
+<a name="252"/>   linden["penrose4"].rewrite["Y"] := "-WF++XF[+++YF++ZF]-"
+<a name="253"/>   linden["penrose4"].rewrite["F"] := ""
+<a name="254"/>   linden["penrose4"].axiom := "[Y]++[Y]++[Y]++[Y]++[Y]"
+<a name="255"/>   linden["penrose4"].angle := 36.0
+<a name="256"/>   linden["penrose4"].gener := 5
+<a name="257"/>   linden["penrose4"].length := 10
+<a name="258"/>   linden["penrosed"] := lsys_0l("", table(), 0, 90)
+<a name="259"/>   linden["penrosed"].rewrite["X"] := "+YF--ZF[---WF--XF]+"
+<a name="260"/>   linden["penrosed"].rewrite["Z"] := "--YF++++WF[+ZF++++XF]--XF"
+<a name="261"/>   linden["penrosed"].rewrite["W"] := "YF++ZF----XF[-YF----WF]++"
+<a name="262"/>   linden["penrosed"].rewrite["Y"] := "-WF++XF[+++YF++ZF]-"
+<a name="263"/>   linden["penrosed"].rewrite["F"] := ""
+<a name="264"/>   linden["penrosed"].axiom := "[X][Y]++[X][Y]++[X][Y]++[X][Y]++[X][Y]"
+<a name="265"/>   linden["penrosed"].angle := 36.0
+<a name="266"/>   linden["penrosed"].length := 40
+<a name="267"/>   linden["plant01"] := lsys_0l("", table(), 0, 90)
+<a name="268"/>   linden["plant01"].rewrite["F"] := "F[+F]F[-F]F"
+<a name="269"/>   linden["plant01"].axiom := "F"
+<a name="270"/>   linden["plant01"].angle := 25.71428571
+<a name="271"/>   linden["plant01"].gener := 10
+<a name="272"/>   linden["plant02"] := lsys_0l("", table(), 0, 90)
+<a name="273"/>   linden["plant02"].rewrite["F"] := "F[+F]F[-F][F]"
+<a name="274"/>   linden["plant02"].axiom := "F"
+<a name="275"/>   linden["plant02"].angle := 20.0
+<a name="276"/>   linden["plant03"] := lsys_0l("", table(), 0, 90)
+<a name="277"/>   linden["plant03"].rewrite["F"] := "FF-[-F+F+F]+[+F-F-F]"
+<a name="278"/>   linden["plant03"].axiom := "F"
+<a name="279"/>   linden["plant03"].angle := 22.5
+<a name="280"/>   linden["plant03"].gener := 4
+<a name="281"/>   linden["plant04"] := lsys_0l("", table(), 0, 90)
+<a name="282"/>   linden["plant04"].rewrite["X"] := "F[+X]F[-X]+X"
+<a name="283"/>   linden["plant04"].rewrite["F"] := "FF"
+<a name="284"/>   linden["plant04"].axiom := "X"
+<a name="285"/>   linden["plant04"].angle := 20.0
+<a name="286"/>   linden["plant04"].gener := 5
+<a name="287"/>   linden["plant05"] := lsys_0l("", table(), 0, 90)
+<a name="288"/>   linden["plant05"].rewrite["X"] := "F[+X][-X]FX"
+<a name="289"/>   linden["plant05"].rewrite["F"] := "FF"
+<a name="290"/>   linden["plant05"].axiom := "X"
+<a name="291"/>   linden["plant05"].angle := 25.71428571
+<a name="292"/>   linden["plant05"].gener := 5
+<a name="293"/>   linden["plant06"] := lsys_0l("", table(), 0, 90)
+<a name="294"/>   linden["plant06"].rewrite["X"] := "F-[[X]+X]+F[+FX]-X"
+<a name="295"/>   linden["plant06"].rewrite["F"] := "FF"
+<a name="296"/>   linden["plant06"].axiom := "X"
+<a name="297"/>   linden["plant06"].angle := 22.5
+<a name="298"/>   linden["plant06"].gener := 5
+<a name="299"/>   linden["plant07"] := lsys_0l("", table(), 0, 90)
+<a name="300"/>   linden["plant07"].rewrite["X"] := "X[-FFF][+FFF]FX"
+<a name="301"/>   linden["plant07"].rewrite["Z"] := "ZFX[+Z][-Z]"
+<a name="302"/>   linden["plant07"].axiom := "Z"
+<a name="303"/>   linden["plant07"].angle := 25.71428571
+<a name="304"/>   linden["plant07"].gener := 5
+<a name="305"/>   linden["plant08"] := lsys_0l("", table(), 0, 90)
+<a name="306"/>   linden["plant08"].rewrite["S"] := "[+++Z][---Z]TS"
+<a name="307"/>   linden["plant08"].rewrite["H"] := "-Z[+H]L"
+<a name="308"/>   linden["plant08"].rewrite["Z"] := "+H[-Z]L"
+<a name="309"/>   linden["plant08"].rewrite["L"] := "[-FFF][+FFF]F"
+<a name="310"/>   linden["plant08"].rewrite["T"] := "TL"
+<a name="311"/>   linden["plant08"].axiom := "SLFFF"
+<a name="312"/>   linden["plant08"].angle := 18.0
+<a name="313"/>   linden["plant08"].gener := 6
+<a name="314"/>   linden["plant08"].length := 8
+<a name="315"/>   linden["plant09"] := lsys_0l("", table(), 0, 90)
+<a name="316"/>   linden["plant09"].rewrite["X"] := "X[-FFF][+FFF]FX"
+<a name="317"/>   linden["plant09"].rewrite["Y"] := "YFX[+Y][-Y]"
+<a name="318"/>   linden["plant09"].axiom := "Y"
+<a name="319"/>   linden["plant09"].angle := 25.71428571
+<a name="320"/>   linden["plant09"].gener := 5
+<a name="321"/>   linden["plant10"] := lsys_0l("", table(), 0, 90)
+<a name="322"/>   linden["plant10"].rewrite["F"] := "F[+FF][-FF]F[+FF][-FF]F"
+<a name="323"/>   linden["plant10"].axiom := "F"
+<a name="324"/>   linden["plant10"].angle := 36.0
+<a name="325"/>   linden["plant10"].gener := 3
+<a name="326"/>   linden["plant11"] := lsys_0l("", table(), 0, 90)
+<a name="327"/>   linden["plant11"].rewrite["F"] := "F[+F[+F][-F]F][-F[+F][-F]F]F[+F][-F]F"
+<a name="328"/>   linden["plant11"].axiom := "F"
+<a name="329"/>   linden["plant11"].angle := 30.0
+<a name="330"/>   linden["plant11"].gener := 3
+<a name="331"/>   linden["plant11"].length := 10
+<a name="332"/>   linden["quadgos"] := lsys_0l("", table(), 0, 90)
+<a name="333"/>   linden["quadgos"].rewrite["R"] := "+FLFL-FR-FR+FL+FLFR+FL-FRFR-FL-FR+FLFRFR-FL-FRFL+FL+FR-FR-FL+FL+FRFR"
+<a name="334"/>   linden["quadgos"].rewrite["L"] := "FLFL-FR-FR+FL+FL-FR-FRFL+FR+FLFLFR-FL+FR+FLFL+FR-FLFR-FR-FL+FL+FRFR-"
+<a name="335"/>   linden["quadgos"].rewrite["F"] := ""
+<a name="336"/>   linden["quadgos"].axiom := "-FR"
+<a name="337"/>   linden["quadgos"].angle := 90.0
+<a name="338"/>   linden["quadkoch"] := lsys_0l("", table(), 0, 90)
+<a name="339"/>   linden["quadkoch"].rewrite["F"] := "F+FF-FF-F-F+F+FF-F-F+F+FF+FF-F"
+<a name="340"/>   linden["quadkoch"].axiom := "FX++FX++FX++FX++FX"
+<a name="341"/>   linden["quadkoch"].angle := 90.0
+<a name="342"/>   linden["quartet"] := lsys_0l("", table(), 0, 90)
+<a name="343"/>   linden["quartet"].rewrite["H"] := "-"
+<a name="344"/>   linden["quartet"].rewrite["B"] := "FB+FA-FB-JFBFA"
+<a name="345"/>   linden["quartet"].rewrite["J"] := "+"
+<a name="346"/>   linden["quartet"].rewrite["A"] := "FBFA+HFA+FB-FA"
+<a name="347"/>   linden["quartet"].rewrite["F"] := ""
+<a name="348"/>   linden["quartet"].axiom := "FB"
+<a name="349"/>   linden["quartet"].angle := 90.0
+<a name="350"/>   linden["quartet"].gener := 8
+<a name="351"/>   linden["sier1"] := lsys_0l("", table(), 0, 90)
+<a name="352"/>   linden["sier1"].rewrite["X"] := "+FXF-FXF-FXF+"
+<a name="353"/>   linden["sier1"].rewrite["F"] := "FXF"
+<a name="354"/>   linden["sier1"].axiom := "F"
+<a name="355"/>   linden["sier1"].angle := 120.0
+<a name="356"/>   linden["sier1"].gener := 5
+<a name="357"/>   linden["sier2"] := lsys_0l("", table(), 0, 90)
+<a name="358"/>   linden["sier2"].rewrite["X"] := "--FXF++FXF++FXF--"
+<a name="359"/>   linden["sier2"].rewrite["F"] := "FF"
+<a name="360"/>   linden["sier2"].axiom := "FXF--FF--FF"
+<a name="361"/>   linden["sier2"].angle := 60.0
+<a name="362"/>   linden["sier2"].gener := 5
+<a name="363"/>   linden["sier3"] := lsys_0l("", table(), 0, 90)
+<a name="364"/>   linden["sier3"].rewrite["F"] := "F[-F]F"
+<a name="365"/>   linden["sier3"].axiom := "F-F-F"
+<a name="366"/>   linden["sier3"].angle := 120.0
+<a name="367"/>   linden["sier3"].gener := 5
+<a name="368"/>   linden["siersqar"] := lsys_0l("", table(), 0, 90)
+<a name="369"/>   linden["siersqar"].rewrite["F"] := "FF+F+F+F+FF"
+<a name="370"/>   linden["siersqar"].axiom := "F+F+F+F"
+<a name="371"/>   linden["siersqar"].angle := 90.0
+<a name="372"/>   linden["siersqar"].gener := 4
+<a name="373"/>   linden["snoflake"] := lsys_0l("", table(), 0, 90)
+<a name="374"/>   linden["snoflake"].rewrite["F"] := "F-F+F+F-F"
+<a name="375"/>   linden["snoflake"].axiom := "+F"
+<a name="376"/>   linden["snoflake"].gener := 4
+<a name="377"/>   linden["space1"] := lsys_0l("", table(), 0, 90)
+<a name="378"/>   linden["space1"].rewrite["X"] := "YFXFY+F+YFXFY-F-XFYFX"
+<a name="379"/>   linden["space1"].rewrite["Y"] := "YFXFY-F-XFYFX+F+YFXFY"
+<a name="380"/>   linden["space1"].axiom := "X"
+<a name="381"/>   linden["space1"].gener := 3
+<a name="382"/>   linden["sphinx"] := lsys_0l("", table(), 0, 90)
+<a name="383"/>   linden["sphinx"].rewrite["X"] := "+FF-YFF+FF--FFFXF--YFFFYFFF"
+<a name="384"/>   linden["sphinx"].rewrite["G"] := "GG"
+<a name="385"/>   linden["sphinx"].rewrite["Y"] := "-FF+XFF-FF++FFFYF++XFFFXFFF"
+<a name="386"/>   linden["sphinx"].rewrite["F"] := "GG"
+<a name="387"/>   linden["sphinx"].axiom := "X"
+<a name="388"/>   linden["sphinx"].angle := 60.0
+<a name="389"/>   linden["sphinx"].gener := 5
+<a name="390"/>   linden["sqgasket"] := lsys_0l("", table(), 0, 90)
+<a name="391"/>   linden["sqgasket"].rewrite["X"] := "+FXF+FXF+FXF+FXF"
+<a name="392"/>   linden["sqgasket"].rewrite["F"] := "FF"
+<a name="393"/>   linden["sqgasket"].axiom := "X"
+<a name="394"/>   linden["sqgasket"].angle := 90.0
+<a name="395"/>   linden["sqgasket"].gener := 5
+<a name="396"/>   linden["square"] := lsys_0l("", table(), 0, 90)
+<a name="397"/>   linden["square"].rewrite["F"] := "FF+F+F+F+FF"
+<a name="398"/>   linden["square"].axiom := "F+F+F+F"
+<a name="399"/>   linden["square"].angle := 90.0
+<a name="400"/>   linden["tile"] := lsys_0l("", table(), 0, 90)
+<a name="401"/>   linden["tile"].rewrite["X"] := "[F+F+F+F[---X-Y]+++++F++++++++F-F-F-F]"
+<a name="402"/>   linden["tile"].rewrite["Y"] := "[F+F+F+F[---Y]+++++F++++++++F-F-F-F]"
+<a name="403"/>   linden["tile"].axiom := "X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X"
+<a name="404"/>   linden["tile"].angle := 15.0
+<a name="405"/>   linden["tile"].length := 10
+<a name="406"/>   linden["tree"] := lsys_0l("", table(), 0, 90)
+<a name="407"/>   linden["tree"].rewrite["X"] := "[-FX]+FX"
+<a name="408"/>   linden["tree"].axiom := "+++FX"
+<a name="409"/>   linden["tree"].angle := 30.0
+<a name="410"/>   linden["tree"].gener := 8
+<a name="411"/>   linden["tree"].length := 10
+<a name="412"/>   linden["tree1"] := lsys_0l("", table(), 0, 90)
+<a name="413"/>   linden["tree1"].rewrite["X"] := "[-FX]+FX"
+<a name="414"/>   linden["tree1"].axiom := "+++FX"
+<a name="415"/>   linden["tree1"].angle := 30.0
+<a name="416"/>   linden["tree1"].gener := 5
+<a name="417"/>   linden["tree1"].length := 8
+<a name="418"/>   linden["tree2"] := lsys_0l("", table(), 0, 90)
+<a name="419"/>   linden["tree2"].rewrite["X"] := "+FY"
+<a name="420"/>   linden["tree2"].rewrite["Y"] := "-FX"
+<a name="421"/>   linden["tree2"].rewrite["F"] := "FF-[XY]+[XY]"
+<a name="422"/>   linden["tree2"].axiom := "++++F"
+<a name="423"/>   linden["tree2"].angle := 22.5
+<a name="424"/>
+<a name="425"/>   return linden
+<a name="426"/>
+<a name="427"/>end
+</pre></body></html>

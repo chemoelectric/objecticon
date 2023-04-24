@@ -1,0 +1,1119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Time</title></head><body>
+<h1>Time</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+<a href="lang.ObjectHash.html" target="displayFrame">lang.ObjectHash</a><br>
+<a href="lang.ObjectEquals.html" target="displayFrame">lang.ObjectEquals</a><br>
+<a href="lang.ObjectCodec.html" target="displayFrame">lang.ObjectCodec</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="util-package.html" target="listFrame">util</a></dd>
+</dl><p/>
+This class is used to represent a date/time.  The representation may
+be retrieved from the class either as the constituent parts of a
+date, or as the number of seconds since a base date, which is
+1/1/2000.  The seconds can be negative for a date before the base
+date.
+<p/>
+The "seconds" viewpoint is always in UTC, whilst the "broken down"
+viewpoint is always relative to a timezone, represented as a
+<code><a href="util.Timezone.html" target="displayFrame">Timezone</a></code> object.
+<p/>
+The wday and yday fields are calculated when any of the "broken
+down" fields or the seconds are changed.
+<p/>
+The constructor accepts various parameters; see the <code><a href="util.Time.html#new">new()</a></code> method
+for details.  Alternatively, the static methods <code><a href="util.Time.html#parse">Time.parse</a></code> and
+<code><a href="util.Time.html#simple_parse">Time.simple_parse</a></code> can be used to create new instances from
+formatted strings.
+<p/><a href="util-time.icn.html#23" target="displayFrame">Source - time.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="util.Time.html">util.Time</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#after">after()</a>
+<a href="#before">before()</a>
+<a href="#compute_broken_down_fields">compute_broken_down_fields()</a>
+<a href="#compute_seconds">compute_seconds()</a>
+<a href="#edit_fields">edit_fields()</a>
+<a href="#format">format()</a>
+<a href="#format_12h">format_12h()</a>
+<a href="#format_am_pm">format_am_pm()</a>
+<a href="#format_int">format_int()</a>
+<a href="#format_month">format_month()</a>
+<a href="#format_rfc3339_timezone">format_rfc3339_timezone()</a>
+<a href="#format_week_date_week">format_week_date_week()</a>
+<a href="#format_week_date_year">format_week_date_year()</a>
+<a href="#format_weekday">format_weekday()</a>
+<a href="#format_year">format_year()</a>
+<a href="#from_week_date">from_week_date()</a>
+<a href="#get_age">get_age()</a>
+<a href="#get_cum_mdays">get_cum_mdays()</a>
+<a href="#get_hour">get_hour()</a>
+<a href="#get_int">get_int()</a>
+<a href="#get_mday">get_mday()</a>
+<a href="#get_mdays">get_mdays()</a>
+<a href="#get_min">get_min()</a>
+<a href="#get_month">get_month()</a>
+<a href="#get_sec">get_sec()</a>
+<a href="#get_seconds">get_seconds()</a>
+<a href="#get_system_micros">get_system_micros()</a>
+<a href="#get_system_millis">get_system_millis()</a>
+<a href="#get_system_seconds">get_system_seconds()</a>
+<a href="#get_unix_seconds">get_unix_seconds()</a>
+<a href="#get_wday">get_wday()</a>
+<a href="#get_week_date">get_week_date()</a>
+<a href="#get_yday">get_yday()</a>
+<a href="#get_year">get_year()</a>
+<a href="#get_zone">get_zone()</a>
+<a href="#init">init()</a>
+<a href="#match_literal">match_literal()</a>
+<a href="#new">new()</a>
+<a href="#normalize_zone">normalize_zone()</a>
+<a href="#object_decode">object_decode()</a>
+<a href="#object_encode">object_encode()</a>
+<a href="#object_equals">object_equals()</a>
+<a href="#object_hash">object_hash()</a>
+<a href="#object_output">object_output()</a>
+<a href="#parse">parse()</a>
+<a href="#set_fields">set_fields()</a>
+<a href="#set_hour">set_hour()</a>
+<a href="#set_mday">set_mday()</a>
+<a href="#set_min">set_min()</a>
+<a href="#set_month">set_month()</a>
+<a href="#set_month_truncate">set_month_truncate()</a>
+<a href="#set_sec">set_sec()</a>
+<a href="#set_seconds">set_seconds()</a>
+<a href="#set_unix_seconds">set_unix_seconds()</a>
+<a href="#set_year">set_year()</a>
+<a href="#set_year_truncate">set_year_truncate()</a>
+<a href="#set_zone">set_zone()</a>
+<a href="#simple_parse">simple_parse()</a>
+<a href="#to_clock">to_clock()</a>
+<a href="#to_date">to_date()</a>
+<a href="#to_date_clock">to_date_clock()</a>
+<a href="#to_dateline">to_dateline()</a>
+<a href="#to_letter_string">to_letter_string()</a>
+<a href="#to_rfc822">to_rfc822()</a>
+<a href="#to_short_string">to_short_string()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#AM_PM">AM_PM</a>
+<a href="#BASE_YEAR">BASE_YEAR</a>
+<a href="#CUM_MDAYS">CUM_MDAYS</a>
+<a href="#DEFAULT_FORMAT">DEFAULT_FORMAT</a>
+<a href="#hour">hour</a>
+<a href="#LEAP_CUM_MDAYS">LEAP_CUM_MDAYS</a>
+<a href="#LEAP_MDAYS">LEAP_MDAYS</a>
+<a href="#LOCAL_AM_PM">LOCAL_AM_PM</a>
+<a href="#LOCAL_MONTHS">LOCAL_MONTHS</a>
+<a href="#LOCAL_WEEK_DAYS">LOCAL_WEEK_DAYS</a>
+<a href="#mday">mday</a>
+<a href="#MDAYS">MDAYS</a>
+<a href="#min">min</a>
+<a href="#month">month</a>
+<a href="#MONTHS">MONTHS</a>
+<a href="#sec">sec</a>
+<a href="#seconds">seconds</a>
+<a href="#SYSTEM_BASE_OFFSET">SYSTEM_BASE_OFFSET</a>
+<a href="#TZCHARS">TZCHARS</a>
+<a href="#wday">wday</a>
+<a href="#WEEK_DAYS">WEEK_DAYS</a>
+<a href="#yday">yday</a>
+<a href="#year">year</a>
+<a href="#zone">zone</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="after"/>
+<h3>after(d)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if date is after d
+<p/><a href="util-time.icn.html#408" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="before"/>
+<h3>before(d)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if date is before d
+<p/><a href="util-time.icn.html#415" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_broken_down_fields"/>
+<h3>compute_broken_down_fields()</h3>
+private<p/>
+<dl>
+<dd>
+Compute broken down fields based on seconds past base date
+<p/><a href="util-time.icn.html#539" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_seconds"/>
+<h3>compute_seconds()</h3>
+private<p/>
+<dl>
+<dd>
+Compute seconds past base date based on broken down fields.
+<p/><a href="util-time.icn.html#451" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="edit_fields"/>
+<h3>edit_fields(year, month, mday, hour, min, sec, zone)</h3>
+public<p/>
+<dl>
+<dd>
+Change the fields of the instance, and then recompute the
+seconds.  Any omitted fields are left unchanged.
+<p/><a href="util-time.icn.html#971" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format"/>
+<h3>format(p)</h3>
+public<p/>
+<dl>
+<dd>
+Format the instance using the given pattern string.  The pattern
+consists of pattern chars and other chars.  <br>
+<p/>
+The "width" of a field is the number of successive equal pattern
+chars.  For example in the pattern
+<p/>
+yyyy/MMM/dd
+<p/>
+the widths are 4, 3 and 2 respectively.
+<p/>
+The possible pattern chars are :-
+<p/>
+E - The weekday.  A width &lt; 4 gives the first three chars (eg Mon), otherwise
+the full day is given (eg Monday)
+<p/>
+F - Like E, but using the local weekday names.
+<p/>
+G - The ISO-8601 week date day number (1 = Monday, etc).
+<p/>
+y - The year.  If the width is 2, the year will be the least
+significant 2 digits (eg "99"), otherwise it is the full year
+padded to the width. 
+<p/>
+v - The week date year (see <code><a href="util.Time.html#get_week_date">get_week_date()</a></code>).
+<p/>
+d - The day of the month padded to the width.
+<p/>
+H - The hour in the day using the 24 hour clock padded to the width.
+<p/>
+h - The hour in the day using the 12 hour clock padded to the width.
+<p/>
+M - The month of the year.  If the width is less than 3 then the
+numeric value is used, padded to the width.  If the width is 3, then
+the abbreviated month is used (eg "Jul"); otherwise the full month is
+used (eg "July").
+<p/>
+N - Like M, but using the local month names.
+<p/>
+w - The week (see <code><a href="util.Time.html#get_week_date">get_week_date()</a></code>).
+<p/>
+m - The minute in the hour padded to the width.
+<p/>
+s - The second in the minute padded to the width.
+<p/>
+a - am or pm.  The width is ignored.
+<p/>
+A - AM or PM  The width is ignored.
+<p/>
+b - Like a, but using the local am/pm names.
+<p/>
+B - Like B, but using the local am/pm names.
+<p/>
+z - the timezone id (eg UTC or +0400).  The width is ignored.
+Z - the timezone offset.   The width is ignored.
+T - The timezone in RFC3339 format (eg Z or +04:00).   The width
+is ignored.
+<p/>
+Literal strings (which can include the above chars) can be
+included using single quotes.  Two single quotes maps to
+an actual single quote.
+<p/>
+Example :-
+<pre>
+  yyyy MM dd HH mm ss -&gt; 1999 12 17 23 30 01
+  yyyy MM dd HH 'o''clock' mm ss -&gt; 1999 12 17 23 o'clock 30 01
+  yyyy/M/d HH:mm:ss zzz -&gt; 1999/2/7 23:30:01 PST
+  E MMM dd HH:mm:ss zzz yyyy -&gt; Mon Feb 07 23:30:01 PST 1999
+  yy MM dd HH mm ss -&gt; 99 12 17 23 30 01
+</pre>
+<p/><a href="util-time.icn.html#217" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_12h"/>
+<h3>format_12h(w)</h3>
+private<p/>
+<dl>
+<dd>
+Format a 12-hour hour
+<p/>
+<p/><a href="util-time.icn.html#173" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_am_pm"/>
+<h3>format_am_pm(l)</h3>
+private<p/>
+<dl>
+<dd>
+Format AM/PM
+<p/><a href="util-time.icn.html#153" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_int"/>
+<h3>format_int(n, w)</h3>
+private static<p/>
+<dl>
+<dd>
+Format the given int using the given width
+<p/>
+<p/><a href="util-time.icn.html#119" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_month"/>
+<h3>format_month(w, l)</h3>
+private<p/>
+<dl>
+<dd>
+Format a month (Jan, Feb etc) given a width
+<p/>
+<p/><a href="util-time.icn.html#141" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_rfc3339_timezone"/>
+<h3>format_rfc3339_timezone(w)</h3>
+private<p/>
+<dl>
+<dd>
+The timezone in RFC3339 format
+<p/><a href="util-time.icn.html#206" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_week_date_week"/>
+<h3>format_week_date_week(w)</h3>
+private<p/>
+<dl>
+<dd>
+Format a week given the width
+<p/>
+<p/><a href="util-time.icn.html#197" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_week_date_year"/>
+<h3>format_week_date_year(w)</h3>
+private<p/>
+<dl>
+<dd>
+Format a week year given the width
+<p/>
+<p/><a href="util-time.icn.html#185" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_weekday"/>
+<h3>format_weekday(w, l)</h3>
+private<p/>
+<dl>
+<dd>
+Format a weekday (Mon, Tue etc) given a width.
+<p/>
+<p/><a href="util-time.icn.html#131" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="format_year"/>
+<h3>format_year(w)</h3>
+private<p/>
+<dl>
+<dd>
+Format a year given the width
+<p/>
+<p/><a href="util-time.icn.html#163" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="from_week_date"/>
+<h3>from_week_date(year, week, day)</h3>
+public static<p/>
+<dl>
+<dd>
+Return a <code><a href="util.Time.html" target="displayFrame">Time</a></code> instance representing the given <code>day</code> within ISO week
+<code>week</code> for the given <code>year</code>.  <code>day</code> is an integer in the range 1-7
+(Monday=1, etc), defaulting to 1.  Note that this is a different
+numbering scheme compared to <code><a href="util.Time.html#wday">Time.wday</a></code>.
+<p/>
+Note also that the result may not actually be in the given year, eg
+week 1 for 2009 begins on Monday Dec 29, 2008.
+<p/>
+The <code><a href="util.Time.html" target="displayFrame">Time</a></code> returned is set at midnight on the day in question, in
+the local timezone in effect on that date.  For example :-
+<pre>
+   Time.from_week_date(1967, 22, 6)
+   result :-
+      object util.Time#1(June 3, 1967 00:00:00 BST)
+</pre>
+<p/><a href="util-time.icn.html#825" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_age"/>
+<h3>get_age()</h3>
+public<p/>
+<dl>
+<dd>
+Return the difference in seconds between the current system time and the
+time represented by this object.
+<p/><a href="util-time.icn.html#927" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_cum_mdays"/>
+<h3>get_cum_mdays(y, m)</h3>
+public static<p/>
+<dl>
+<dd>
+Utility procedure - return cumulative days upto month m in year y
+<p/><a href="util-time.icn.html#856" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_hour"/>
+<h3>get_hour()</h3>
+public<p/>
+<dl>
+<dd>
+Get the hour.
+<p/><a href="util-time.icn.html#761" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_int"/>
+<h3>get_int()</h3>
+private static<p/>
+<dl>
+<dd>
+Utility to get next integer
+<p/><a href="util-time.icn.html#878" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mday"/>
+<h3>get_mday()</h3>
+public<p/>
+<dl>
+<dd>
+Get the mday.
+<p/><a href="util-time.icn.html#754" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mdays"/>
+<h3>get_mdays(y, m)</h3>
+public static<p/>
+<dl>
+<dd>
+Utility procedure - return days in month m for year y
+<p/><a href="util-time.icn.html#867" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_min"/>
+<h3>get_min()</h3>
+public<p/>
+<dl>
+<dd>
+Get the min.
+<p/><a href="util-time.icn.html#768" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_month"/>
+<h3>get_month()</h3>
+public<p/>
+<dl>
+<dd>
+Get the month.
+<p/><a href="util-time.icn.html#747" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_sec"/>
+<h3>get_sec()</h3>
+public<p/>
+<dl>
+<dd>
+Get the seconds past the hour.
+<p/><a href="util-time.icn.html#775" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_seconds"/>
+<h3>get_seconds()</h3>
+public<p/>
+<dl>
+<dd>
+Get the seconds past the base date
+<p/><a href="util-time.icn.html#733" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_system_micros"/>
+<h3>get_system_micros()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the number of microseconds since the Unix base epoch (1 Jan 1970).
+<p/><a href="util-time.icn.html#997" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_system_millis"/>
+<h3>get_system_millis()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the number of milliseconds since the Unix base epoch (1 Jan 1970).
+<p/><a href="util-time.icn.html#992" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_system_seconds"/>
+<h3>get_system_seconds()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the number of seconds since the Unix base epoch (1 Jan 1970).
+<p/><a href="util-time.icn.html#987" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_unix_seconds"/>
+<h3>get_unix_seconds()</h3>
+public<p/>
+<dl>
+<dd>
+Return this time as the number of seconds past the Unix base epoch.
+<p/><a href="util-time.icn.html#920" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_wday"/>
+<h3>get_wday()</h3>
+public<p/>
+<dl>
+<dd>
+Get day of week.  1 = Sunday, 2 = Monday, etc.
+<p/><a href="util-time.icn.html#782" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_week_date"/>
+<h3>get_week_date()</h3>
+public<p/>
+<dl>
+<dd>
+Get the ISO week number for this instance.  A <code><a href="util.WeekDate.html" target="displayFrame">WeekDate</a></code> record is
+returned, giving the week number and year, and also the day within
+that week, with Monday=1, etc.  Note that the latter has a different
+numbering scheme compared to <code><a href="util.Time.html#wday">Time.wday</a></code>.
+<p/><a href="util-time.icn.html#796" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_yday"/>
+<h3>get_yday()</h3>
+public<p/>
+<dl>
+<dd>
+Get year day. January 1st = 1 etc
+<p/><a href="util-time.icn.html#789" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_year"/>
+<h3>get_year()</h3>
+public<p/>
+<dl>
+<dd>
+Get the year.
+<p/><a href="util-time.icn.html#740" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="get_zone"/>
+<h3>get_zone()</h3>
+public<p/>
+<dl>
+<dd>
+Get the time zone
+<p/><a href="util-time.icn.html#726" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#84" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="match_literal"/>
+<h3>match_literal()</h3>
+public static<p/>
+<dl>
+<dd>
+Match a literal, which begins with a ', and ends with the next ', except
+that two ' together means a single ' in the result.
+<p/>
+<p/><a href="util-time.icn.html#329" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(a[])</h3>
+public<p/>
+<dl>
+<dd>
+The constructor to <code><a href="util.Time.html" target="displayFrame">Time()</a></code> does different things depending on
+the number of arguments provided.  <br>
+<p/>
+With no arguments, the instance is set to the current time.
+<p/>
+A single argument is taken as the number of seconds past the
+base date in the default zone.
+<p/>
+With two arguments, the first is the number of seconds past the
+base date and the second is a <code><a href="util.Timezone.html" target="displayFrame">Timezone</a></code>.
+<p/>
+With three or more arguments, they are used as parameters to
+<code><a href="util.Time.html#set_fields">set_fields</a></code> in order to initialize the object.
+<p/><a href="util-time.icn.html#1002" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="normalize_zone"/>
+<h3>normalize_zone()</h3>
+public<p/>
+<dl>
+<dd>
+Set the timezone to an appropriate local timezone, depending on
+the other fields.  If it is changed, then the seconds are recomputed.
+<p/>
+Example :-
+<pre>
+     t := Time(2003,6,3)     # midnight, 3 June 2003 BST
+     t.set_month(2)          # midnight, 3 Feb 2003 BST
+     t.normalize_zone()      # midnight, 3 Feb 2003 GMT
+</pre>
+<p/><a href="util-time.icn.html#935" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="object_decode"/>
+<h3>object_decode(c)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectCodec.html#object_decode">object_decode()</a> in <a href="lang.ObjectCodec.html" target="displayFrame">lang.ObjectCodec</a></dd>
+<dd>
+<p/><a href="util-time.icn.html#445" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="object_encode"/>
+<h3>object_encode(c)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectCodec.html#object_encode">object_encode()</a> in <a href="lang.ObjectCodec.html" target="displayFrame">lang.ObjectCodec</a></dd>
+<dd>
+Encode just stores the seconds and zone information.
+<p/><a href="util-time.icn.html#438" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="object_equals"/>
+<h3>object_equals(d)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectEquals.html#object_equals">object_equals()</a> in <a href="lang.ObjectEquals.html" target="displayFrame">lang.ObjectEquals</a></dd>
+<dd>
+Succeed if date is equal to d; uses the seconds past the base date
+for comparison.
+<p/><a href="util-time.icn.html#422" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="object_hash"/>
+<h3>object_hash()</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectHash.html#object_hash">object_hash()</a> in <a href="lang.ObjectHash.html" target="displayFrame">lang.ObjectHash</a></dd>
+<dd>
+The hash code, to be consistent with <code><a href="lang.equals.html" target="displayFrame">equals()</a></code> above, returns the
+seconds past the base date.
+<p/><a href="util-time.icn.html#430" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+Output object
+<p/><a href="util-time.icn.html#112" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s, p)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a Time instance using the given format string; see
+<code><a href="util.TimeParser.html#parse">TimeParser.parse</a></code> for more details.
+<p/><a href="util-time.icn.html#397" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fields"/>
+<h3>set_fields(year, month, mday, hour, min, sec, zone)</h3>
+public<p/>
+<dl>
+<dd>
+Set the fields, and then recompute the seconds.  Any omitted
+fields are set to a default, which is the smallest legal value
+for that field, except the zone, which is set to an appropriate
+local timezone, depending on the other fields.
+<p/><a href="util-time.icn.html#951" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_hour"/>
+<h3>set_hour(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set hour; recompute seconds past the base date.
+<p/><a href="util-time.icn.html#687" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_mday"/>
+<h3>set_mday(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set mday; recompute seconds past the base date.
+<p/><a href="util-time.icn.html#678" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_min"/>
+<h3>set_min(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set min; recompute seconds past the base date.
+<p/><a href="util-time.icn.html#696" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_month"/>
+<h3>set_month(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set month; recompute seconds past the base date.
+<p/><a href="util-time.icn.html#652" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_month_truncate"/>
+<h3>set_month_truncate(n)</h3>
+public<p/>
+<dl>
+<dd>
+As above,  but if mday is out of bounds for new month,
+truncate to end of month
+<p/><a href="util-time.icn.html#661" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_sec"/>
+<h3>set_sec(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set seconds past the hour; recompute seconds past the base date.
+<p/><a href="util-time.icn.html#705" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_seconds"/>
+<h3>set_seconds(n, zone)</h3>
+public<p/>
+<dl>
+<dd>
+Set seconds and zone field; re-compute broken down fields
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - the seconds past the base point
+</dd>
+<dd>
+<code>zone</code> - the zone, as a <code><a href="util.Timezone.html" target="displayFrame">Timezone</a></code> object, or &amp;null, in which case
+the local system timezone corresponding to the seconds
+is used.
+</dd>
+</dl>
+<p/><a href="util-time.icn.html#615" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_unix_seconds"/>
+<h3>set_unix_seconds(t, zone)</h3>
+public<p/>
+<dl>
+<dd>
+Set to a time based on the number of seconds past the Unix base epoch.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - the number of seconds
+</dd>
+<dd>
+<code>zone</code> - the zone, as a <code><a href="util.Timezone.html" target="displayFrame">Timezone</a></code> object, or &amp;null, in which case
+the local system timezone corresponding to the seconds
+is used.
+</dd>
+</dl>
+<p/><a href="util-time.icn.html#908" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_year"/>
+<h3>set_year(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set year; recompute seconds past the base date.
+<p/><a href="util-time.icn.html#631" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_year_truncate"/>
+<h3>set_year_truncate(n)</h3>
+public<p/>
+<dl>
+<dd>
+As above,  but if mday is out of bounds for new year,
+truncate to end of month
+<p/><a href="util-time.icn.html#640" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="set_zone"/>
+<h3>set_zone(z)</h3>
+public<p/>
+<dl>
+<dd>
+Set the time zone offset; recompute seconds past the base date.  To keep the
+seconds constant and recompute the broken-down fields, use <code><a href="util.Time.html#set_seconds">set_seconds</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>z</code> - a <code><a href="util.Timezone.html" target="displayFrame">Timezone</a></code> object.
+</dd>
+</dl>
+<p/><a href="util-time.icn.html#714" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="simple_parse"/>
+<h3>simple_parse(s)</h3>
+public static<p/>
+<dl>
+<dd>
+An alternative more liberal form of parsing.  The numeric fields are taken
+as successive ints in the input: all else is ignored.  The year, month and
+day are mandatory, but hours, mins, secs are optional. Finally, an optional
+timezone is allowed.  If omitted, the local zone is used, normalized for
+daylight saving if appropriate.
+<p/><a href="util-time.icn.html#886" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="to_clock"/>
+<h3>to_clock()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to icon &amp;clock format
+<p/><a href="util-time.icn.html#375" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="to_date"/>
+<h3>to_date()</h3>
+public<p/>
+<dl>
+<dd>
+#      <br>
+Convert to icon &amp;date format
+<p/>
+<p/>
+<p/><a href="util-time.icn.html#367" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="to_date_clock"/>
+<h3>to_date_clock()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to a string in icon &amp;date format followed by Icon &amp;clock format followed by the
+timezone.
+<p/><a href="util-time.icn.html#382" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="to_dateline"/>
+<h3>to_dateline()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to a string in icon &amp;dateline format
+<p/><a href="util-time.icn.html#390" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="to_letter_string"/>
+<h3>to_letter_string()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to string in a format suitable for use in a letter
+<p/><a href="util-time.icn.html#353" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="to_rfc822"/>
+<h3>to_rfc822()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to string in accordance with RFC 822.
+<p/><a href="util-time.icn.html#346" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="to_short_string"/>
+<h3>to_short_string()</h3>
+public<p/>
+<dl>
+<dd>
+Convert to string in format d-MMM-yy
+<p/><a href="util-time.icn.html#360" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="AM_PM"/>
+<h3>AM_PM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#72" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="BASE_YEAR"/>
+<h3>BASE_YEAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#70" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="CUM_MDAYS"/>
+<h3>CUM_MDAYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#78" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFAULT_FORMAT"/>
+<h3>DEFAULT_FORMAT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#75" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="hour"/>
+<h3>hour</h3>
+private readable<p/>
+<dl>
+<dd>
+Hour in the day in 24-hour clock form
+<p/><a href="util-time.icn.html#52" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="LEAP_CUM_MDAYS"/>
+<h3>LEAP_CUM_MDAYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#79" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="LEAP_MDAYS"/>
+<h3>LEAP_MDAYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#77" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="LOCAL_AM_PM"/>
+<h3>LOCAL_AM_PM</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#82" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="LOCAL_MONTHS"/>
+<h3>LOCAL_MONTHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#80" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="LOCAL_WEEK_DAYS"/>
+<h3>LOCAL_WEEK_DAYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#81" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="mday"/>
+<h3>mday</h3>
+private readable<p/>
+<dl>
+<dd>
+Day of month, 1 being the first day
+<p/><a href="util-time.icn.html#50" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="MDAYS"/>
+<h3>MDAYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#76" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="min"/>
+<h3>min</h3>
+private readable<p/>
+<dl>
+<dd>
+Minute in the hour
+<p/><a href="util-time.icn.html#54" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="month"/>
+<h3>month</h3>
+private readable<p/>
+<dl>
+<dd>
+Month 1=January, etc
+<p/><a href="util-time.icn.html#48" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="MONTHS"/>
+<h3>MONTHS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#69" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="sec"/>
+<h3>sec</h3>
+private readable<p/>
+<dl>
+<dd>
+Second in the minute
+<p/><a href="util-time.icn.html#56" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="seconds"/>
+<h3>seconds</h3>
+private readable<p/>
+<dl>
+<dd>
+Seconds since the base epoch date
+<p/><a href="util-time.icn.html#44" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="SYSTEM_BASE_OFFSET"/>
+<h3>SYSTEM_BASE_OFFSET</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#74" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="TZCHARS"/>
+<h3>TZCHARS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#73" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="wday"/>
+<h3>wday</h3>
+private readable<p/>
+<dl>
+<dd>
+Day of the week, 1 = Sunday, 2 = Monday, etc.
+<p/><a href="util-time.icn.html#58" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="WEEK_DAYS"/>
+<h3>WEEK_DAYS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="util-time.icn.html#71" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="yday"/>
+<h3>yday</h3>
+private readable<p/>
+<dl>
+<dd>
+Day in year, January 1st = 1 etc
+<p/><a href="util-time.icn.html#60" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="year"/>
+<h3>year</h3>
+private readable<p/>
+<dl>
+<dd>
+Year
+<p/><a href="util-time.icn.html#46" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+<a name="zone"/>
+<h3>zone</h3>
+private readable<p/>
+<dl>
+<dd>
+Timezone
+<p/><a href="util-time.icn.html#62" target="displayFrame">Source - time.icn </a>
+</dd>
+</dl><hr>
+</body></html>

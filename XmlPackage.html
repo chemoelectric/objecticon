@@ -42,7 +42,7 @@
 <p>This page describes the XML parser in the library. The parser takes its source input as a string, and produces as output a hierarchical tree structure representing the document. There are also formatter classes that take the document structure and produce a string representation of the document as output.</p>
 <p>The reason for using strings as input and output rather than files is for two reasons. Firstly, it is more flexible - a file can be turned into a string easily, but not vice-versa (without using a temporary file). Secondly, it allows the parser to use the built-in string scanning functions, which increase parse speed. The downside of using strings is that the document has to be read into memory prior to parsing, so the parser may not be suitable for really huge documents.</p>
 <h1 id="the-xml-parser">The XML parser</h1>
-<p>The parser is contained in the class <a href="http://objecticon.sourceforge.net/libref/index.html?xml.XmlParser.html"><code>xml.XmlParser</code></a>, which has a <code>parse</code> method for parsing a string. It returns a <a href="http://objecticon.sourceforge.net/libref/index.html?xml.XmlDocument.html"><code>xml.XmlDocument</code></a> object, or fails if the input was not well-formed. Here is an example program.</p>
+<p>The parser is contained in the class <a href="libref/index.html?xml.XmlParser.html"><code>xml.XmlParser</code></a>, which has a <code>parse</code> method for parsing a string. It returns a <a href="libref/index.html?xml.XmlDocument.html"><code>xml.XmlDocument</code></a> object, or fails if the input was not well-formed. Here is an example program.</p>
 <pre><code>import
    io(stop, write),
    lang(to_string),
@@ -57,7 +57,7 @@ procedure main()
 end</code></pre>
 <p>If you have a file you need to parse, just load it into a string first using the <code>io.Files.file_to_string()</code> method.</p>
 <h1 id="the-xmldocument-and-xmlelement-classes">The <code>XmlDocument</code> and <code>XmlElement</code> classes</h1>
-<p>As noted above, the parser returns an <code>XmlDocument</code> instance. <code>XmlDocument</code> has methods to inspect the result of the parsing. Most notably, the method <code>get_root_element()</code> will return the <a href="http://objecticon.sourceforge.net/libref/index.html?xml.XmlElement.html"><code>xml.XmlElement</code></a> which is the root of the element structure :-</p>
+<p>As noted above, the parser returns an <code>XmlDocument</code> instance. <code>XmlDocument</code> has methods to inspect the result of the parsing. Most notably, the method <code>get_root_element()</code> will return the <a href="libref/index.html?xml.XmlElement.html"><code>xml.XmlElement</code></a> which is the root of the element structure :-</p>
 <pre><code>e := d.get_root_element()</code></pre>
 <p>The <code>XmlElement</code> class has methods which enable you to search the children of the element, and to inspect the element attributes. For example, say that the element e represented the following structure :-</p>
 <pre><code>&lt;top a1=&quot;val1&quot; a2=&quot;val2&quot;&gt;
@@ -127,7 +127,7 @@ fatal error:object xml.ProblemDetail#4(
    msg=&quot;&#39;&gt;&#39; expected&quot;
 )
 Couldn&#39;t parse:&#39;&gt;&#39; expected</code></pre>
-<p>Note how each message detail is encapsulated in a <a href="http://objecticon.sourceforge.net/libref/index.html?xml.ProblemDetail.html"><code>xml.ProblemDetail</code></a> instance.</p>
+<p>Note how each message detail is encapsulated in a <a href="libref/index.html?xml.ProblemDetail.html"><code>xml.ProblemDetail</code></a> instance.</p>
 <h1 id="validation">Validation</h1>
 <p>The parser’s validation process can be turned off if desired, using the <code>set_validate()</code> method. This will increase parser speed, but may affect the result in terms of whitespace (see below).</p>
 <h1 id="external-entity-resolution">External entity resolution</h1>
@@ -135,7 +135,7 @@ Couldn&#39;t parse:&#39;&gt;&#39; expected</code></pre>
 <pre><code>&lt;!DOCTYPE web-app
   PUBLIC &quot;-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN&quot;
   &quot;http://java.sun.com/j2ee/dtds/web-app_2_2.dtd&quot;&gt;</code></pre>
-<p>In order to resolve this, and obtain the external data, the parser uses <a href="http://objecticon.sourceforge.net/libref/index.html?xml.Resolver.html"><code>xml.Resolver</code></a>. A custom resolver class can be used as follows :-</p>
+<p>In order to resolve this, and obtain the external data, the parser uses <a href="libref/index.html?xml.Resolver.html"><code>xml.Resolver</code></a>. A custom resolver class can be used as follows :-</p>
 <pre><code>import xml
 
 class MyResolver(Resolver)
@@ -150,21 +150,21 @@ end
 ...
 
 p.set_resolver(MyResolver())</code></pre>
-<p>The parser uses a default resolver, <a href="http://objecticon.sourceforge.net/libref/index.html?xml.DefaultResolver.html"><code>xml.DefaultResolver</code></a>, which should be sufficient for normal purposes. It resolves system ids beginning with <code>file://</code> and <code>http://</code> locally and over the network respectively. If the system id doesn’t begin with either of those strings, then it is treated as a local file path.</p>
+<p>The parser uses a default resolver, <a href="libref/index.html?xml.DefaultResolver.html"><code>xml.DefaultResolver</code></a>, which should be sufficient for normal purposes. It resolves system ids beginning with <code>file://</code> and <code>http://</code> locally and over the network respectively. If the system id doesn’t begin with either of those strings, then it is treated as a local file path.</p>
 <h1 id="formatted-output">Formatted output</h1>
-<p>Output of document structures is done using a set of formatter classes. For XML documents, use the <a href="http://objecticon.sourceforge.net/libref/index.html?xml.XmlFormatter.html"><code>xml.XmlFormatter</code></a> class :-</p>
+<p>Output of document structures is done using a set of formatter classes. For XML documents, use the <a href="libref/index.html?xml.XmlFormatter.html"><code>xml.XmlFormatter</code></a> class :-</p>
 <pre><code>r := RamStream()          # A Stream to capture the result
 f := XmlFormatter(r)      # Create a formatter outputting to the stream
 f.format (doc)            # doc is the XmlDocument to format
 s := r.done()             # Get the string from the stream
 write(s)</code></pre>
-<p>The formatter can use any <a href="http://objecticon.sourceforge.net/libref/index.html?io.Stream.html"><code>io.Stream</code></a> as its output destination; an opened file would be a typical alternative to the <code>RamStream</code> used above. The default output destination, if no parameter is given to the formatter’s constructor, is <code>FileStream.stdout</code>.</p>
+<p>The formatter can use any <a href="libref/index.html?io.Stream.html"><code>io.Stream</code></a> as its output destination; an opened file would be a typical alternative to the <code>RamStream</code> used above. The default output destination, if no parameter is given to the formatter’s constructor, is <code>FileStream.stdout</code>.</p>
 <p>Various options can be set on the formatter; for example</p>
 <pre><code>f.set_text_trim()
 f.set_indent(3)</code></pre>
 <p>will output all the text content with whitespace trimmed, and all elements formatted with an indent of 3 spaces.</p>
 <h1 id="namespaces">Namespaces</h1>
-<p>Namespaces are fully supported as a post-processing step to normal parsing. This is on by default, but can be turned off by using <code>p.set_do_namespaces(&amp;no)</code>. Assuming namespaces are being processed, then the <code>XmlElement</code> class has extra methods which can be used to find child elements and attributes based on the global name, which is a pair of a URI and a local name. A global name is represented by a <a href="http://objecticon.sourceforge.net/libref/index.html?xml.GlobalName.html"><code>xml.GlobalName</code></a> instance, which can be created with something like :-</p>
+<p>Namespaces are fully supported as a post-processing step to normal parsing. This is on by default, but can be turned off by using <code>p.set_do_namespaces(&amp;no)</code>. Assuming namespaces are being processed, then the <code>XmlElement</code> class has extra methods which can be used to find child elements and attributes based on the global name, which is a pair of a URI and a local name. A global name is represented by a <a href="libref/index.html?xml.GlobalName.html"><code>xml.GlobalName</code></a> instance, which can be created with something like :-</p>
 <pre><code>gn := GlobalName(&quot;Local&quot;, &quot;http://schemas.xmlsoap.org/soap/envelope/&quot;)</code></pre>
 <p>This global name can then be used to select the element “Prefix:Local” in the following example :-</p>
 <pre><code>&lt;parent xmlns:Prefix=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
@@ -185,7 +185,7 @@ f.set_indent(3)</code></pre>
 <p>This is a small program which can be used to see what the parser does with a particular document. Given an input filename, testxml will parse the document and output various sections showing the formatted version of the document, a complete display of the document’s structure, and the document’s constraints read from the DTD.</p>
 <p>Just run “testxml -?” for a list of options.</p>
 <h1 id="html-parsing">HTML parsing</h1>
-<p>The HTML parser, <a href="http://objecticon.sourceforge.net/libref/index.html?xml.HtmlParser.html"><code>xml.HtmlParser</code></a>, uses similar document structures for input and output as the XML parser. However, it is much simpler than the XML parser.</p>
+<p>The HTML parser, <a href="libref/index.html?xml.HtmlParser.html"><code>xml.HtmlParser</code></a>, uses similar document structures for input and output as the XML parser. However, it is much simpler than the XML parser.</p>
 <h2 id="the-parser">The parser</h2>
 <p>Code to create and use the HTML parser follows a similar form to the example for XML shown above :-</p>
 <pre><code>import
@@ -204,10 +204,10 @@ procedure main()
    d := p.parse(s)
    write(to_string(d, 3))
 end</code></pre>
-<p>The <code>parse</code> method returns an <a href="http://objecticon.sourceforge.net/libref/index.html?xml.HtmlDocument.html"><code>xml.HtmlDocument</code></a> object, which can then be inspected as needed.</p>
+<p>The <code>parse</code> method returns an <a href="libref/index.html?xml.HtmlDocument.html"><code>xml.HtmlDocument</code></a> object, which can then be inspected as needed.</p>
 <p>In contrast to the XML parser, the <code>parse</code> method will never fail. In other words, even if something that isn’t remotely like HTML is given as input, it will still try to make sense of it. This is in recognition of the fact that much HTML out on the Web is malformed! A fussy parser would be of little use.</p>
 <h2 id="the-htmldocument-and-htmlelement-classes">The <code>HtmlDocument</code> and <code>HtmlElement</code> classes</h2>
-<p>As noted above, the parser returns an <code>HtmlDocument</code> instance. This works in a very similar way to the <code>XmlDocument</code> class used for XML parsing; in fact the two classes share a common base class. The most important method is <code>get_root_element()</code>, which will return the [<code>xml.</code>HtmlElement<code>](http://objecticon.sourceforge.net/libref/index.html?xml.</code>HtmlElement.html) which is the root of the element structure :-</p>
+<p>As noted above, the parser returns an <code>HtmlDocument</code> instance. This works in a very similar way to the <code>XmlDocument</code> class used for XML parsing; in fact the two classes share a common base class. The most important method is <code>get_root_element()</code>, which will return the [<code>xml.</code>HtmlElement<code>](libref/index.html?xml.</code>HtmlElement.html) which is the root of the element structure :-</p>
 <pre><code>    e := d.get_root_element()</code></pre>
 <p><code>HtmlElement</code> is also related to <code>XmlElement</code> by way of a common base class, and they have the same methods for inspecting attributes and child elements. So, for example, say that the element <code>e</code> represented the following structure :-</p>
 <pre><code>    &lt;html lang=&quot;en&quot;&gt;
@@ -228,7 +228,7 @@ end</code></pre>
 <p>Note that all element names and attribute names are capitalized during parsing (eg “html”-&gt;“HTML”).</p>
 <p>The <code>search_tree</code> method of the Element class is very useful if you want to get at an Element deep within the document. Please see the API documentation for more details.</p>
 <h2 id="formatted-output-1">Formatted output</h2>
-<p>Output of an HTML document is done with the <a href="http://objecticon.sourceforge.net/libref/index.html?xml.HtmlFormatter.html"><code>xml.HtmlFormatter</code></a> class, which again shares a common base class with its XML equivalent, <code>XmlFormatter</code>. For example :-</p>
+<p>Output of an HTML document is done with the <a href="libref/index.html?xml.HtmlFormatter.html"><code>xml.HtmlFormatter</code></a> class, which again shares a common base class with its XML equivalent, <code>XmlFormatter</code>. For example :-</p>
 <pre><code>r := RamStream()          # A Stream to capture the result
 f := HtmlFormatter(r)
 f.format (d)

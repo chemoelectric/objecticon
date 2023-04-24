@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ArchiveListerStream</title></head><body>
+<h1>ArchiveListerStream</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.LineBasedGeneratorStream.html" target="displayFrame">io.LineBasedGeneratorStream</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.archives.ZipDirStream.html">ipl.archives.ZipDirStream</a><br>
+<a href="ipl.archives.RarDirStream.html">ipl.archives.RarDirStream</a><br>
+<a href="ipl.archives.TarDirStream.html">ipl.archives.TarDirStream</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.archives-package.html" target="listFrame">ipl.archives</a></dd>
+</dl><p/>
+<code>Stream</code> for reading the entries in an archive, one per line of the stream.
+<p/><a href="ipl.archives-archives.icn.html#35" target="displayFrame">Source - archives.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.LineBasedInputStream.html">io.LineBasedInputStream</a>
+<a href="io.LineBasedGeneratorStream.html">io.LineBasedGeneratorStream</a>
+<a href="ipl.archives.ArchiveListerStream.html">ipl.archives.ArchiveListerStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#out">out()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.LineBasedInputStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.LineBasedInputStream.html#get_mode">get_mode()</a>
+<a href="io.LineBasedInputStream.html#in">in()</a>
+<a href="io.LineBasedInputStream.html#read_line">read_line()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.LineBasedInputStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.LineBasedInputStream.html#line">line</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.LineBasedGeneratorStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.LineBasedGeneratorStream.html#read_line_impl">read_line_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.LineBasedGeneratorStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.LineBasedGeneratorStream.html#coex">coex</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#expect_line">expect_line()</a>
+<a href="#line_gen">line_gen()</a>
+<a href="#new">new()</a>
+<a href="#next_line">next_line()</a>
+<a href="#succeeded">succeeded()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#bf">bf</a>
+<a href="#f">f</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="ipl.archives-archives.icn.html#46" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+<a name="expect_line"/>
+<h3>expect_line()</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="ipl.archives-archives.icn.html#55" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+<a name="line_gen"/>
+<h3>line_gen()</h3>
+protected abstract<p/>
+<dl>
+<dd>
+Generates the lines of the stream.  End-of-file is signalled by
+returning <code>&amp;null</code> and errors are signalled by failing and setting
+<code>&amp;why</code>.
+<p/><a href="ipl.archives-archives.icn.html#61" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(prog, args)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="io.LineBasedGeneratorStream.html#new">new()</a> in <a href="io.LineBasedGeneratorStream.html" target="displayFrame">io.LineBasedGeneratorStream</a></dd>
+<dd>
+<p/><a href="ipl.archives-archives.icn.html#67" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+<a name="next_line"/>
+<h3>next_line()</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="ipl.archives-archives.icn.html#51" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+<a name="succeeded"/>
+<h3>succeeded()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.archives-archives.icn.html#42" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="bf"/>
+<h3>bf</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.archives-archives.icn.html#40" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+<a name="f"/>
+<h3>f</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.archives-archives.icn.html#40" target="displayFrame">Source - archives.icn </a>
+</dd>
+</dl><hr>
+</body></html>

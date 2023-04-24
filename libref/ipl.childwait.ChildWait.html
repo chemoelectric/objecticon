@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ChildWait</title></head><body>
+<h1>ChildWait</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="ipl.childwait-package.html" target="listFrame">ipl.childwait</a></dd>
+</dl><p/>
+This class is used to cleanup child processes when they exit, using
+the System.wait call.
+<p/><a href="ipl.childwait-childwait.icn.html#7" target="displayFrame">Source - childwait.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_pid">add_pid()</a>
+<a href="#child_cleanup">child_cleanup()</a>
+<a href="#init">init()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#task">task</a>
+<a href="#waiting">waiting</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_pid"/>
+<h3>add_pid(pid, on_exit)</h3>
+public static<p/>
+<dl>
+<dd>
+Add a pid to wait for.  The optional <code>on_exit</code> function is called
+after the given pid exits.
+<p/><a href="ipl.childwait-childwait.icn.html#21" target="displayFrame">Source - childwait.icn </a>
+</dd>
+</dl><hr>
+<a name="child_cleanup"/>
+<h3>child_cleanup()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.childwait-childwait.icn.html#29" target="displayFrame">Source - childwait.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.childwait-childwait.icn.html#15" target="displayFrame">Source - childwait.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="task"/>
+<h3>task</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.childwait-childwait.icn.html#13" target="displayFrame">Source - childwait.icn </a>
+</dd>
+</dl><hr>
+<a name="waiting"/>
+<h3>waiting</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.childwait-childwait.icn.html#12" target="displayFrame">Source - childwait.icn </a>
+</dd>
+</dl><hr>
+</body></html>

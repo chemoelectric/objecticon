@@ -1,0 +1,558 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Prog</title></head><body>
+<h1>Prog</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+In the methods below, the term "program" refers to the main
+co-expression of either the root program, or a program loaded via
+<code><a href="lang.Prog.html#load">Prog.load</a></code> below.   The parameters named <code>P</code> are always programs
+and default to the currently executing program if omitted.
+<p/><a href="lang-prog.icn.html#5" target="displayFrame">Source - prog.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#eval_keyword">eval_keyword()</a>
+<a href="#get_allocation_info">get_allocation_info()</a>
+<a href="#get_allocation_info_impl">get_allocation_info_impl()</a>
+<a href="#get_collection_info">get_collection_info()</a>
+<a href="#get_collection_info_impl">get_collection_info_impl()</a>
+<a href="#get_event">get_event()</a>
+<a href="#get_event_impl">get_event_impl()</a>
+<a href="#get_event_mask">get_event_mask()</a>
+<a href="#get_function">get_function()</a>
+<a href="#get_functions">get_functions()</a>
+<a href="#get_global">get_global()</a>
+<a href="#get_global_collection_count">get_global_collection_count()</a>
+<a href="#get_global_flags">get_global_flags()</a>
+<a href="#get_global_impl">get_global_impl()</a>
+<a href="#get_global_index">get_global_index()</a>
+<a href="#get_global_location">get_global_location()</a>
+<a href="#get_global_location_impl">get_global_location_impl()</a>
+<a href="#get_global_name">get_global_name()</a>
+<a href="#get_global_names">get_global_names()</a>
+<a href="#get_keyword">get_keyword()</a>
+<a href="#get_keywords">get_keywords()</a>
+<a href="#get_n_globals">get_n_globals()</a>
+<a href="#get_named_global">get_named_global()</a>
+<a href="#get_operator">get_operator()</a>
+<a href="#get_operators">get_operators()</a>
+<a href="#get_region_info">get_region_info()</a>
+<a href="#get_region_info_impl">get_region_info_impl()</a>
+<a href="#get_runtime_millis">get_runtime_millis()</a>
+<a href="#get_stack_used">get_stack_used()</a>
+<a href="#get_startup_micros">get_startup_micros()</a>
+<a href="#get_timer_interval">get_timer_interval()</a>
+<a href="#get_variable">get_variable()</a>
+<a href="#init">init()</a>
+<a href="#load">load()</a>
+<a href="#set_event_mask">set_event_mask()</a>
+<a href="#set_timer_interval">set_timer_interval()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#Builtin">Builtin</a>
+<a href="#Const">Const</a>
+<a href="#Package">Package</a>
+<a href="#Readable">Readable</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="eval_keyword"/>
+<h3>eval_keyword(s, P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the value of the keyword <code>s</code> in program P.
+<p/><a href="lang-prog.icn.html#152" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_allocation_info"/>
+<h3>get_allocation_info(P)</h3>
+public static<p/>
+<dl>
+<dd>
+Return info about the allocations in the given program.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="lang.AllocationInfo.html" target="displayFrame">AllocationInfo</a></code> object
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#227" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_allocation_info_impl"/>
+<h3>get_allocation_info_impl(P)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#236" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_collection_info"/>
+<h3>get_collection_info(P)</h3>
+public static<p/>
+<dl>
+<dd>
+Return info about the collections in the given program.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="lang.CollectionInfo.html" target="displayFrame">CollectionInfo</a></code> object
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#210" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_collection_info_impl"/>
+<h3>get_collection_info_impl(P)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#219" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_event"/>
+<h3>get_event(P)</h3>
+public static<p/>
+<dl>
+<dd>
+Get the next event from program P.
+<p/><a href="lang-prog.icn.html#185" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_event_impl"/>
+<h3>get_event_impl(P, res)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#196" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_event_mask"/>
+<h3>get_event_mask(P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the given program's event mask
+<p/><a href="lang-prog.icn.html#164" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_function"/>
+<h3>get_function(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the builtin function named <code>s</code>, or fail if it doesn't exist.
+<p/><a href="lang-prog.icn.html#121" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_functions"/>
+<h3>get_functions()</h3>
+public static native<p/>
+<dl>
+<dd>
+Generate the builtin functions.
+<p/><a href="lang-prog.icn.html#106" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global"/>
+<h3>get_global(q, P)</h3>
+public static<p/>
+<dl>
+<dd>
+Get the global named <code>s</code> in program P
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>q</code> - either a global name or number
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#71" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_collection_count"/>
+<h3>get_global_collection_count()</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the number of collections of any type triggered by any
+program.
+<p/><a href="lang-prog.icn.html#221" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_flags"/>
+<h3>get_global_flags(q, P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return an integer flag value giving info about the global.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>q</code> - either a global name or number
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#64" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_impl"/>
+<h3>get_global_impl(q, P)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#97" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_index"/>
+<h3>get_global_index(q, P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the index number of the given global.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>q</code> - either a global name or number
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#57" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_location"/>
+<h3>get_global_location(q, P)</h3>
+public static<p/>
+<dl>
+<dd>
+Get the location of global <code>s</code> in program P, if that data is
+available.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>q</code> - either a global name or number
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="lang.Location.html" target="displayFrame">Location</a></code> instance
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#138" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_location_impl"/>
+<h3>get_global_location_impl(q, P)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#150" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_name"/>
+<h3>get_global_name(q, P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the name of the given global.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>q</code> - either a global name or number
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#50" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_global_names"/>
+<h3>get_global_names(P)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate the global names in program P
+<p/><a href="lang-prog.icn.html#99" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_keyword"/>
+<h3>get_keyword(s)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the builtin keyword named <code>s</code> (as an invocable function), or fail
+if it doesn't exist.
+<p/><a href="lang-prog.icn.html#132" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_keywords"/>
+<h3>get_keywords()</h3>
+public static native<p/>
+<dl>
+<dd>
+Generate the builtin keywords (as invocable functions).
+<p/><a href="lang-prog.icn.html#116" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_n_globals"/>
+<h3>get_n_globals(P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Generate the number of globals in program P
+<p/><a href="lang-prog.icn.html#45" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_named_global"/>
+<h3>get_named_global(q, P)</h3>
+public static<p/>
+<dl>
+<dd>
+Get the global in program P, restricting results to named (constant) globals.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>q</code> - either a global name or number
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#85" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_operator"/>
+<h3>get_operator(s, n)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the builtin operator named <code>s</code>, with arity <code>n</code>, or fail if
+it doesn't exist.
+<p/><a href="lang-prog.icn.html#126" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_operators"/>
+<h3>get_operators()</h3>
+public static native<p/>
+<dl>
+<dd>
+Generate the builtin operators.
+<p/><a href="lang-prog.icn.html#111" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_region_info"/>
+<h3>get_region_info(P)</h3>
+public static<p/>
+<dl>
+<dd>
+Return info about the memory regions in the given program.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code><a href="lang.RegionInfo.html" target="displayFrame">RegionInfo</a></code> object
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#238" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_region_info_impl"/>
+<h3>get_region_info_impl(P)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#253" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_runtime_millis"/>
+<h3>get_runtime_millis(P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the number of milliseconds since the startup time of the given
+program.
+<p/><a href="lang-prog.icn.html#198" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_stack_used"/>
+<h3>get_stack_used(P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the amount of stack (stack frames and local variables)
+currently allocated by the given program.
+<p/>
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+an integer
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#255" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_startup_micros"/>
+<h3>get_startup_micros(P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the startup time (load time) of the given program, as the
+number of microseconds since the Unix base epoch (1 Jan 1970).
+<p/><a href="lang-prog.icn.html#204" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_timer_interval"/>
+<h3>get_timer_interval(P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the timer interval for program P.
+<p/><a href="lang-prog.icn.html#180" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="get_variable"/>
+<h3>get_variable(s, P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Find the variable with name s in program P and return a variable
+descriptor which points to its value.  Fails if <code>s</code> cannot be
+resolved to a variable.
+<p/><a href="lang-prog.icn.html#157" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="lang-prog.icn.html#22" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="load"/>
+<h3>load(s, arglist, blocksize, stringsize)</h3>
+public static native<p/>
+<dl>
+<dd>
+Load and return a program from file <code>s</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the file name of the program.
+</dd>
+<dd>
+<code>arglist</code> - an optional list of arguments to pass to the
+program's <code>main</code> procedure; they need not be
+strings.
+</dd>
+<dd>
+<code>blocksize</code> - the optional size of the program's block region.
+If omitted, then the top-level program's block region
+size is used; if zero then the program shares its
+loader's block region.
+</dd>
+<dd>
+<code>stringsize</code> - the size of the string region, with similar
+defaults to <code>blocksize</code>.
+</dd>
+</dl>
+<p/><a href="lang-prog.icn.html#29" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="set_event_mask"/>
+<h3>set_event_mask(cs, P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Set the given program's event mask
+<p/><a href="lang-prog.icn.html#169" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="set_timer_interval"/>
+<h3>set_timer_interval(i, P)</h3>
+public static native<p/>
+<dl>
+<dd>
+Set the given program's timer interval, for use with the E_Timer
+event.
+<p/><a href="lang-prog.icn.html#174" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="Builtin"/>
+<h3>Builtin</h3>
+public static const<p/>
+<dl>
+<dd>
+Integer flag for a global procedure which is a builtin function.
+<p/><a href="lang-prog.icn.html#19" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="Const"/>
+<h3>Const</h3>
+public static const<p/>
+<dl>
+<dd>
+Integer flag for a pre-defined constant global, which will be
+either a class, record or procedure.
+<p/><a href="lang-prog.icn.html#12" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="Package"/>
+<h3>Package</h3>
+public static const<p/>
+<dl>
+<dd>
+Integer flag for a global with package visibility
+<p/><a href="lang-prog.icn.html#15" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+<a name="Readable"/>
+<h3>Readable</h3>
+public static const<p/>
+<dl>
+<dd>
+Integer flag for a global with readable visibility
+<p/><a href="lang-prog.icn.html#17" target="displayFrame">Source - prog.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,539 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>evaluator.icn</title></head><body><pre>
+<a name="1"/>package eval
+<a name="2"/>
+<a name="3"/>import ipl.pdco, ipl.lists, lang, util, exception, parser
+<a name="4"/>
+<a name="5"/>abstract class EvaluatorEnv()
+<a name="6"/>   public abstract get(k, ev)
+<a name="7"/>end
+<a name="8"/>
+<a name="9"/>class DefaultEvaluatorEnv(EvaluatorEnv)
+<a name="10"/>   private 
+<a name="11"/>      vars, consts
+<a name="12"/>   private readable
+<a name="13"/>      write_globals_flag
+<a name="14"/>
+<a name="15"/>   public override get(k, ev)
+<a name="16"/>      return (if \write_globals_flag then glookup(k, ev) else .glookup(k, ev)) | tlookup(k)
+<a name="17"/>   end
+<a name="18"/>
+<a name="19"/>   private tlookup(k)
+<a name="20"/>      if upto('.', k) then
+<a name="21"/>         (k ?:= (="default.", tab(0))) | runerr("No such id: " || k)
+<a name="22"/>      return .member(\consts, k) | vars[k]
+<a name="23"/>   end
+<a name="24"/>
+<a name="25"/>   private glookup(k, ev)
+<a name="26"/>      local t, f
+<a name="27"/>      if upto('.', k) then {
+<a name="28"/>         k ?:= (="default.", tab(0))
+<a name="29"/>         return lang.Prog.get_global(k)
+<a name="30"/>      }
+<a name="31"/>      t := []
+<a name="32"/>      if lang.Prog.get_global(k) then
+<a name="33"/>         put(t, k)
+<a name="34"/>      every f := ev.get_imports() || "." || k do {
+<a name="35"/>         if lang.Prog.get_global(f) then
+<a name="36"/>            put(t, f)
+<a name="37"/>      }
+<a name="38"/>      if *t = 1 then
+<a name="39"/>         return lang.Prog.get_global(t[1])
+<a name="40"/>      if *t &gt; 1 then
+<a name="41"/>         runerr("Ambiguous name: " || k || "(" || list2str(t) || ")")
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   public set_vars(t)
+<a name="45"/>      self.vars := t
+<a name="46"/>      link
+<a name="47"/>   end
+<a name="48"/>
+<a name="49"/>   public set_consts(t)
+<a name="50"/>      self.consts := t
+<a name="51"/>      link
+<a name="52"/>   end
+<a name="53"/>
+<a name="54"/>   public set_write_globals(f)
+<a name="55"/>      write_globals_flag := need_flag(f)
+<a name="56"/>      link
+<a name="57"/>   end
+<a name="58"/>
+<a name="59"/>   public new(v, c)
+<a name="60"/>      /v := table()
+<a name="61"/>      self.vars := v
+<a name="62"/>      self.consts := c
+<a name="63"/>      return
+<a name="64"/>   end
+<a name="65"/>end
+<a name="66"/>
+<a name="67"/>class Evaluator()
+<a name="68"/>   private
+<a name="69"/>      # Map of nodes (loops, breaks) to the enclosing loop node.
+<a name="70"/>      loops,
+<a name="71"/>      brk,
+<a name="72"/>      subject,
+<a name="73"/>      imports,
+<a name="74"/>      pos,
+<a name="75"/>      # Map of nodes (loops, breaks) to the topmost scan node in the enclosing loop
+<a name="76"/>      scans,
+<a name="77"/>      env,
+<a name="78"/>      node
+<a name="79"/>
+<a name="80"/>   private compute_loops(n, loop, scan)
+<a name="81"/>      if is(n, Node) then
+<a name="82"/>         case n.label of {
+<a name="83"/>            "everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat": {
+<a name="84"/>               loops[n] := loop
+<a name="85"/>               scans[n] := scan
+<a name="86"/>               every compute_loops(n.gen(), n)
+<a name="87"/>            }
+<a name="88"/>            "create": compute_loops(n.child(2))
+<a name="89"/>            "coinvoke": {
+<a name="90"/>               compute_loops(n.child(1), loop, scan)
+<a name="91"/>               every compute_loops(ExprList(n, 3).gen().pos)
+<a name="92"/>            }
+<a name="93"/>            "break"|"breakexpr": {
+<a name="94"/>               loops[n] := \loop | throw("break without loop")
+<a name="95"/>               scans[n] := scan
+<a name="96"/>               compute_loops(n.child(2), loops[loop], scans[loop])
+<a name="97"/>            }
+<a name="98"/>            "next": {
+<a name="99"/>               loops[n] := \loop | throw("next without loop")
+<a name="100"/>               scans[n] := scan
+<a name="101"/>            }
+<a name="102"/>            "augqmark"|"Bqmark": {
+<a name="103"/>               compute_loops(n.child(1), loop, scan)
+<a name="104"/>               /scan := n
+<a name="105"/>               compute_loops(n.child(3), loop, scan)
+<a name="106"/>            }
+<a name="107"/>            "fail"|"return"|"returnexpr"|"succeed"|"succeedexpr"|"link"|
+<a name="108"/>               "linkexpr"|"suspend"|"suspendexpr"|"suspendexprdo":
+<a name="109"/>               throw("suspend/return/succeed/link/fail not allowed")
+<a name="110"/>            default: every compute_loops(n.gen(), loop, scan)
+<a name="111"/>         }
+<a name="112"/>   end
+<a name="113"/>
+<a name="114"/>   private loop(n, ex)
+<a name="115"/>      local res
+<a name="116"/>      brk[n] := &amp;current
+<a name="117"/>      while res := !ex do
+<a name="118"/>         unless res === "next" then
+<a name="119"/>            return res
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   private restore(n)
+<a name="123"/>      local x
+<a name="124"/>      if x := \scans[n] then {
+<a name="125"/>         &amp;subject := subject[x]
+<a name="126"/>         &amp;pos := pos[x]
+<a name="127"/>      }
+<a name="128"/>   end
+<a name="129"/>
+<a name="130"/>   private save(n)
+<a name="131"/>      subject[n] := &amp;subject
+<a name="132"/>      pos[n] := &amp;pos
+<a name="133"/>      return
+<a name="134"/>   end
+<a name="135"/>
+<a name="136"/>   private do_everydo(n)
+<a name="137"/>      local e
+<a name="138"/>      e := create_E(n.child(2))
+<a name="139"/>      suspend E(loop(n, create while @e do E(n.child(4)) ))
+<a name="140"/>   end
+<a name="141"/>
+<a name="142"/>   private do_every(n)
+<a name="143"/>      local e
+<a name="144"/>      e := create_E(n.child(2))
+<a name="145"/>      suspend E(loop(n, create while @e ))
+<a name="146"/>   end
+<a name="147"/>
+<a name="148"/>   private create_E(e)
+<a name="149"/>      return create E(e)
+<a name="150"/>   end
+<a name="151"/>
+<a name="152"/>   private static pos_list(x)
+<a name="153"/>      return ipl.pdco.List{ x.gen().pos }
+<a name="154"/>   end
+<a name="155"/>
+<a name="156"/>   private do_invoke(n)
+<a name="157"/>      local x
+<a name="158"/>      x := pos_list(ExprList(n, 3))
+<a name="159"/>      suspend case *x of {
+<a name="160"/>         0: E(n.child(1))()
+<a name="161"/>         1: E(n.child(1))(E(x[1]))
+<a name="162"/>         2: E(n.child(1))(E(x[1]),E(x[2]))
+<a name="163"/>         3: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]))
+<a name="164"/>         4: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]))
+<a name="165"/>         5: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]))
+<a name="166"/>         6: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]))
+<a name="167"/>         7: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]))
+<a name="168"/>         8: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]))
+<a name="169"/>         9: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]))
+<a name="170"/>         10: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]))
+<a name="171"/>         11: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="172"/>                                   E(x[11]))
+<a name="173"/>         12: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="174"/>                                   E(x[11]),E(x[12]))
+<a name="175"/>         13: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="176"/>                                   E(x[11]),E(x[12]),E(x[13]))
+<a name="177"/>         14: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="178"/>                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]))
+<a name="179"/>         15: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="180"/>                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
+<a name="181"/>         16: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="182"/>                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
+<a name="183"/>         default: runerr("Too many parameters")
+<a name="184"/>      }
+<a name="185"/>   end
+<a name="186"/>
+<a name="187"/>   private do_coinvoke(n)
+<a name="188"/>      local x
+<a name="189"/>      x := pos_list(ExprList(n, 3))
+<a name="190"/>      suspend case *x of {
+<a name="191"/>         0: E(n.child(1)){}
+<a name="192"/>         1: E(n.child(1)){E(x[1])}
+<a name="193"/>         2: E(n.child(1)){E(x[1]),E(x[2])}
+<a name="194"/>         3: E(n.child(1)){E(x[1]),E(x[2]),E(x[3])}
+<a name="195"/>         4: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4])}
+<a name="196"/>         5: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])}
+<a name="197"/>         6: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])}
+<a name="198"/>         7: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])}
+<a name="199"/>         8: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])}
+<a name="200"/>         9: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])}
+<a name="201"/>         10: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])}
+<a name="202"/>         11: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="203"/>                                   E(x[11])}
+<a name="204"/>         12: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="205"/>                                   E(x[11]),E(x[12])}
+<a name="206"/>         13: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="207"/>                                   E(x[11]),E(x[12]),E(x[13])}
+<a name="208"/>         14: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="209"/>                                   E(x[11]),E(x[12]),E(x[13]),E(x[14])}
+<a name="210"/>         15: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="211"/>                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])}
+<a name="212"/>         16: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="213"/>                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])}
+<a name="214"/>         default: runerr("Too many parameters")
+<a name="215"/>      }
+<a name="216"/>   end
+<a name="217"/>
+<a name="218"/>   private do_subscript(n)
+<a name="219"/>      local x
+<a name="220"/>      x := pos_list(ExprList(n, 3))
+<a name="221"/>      suspend case *x of {
+<a name="222"/>         0: E(n.child(1))[]
+<a name="223"/>         1: E(n.child(1))[E(x[1])]
+<a name="224"/>         2: E(n.child(1))[E(x[1]),E(x[2])]
+<a name="225"/>         3: E(n.child(1))[E(x[1]),E(x[2]),E(x[3])]
+<a name="226"/>         4: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4])]
+<a name="227"/>         5: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])]
+<a name="228"/>         6: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])]
+<a name="229"/>         7: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])]
+<a name="230"/>         8: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])]
+<a name="231"/>         9: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])]
+<a name="232"/>         10: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])]
+<a name="233"/>         11: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="234"/>                           E(x[11])]
+<a name="235"/>         12: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="236"/>                           E(x[11]),E(x[12])]
+<a name="237"/>         13: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="238"/>                           E(x[11]),E(x[12]),E(x[13])]
+<a name="239"/>         14: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="240"/>                           E(x[11]),E(x[12]),E(x[13]),E(x[14])]
+<a name="241"/>         15: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="242"/>                           E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])]
+<a name="243"/>         16: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="244"/>                           E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])]
+<a name="245"/>         default: runerr("Too many subscripts")
+<a name="246"/>      }
+<a name="247"/>   end
+<a name="248"/>
+<a name="249"/>   private do_paren(n)
+<a name="250"/>      local x
+<a name="251"/>      x := pos_list(ExprList(n, 2))
+<a name="252"/>      suspend case *x of {
+<a name="253"/>         0:  &amp;null
+<a name="254"/>         1:  E(x[1])
+<a name="255"/>         2:  (E(x[1]),E(x[2]))
+<a name="256"/>         3:  (E(x[1]),E(x[2]),E(x[3]))
+<a name="257"/>         4:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]))
+<a name="258"/>         5:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]))
+<a name="259"/>         6:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]))
+<a name="260"/>         7:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]))
+<a name="261"/>         8:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]))
+<a name="262"/>         9:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]))
+<a name="263"/>         10: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]))
+<a name="264"/>         11: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="265"/>              E(x[11]))
+<a name="266"/>         12: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="267"/>              E(x[11]),E(x[12]))
+<a name="268"/>         13: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="269"/>              E(x[11]),E(x[12]),E(x[13]))
+<a name="270"/>         14: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="271"/>              E(x[11]),E(x[12]),E(x[13]),E(x[14]))
+<a name="272"/>         15: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="273"/>              E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
+<a name="274"/>         16: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="275"/>              E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
+<a name="276"/>         default: runerr("Too many parenthesized expressions")
+<a name="277"/>      }
+<a name="278"/>   end
+<a name="279"/>
+<a name="280"/>   private do_brack(n)
+<a name="281"/>      local x, l
+<a name="282"/>      x := pos_list(ExprList(n, 2))
+<a name="283"/>      suspend case *x of {
+<a name="284"/>         0:  []
+<a name="285"/>         1:  [E(x[1])]
+<a name="286"/>         2:  [E(x[1]),E(x[2])]
+<a name="287"/>         3:  [E(x[1]),E(x[2]),E(x[3])]
+<a name="288"/>         4:  [E(x[1]),E(x[2]),E(x[3]),E(x[4])]
+<a name="289"/>         5:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])]
+<a name="290"/>         6:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])]
+<a name="291"/>         7:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])]
+<a name="292"/>         8:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])]
+<a name="293"/>         9:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])]
+<a name="294"/>         10:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])]
+<a name="295"/>         11:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="296"/>               E(x[11])]
+<a name="297"/>         12:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="298"/>               E(x[11]),E(x[12])]
+<a name="299"/>         13:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="300"/>               E(x[11]),E(x[12]),E(x[13])]
+<a name="301"/>         14:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="302"/>               E(x[11]),E(x[12]),E(x[13]),E(x[14])]
+<a name="303"/>         15:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="304"/>               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])]
+<a name="305"/>         16:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+<a name="306"/>               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])]
+<a name="307"/>         default: {
+<a name="308"/>            l := ipl.pdco.List{ create_E(!x) }
+<a name="309"/>            copy(Lifo!l)
+<a name="310"/>         }
+<a name="311"/>      }
+<a name="312"/>   end
+<a name="313"/>
+<a name="314"/>   private do_case(n)
+<a name="315"/>      local l, v, cc, def
+<a name="316"/>      l := pos_list(CaseList(n, 5))
+<a name="317"/>      if v := E(n.child(2)) then {
+<a name="318"/>         every cc := !l do {
+<a name="319"/>            if cc.label == "cclause" then {
+<a name="320"/>               if v === E(cc.child(1)) then {
+<a name="321"/>                  suspend E(cc.child(3))
+<a name="322"/>                  fail
+<a name="323"/>               }
+<a name="324"/>            } else # Default clause
+<a name="325"/>               def := cc
+<a name="326"/>         }
+<a name="327"/>         if \def then
+<a name="328"/>            suspend E(def.child(3))
+<a name="329"/>      }
+<a name="330"/>   end
+<a name="331"/>
+<a name="332"/>   private do_section(n) 
+<a name="333"/>      suspend case n.child(4).tok of {
+<a name="334"/>         YY.COLON : E(n.child(1))[E(n.child(3)):E(n.child(5))]
+<a name="335"/>         YY.PCOLON : E(n.child(1))[E(n.child(3))+:E(n.child(5))]
+<a name="336"/>         YY.MCOLON : E(n.child(1))[E(n.child(3))-:E(n.child(5))]
+<a name="337"/>      }
+<a name="338"/>   end
+<a name="339"/>
+<a name="340"/>   private do_dottedident(n)
+<a name="341"/>      local ls
+<a name="342"/>      ls := Util.dottedid2string(n.child(1))
+<a name="343"/>      if (ls == "default") | member(\imports, ls) then
+<a name="344"/>         return env.get(ls || "." || n.child(3).s, self)
+<a name="345"/>      suspend Class_get(E(n.child(1)), n.child(3).s)
+<a name="346"/>   end
+<a name="347"/>
+<a name="348"/>   # This is wrapped in a static method so that lookups if x is a
+<a name="349"/>   # class give the right error message (606 rather than 607).
+<a name="350"/>   private static Class_get(x, field)
+<a name="351"/>      return lang.Class.get(x, field)
+<a name="352"/>   end
+<a name="353"/>
+<a name="354"/>   private do_keyword(n) 
+<a name="355"/>      local s, f
+<a name="356"/>      s := "&amp;" || n.child(2).s
+<a name="357"/>      f := lang.Prog.get_keyword(s) | runerr("Invalid keyword: "|| s)
+<a name="358"/>      suspend f() 
+<a name="359"/>   end
+<a name="360"/>
+<a name="361"/>   private do_break(n)
+<a name="362"/>      restore(n)
+<a name="363"/>      return coact(Factory.new_keyword(, "null"), brk[loops[n]])
+<a name="364"/>   end
+<a name="365"/>
+<a name="366"/>   private do_next(n)
+<a name="367"/>      restore(n)
+<a name="368"/>      return coact("next", brk[loops[n]])
+<a name="369"/>   end
+<a name="370"/>
+<a name="371"/>   private do_breakexpr(n)
+<a name="372"/>      restore(n)
+<a name="373"/>      return coact(n.child(2), brk[loops[n]])
+<a name="374"/>   end
+<a name="375"/>
+<a name="376"/>   private E(n)
+<a name="377"/>      if is(n, Token) then
+<a name="378"/>         return case n.tok of {
+<a name="379"/>            YY.IDENT: env.get(n.s, self)
+<a name="380"/>            YY.INTLIT|YY.REALLIT|YY.STRINGLIT|YY.CSETLIT|YY.UCSLIT: n.val
+<a name="381"/>            default : fatalerr("Not implemented: token " || to_string(n))
+<a name="382"/>         }
+<a name="383"/>      suspend case n.label of {
+<a name="384"/>         "Bat": E(n.child(1)) @ E(n.child(3))
+<a name="385"/>         "Bbackslash": E(n.child(1)) \ E(n.child(3))
+<a name="386"/>         "Bbang": E(n.child(1)) ! E(n.child(3))
+<a name="387"/>         "Bbar": E(n.child(1)) | E(n.child(3))
+<a name="388"/>         "Bcaret": E(n.child(1)) ^ E(n.child(3))
+<a name="389"/>         "Bconcat": E(n.child(1)) || E(n.child(3))
+<a name="390"/>         "Bdiff": E(n.child(1)) -- E(n.child(3))
+<a name="391"/>         "Bequiv": E(n.child(1)) === E(n.child(3))
+<a name="392"/>         "Binter": E(n.child(1)) ** E(n.child(3))
+<a name="393"/>         "Blconcat": E(n.child(1)) ||| E(n.child(3))
+<a name="394"/>         "Bminus": E(n.child(1)) - E(n.child(3))
+<a name="395"/>         "Bmod": E(n.child(1)) % E(n.child(3))
+<a name="396"/>         "Bnequiv": E(n.child(1)) ~=== E(n.child(3))
+<a name="397"/>         "Bnmeq": E(n.child(1)) = E(n.child(3))
+<a name="398"/>         "Bnmge": E(n.child(1)) &gt;= E(n.child(3))
+<a name="399"/>         "Bnmgt": E(n.child(1)) &gt; E(n.child(3))
+<a name="400"/>         "Bnmle": E(n.child(1)) &lt;= E(n.child(3))
+<a name="401"/>         "Bnmlt": E(n.child(1)) &lt; E(n.child(3))
+<a name="402"/>         "Bnmne": E(n.child(1)) ~= E(n.child(3))
+<a name="403"/>         "Bplus": E(n.child(1)) + E(n.child(3))
+<a name="404"/>         "Bqmark": 1(E(n.child(1)),save(n)) ? E(n.child(3))
+<a name="405"/>         "Bseq": E(n.child(1)) == E(n.child(3))
+<a name="406"/>         "Bsge": E(n.child(1)) &gt;&gt;= E(n.child(3))
+<a name="407"/>         "Bsgt": E(n.child(1)) &gt;&gt; E(n.child(3))
+<a name="408"/>         "Bslash": E(n.child(1)) / E(n.child(3))
+<a name="409"/>         "Bsle": E(n.child(1)) &lt;&lt;= E(n.child(3))
+<a name="410"/>         "Bslt": E(n.child(1)) &lt;&lt; E(n.child(3))
+<a name="411"/>         "Bsne": E(n.child(1)) ~== E(n.child(3))
+<a name="412"/>         "Bstar": E(n.child(1)) * E(n.child(3))
+<a name="413"/>         "Bunion": E(n.child(1)) ++ E(n.child(3))
+<a name="414"/>         "Empty": {}
+<a name="415"/>         "Uat": @E(n.child(2))
+<a name="416"/>         "Ubackslash": \E(n.child(2))
+<a name="417"/>         "Ubang": !E(n.child(2))
+<a name="418"/>         "Ucaret": ^E(n.child(2))
+<a name="419"/>         "Ubar"|"Uconcat"|"Ulconcat": |E(n.child(2))
+<a name="420"/>         "Udiff": --E(n.child(2))
+<a name="421"/>         "Udot": .E(n.child(2))
+<a name="422"/>         "Uequiv": ===E(n.child(2))
+<a name="423"/>         "Uinter": **E(n.child(2))
+<a name="424"/>         "Uminus": -E(n.child(2))
+<a name="425"/>         "Unequiv": ~===E(n.child(2))
+<a name="426"/>         "Unmeq": =E(n.child(2))
+<a name="427"/>         "Unmne": ~=E(n.child(2))
+<a name="428"/>         "Unot": not E(n.child(2))
+<a name="429"/>         "Uplus": +E(n.child(2))
+<a name="430"/>         "Uqmark": ?E(n.child(2))
+<a name="431"/>         "Useq": ==E(n.child(2))
+<a name="432"/>         "Uslash": /E(n.child(2))
+<a name="433"/>         "Usne": ~==E(n.child(2))
+<a name="434"/>         "Ustar": *E(n.child(2))
+<a name="435"/>         "Utilde": ~E(n.child(2))
+<a name="436"/>         "Uunion": ++E(n.child(2))
+<a name="437"/>         "and": E(n.child(1)) &amp; E(n.child(3))
+<a name="438"/>         "assign": E(n.child(1)) := E(n.child(3))
+<a name="439"/>         "augand": E(n.child(1)) &amp;:= E(n.child(3))
+<a name="440"/>         "augat": E(n.child(1)) @:= E(n.child(3))
+<a name="441"/>         "augbang": E(n.child(1)) !:= E(n.child(3))
+<a name="442"/>         "augcaret": E(n.child(1)) ^:= E(n.child(3))
+<a name="443"/>         "augconcat": E(n.child(1)) ||:= E(n.child(3))
+<a name="444"/>         "augdiff": E(n.child(1)) --:= E(n.child(3))
+<a name="445"/>         "augequiv": E(n.child(1)) ===:= E(n.child(3))
+<a name="446"/>         "auginter": E(n.child(1)) **:= E(n.child(3))
+<a name="447"/>         "auglconcat": E(n.child(1)) |||:= E(n.child(3))
+<a name="448"/>         "augminus": E(n.child(1)) -:= E(n.child(3))
+<a name="449"/>         "augmod": E(n.child(1)) %:= E(n.child(3))
+<a name="450"/>         "augnequiv": E(n.child(1)) ~===:= E(n.child(3))
+<a name="451"/>         "augnmeq": E(n.child(1)) =:= E(n.child(3))
+<a name="452"/>         "augnmge": E(n.child(1)) &gt;=:= E(n.child(3))
+<a name="453"/>         "augnmgt": E(n.child(1)) &gt;:= E(n.child(3))
+<a name="454"/>         "augnmle": E(n.child(1)) &lt;=:= E(n.child(3))
+<a name="455"/>         "augnmlt": E(n.child(1)) &lt;:= E(n.child(3))
+<a name="456"/>         "augnmne": E(n.child(1)) ~=:= E(n.child(3))
+<a name="457"/>         "augplus": E(n.child(1)) +:= E(n.child(3))
+<a name="458"/>         "augqmark": 1(E(n.child(1)),save(n)) ?:= E(n.child(3))
+<a name="459"/>         "augseq": E(n.child(1)) ==:= E(n.child(3))
+<a name="460"/>         "augsge": E(n.child(1)) &gt;&gt;=:= E(n.child(3))
+<a name="461"/>         "augsgt": E(n.child(1)) &gt;&gt;:= E(n.child(3))
+<a name="462"/>         "augslash": E(n.child(1)) /:= E(n.child(3))
+<a name="463"/>         "augsle": E(n.child(1)) &lt;&lt;=:= E(n.child(3))
+<a name="464"/>         "augslt": E(n.child(1)) &lt;&lt;:= E(n.child(3))
+<a name="465"/>         "augsne": E(n.child(1)) ~==:= E(n.child(3))
+<a name="466"/>         "augstar": E(n.child(1)) *:= E(n.child(3))
+<a name="467"/>         "augunion": E(n.child(1)) ++:= E(n.child(3))
+<a name="468"/>         "brace": E(n.child(2))
+<a name="469"/>         "brack": do_brack(n)
+<a name="470"/>         "break": do_break(n)
+<a name="471"/>         "breakexpr": do_breakexpr(n)
+<a name="472"/>         "case": do_case(n)
+<a name="473"/>         "coinvoke": do_coinvoke(n)
+<a name="474"/>         "compound": { E(n.child(1)) ; E(n.child(3)) }
+<a name="475"/>         "create": create_E(n.child(2))
+<a name="476"/>         "dottedident": do_dottedident(n)
+<a name="477"/>         "every": do_every(n)
+<a name="478"/>         "everydo": do_everydo(n)
+<a name="479"/>         "field": Class_get(E(n.child(1)), n.child(3).s)
+<a name="480"/>         "if": if E(n.child(2)) then E(n.child(4))
+<a name="481"/>         "ifelse": if E(n.child(2)) then E(n.child(4)) else E(n.child(6))
+<a name="482"/>         "invoke": do_invoke(n)
+<a name="483"/>         "keyword": do_keyword(n)
+<a name="484"/>         "next": do_next(n)
+<a name="485"/>         "paren": do_paren(n)
+<a name="486"/>         "repeat": E( loop(n, create  repeat E(n.child(2)) ))
+<a name="487"/>         "revassign": E(n.child(1)) &lt;- E(n.child(3))
+<a name="488"/>         "revswap": E(n.child(1)) &lt;-&gt; E(n.child(3))
+<a name="489"/>         "section": do_section(n)
+<a name="490"/>         "subscript": do_subscript(n)
+<a name="491"/>         "swap": E(n.child(1)) :=: E(n.child(3))
+<a name="492"/>         "to": E(n.child(1)) to E(n.child(3))
+<a name="493"/>         "toby": E(n.child(1)) to E(n.child(3)) by E(n.child(5))
+<a name="494"/>         "unless": unless E(n.child(2)) then E(n.child(4))
+<a name="495"/>         "unlesselse": unless E(n.child(2)) then E(n.child(4)) else E(n.child(6))
+<a name="496"/>         "until": E( loop(n, create  until E(n.child(2)) ))
+<a name="497"/>         "untildo": E( loop(n, create  until E(n.child(2)) do E(n.child(4)) ))
+<a name="498"/>         "while": E( loop(n, create  while E(n.child(2)) ))
+<a name="499"/>         "whiledo": E( loop(n, create  while E(n.child(2)) do E(n.child(4)) ))
+<a name="500"/>         default: fatalerr("Not implemented: " || n.label)
+<a name="501"/>      }
+<a name="502"/>   end
+<a name="503"/>   
+<a name="504"/>   public eval()
+<a name="505"/>      (\env &amp; \node) | runerr("eval() called without environment and/or node being set")
+<a name="506"/>      brk := table()
+<a name="507"/>      subject := table()
+<a name="508"/>      pos := table()
+<a name="509"/>      suspend E(node)
+<a name="510"/>   end
+<a name="511"/>
+<a name="512"/>   public set_env(env)
+<a name="513"/>      self.env := env
+<a name="514"/>      link
+<a name="515"/>   end
+<a name="516"/>
+<a name="517"/>   public set_node(n)
+<a name="518"/>      loops := table()
+<a name="519"/>      scans := table()
+<a name="520"/>      node := n
+<a name="521"/>      unless try1 { compute_loops(n) } then {
+<a name="522"/>         node := loops := scans := &amp;null
+<a name="523"/>         fail
+<a name="524"/>      }
+<a name="525"/>      link
+<a name="526"/>   end
+<a name="527"/>
+<a name="528"/>   public set_imports(t)
+<a name="529"/>      self.imports := t
+<a name="530"/>      link
+<a name="531"/>   end
+<a name="532"/>
+<a name="533"/>   public get_imports()
+<a name="534"/>      suspend .!\imports
+<a name="535"/>   end
+<a name="536"/>end
+</pre></body></html>

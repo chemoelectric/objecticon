@@ -85,16 +85,16 @@ f := lambda {{
    end</code></pre>
 <p>And use it as follows :-</p>
 <pre><code>f := lambda{ _a[1] + 1 | _a[2] - 1 }</code></pre>
-<p>Of course, this still suffers from the problem that one call may interfere with another’s use of <code>_a</code>. However, this is quite easily fixed, because the <code>call</code> method has access to <code>_a</code>, and can thus save and restore its value as necessary. Saving and restoring global state is a general problem, and there is a library procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?util.save_state.html"><code>util.save_state</code></a>, to help. See <a href="GlobalState.html">this page</a> for more details.</p>
+<p>Of course, this still suffers from the problem that one call may interfere with another’s use of <code>_a</code>. However, this is quite easily fixed, because the <code>call</code> method has access to <code>_a</code>, and can thus save and restore its value as necessary. Saving and restoring global state is a general problem, and there is a library procedure, <a href="libref/index.html?util.save_state.html"><code>util.save_state</code></a>, to help. See <a href="GlobalState.html">this page</a> for more details.</p>
 <h1 id="library-procedures">Library procedures</h1>
-<p>The above techniques are used in the library procedure <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.lambda.html"><code>ipl.functional.lambda</code></a>. In addition to a global variable <code>_a</code> for the arguments, <code>_l</code> is provided for notional local variables to be used by the anonymous function. For example :-</p>
+<p>The above techniques are used in the library procedure <a href="libref/index.html?ipl.functional.lambda.html"><code>ipl.functional.lambda</code></a>. In addition to a global variable <code>_a</code> for the arguments, <code>_l</code> is provided for notional local variables to be used by the anonymous function. For example :-</p>
 <pre><code>f := lambda{ (_l := 0, _l +:= 1 to _a[1], ._l) }</code></pre>
 <p>Given this, <code>f(5)</code> would generate 1, 3, 6, 10, 15. Note how <code>_l</code> is dereferenced, to avoid returning a variable reference to <code>_l</code>. If this wasn’t done, the caller would dereference it, and get the value restored by <code>save_state</code>, probably <code>&amp;null</code>.</p>
-<p>An instance of <a href="http://objecticon.sourceforge.net/libref/index.html?util.State.html"><code>util.State</code></a> is provided, <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.LambdaState.html"><code>ipl.functional.LambdaState</code></a>, which saves and restores <code>_a</code> and <code>_l</code>, in effect giving each lambda function it its own copy of these variables. The <code>call</code> method uses <code>save_state</code>, as follows :-</p>
+<p>An instance of <a href="libref/index.html?util.State.html"><code>util.State</code></a> is provided, <a href="libref/index.html?ipl.functional.LambdaState.html"><code>ipl.functional.LambdaState</code></a>, which saves and restores <code>_a</code> and <code>_l</code>, in effect giving each lambda function it its own copy of these variables. The <code>call</code> method uses <code>save_state</code>, as follows :-</p>
 <pre><code>   public call(a[])
       suspend save_state(^e, LambdaState(a))
    end</code></pre>
-<p>There is another procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.lambda1.html"><code>ipl.functional.lambda1</code></a>, which behaves just like <code>lambda</code>, except that it sets <code>_a</code> to the first argument, rather than the argument list. This makes functions which use just one argument cleaner; for example the one above could be rewritten :-</p>
+<p>There is another procedure, <a href="libref/index.html?ipl.functional.lambda1.html"><code>ipl.functional.lambda1</code></a>, which behaves just like <code>lambda</code>, except that it sets <code>_a</code> to the first argument, rather than the argument list. This makes functions which use just one argument cleaner; for example the one above could be rewritten :-</p>
 <pre><code>f := lambda1{ (_l := 0, _l +:= 1 to _a, ._l) }</code></pre>
 <p>As a final example, here is a recursive function to sum a flattened list structure; for example f([1,[2,4],[5,[6,7]]]) gives 25.</p>
 <pre><code>f := lambda1{{
@@ -128,7 +128,7 @@ end
 private meth2(a)
    ....
 end</code></pre></li>
-<li><p>However, if you <em>do</em> wish to reference local variables in the function, consider passing them using <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.lpartial.html"><code>ipl.functional.lpartial</code></a>. For example :-</p>
+<li><p>However, if you <em>do</em> wish to reference local variables in the function, consider passing them using <a href="libref/index.html?ipl.functional.lpartial.html"><code>ipl.functional.lpartial</code></a>. For example :-</p>
 <pre><code>public meth1()
    local f, v1, v2
    ...

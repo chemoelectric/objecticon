@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>timezone.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: timezone.icn 8228 2020-04-14 13:08:33Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package util
+<a name="10"/>
+<a name="11"/>import lang
+<a name="12"/>
+<a name="13"/>class Timezone()
+<a name="14"/>   public static const 
+<a name="15"/>      KNOWN_TIMEZONES,
+<a name="16"/>      UTC_TIMEZONE,
+<a name="17"/>      LOCAL_STANDARD_TIMEZONE,
+<a name="18"/>      LOCAL_DAYLIGHT_SAVINGS_TIMEZONE
+<a name="19"/>
+<a name="20"/>   public const
+<a name="21"/>      offset,
+<a name="22"/>      id
+<a name="23"/>
+<a name="24"/>   private static init()
+<a name="25"/>      local t, l
+<a name="26"/>      KNOWN_TIMEZONES := table()
+<a name="27"/>      UTC_TIMEZONE := Timezone()
+<a name="28"/>      if l := get_local_timezones() then {
+<a name="29"/>         LOCAL_STANDARD_TIMEZONE := Timezone!l[1]
+<a name="30"/>         equals(l[1], l[2]) |
+<a name="31"/>            (LOCAL_DAYLIGHT_SAVINGS_TIMEZONE := Timezone!l[2])
+<a name="32"/>      } else
+<a name="33"/>         LOCAL_STANDARD_TIMEZONE := UTC_TIMEZONE
+<a name="34"/>
+<a name="35"/>      every t := 
+<a name="36"/>         UTC_TIMEZONE |
+<a name="37"/>         Timezone(37800, "ACDT") | Timezone(34200, "ACST") | Timezone(-10800, "ADT") |
+<a name="38"/>         Timezone(39600, "AEDT") | Timezone(36000, "AEST") | Timezone(-28800, "AKDT") |
+<a name="39"/>         Timezone(-32400, "AKST") | Timezone(-14400, "AST") | Timezone(32400, "AWDT") |
+<a name="40"/>         Timezone(28800, "AWST") | Timezone(3600, "BST") | Timezone(-18000, "CDT") |
+<a name="41"/>         Timezone(7200, "CEDT") | Timezone(7200, "CEST") | Timezone(3600, "CET") |
+<a name="42"/>         Timezone(-21600, "CST") | Timezone(25200, "CXT") | Timezone(-14400, "EDT") |
+<a name="43"/>         Timezone(10800, "EEDT") | Timezone(10800, "EEST") | Timezone(7200, "EET") |
+<a name="44"/>         Timezone(-18000, "EST") | Timezone(0, "GMT") | Timezone(-10800, "HAA") |
+<a name="45"/>         Timezone(-18000, "HAC") | Timezone(-32400, "HADT") | Timezone(-14400, "HAE") |
+<a name="46"/>         Timezone(-25200, "HAP") | Timezone(-21600, "HAR") | Timezone(-36000, "HAST") |
+<a name="47"/>         Timezone(-9000, "HAT") | Timezone(-28800, "HAY") | Timezone(-14400, "HNA") |
+<a name="48"/>         Timezone(-21600, "HNC") | Timezone(-18000, "HNE") | Timezone(-28800, "HNP") |
+<a name="49"/>         Timezone(-25200, "HNR") | Timezone(-12600, "HNT") | Timezone(-32400, "HNY") |
+<a name="50"/>         Timezone(3600, "IST") | Timezone(-21600, "MDT") | Timezone(7200, "MESZ") |
+<a name="51"/>         Timezone(3600, "MEZ") | Timezone(14400, "MSD") | Timezone(10800, "MSK") |
+<a name="52"/>         Timezone(-25200, "MST") | Timezone(-9000, "NDT") | Timezone(41400, "NFT") |
+<a name="53"/>         Timezone(-12600, "NST") | Timezone(-25200, "PDT") | Timezone(-28800, "PST") |
+<a name="54"/>         Timezone(0, "UT") | Timezone(32400, "WDT") | Timezone(3600, "WEDT") |
+<a name="55"/>         Timezone(3600, "WEST") | Timezone(0, "WET") | Timezone(28800, "WST") |
+<a name="56"/>         LOCAL_STANDARD_TIMEZONE | \LOCAL_DAYLIGHT_SAVINGS_TIMEZONE do
+<a name="57"/>      {
+<a name="58"/>         insert(KNOWN_TIMEZONES, t.id, t)
+<a name="59"/>      }
+<a name="60"/>   end
+<a name="61"/>
+<a name="62"/>   private static native get_local_timezones()
+<a name="63"/>   private static native get_gmt_offset_at(n)
+<a name="64"/>
+<a name="65"/>   # Return the local system Timezone in force at the given time `n`,
+<a name="66"/>   # which is the number of seconds past the Unix epoch.
+<a name="67"/>   public static get_timezone_at(n)
+<a name="68"/>      local o
+<a name="69"/>      o := get_gmt_offset_at(n) | return LOCAL_STANDARD_TIMEZONE
+<a name="70"/>      return case o of {
+<a name="71"/>         LOCAL_STANDARD_TIMEZONE.offset:
+<a name="72"/>            LOCAL_STANDARD_TIMEZONE
+<a name="73"/>         (\LOCAL_DAYLIGHT_SAVINGS_TIMEZONE).offset:
+<a name="74"/>            LOCAL_DAYLIGHT_SAVINGS_TIMEZONE
+<a name="75"/>         default:
+<a name="76"/>            Timezone(o)
+<a name="77"/>      }
+<a name="78"/>   end
+<a name="79"/>
+<a name="80"/>   #
+<a name="81"/>   # Convert a zone id into a Timezone
+<a name="82"/>   #
+<a name="83"/>   public static get_known_timezone(id)
+<a name="84"/>      local s, sign, t
+<a name="85"/>      id := need_string(id)
+<a name="86"/>      if t := member(KNOWN_TIMEZONES, id) then
+<a name="87"/>         return t
+<a name="88"/>      id ? {
+<a name="89"/>         sign := if ="+" then 1 else if ="-" then -1 else fail
+<a name="90"/>         s := tab(many(&amp;digits)) | fail
+<a name="91"/>         return Timezone(sign * (3600 * integer(s[1:3]) + 60 * integer(s[3:5])), id) | fail
+<a name="92"/>      }
+<a name="93"/>   end
+<a name="94"/>
+<a name="95"/>   public get_id()
+<a name="96"/>      return id
+<a name="97"/>   end
+<a name="98"/>
+<a name="99"/>   public get_offset()
+<a name="100"/>      return offset
+<a name="101"/>   end
+<a name="102"/>
+<a name="103"/>   public format_offset()
+<a name="104"/>      return (if offset &lt; 0 then "-" else "+") ||
+<a name="105"/>         right(abs(offset) / 3600, 2, "0") || 
+<a name="106"/>         right((abs(offset) % 3600) / 60, 2, "0")
+<a name="107"/>   end
+<a name="108"/>
+<a name="109"/>   public new(a[])
+<a name="110"/>      if *a = 0 then {
+<a name="111"/>         id := "UTC"
+<a name="112"/>         offset := 0
+<a name="113"/>      }
+<a name="114"/>      else if *a = 1 then {
+<a name="115"/>         if offset := integer(a[1]) then {
+<a name="116"/>            id := format_offset()
+<a name="117"/>         } else {
+<a name="118"/>            id := a[1]
+<a name="119"/>            offset := get_known_timezone(id).get_offset() | fail
+<a name="120"/>         }
+<a name="121"/>      } else {
+<a name="122"/>         offset := need_integer(a[1])
+<a name="123"/>         id := a[2]
+<a name="124"/>      }
+<a name="125"/>      return
+<a name="126"/>   end
+<a name="127"/>end
+<a name="128"/>
+<a name="129"/># Check that x is a `Timezone`, signalling a runtime error otherwise.
+<a name="130"/>#
+<a name="131"/>procedure need_Timezone(x)
+<a name="132"/>   is(x, Timezone) | runerr("Timezone expected", x)
+<a name="133"/>   return x
+<a name="134"/>end
+</pre></body></html>

@@ -1,0 +1,3208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>vt.icn</title></head><body><pre>
+<a name="1"/>$encoding UTF-8
+<a name="2"/>
+<a name="3"/>package ipl.vt
+<a name="4"/>
+<a name="5"/>import gui, io, lang, util, graphics(Window,Key,Selection,Mouse,Canvas), 
+<a name="6"/>   xml, net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics, ipl.printf
+<a name="7"/>
+<a name="8"/># Current attributes.  Treated as immutable, to alter a copy() is taken first.
+<a name="9"/>package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url)
+<a name="10"/>
+<a name="11"/>package record SavedCursor(cx, cy, attr, charsets, curr_charset)
+<a name="12"/>
+<a name="13"/>package record SavedBuffer(cx, cy, attr, charsets, curr_charset, 
+<a name="14"/>                           top_margin, bottom_margin, tab_stops,
+<a name="15"/>                           reverse_mode, origin_mode, wraparound_mode,
+<a name="16"/>                           col_mode, allow_80_132_mode, insert_mode,
+<a name="17"/>                           hide_cursor_mode, application_keypad_mode,
+<a name="18"/>                           application_cursor_mode,
+<a name="19"/>                           rows, cols, contents, history_size)
+<a name="20"/>
+<a name="21"/>package record PopupElement(label, str)
+<a name="22"/>
+<a name="23"/>package record Locn(x, y)
+<a name="24"/>
+<a name="25"/>package class KeyEntry()
+<a name="26"/>   public const 
+<a name="27"/>      bits,       # The bits which must be set in the mask set
+<a name="28"/>      mask,       # The mask, ie the bits to be considered
+<a name="29"/>      val,        # The code to send, or function to call
+<a name="30"/>      data        # An arbitrary piece of user data
+<a name="31"/>
+<a name="32"/>   public matches(i)
+<a name="33"/>      if iand(mask, i) = bits then
+<a name="34"/>         return
+<a name="35"/>   end
+<a name="36"/>
+<a name="37"/>   public new(bits, mask, val, data)
+<a name="38"/>      self.bits := bits
+<a name="39"/>      self.mask := mask
+<a name="40"/>      self.val := val
+<a name="41"/>      self.data := data
+<a name="42"/>      return
+<a name="43"/>   end
+<a name="44"/>end
+<a name="45"/>
+<a name="46"/># Class for storing key code strings.
+<a name="47"/>package class KeyTable()
+<a name="48"/>   private const t
+<a name="49"/>
+<a name="50"/>   public add1(code, bits, mask, val)
+<a name="51"/>      return add(code, bits, mask, val) | syserr(&amp;why)
+<a name="52"/>   end
+<a name="53"/>
+<a name="54"/>   public gen_codes()
+<a name="55"/>      suspend key(t)
+<a name="56"/>   end
+<a name="57"/>
+<a name="58"/>   public gen_entries(code)
+<a name="59"/>      local l
+<a name="60"/>      if l := member(t, code) then
+<a name="61"/>         suspend .!l
+<a name="62"/>   end
+<a name="63"/>
+<a name="64"/>   public add(code, bits, mask, val, data)
+<a name="65"/>      local l, e
+<a name="66"/>      iand(bits, mask) = bits | return error("Invalid bits/mask combination")
+<a name="67"/>      if l := member(t, code) then {
+<a name="68"/>         # Given two entries, e and f, assume i matches both e and f.  Clearly i must
+<a name="69"/>         # be be|bf|z for some other bits z.  Since both match
+<a name="70"/>         # be = i&amp;me and bf=i&amp;mf. So
+<a name="71"/>         # be &amp; i &amp; mf = bf &amp; i &amp; me.  Subsitute i:
+<a name="72"/>         # be &amp; mf &amp; (be|bf|z) = bf &amp; me &amp; (be|bf|z)
+<a name="73"/>         # be&amp;mf | be&amp;mf&amp;bf | be&amp;mf&amp;z = be&amp;bf&amp;me | bf&amp;me | bf&amp;me&amp;z.  Since me&amp;z=mf&amp;z=0 :
+<a name="74"/>         # be&amp;mf | be&amp;mf&amp;bf = be&amp;bf&amp;me | bf&amp;me.  ie
+<a name="75"/>         # be&amp;mf(1|bf) = bf&amp;me(1|be), ie
+<a name="76"/>         # be&amp;mf = bf&amp;me
+<a name="77"/>         every e := !l do {
+<a name="78"/>            if iand(e.bits, mask) = iand(bits, e.mask) then
+<a name="79"/>               return error("Inconsistent key entry")
+<a name="80"/>         }
+<a name="81"/>      } else
+<a name="82"/>         insert(t, code, l := [])
+<a name="83"/>      put(l, KeyEntry(bits, mask, val, data))
+<a name="84"/>      link
+<a name="85"/>   end
+<a name="86"/>
+<a name="87"/>   # Remove a specific bits/mask entry for code or, with just one
+<a name="88"/>   # parameter, all the entries for code.
+<a name="89"/>   #
+<a name="90"/>   public remove(code, bits, mask)
+<a name="91"/>      local l, e
+<a name="92"/>      l := member(t, code) | fail
+<a name="93"/>      if /bits then
+<a name="94"/>         delete(t, code)
+<a name="95"/>      else {
+<a name="96"/>         every e := !l do {
+<a name="97"/>            if e.bits = bits &amp; e.mask = mask then {
+<a name="98"/>               ldel1(l, e)
+<a name="99"/>               if *l = 0 then
+<a name="100"/>                  delete(t, code)
+<a name="101"/>               break
+<a name="102"/>            }
+<a name="103"/>         }
+<a name="104"/>      }
+<a name="105"/>      link
+<a name="106"/>   end
+<a name="107"/>
+<a name="108"/>   public lookup(code, i)
+<a name="109"/>      local e
+<a name="110"/>      every e := !member(t, code) do {
+<a name="111"/>         if e.matches(i) then
+<a name="112"/>            return e
+<a name="113"/>      }
+<a name="114"/>   end
+<a name="115"/>
+<a name="116"/>   public new()
+<a name="117"/>      t := table()
+<a name="118"/>      return
+<a name="119"/>   end
+<a name="120"/>end
+<a name="121"/>
+<a name="122"/># Part of a line
+<a name="123"/>package class Segment()
+<a name="124"/>   public const
+<a name="125"/>      s,      # The string for this segment
+<a name="126"/>      attr    # The attributes
+<a name="127"/>
+<a name="128"/>   public new(s, attr)
+<a name="129"/>      self.s := s
+<a name="130"/>      self.attr := attr
+<a name="131"/>      return
+<a name="132"/>   end
+<a name="133"/>end
+<a name="134"/>
+<a name="135"/># Represents one line
+<a name="136"/>package class Row()
+<a name="137"/>   public const
+<a name="138"/>      l,     # List of Segments
+<a name="139"/>      bg,    # Bg colour for right part of row not covered by segments (null -&gt; current bg).
+<a name="140"/>      join   # Line is notionally joined with next one (used to reflow).
+<a name="141"/>
+<a name="142"/>   public new(l, bg, join)
+<a name="143"/>      /l := []
+<a name="144"/>      self.l := l
+<a name="145"/>      self.bg := bg
+<a name="146"/>      self.join := join
+<a name="147"/>      return
+<a name="148"/>   end
+<a name="149"/>end
+<a name="150"/>
+<a name="151"/>#
+<a name="152"/># This interface provides external required functionality for the terminal.
+<a name="153"/>abstract class VtUI()
+<a name="154"/>   public abstract link_left_clicked(url)
+<a name="155"/>   public abstract link_middle_clicked(urls)
+<a name="156"/>   public abstract create_link_menu(url)
+<a name="157"/>   public abstract create_context_menu()
+<a name="158"/>   public abstract quieten_cursor()
+<a name="159"/>   public abstract send_tty(s)
+<a name="160"/>   public abstract vt_size_changed(cols, rows)
+<a name="161"/>   public abstract msg(s, n)
+<a name="162"/>   public abstract search_msg(s)
+<a name="163"/>
+<a name="164"/>   public info_msg(s)
+<a name="165"/>      return msg(s, Gui.INFO_DELAY)
+<a name="166"/>   end
+<a name="167"/>end
+<a name="168"/>
+<a name="169"/>package abstract class AttrTextSelectionOwner(SelectionOwner)
+<a name="170"/>   private
+<a name="171"/>      attr,
+<a name="172"/>      rs,
+<a name="173"/>      stk
+<a name="174"/>
+<a name="175"/>   protected abstract get_list()
+<a name="176"/>
+<a name="177"/>   private get_text()
+<a name="178"/>      local s, l, m
+<a name="179"/>      l := get_list()
+<a name="180"/>      s := ""
+<a name="181"/>      every m := !l do {
+<a name="182"/>         every s ||:= (!m).s
+<a name="183"/>         unless m === l[-1] then
+<a name="184"/>            s ||:= "\N"
+<a name="185"/>      }
+<a name="186"/>      return ucs(s)
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   private static html_colour(s)
+<a name="190"/>      local r
+<a name="191"/>      if r := Window.parse_color(s) then
+<a name="192"/>         return sprintf("#%02x%02x%02x", r.red / 257, r.green / 257, r.blue / 257)
+<a name="193"/>   end
+<a name="194"/>
+<a name="195"/>   private pop_to(s)
+<a name="196"/>      while pop_item() ~== s
+<a name="197"/>   end
+<a name="198"/>
+<a name="199"/>   private pop_item()
+<a name="200"/>      local s
+<a name="201"/>      if s := get(stk) then {
+<a name="202"/>         case s of {
+<a name="203"/>            "A":  { rs.writes1("&lt;/A&gt;") ; attr.url := &amp;null }
+<a name="204"/>            "B":  { rs.writes1("&lt;/B&gt;") ; attr.bold := &amp;null }
+<a name="205"/>            "U":  { rs.writes1("&lt;/U&gt;") ; attr.underline := &amp;null }
+<a name="206"/>            "I":  { rs.writes1("&lt;/I&gt;") ; attr.italic := &amp;null }
+<a name="207"/>            "S":  { rs.writes1("&lt;/S&gt;") ; attr.crossed := &amp;null }
+<a name="208"/>            "FG":  { rs.writes1("&lt;/FONT&gt;") ; attr.fg := &amp;null }
+<a name="209"/>            "BG":  { rs.writes1("&lt;/SPAN&gt;") ; attr.bg := &amp;null }
+<a name="210"/>            "V":  { rs.writes1("&lt;/SPAN&gt;") ; attr.invisible := &amp;null }
+<a name="211"/>         }
+<a name="212"/>         return s
+<a name="213"/>      }
+<a name="214"/>   end
+<a name="215"/>
+<a name="216"/>   private note(s)
+<a name="217"/>      push(stk, s)
+<a name="218"/>   end
+<a name="219"/>
+<a name="220"/>   private html_segment(e)
+<a name="221"/>      local a, fg, bg
+<a name="222"/>      a := e.attr
+<a name="223"/>      if /a.url &amp; \attr.url then
+<a name="224"/>         pop_to("A")
+<a name="225"/>      if /a.underline &amp; \attr.underline then
+<a name="226"/>         pop_to("U")
+<a name="227"/>      if /a.bold &amp; \attr.bold then
+<a name="228"/>         pop_to("B")
+<a name="229"/>      if /a.italic &amp; \attr.italic then
+<a name="230"/>         pop_to("I")
+<a name="231"/>      if /a.crossed &amp; \attr.crossed then
+<a name="232"/>         pop_to("S")
+<a name="233"/>      if /a.invisible &amp; \attr.invisible then
+<a name="234"/>         pop_to("V")
+<a name="235"/>      fg := a.fg
+<a name="236"/>      bg := a.bg
+<a name="237"/>      if \a.inverse then {
+<a name="238"/>         /fg := "black"
+<a name="239"/>         /bg := "white"
+<a name="240"/>         fg :=: bg
+<a name="241"/>      }
+<a name="242"/>      if fg ~=== \attr.fg then
+<a name="243"/>         pop_to("FG")
+<a name="244"/>      if bg ~=== \attr.bg then
+<a name="245"/>         pop_to("BG")
+<a name="246"/>
+<a name="247"/>      if attr.url ~===:= a.url then {
+<a name="248"/>         note("A")
+<a name="249"/>         rs.writes("&lt;A HREF=\"", xml_escape(a.url.str(), '\"\'&amp;'), "\"&gt;")
+<a name="250"/>      }
+<a name="251"/>      if attr.underline ~===:= a.underline then {
+<a name="252"/>         note("U")
+<a name="253"/>         rs.writes1("&lt;U&gt;")
+<a name="254"/>      }
+<a name="255"/>      if attr.bold ~===:= a.bold then {
+<a name="256"/>         note("B")
+<a name="257"/>         rs.writes1("&lt;B&gt;")
+<a name="258"/>      }
+<a name="259"/>      if attr.italic ~===:= a.italic then {
+<a name="260"/>         note("I")
+<a name="261"/>         rs.writes1("&lt;I&gt;")
+<a name="262"/>      }
+<a name="263"/>      if attr.crossed ~===:= a.crossed then {
+<a name="264"/>         note("S")
+<a name="265"/>         rs.writes1("&lt;S&gt;")
+<a name="266"/>      }
+<a name="267"/>      if attr.invisible ~===:= a.invisible then {
+<a name="268"/>         note("V")
+<a name="269"/>         rs.writes1("&lt;SPAN STYLE=\"visibility:hidden\"&gt;")
+<a name="270"/>      }
+<a name="271"/>      if attr.fg ~===:= fg then {
+<a name="272"/>         note("FG")
+<a name="273"/>         rs.writes("&lt;FONT COLOR=\"", html_colour(fg), "\"&gt;")
+<a name="274"/>      }
+<a name="275"/>      if attr.bg ~===:= bg then {
+<a name="276"/>         note("BG")
+<a name="277"/>         rs.writes("&lt;SPAN STYLE=\"background-color:", html_colour(bg), "\"&gt;")
+<a name="278"/>      }
+<a name="279"/>      rs.writes1(xml_escape(e.s, '&lt;&gt;&amp;'))
+<a name="280"/>   end
+<a name="281"/>
+<a name="282"/>   private get_html()
+<a name="283"/>      local l, m
+<a name="284"/>      l := get_list()
+<a name="285"/>      return use {
+<a name="286"/>         rs := RamStream(),
+<a name="287"/>         {
+<a name="288"/>            attr := Attr()
+<a name="289"/>            stk := []
+<a name="290"/>            rs.writes1("&lt;HTML&gt;&lt;PRE&gt;")
+<a name="291"/>            every m := !l do {
+<a name="292"/>               every html_segment(!m)
+<a name="293"/>               unless m === l[-1] then
+<a name="294"/>                  rs.write()
+<a name="295"/>            }
+<a name="296"/>            while pop_item()
+<a name="297"/>            rs.writes1("&lt;/PRE&gt;&lt;/HTML&gt;")
+<a name="298"/>            ucs(rs.str())
+<a name="299"/>         }
+<a name="300"/>      }
+<a name="301"/>   end
+<a name="302"/>
+<a name="303"/>   public override get_targets()
+<a name="304"/>      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | "text/html"
+<a name="305"/>   end
+<a name="306"/>
+<a name="307"/>   public override get_content(target)
+<a name="308"/>      return case target of {
+<a name="309"/>         Selection.STRING_TARGET: text_convert(get_text(), "string")
+<a name="310"/>         Selection.UTF8_STRING_TARGET: get_text()
+<a name="311"/>         "text/html": get_html()
+<a name="312"/>      }
+<a name="313"/>   end
+<a name="314"/>end
+<a name="315"/>
+<a name="316"/>package class StaticAttrTextSelectionOwner(AttrTextSelectionOwner)
+<a name="317"/>   private const l
+<a name="318"/>
+<a name="319"/>   protected override get_list()
+<a name="320"/>      return l
+<a name="321"/>   end
+<a name="322"/>
+<a name="323"/>   public override lost_ownership()
+<a name="324"/>   end
+<a name="325"/>
+<a name="326"/>   public new(l)
+<a name="327"/>      self.l := need_list(l)
+<a name="328"/>      return
+<a name="329"/>   end
+<a name="330"/>end
+<a name="331"/>
+<a name="332"/>package class VtPrimarySelectionOwner(AttrTextSelectionOwner)
+<a name="333"/>   private const parent
+<a name="334"/>
+<a name="335"/>   protected override get_list()
+<a name="336"/>      return \parent.primary
+<a name="337"/>   end
+<a name="338"/>
+<a name="339"/>   public override lost_ownership()
+<a name="340"/>      parent.on_lost_primary_ownership()
+<a name="341"/>   end
+<a name="342"/>
+<a name="343"/>   public new(parent)
+<a name="344"/>      self.parent := parent
+<a name="345"/>      return
+<a name="346"/>   end
+<a name="347"/>end
+<a name="348"/>
+<a name="349"/>package class Charset()
+<a name="350"/>   public const
+<a name="351"/>      id, src, dest
+<a name="352"/>
+<a name="353"/>   public map(s)
+<a name="354"/>      return default.map(s, src, dest)
+<a name="355"/>   end
+<a name="356"/>
+<a name="357"/>   public new(id, src, dest)
+<a name="358"/>      self.id := id
+<a name="359"/>      self.src := src
+<a name="360"/>      self.dest := dest
+<a name="361"/>      return
+<a name="362"/>   end
+<a name="363"/>end
+<a name="364"/>
+<a name="365"/>package class VtView(DrawScrollAreaView)
+<a name="366"/>   public override initially()
+<a name="367"/>      parent.synch_view_colours()
+<a name="368"/>      DrawScrollAreaView.initially()
+<a name="369"/>   end
+<a name="370"/>end
+<a name="371"/>
+<a name="372"/>package class VtVsb(ScrollBar)
+<a name="373"/>   public override page_jump(n)
+<a name="374"/>      return parent.page_jump_impl(n)
+<a name="375"/>   end
+<a name="376"/>
+<a name="377"/>   public override small_jump(n)
+<a name="378"/>      return parent.small_jump_impl(n)
+<a name="379"/>   end
+<a name="380"/>end
+<a name="381"/>
+<a name="382"/>#
+<a name="383"/># A VT emulator.
+<a name="384"/>#
+<a name="385"/>class Vt(LineBasedScrollArea, MenuMode)
+<a name="386"/>   private const
+<a name="387"/>      scroll_ticker,
+<a name="388"/>      cursor_ticker,
+<a name="389"/>      primary_selection_owner
+<a name="390"/>
+<a name="391"/>   private
+<a name="392"/>      ui,                         # The VtUI instance providing external functionality.
+<a name="393"/>      contents,                   # List of Rows
+<a name="394"/>      tab_stops,                  # Set of column numbers.
+<a name="395"/>      custom_keys,                # KeyTable for custom key settings.
+<a name="396"/>      cursor_on,
+<a name="397"/>      going_up,                   # Selection scrolling direction
+<a name="398"/>      scroll_ticker_interval,
+<a name="399"/>      highlight,                  # Link clicked on (shown red).
+<a name="400"/>      last_highlight,             # Link last clicked, shown with a dotted rectangle
+<a name="401"/>      multi_begin,                # Start of potential shifted middle press block
+<a name="402"/>      held,                       # Link held by mouse down
+<a name="403"/>      over,                       # Link mouse is over
+<a name="404"/>      no_drag,                    # Don't allow drag to set the cursor
+<a name="405"/>      got,                        # Raw input, a string.
+<a name="406"/>      part_ch,                    # Partial utf-8 char, a string.
+<a name="407"/>      buff,                       # Input buffer, a ucs string.
+<a name="408"/>      input_handler_coex,
+<a name="409"/>      attr,
+<a name="410"/>      saved_cursor,               # A SavedCursor instance for implementing decset 1048
+<a name="411"/>      saved_buffer,               # A SavedBuffer instance for implementing decset 1049
+<a name="412"/>      popup,
+<a name="413"/>      quieten                     # A flag to stop distracting in_chain cursor updates
+<a name="414"/>
+<a name="415"/>   private readable
+<a name="416"/>      dont_quieten_flag,          # Don't quieten the cursor if set
+<a name="417"/>      verbose_flag,
+<a name="418"/>      cursor_x,                   # The selection cursor/mark
+<a name="419"/>      cursor_y,
+<a name="420"/>      mark_x,
+<a name="421"/>      mark_y,
+<a name="422"/>      char_w,                     # Character width dimensions of the font in use.
+<a name="423"/>      rows,                       # Size of the emulated screen
+<a name="424"/>      cols,
+<a name="425"/>      cx,                         # The cursor position (in screen co-ordinates)
+<a name="426"/>      cy,
+<a name="427"/>      top_margin,                 # Optional margins
+<a name="428"/>      bottom_margin,
+<a name="429"/>      origin_mode,                # Various mode flags
+<a name="430"/>      reverse_mode,
+<a name="431"/>      insert_mode,
+<a name="432"/>      wraparound_mode,
+<a name="433"/>      col_mode,
+<a name="434"/>      allow_80_132_mode,
+<a name="435"/>      application_keypad_mode,
+<a name="436"/>      application_cursor_mode,
+<a name="437"/>      hide_cursor_mode,
+<a name="438"/>      text_selection,             # Current text selection, or null
+<a name="439"/>      links_selection,            # Current links selection (a list of URLs), or null
+<a name="440"/>      primary,                    # Primary selection string, or null
+<a name="441"/>      history_size,               # Size of history scroll lines; 0 -&gt; no vsb
+<a name="442"/>      vt_width,                   # Default width in chars, used by get_default_width()
+<a name="443"/>      vt_height,                  # Default height in chars, used by get_default_height()
+<a name="444"/>      reverse_fg,                 # Colours of reverse mode, or null implying true reverse.
+<a name="445"/>      reverse_bg,
+<a name="446"/>      normal_fg,                  # Colours of non-reverse mode, or null implying use cbwin colours.
+<a name="447"/>      normal_bg,
+<a name="448"/>      charsets,                   # List of 4 Charsets G0..G4
+<a name="449"/>      curr_charset,               # Current charset 1=G0 etc.  
+<a name="450"/>      search_term,                # Current string being searched for.
+<a name="451"/>      search_term_c1,             # Cset of first search char.
+<a name="452"/>      search_increment_flag       # Should next search forward/backward be incremental? (ie from mark).
+<a name="453"/>
+<a name="454"/>   private static const
+<a name="455"/>      EMPTY_ATTR,
+<a name="456"/>      KEY_TABLE,
+<a name="457"/>      C, S, M, M4, M5, K, U, CSM,
+<a name="458"/>      CHARSET,
+<a name="459"/>      COLORS
+<a name="460"/>
+<a name="461"/>   public static const
+<a name="462"/>      DEFAULT_HISTORY_SIZE,
+<a name="463"/>      DEFAULT_VT_WIDTH,
+<a name="464"/>      DEFAULT_VT_HEIGHT,
+<a name="465"/>      DEFAULT_FONT,
+<a name="466"/>      PAGE_MARGIN,
+<a name="467"/>      OSC_CHAR
+<a name="468"/>
+<a name="469"/>   private static init()
+<a name="470"/>      EMPTY_ATTR := Attr()
+<a name="471"/>      C := 1
+<a name="472"/>      S := 2
+<a name="473"/>      M := 4
+<a name="474"/>      M4 := 8
+<a name="475"/>      M5 := 16
+<a name="476"/>      K := 32
+<a name="477"/>      U := 64
+<a name="478"/>      CSM := C + S + M + M4 + M5
+<a name="479"/>      KEY_TABLE := KeyTable()
+<a name="480"/>      setup_key_table()
+<a name="481"/>      CHARSET := table()
+<a name="482"/>      setup_charsets()
+<a name="483"/>      OSC_CHAR := '\x08-\x0D\x20-\x7E'
+<a name="484"/>      DEFAULT_HISTORY_SIZE := env_int("OI_VT_DEFAULT_HISTORY_SIZE", 0) | 500
+<a name="485"/>      DEFAULT_VT_WIDTH := env_int("OI_VT_DEFAULT_VT_WIDTH", 20) | 80
+<a name="486"/>      DEFAULT_VT_HEIGHT := env_int("OI_VT_DEFAULT_VT_HEIGHT", 5) | 25
+<a name="487"/>      DEFAULT_FONT := env_font("OI_VT_DEFAULT_FONT") | "fixed"
+<a name="488"/>      PAGE_MARGIN := env_int("OI_VT_PAGE_MARGIN", 0) | ScrollBar.DEFAULT_MARGIN_FACTOR
+<a name="489"/>      COLORS :=  ["black", "dark red", "dark green", "dark yellow", "blue",
+<a name="490"/>                  "purple", "dark cyan", "pale gray"]
+<a name="491"/>   end
+<a name="492"/>
+<a name="493"/>   private static setup_charsets()
+<a name="494"/>      insert(CHARSET, "0", Charset("DEC Special Character and Line Drawing",
+<a name="495"/>                                   u"`abcdefghijklmnopqrstuvwxyz{|}~",
+<a name="496"/>                                   u"◆▒␉␌␍␊°±␤␋┘┐┌└┼─├┤┴┬│≤≥π≠£·"))
+<a name="497"/>      insert(CHARSET, "A", Charset("United Kingdom", u"#", u"£"))
+<a name="498"/>      insert(CHARSET, "B", Charset("United States", u"", u""))
+<a name="499"/>   end
+<a name="500"/>
+<a name="501"/>   public static string_to_key_mask(s)
+<a name="502"/>      local i, c
+<a name="503"/>      i := 0
+<a name="504"/>      every c := !s do {
+<a name="505"/>         i := ior(i, case Text.lower(string(c)) of {
+<a name="506"/>            "0" : 0
+<a name="507"/>            "c" : C
+<a name="508"/>            "s" : S
+<a name="509"/>            "m" : M
+<a name="510"/>            "4" : M4
+<a name="511"/>            "5" : M5
+<a name="512"/>            "k" : K
+<a name="513"/>            "u" : U
+<a name="514"/>            "*" : CSM
+<a name="515"/>            default: fail
+<a name="516"/>         })
+<a name="517"/>      }
+<a name="518"/>      return i
+<a name="519"/>   end
+<a name="520"/>
+<a name="521"/>   private static setup_key_table()
+<a name="522"/>      add_cursor_key(Key.UP, "A")
+<a name="523"/>      add_cursor_key(Key.DOWN, "B")
+<a name="524"/>      add_cursor_key(Key.RIGHT, "C")
+<a name="525"/>      add_cursor_key(Key.LEFT, "D")
+<a name="526"/>      add_cursor_key(Key.HOME, "H")
+<a name="527"/>      add_cursor_key(Key.END, "F")
+<a name="528"/>
+<a name="529"/>      KEY_TABLE.add1("\b", 0, C+M, "\d")
+<a name="530"/>      KEY_TABLE.add1("\b", M, C+M, "\e\d")
+<a name="531"/>
+<a name="532"/>      add_std_key("\d", "\e[3~")
+<a name="533"/>      add_std_key(Key.PGUP, "\e[5~")
+<a name="534"/>      add_std_key(Key.PGDN, "\e[6~")
+<a name="535"/>      add_std_key(Key.INSERT, "\e[2~")
+<a name="536"/>
+<a name="537"/>      add_std_key(Key.F1, "\eOP", "\e[1P")
+<a name="538"/>      add_std_key(Key.F2, "\eOQ", "\e[1Q")
+<a name="539"/>      add_std_key(Key.F3, "\eOR", "\e[1R")
+<a name="540"/>      add_std_key(Key.F4, "\eOS", "\e[1S")
+<a name="541"/>      add_std_key(Key.F5, "\e[15~")
+<a name="542"/>      add_std_key(Key.F6, "\e[17~")
+<a name="543"/>      add_std_key(Key.F7, "\e[18~")
+<a name="544"/>      add_std_key(Key.F8, "\e[19~")
+<a name="545"/>      add_std_key(Key.F9, "\e[20~")
+<a name="546"/>      add_std_key(Key.F10, "\e[21~")
+<a name="547"/>      add_std_key(Key.F11, "\e[23~")
+<a name="548"/>      add_std_key(Key.F12, "\e[24~")
+<a name="549"/>   end
+<a name="550"/>
+<a name="551"/>   private static add_std_mods(k, l, r)
+<a name="552"/>      KEY_TABLE.add1(k, S,   CSM, l || ";2" || r)
+<a name="553"/>      KEY_TABLE.add1(k, M,   CSM, l || ";3" || r)
+<a name="554"/>      KEY_TABLE.add1(k, S+M, CSM, l || ";4" || r)
+<a name="555"/>      KEY_TABLE.add1(k, C,   CSM, l || ";5" || r)
+<a name="556"/>      KEY_TABLE.add1(k, C+S, CSM, l || ";6" || r)
+<a name="557"/>      KEY_TABLE.add1(k, C+M, CSM, l || ";7" || r)
+<a name="558"/>      KEY_TABLE.add1(k, CSM, CSM, l || ";8" || r)
+<a name="559"/>   end
+<a name="560"/>
+<a name="561"/>   private static add_std_key(k, s, t)
+<a name="562"/>      KEY_TABLE.add1(k, 0, CSM, s)
+<a name="563"/>      /t := s
+<a name="564"/>      add_std_mods(k, t[1:-1], t[-1])
+<a name="565"/>   end
+<a name="566"/>
+<a name="567"/>   private static add_cursor_key(k, c)
+<a name="568"/>      KEY_TABLE.add1(k, 0, CSM+U, "\e[" || c)
+<a name="569"/>      KEY_TABLE.add1(k, U, CSM+U, "\eO" || c)
+<a name="570"/>      add_std_mods(k, "\e[1", c)
+<a name="571"/>   end
+<a name="572"/>
+<a name="573"/>   package on_lost_primary_ownership()
+<a name="574"/>      primary := &amp;null
+<a name="575"/>      invalidate_region()
+<a name="576"/>      clear_mark()
+<a name="577"/>   end
+<a name="578"/>
+<a name="579"/>   public override create_view()
+<a name="580"/>      return VtView()
+<a name="581"/>   end
+<a name="582"/>
+<a name="583"/>   public override create_vsb()
+<a name="584"/>      return VtVsb()
+<a name="585"/>   end
+<a name="586"/>
+<a name="587"/>   public override layout()
+<a name="588"/>      check_changed_size()
+<a name="589"/>      LineBasedScrollArea.layout()
+<a name="590"/>   end
+<a name="591"/>
+<a name="592"/>   #
+<a name="593"/>   # Set the width of the vt in characters.  The default is 80. Only
+<a name="594"/>   # used if the size of the component is not set in pixels.
+<a name="595"/>   #
+<a name="596"/>   public set_vt_width(n)
+<a name="597"/>      n := need_integer(n, 1)
+<a name="598"/>      self.vt_width := n
+<a name="599"/>      link
+<a name="600"/>   end
+<a name="601"/>
+<a name="602"/>   #
+<a name="603"/>   # Set the height of the vt in lines.  The default is 25.  Only used
+<a name="604"/>   # if the size of the component is not set in pixels.
+<a name="605"/>   #
+<a name="606"/>   public set_vt_height(n)
+<a name="607"/>      n := need_integer(n, 1)
+<a name="608"/>      self.vt_height := n
+<a name="609"/>      link
+<a name="610"/>   end
+<a name="611"/>
+<a name="612"/>   public override get_default_width()
+<a name="613"/>      return predict_total_width(integer(vt_width * char_w) + 2 * Gui.TEXT_INSET, Yes{ history_size &gt; 0 })
+<a name="614"/>   end
+<a name="615"/>
+<a name="616"/>   public override get_default_height()
+<a name="617"/>      return predict_total_height(vt_height * get_line_height())
+<a name="618"/>   end
+<a name="619"/>
+<a name="620"/>   private check_changed_size()
+<a name="621"/>      local old_cols, old_rows
+<a name="622"/>      old_cols := \cols | 0
+<a name="623"/>      old_rows := \rows | 0
+<a name="624"/>      calc_size()
+<a name="625"/>      if old_cols ~= cols | old_rows ~= rows then {
+<a name="626"/>         ui.vt_size_changed(cols, rows)
+<a name="627"/>         normalize_after_size_changed(old_cols, old_rows)
+<a name="628"/>         trim_history()
+<a name="629"/>         reset_margins()
+<a name="630"/>         reset_tab_stops()
+<a name="631"/>         invalidate_line_count()
+<a name="632"/>         compute_and_invalidate()
+<a name="633"/>      }
+<a name="634"/>   end
+<a name="635"/>
+<a name="636"/>   #
+<a name="637"/>   # This generates the rows so that multi-row lines (with join set)
+<a name="638"/>   # are merged together and generated as one row.
+<a name="639"/>   #
+<a name="640"/>   private unflowed()
+<a name="641"/>      local r, m
+<a name="642"/>      every r := !contents do {
+<a name="643"/>         if /r.join then {
+<a name="644"/>            if /m then
+<a name="645"/>               suspend r
+<a name="646"/>            else {
+<a name="647"/>               put_all_segments(m, r.l)
+<a name="648"/>               suspend Row(m, r.bg)
+<a name="649"/>               m := &amp;null
+<a name="650"/>            }
+<a name="651"/>         } else {
+<a name="652"/>            /m := []
+<a name="653"/>            put_all_segments(m, r.l)
+<a name="654"/>         }
+<a name="655"/>      }
+<a name="656"/>      # The last line's continuation line is missing (perhaps it was
+<a name="657"/>      # deleted).
+<a name="658"/>      if \ (\r).join then
+<a name="659"/>         return Row(m, r.bg)
+<a name="660"/>   end
+<a name="661"/>
+<a name="662"/>   #
+<a name="663"/>   # Given an x, y position in the current contents, this returns the
+<a name="664"/>   # corresponding position in "unflowed" coordinates (ie, consistent
+<a name="665"/>   # with the rows generated by unflowed() above).
+<a name="666"/>   #
+<a name="667"/>   private unflow_loc(x, y)
+<a name="668"/>      local r, i, j, l
+<a name="669"/>      i := j := 1
+<a name="670"/>      l := 0
+<a name="671"/>      every r := !contents do {
+<a name="672"/>         if i = y then {
+<a name="673"/>            # If this is line is part of a larger line, and x is
+<a name="674"/>            # beyond its end, then it makes sense to limit x to the
+<a name="675"/>            # end of the line; otherwise the returned result would
+<a name="676"/>            # notionally refer to a position some way into the next
+<a name="677"/>            # line.  In any case, this shouldn't occur under normal
+<a name="678"/>            # circumstances.
+<a name="679"/>            /r.join | i = *contents | (x &gt;:= line_len(r.l) + 1)
+<a name="680"/>            return Locn(l + x, j)
+<a name="681"/>         }
+<a name="682"/>         if /r.join then {
+<a name="683"/>            j +:= 1
+<a name="684"/>            l := 0
+<a name="685"/>         } else
+<a name="686"/>            l +:= line_len(r.l)
+<a name="687"/>         i +:= 1
+<a name="688"/>      }
+<a name="689"/>   end
+<a name="690"/>
+<a name="691"/>   #
+<a name="692"/>   # Given an x, y position based on "unflowed" coordinates, returns
+<a name="693"/>   # a new position based on the current (flowed) contents.
+<a name="694"/>   #
+<a name="695"/>   private reflow_loc(x, y)
+<a name="696"/>      local r, i, j, l
+<a name="697"/>      i := j := 1
+<a name="698"/>      l := 0
+<a name="699"/>      every r := !contents do {
+<a name="700"/>         if j = y &amp; (/r.join | i = *contents | x &lt;= l + line_len(r.l)) then
+<a name="701"/>            return Locn(x - l, i)
+<a name="702"/>         if /r.join then {
+<a name="703"/>            j +:= 1
+<a name="704"/>            l := 0
+<a name="705"/>         } else
+<a name="706"/>            l +:= line_len(r.l)
+<a name="707"/>         i +:= 1
+<a name="708"/>      }
+<a name="709"/>   end
+<a name="710"/>
+<a name="711"/>   private reflow(old_rows)
+<a name="712"/>      local t, r, cursor, mark, cxy, p
+<a name="713"/>      # Get cursor, mark and cx/cy in "normalized" unflowed coordinates.
+<a name="714"/>      cursor := unflow_loc(cursor_x, \cursor_y)
+<a name="715"/>      mark := unflow_loc(mark_x, \mark_y)
+<a name="716"/>      cxy := unflow_loc(cx, *contents - old_rows + cy)
+<a name="717"/>      # Now reflow the contents based on the new column width.
+<a name="718"/>      t := []
+<a name="719"/>      every r := unflowed() do {
+<a name="720"/>         while line_len(r.l) &gt; cols do {
+<a name="721"/>            put(t, Row(split_upto(r, cols), r.bg, &amp;yes))
+<a name="722"/>            r := Row(split_from(r, cols), r.bg)
+<a name="723"/>         }
+<a name="724"/>         put(t, r)
+<a name="725"/>      }
+<a name="726"/>      contents := t
+<a name="727"/>
+<a name="728"/>      # Ensure the reflowed contents is consistent with old_rows; pad
+<a name="729"/>      # with blank lines so that it covers the screen.
+<a name="730"/>      while *contents &lt; old_rows do
+<a name="731"/>         put(contents, Row(, attr.bg))
+<a name="732"/>
+<a name="733"/>      # Finally, reset the cursor, mark and cx/cy, from their
+<a name="734"/>      # normalized values to coordinates based on the new contents.
+<a name="735"/>      if \cursor &amp; p := reflow_loc(cursor.x, cursor.y) then {
+<a name="736"/>         cursor_x := p.x
+<a name="737"/>         cursor_y := p.y
+<a name="738"/>      }
+<a name="739"/>      if \mark &amp; p := reflow_loc(mark.x, mark.y) then {
+<a name="740"/>         mark_x := p.x
+<a name="741"/>         mark_y := p.y
+<a name="742"/>      }
+<a name="743"/>      if \cxy &amp; p := reflow_loc(cxy.x, cxy.y) then {
+<a name="744"/>         cx := p.x
+<a name="745"/>         cy := p.y - *contents + old_rows
+<a name="746"/>         cy &lt;:= 1
+<a name="747"/>         cy &gt;:= old_rows
+<a name="748"/>      } 
+<a name="749"/>   end
+<a name="750"/>
+<a name="751"/>   private calc_size()
+<a name="752"/>      cols := integer((predict_view_width(w, Yes{history_size &gt; 0} ) - 2 * Gui.TEXT_INSET) / char_w)
+<a name="753"/>      cols &gt;:= \col_mode
+<a name="754"/>      cols &lt;:= 16
+<a name="755"/>      rows := predict_view_height(h) / get_line_height()
+<a name="756"/>      rows &lt;:= 1
+<a name="757"/>   end
+<a name="758"/>
+<a name="759"/>   private normalize_after_size_changed(old_cols, old_rows)
+<a name="760"/>      # Firstly, reflow the content if the columns have changed.
+<a name="761"/>      if old_cols ~= cols then
+<a name="762"/>         reflow(old_rows)
+<a name="763"/>
+<a name="764"/>      cx &gt;:= cols + 1
+<a name="765"/>      # The objective is to leave the value of cy_to_index() unchanged as we adjust *contents, rows and cy.
+<a name="766"/>      # Say the old is i1 = *c1 - rows1 + cy1; the new is i2 = *c2 - rows2 + cy2
+<a name="767"/>      if rows &lt; old_rows then {
+<a name="768"/>         if cy &lt;= rows then {
+<a name="769"/>            # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
+<a name="770"/>            # So we pull (old_rows - rows) rows from the end.
+<a name="771"/>            every 1 to old_rows - rows do
+<a name="772"/>               content_delete(*contents)
+<a name="773"/>         } else {
+<a name="774"/>            # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
+<a name="775"/>            # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
+<a name="776"/>            # So we pull (old_rows - cy) rows from the end.
+<a name="777"/>            every 1 to old_rows - cy do
+<a name="778"/>               content_delete(*contents)
+<a name="779"/>            cy := rows
+<a name="780"/>         }
+<a name="781"/>      } else {
+<a name="782"/>         # rows &gt;= old_rows, so we leave cy2 = cy1.  for i1 = i2, *c2 - *c1 = rows2 - rows1.  So we
+<a name="783"/>         # add (rows - old_rows) new rows to the end.
+<a name="784"/>         every 1 to rows - old_rows do
+<a name="785"/>            put(contents, Row(, attr.bg))
+<a name="786"/>      }
+<a name="787"/>   end
+<a name="788"/>
+<a name="789"/>   private reset_margins()
+<a name="790"/>      top_margin := 1
+<a name="791"/>      bottom_margin := rows
+<a name="792"/>   end
+<a name="793"/>
+<a name="794"/>   public override initially()
+<a name="795"/>      local s
+<a name="796"/>      s := get_wattrib(WAttrib.FONT)
+<a name="797"/>      char_w := check_font(s) | runerr(&amp;why, self)
+<a name="798"/>      LineBasedScrollArea.initially()
+<a name="799"/>      if has_focus() then
+<a name="800"/>         cursor_ticker.start()
+<a name="801"/>   end
+<a name="802"/>
+<a name="803"/>   private static check_font1(W, s)
+<a name="804"/>      local m, m2
+<a name="805"/>      W.set_font(s) | fail
+<a name="806"/>      m := W.text_width("m")
+<a name="807"/>      (m = W.text_width("i")) | return error("Font is not monospace")
+<a name="808"/>      m2 := W.text_width(repl("m", 1000))
+<a name="809"/>      return if m2 = m * 1000 then m else m2 / 1000.0
+<a name="810"/>   end
+<a name="811"/>
+<a name="812"/>   # Check the font s is monospaced; if so return the average char
+<a name="813"/>   # width (which may be a real).
+<a name="814"/>   private static check_font(s)
+<a name="815"/>      local W
+<a name="816"/>      return use {
+<a name="817"/>         W := new_win(),
+<a name="818"/>         check_font1(W, s)
+<a name="819"/>      }
+<a name="820"/>   end
+<a name="821"/>
+<a name="822"/>   # A wrapper around `set_font()`, which validates `s` as a valid
+<a name="823"/>   # font and resets the component if necessary.
+<a name="824"/>   #
+<a name="825"/>   public set_vt_font(s)
+<a name="826"/>      s := need_string(s)
+<a name="827"/>      check_font(s) | fail
+<a name="828"/>      if s ~=== get_wattrib(WAttrib.FONT) then {
+<a name="829"/>         set_font(s)
+<a name="830"/>         if is_live() then {
+<a name="831"/>            invalidate_line_height()
+<a name="832"/>            reset()
+<a name="833"/>         }
+<a name="834"/>      }
+<a name="835"/>      link
+<a name="836"/>   end
+<a name="837"/>
+<a name="838"/>   public override finally()
+<a name="839"/>      close_popup()
+<a name="840"/>      scroll_ticker.stop()
+<a name="841"/>      cursor_ticker.stop()
+<a name="842"/>      LineBasedScrollArea.finally()
+<a name="843"/>   end
+<a name="844"/>
+<a name="845"/>   #
+<a name="846"/>   # Provide input to the terminal
+<a name="847"/>   #
+<a name="848"/>   public input(s)
+<a name="849"/>      got := need_string(s)
+<a name="850"/>      @input_handler_coex
+<a name="851"/>      link
+<a name="852"/>   end
+<a name="853"/>
+<a name="854"/>   private static is_partial_utf8(s)
+<a name="855"/>      succeed *s &lt; (5 &gt; Text.get_utf8_seq_len(s[1]))
+<a name="856"/>   end
+<a name="857"/>
+<a name="858"/>   private wait_for_buff()
+<a name="859"/>      local i
+<a name="860"/>      while *buff = 0 do {
+<a name="861"/>         # Note that *got will not be 0 here on the first time
+<a name="862"/>         # through, since we are activated for the first time by
+<a name="863"/>         # input().
+<a name="864"/>         while *got = 0 do
+<a name="865"/>            coact()
+<a name="866"/>         # Add any partial utf-8 char saved from last time
+<a name="867"/>         got := part_ch || got
+<a name="868"/>         part_ch := ""
+<a name="869"/>         # Try the simple, usual case first
+<a name="870"/>         buff := ucs(got) | {
+<a name="871"/>            # Find the last utf-8 char in got; may be part of a char
+<a name="872"/>            i := *got
+<a name="873"/>            while i &gt; 1 &amp; 127 &lt; ord(got[i]) &lt; 192 do
+<a name="874"/>               i -:= 1
+<a name="875"/>            # Now got[i:0] gives us the last utf-8 char or part of it.
+<a name="876"/>            # Split got into got and part_ch, depending on whether the
+<a name="877"/>            # last utf-8 sequence is partial or not.
+<a name="878"/>            if is_partial_utf8(got[i:0]) then {
+<a name="879"/>               part_ch := got[i:0]
+<a name="880"/>               got := got[1:i]
+<a name="881"/>            }
+<a name="882"/>            # Assign to buff
+<a name="883"/>            Text.liberal_ucs(got)
+<a name="884"/>         }
+<a name="885"/>         got := ""
+<a name="886"/>       }
+<a name="887"/>   end
+<a name="888"/>
+<a name="889"/>   private get_chs(cs)
+<a name="890"/>      local c
+<a name="891"/>      wait_for_buff()
+<a name="892"/>      buff ? {
+<a name="893"/>         c := tab(many(cs)) | move(1)
+<a name="894"/>         buff := tab(0)
+<a name="895"/>      }
+<a name="896"/>      return c
+<a name="897"/>   end
+<a name="898"/>
+<a name="899"/>   private get_ch()
+<a name="900"/>      local c
+<a name="901"/>      wait_for_buff()
+<a name="902"/>      buff ? {
+<a name="903"/>         c := move(1)
+<a name="904"/>         buff := tab(0)
+<a name="905"/>      }
+<a name="906"/>      return c
+<a name="907"/>   end
+<a name="908"/>
+<a name="909"/>   private peek_ch()
+<a name="910"/>      wait_for_buff()
+<a name="911"/>      return buff[1]
+<a name="912"/>   end
+<a name="913"/>
+<a name="914"/>   private input_handler()
+<a name="915"/>      local c
+<a name="916"/>      repeat {
+<a name="917"/>         c := get_chs(Gui.PRINTABLE_1)
+<a name="918"/>         case string(c) of {
+<a name="919"/>            "\r" : do_cr()
+<a name="920"/>            "\n" | "\f" | "\v" : do_nl()
+<a name="921"/>            "\e" : do_esc()
+<a name="922"/>            "\b" : do_backspace()
+<a name="923"/>            "\t" : do_tab()
+<a name="924"/>            "\^g" : {}
+<a name="925"/>            "\^o" : do_set_charset(1)
+<a name="926"/>            "\^n" : do_set_charset(2)
+<a name="927"/>            default: do_default_str(apply_charset(c, curr_charset))
+<a name="928"/>         }
+<a name="929"/>         parent_dialog.resynch_pointer()
+<a name="930"/>      }
+<a name="931"/>   end
+<a name="932"/>
+<a name="933"/>   private do_set_charset(n)
+<a name="934"/>      curr_charset := n
+<a name="935"/>   end
+<a name="936"/>
+<a name="937"/>   private apply_charset(s, n)
+<a name="938"/>      return charsets[n].map(s)
+<a name="939"/>   end
+<a name="940"/>
+<a name="941"/>   private do_tab()
+<a name="942"/>      local i
+<a name="943"/>      # If in pos cols+1 (or cols), do nothing.  In particular tab doesn't reset cx=cols+1 to cols.
+<a name="944"/>      if cx &gt;= cols then
+<a name="945"/>         fail
+<a name="946"/>      i := cx
+<a name="947"/>      repeat {
+<a name="948"/>         i +:= 1
+<a name="949"/>         if (i &gt;= cols) | member(tab_stops, i) then
+<a name="950"/>            break
+<a name="951"/>      }
+<a name="952"/>      move_cursor(i)
+<a name="953"/>   end
+<a name="954"/>
+<a name="955"/>   private do_backspace()
+<a name="956"/>      cx &gt;:= cols
+<a name="957"/>      move_cursor(cx - 1)
+<a name="958"/>   end
+<a name="959"/>
+<a name="960"/>   private read_params()
+<a name="961"/>      local l, c, t
+<a name="962"/>      l := []
+<a name="963"/>      repeat {
+<a name="964"/>         c := peek_ch()
+<a name="965"/>         if any(&amp;digits, c) then {
+<a name="966"/>            t := get_chs(&amp;digits)
+<a name="967"/>            while any(&amp;digits, peek_ch()) do
+<a name="968"/>               t ||:= get_chs(&amp;digits)
+<a name="969"/>            put(l, integer(t))
+<a name="970"/>         } else if c == "\"" then {
+<a name="971"/>            get_ch()  # opening "
+<a name="972"/>            t := u""
+<a name="973"/>            repeat {
+<a name="974"/>               # This check is to avoid getting stuck in the loop.  ^C
+<a name="975"/>               # will certainly be followed by a newline, or the user
+<a name="976"/>               # will press newline to get the prompt, or the prompt
+<a name="977"/>               # itself will produce a newline.
+<a name="978"/>               if any('\r\n', peek_ch()) then
+<a name="979"/>                  break
+<a name="980"/>               c := get_chs(~'\r\n\"')
+<a name="981"/>               if c == "\"" then
+<a name="982"/>                  break
+<a name="983"/>               t ||:= c
+<a name="984"/>            }
+<a name="985"/>            put(l, t)
+<a name="986"/>         } else if c == ";" then
+<a name="987"/>            # Empty param
+<a name="988"/>            put(l)
+<a name="989"/>         if peek_ch() ~== ";" then
+<a name="990"/>            break
+<a name="991"/>         get_ch()  # skip ;
+<a name="992"/>      }
+<a name="993"/>      return l
+<a name="994"/>   end
+<a name="995"/>
+<a name="996"/>   private do_csi()
+<a name="997"/>      local cmd, param
+<a name="998"/>      cmd := if any('&gt;?!', peek_ch()) then get_ch() else u""
+<a name="999"/>      param := read_params()
+<a name="1000"/>      cmd ||:= get_ch()
+<a name="1001"/>      # See ecma 5.4
+<a name="1002"/>      while any(' !"#$%&amp;\'()*+,\-./', cmd[-1]) do
+<a name="1003"/>         cmd ||:= get_ch()
+<a name="1004"/>      case string(cmd) of {
+<a name="1005"/>         "m" : every do_set_attr(int_params(param, 0))
+<a name="1006"/>         "!L" : do_set_link(param)
+<a name="1007"/>         "!P" : do_popup(param)
+<a name="1008"/>         "A" : do_cursor_up(int_param(param, 1, 1))
+<a name="1009"/>         "B" : do_cursor_down(int_param(param, 1, 1))
+<a name="1010"/>         "C" : do_cursor_right(int_param(param, 1, 1))
+<a name="1011"/>         "D" : do_cursor_left(int_param(param, 1, 1))
+<a name="1012"/>         "P" : do_delete_chars(int_param(param, 1, 1))
+<a name="1013"/>         "J" : do_erase_in_display(int_param(param, 1, 0))
+<a name="1014"/>         "K" : do_erase_in_line(int_param(param, 1, 0))
+<a name="1015"/>         "X" : do_erase_characters(int_param(param, 1, 1))
+<a name="1016"/>         "G" : do_move_cursor_x(int_param(param, 1, 1))
+<a name="1017"/>         "H" : do_move_cursor(int_param(param, 1, 1), int_param(param, 2, 1))
+<a name="1018"/>         "r" : do_set_margins(int_param(param, 1, 1), int_param(param, 2, rows))
+<a name="1019"/>         "c" : do_send_primary_device_attrs(int_param(param, 1, 0))
+<a name="1020"/>         "&gt;c" : do_send_secondary_device_attrs(int_param(param, 1, 0))
+<a name="1021"/>         "@" : do_insert_blanks(int_param(param, 1, 1))
+<a name="1022"/>         "S" : do_scroll_up(int_param(param, 1, 1))
+<a name="1023"/>         "L" : do_insert_lines(int_param(param, 1, 1))
+<a name="1024"/>         "M" : do_delete_lines(int_param(param, 1, 1))
+<a name="1025"/>         "d" : do_vertical_pos_absolute(int_param(param, 1, 1))
+<a name="1026"/>         "e" : do_vertical_pos_relative(int_param(param, 1, 1))
+<a name="1027"/>         "f" : do_vertical_and_horizontal_pos(int_param(param, 1, 1), int_param(param, 2, 1))
+<a name="1028"/>         "h" : do_set_mode(int_param(param, 1))
+<a name="1029"/>         "l" : do_reset_mode(int_param(param, 1))
+<a name="1030"/>         "n" : do_device_status_report(int_param(param, 1))
+<a name="1031"/>         "?h" : do_dec_set(int_param(param, 1))
+<a name="1032"/>         "?l" : do_dec_reset(int_param(param, 1))
+<a name="1033"/>         "!p" : do_soft_reset()
+<a name="1034"/>         "g" : do_tab_clear(int_param(param, 1, 0))
+<a name="1035"/>         default : if \verbose_flag then ewrite("CSI not implemented: cmd=", image(cmd), "  params=", to_string(param))
+<a name="1036"/>      }
+<a name="1037"/>   end
+<a name="1038"/>
+<a name="1039"/>   private do_device_status_report(n)
+<a name="1040"/>      local t
+<a name="1041"/>      case n of {
+<a name="1042"/>         5 : send("\e[0n")
+<a name="1043"/>         6 : { 
+<a name="1044"/>            # cy is relative to top_margin, for consistency with xterm (see vttest option 6,3).
+<a name="1045"/>            # cx may be in cols+1; xterm reports cols (but konsole reports cols+1).  Do as per xterm.
+<a name="1046"/>            t := if \origin_mode then cy - top_margin + 1 else cy
+<a name="1047"/>            send("\e[" || t || ";" || min(cx, cols) || "R")
+<a name="1048"/>         }
+<a name="1049"/>      }
+<a name="1050"/>   end
+<a name="1051"/>
+<a name="1052"/>   private do_set_mode(n)
+<a name="1053"/>      case n of {
+<a name="1054"/>         4 : insert_mode := &amp;yes
+<a name="1055"/>      }
+<a name="1056"/>   end
+<a name="1057"/>
+<a name="1058"/>   private do_reset_mode(n)
+<a name="1059"/>      case n of {
+<a name="1060"/>         4 : insert_mode := &amp;no
+<a name="1061"/>      }
+<a name="1062"/>   end
+<a name="1063"/>
+<a name="1064"/>   private do_tab_clear(n)
+<a name="1065"/>      case n of {
+<a name="1066"/>         0 : delete(tab_stops, cx)
+<a name="1067"/>         3 : clear(tab_stops)
+<a name="1068"/>      }
+<a name="1069"/>   end
+<a name="1070"/>
+<a name="1071"/>   private do_soft_reset()
+<a name="1072"/>      reset_term()
+<a name="1073"/>   end
+<a name="1074"/>
+<a name="1075"/>   private do_full_reset()
+<a name="1076"/>      do_restore_cursor()
+<a name="1077"/>      do_use_normal_buffer()
+<a name="1078"/>      reset_term()
+<a name="1079"/>      do_erase_all()
+<a name="1080"/>      move_cursor(1, 1)
+<a name="1081"/>   end
+<a name="1082"/>
+<a name="1083"/>   private do_dec_set(n)
+<a name="1084"/>      case n of {
+<a name="1085"/>         1 : do_application_cursor_keys_mode(&amp;yes)
+<a name="1086"/>         3 : set_col_mode(132)
+<a name="1087"/>         5 : do_reverse_video(&amp;yes)
+<a name="1088"/>         6 : do_origin_mode(&amp;yes)
+<a name="1089"/>         7 : do_wraparound_mode(&amp;yes)
+<a name="1090"/>         25 : do_hide_cursor(&amp;no)
+<a name="1091"/>         40 : do_allow_80_132_mode(&amp;yes)
+<a name="1092"/>         1047 | 1049 : do_use_alternate_buffer()
+<a name="1093"/>         1048 : do_save_cursor()
+<a name="1094"/>      }
+<a name="1095"/>   end
+<a name="1096"/>
+<a name="1097"/>   private do_dec_reset(n)
+<a name="1098"/>      case n of {
+<a name="1099"/>         1 : do_application_cursor_keys_mode(&amp;no)
+<a name="1100"/>         3 : set_col_mode(80)
+<a name="1101"/>         5 : do_reverse_video(&amp;no)
+<a name="1102"/>         6 : do_origin_mode(&amp;no)
+<a name="1103"/>         7 : do_wraparound_mode(&amp;no)
+<a name="1104"/>         25 : do_hide_cursor(&amp;yes)
+<a name="1105"/>         40 : do_allow_80_132_mode(&amp;no)
+<a name="1106"/>         1047 | 1049 : do_use_normal_buffer()
+<a name="1107"/>         1048 : do_restore_cursor()
+<a name="1108"/>      }
+<a name="1109"/>   end
+<a name="1110"/>
+<a name="1111"/>   private do_use_alternate_buffer()
+<a name="1112"/>      saved_buffer := SavedBuffer(cx, cy, attr, charsets, curr_charset, 
+<a name="1113"/>                                  top_margin, bottom_margin, tab_stops,
+<a name="1114"/>                                  reverse_mode, origin_mode, wraparound_mode,
+<a name="1115"/>                                  col_mode, allow_80_132_mode, insert_mode,
+<a name="1116"/>                                  hide_cursor_mode, application_keypad_mode,
+<a name="1117"/>                                  application_cursor_mode,
+<a name="1118"/>                                  rows, cols, contents, history_size)
+<a name="1119"/>      history_size := 0
+<a name="1120"/>      contents := []
+<a name="1121"/>      every 1 to rows do put(contents, Row())
+<a name="1122"/>      origin_mode := &amp;no
+<a name="1123"/>      wraparound_mode := &amp;yes
+<a name="1124"/>      cx := cy := 1
+<a name="1125"/>      col_mode := &amp;no
+<a name="1126"/>      allow_80_132_mode := &amp;no
+<a name="1127"/>      insert_mode := &amp;no
+<a name="1128"/>      hide_cursor_mode := &amp;no
+<a name="1129"/>      reset_charsets()
+<a name="1130"/>      attr := EMPTY_ATTR
+<a name="1131"/>      check_changed_size()
+<a name="1132"/>      clear_mark()
+<a name="1133"/>      reset_tab_stops()
+<a name="1134"/>      reset_margins()
+<a name="1135"/>      invalidate_line_count()
+<a name="1136"/>      compute_and_invalidate()
+<a name="1137"/>   end
+<a name="1138"/>
+<a name="1139"/>   private do_use_normal_buffer()
+<a name="1140"/>      local old_cols, old_rows
+<a name="1141"/>      \saved_buffer | fail
+<a name="1142"/>      contents := saved_buffer.contents
+<a name="1143"/>      history_size := saved_buffer.history_size
+<a name="1144"/>      col_mode := saved_buffer.col_mode
+<a name="1145"/>      old_cols := cols
+<a name="1146"/>      old_rows := rows
+<a name="1147"/>      calc_size()
+<a name="1148"/>      if old_cols ~= cols | old_rows ~= rows then
+<a name="1149"/>         ui.vt_size_changed(cols, rows)
+<a name="1150"/>      if saved_buffer.cols ~= cols | saved_buffer.rows ~= rows then {
+<a name="1151"/>         # Normalize needs cy to be set for its calculations, then limits it (and cx).
+<a name="1152"/>         cx := saved_buffer.cx
+<a name="1153"/>         cy := saved_buffer.cy
+<a name="1154"/>         normalize_after_size_changed(saved_buffer.cols, saved_buffer.rows)      
+<a name="1155"/>         trim_history()
+<a name="1156"/>         reset_tab_stops()
+<a name="1157"/>         reset_margins()
+<a name="1158"/>      } else {
+<a name="1159"/>         top_margin := saved_buffer.top_margin
+<a name="1160"/>         bottom_margin := saved_buffer.bottom_margin
+<a name="1161"/>         tab_stops := saved_buffer.tab_stops
+<a name="1162"/>         move_cursor(saved_buffer.cx, saved_buffer.cy, &amp;yes)
+<a name="1163"/>      }
+<a name="1164"/>      attr := saved_buffer.attr
+<a name="1165"/>      charsets := saved_buffer.charsets
+<a name="1166"/>      curr_charset := saved_buffer.curr_charset
+<a name="1167"/>      do_reverse_video(saved_buffer.reverse_mode)
+<a name="1168"/>      origin_mode := saved_buffer.origin_mode
+<a name="1169"/>      wraparound_mode := saved_buffer.wraparound_mode
+<a name="1170"/>      allow_80_132_mode := saved_buffer.allow_80_132_mode
+<a name="1171"/>      insert_mode := saved_buffer.insert_mode
+<a name="1172"/>      hide_cursor_mode := saved_buffer.hide_cursor_mode
+<a name="1173"/>      application_keypad_mode := saved_buffer.application_keypad_mode
+<a name="1174"/>      application_cursor_mode := saved_buffer.application_cursor_mode
+<a name="1175"/>      saved_buffer := &amp;null
+<a name="1176"/>      clear_mark()
+<a name="1177"/>      invalidate_line_count()
+<a name="1178"/>      compute_and_invalidate()
+<a name="1179"/>   end
+<a name="1180"/>
+<a name="1181"/>   private do_reverse_video(f)
+<a name="1182"/>      if reverse_mode ~===:= f then
+<a name="1183"/>         view.reset()
+<a name="1184"/>   end
+<a name="1185"/>
+<a name="1186"/>   private do_origin_mode(f)
+<a name="1187"/>      if origin_mode ~===:= f then
+<a name="1188"/>         do_move_cursor(1, 1)
+<a name="1189"/>   end
+<a name="1190"/>
+<a name="1191"/>   private do_wraparound_mode(f)
+<a name="1192"/>      wraparound_mode := f
+<a name="1193"/>   end
+<a name="1194"/>
+<a name="1195"/>   private do_allow_80_132_mode(f)
+<a name="1196"/>      allow_80_132_mode := f
+<a name="1197"/>   end
+<a name="1198"/>
+<a name="1199"/>   private set_col_mode(n)
+<a name="1200"/>      \allow_80_132_mode | fail
+<a name="1201"/>      col_mode := n
+<a name="1202"/>      do_erase_all()
+<a name="1203"/>      move_cursor(1, 1)
+<a name="1204"/>      check_changed_size()
+<a name="1205"/>   end
+<a name="1206"/>
+<a name="1207"/>   private do_vertical_pos_absolute(n)
+<a name="1208"/>      move_cursor(, n)
+<a name="1209"/>   end
+<a name="1210"/>
+<a name="1211"/>   private do_vertical_pos_relative(n)
+<a name="1212"/>      move_cursor(, cy + n)
+<a name="1213"/>   end
+<a name="1214"/>
+<a name="1215"/>   private do_vertical_and_horizontal_pos(m, n)
+<a name="1216"/>      move_cursor(n, m)
+<a name="1217"/>   end
+<a name="1218"/>
+<a name="1219"/>   private do_insert_lines(n)
+<a name="1220"/>      scroll_down(cy, n)
+<a name="1221"/>   end
+<a name="1222"/>
+<a name="1223"/>   private do_scroll_up(n)
+<a name="1224"/>      scroll_up(bottom_margin, n)
+<a name="1225"/>   end
+<a name="1226"/>
+<a name="1227"/>   private do_delete_lines(n)
+<a name="1228"/>      delete_lines(cy, n)
+<a name="1229"/>   end
+<a name="1230"/>
+<a name="1231"/>   private do_insert_blanks(n)
+<a name="1232"/>      do_insert(spc(n))
+<a name="1233"/>   end
+<a name="1234"/>
+<a name="1235"/>   private reset_tab_stops()
+<a name="1236"/>      tab_stops := Set{1 to cols by 8}
+<a name="1237"/>   end
+<a name="1238"/>
+<a name="1239"/>   private reset_charsets()
+<a name="1240"/>      charsets := []
+<a name="1241"/>      every 1 to 4 do put(charsets, CHARSET["B"])
+<a name="1242"/>      curr_charset := 1
+<a name="1243"/>   end
+<a name="1244"/>
+<a name="1245"/>   private reset_term()
+<a name="1246"/>      origin_mode := &amp;no
+<a name="1247"/>      wraparound_mode := &amp;yes
+<a name="1248"/>      cx := cy := 1
+<a name="1249"/>      col_mode := &amp;no
+<a name="1250"/>      allow_80_132_mode := &amp;no
+<a name="1251"/>      reverse_mode := &amp;no
+<a name="1252"/>      insert_mode := &amp;no
+<a name="1253"/>      application_keypad_mode := &amp;no
+<a name="1254"/>      application_cursor_mode := &amp;no
+<a name="1255"/>      hide_cursor_mode := &amp;no
+<a name="1256"/>      reset_charsets()
+<a name="1257"/>      attr := EMPTY_ATTR
+<a name="1258"/>      if is_live() then {
+<a name="1259"/>         # Size may have changed since col_mode changed
+<a name="1260"/>         check_changed_size()
+<a name="1261"/>         clear_mark()
+<a name="1262"/>         # The next two need rows/cols to be set, so can only be done
+<a name="1263"/>         # if live.
+<a name="1264"/>         reset_tab_stops()
+<a name="1265"/>         reset_margins()
+<a name="1266"/>         # Since reverse_mode may have changed.
+<a name="1267"/>         view.reset()
+<a name="1268"/>      }
+<a name="1269"/>   end
+<a name="1270"/>
+<a name="1271"/>   #
+<a name="1272"/>   # If set, some debug output is produced.
+<a name="1273"/>   #
+<a name="1274"/>   public set_verbose(f)
+<a name="1275"/>      self.verbose_flag := need_flag(f)
+<a name="1276"/>      link
+<a name="1277"/>   end
+<a name="1278"/>
+<a name="1279"/>   #
+<a name="1280"/>   # If set, quietening of the cursor is disabled.
+<a name="1281"/>   #
+<a name="1282"/>   public set_dont_quieten(f)
+<a name="1283"/>      self.dont_quieten_flag := need_flag(f)
+<a name="1284"/>      link
+<a name="1285"/>   end
+<a name="1286"/>
+<a name="1287"/>   #
+<a name="1288"/>   # Set the fg colour to use in reverse mode.
+<a name="1289"/>   #
+<a name="1290"/>   public set_reverse_fg(c)
+<a name="1291"/>      /c | Window.parse_color(c) | return error("Invalid color")
+<a name="1292"/>      if reverse_fg ~===:= c then {
+<a name="1293"/>         if is_live() then
+<a name="1294"/>            view.reset()
+<a name="1295"/>      }
+<a name="1296"/>      link
+<a name="1297"/>   end
+<a name="1298"/>
+<a name="1299"/>   #
+<a name="1300"/>   # Set the bg colour to use in reverse mode.
+<a name="1301"/>   #
+<a name="1302"/>   public set_reverse_bg(c)
+<a name="1303"/>      /c | Window.parse_color(c) | return error("Invalid color")
+<a name="1304"/>      if reverse_bg ~===:= c then {
+<a name="1305"/>         if is_live() then
+<a name="1306"/>            view.reset()
+<a name="1307"/>      }
+<a name="1308"/>      link
+<a name="1309"/>   end
+<a name="1310"/>
+<a name="1311"/>   #
+<a name="1312"/>   # Set the fg colour to use in normal (non-reverse) mode.
+<a name="1313"/>   #
+<a name="1314"/>   public set_normal_fg(c)
+<a name="1315"/>      /c | Window.parse_color(c) | return error("Invalid color")
+<a name="1316"/>      if normal_fg ~===:= c then {
+<a name="1317"/>         if is_live() then
+<a name="1318"/>            view.reset()
+<a name="1319"/>      }
+<a name="1320"/>      link
+<a name="1321"/>   end
+<a name="1322"/>
+<a name="1323"/>   #
+<a name="1324"/>   # Set the bg colour to use in non-reverse mode.
+<a name="1325"/>   #
+<a name="1326"/>   public set_normal_bg(c)
+<a name="1327"/>      /c | Window.parse_color(c) | return error("Invalid color")
+<a name="1328"/>      if normal_bg ~===:= c then {
+<a name="1329"/>         if is_live() then
+<a name="1330"/>            view.reset()
+<a name="1331"/>      }
+<a name="1332"/>      link
+<a name="1333"/>   end
+<a name="1334"/>
+<a name="1335"/>   #
+<a name="1336"/>   # Set the history size; 0 implies no scrollbar.
+<a name="1337"/>   #
+<a name="1338"/>   public set_history_size(n)
+<a name="1339"/>      n := need_integer(n, 0)
+<a name="1340"/>      if history_size ~=:= n then {
+<a name="1341"/>         trim_history()
+<a name="1342"/>         invalidate_line_count()
+<a name="1343"/>         if is_live() then {
+<a name="1344"/>            check_changed_size()
+<a name="1345"/>            compute_and_invalidate()
+<a name="1346"/>         }
+<a name="1347"/>      }
+<a name="1348"/>      link
+<a name="1349"/>   end
+<a name="1350"/>
+<a name="1351"/>   #
+<a name="1352"/>   # Return the history size, but ignoring the value used by the
+<a name="1353"/>   # alternate buffer, if we are in that mode.
+<a name="1354"/>   #
+<a name="1355"/>   public get_actual_history_size()
+<a name="1356"/>      return .(\saved_buffer).history_size | .history_size
+<a name="1357"/>   end
+<a name="1358"/>
+<a name="1359"/>   private do_send_primary_device_attrs(n)
+<a name="1360"/>      case n of {
+<a name="1361"/>         0 : send("\e[?1;2;75c")
+<a name="1362"/>      }
+<a name="1363"/>   end
+<a name="1364"/>
+<a name="1365"/>   private do_send_secondary_device_attrs(n)
+<a name="1366"/>      case n of {
+<a name="1367"/>         0 : send("\e[&gt;0;115;0c")
+<a name="1368"/>      }
+<a name="1369"/>   end
+<a name="1370"/>
+<a name="1371"/>   private do_erase_in_display(n)
+<a name="1372"/>      case n of {
+<a name="1373"/>         0 : do_erase_below()
+<a name="1374"/>         1 : do_erase_above()
+<a name="1375"/>         2 : do_erase_all()
+<a name="1376"/>         9 : do_erase_history()
+<a name="1377"/>      }
+<a name="1378"/>   end
+<a name="1379"/>
+<a name="1380"/>   private do_erase_in_line(n)
+<a name="1381"/>      case n of {
+<a name="1382"/>         0 : do_erase_right()
+<a name="1383"/>         1 : do_erase_left()
+<a name="1384"/>         2 : do_erase_line()
+<a name="1385"/>         7 : do_custom_erase_right()
+<a name="1386"/>      }
+<a name="1387"/>   end
+<a name="1388"/>
+<a name="1389"/>   private static spc(n)
+<a name="1390"/>      return repl(u" ", n)
+<a name="1391"/>   end
+<a name="1392"/>
+<a name="1393"/>   private do_erase_characters(n)
+<a name="1394"/>      local i, r, m
+<a name="1395"/>      r := contents[i := cy_to_index()]
+<a name="1396"/>      cx &gt;:= cols
+<a name="1397"/>      n &gt;:= cols - cx + 1
+<a name="1398"/>      m := split_upto(r, cx - 1, &amp;yes)
+<a name="1399"/>      put_segment(m, spc(n), attr)
+<a name="1400"/>      content_edit(i, split_from(r, cx + n - 1, m), r.bg, r.join)
+<a name="1401"/>      invalidate_line(i)
+<a name="1402"/>   end
+<a name="1403"/>
+<a name="1404"/>   private do_erase_below()
+<a name="1405"/>      local i
+<a name="1406"/>      do_erase_right()
+<a name="1407"/>      i := cy_to_index()
+<a name="1408"/>      every content_edit(i + 1 to *contents,, attr.bg)
+<a name="1409"/>      invalidate_lines(i + 1, *contents)
+<a name="1410"/>   end
+<a name="1411"/>
+<a name="1412"/>   private do_erase_above()
+<a name="1413"/>      local i, j
+<a name="1414"/>      do_erase_left()
+<a name="1415"/>      i := row_to_index(1)
+<a name="1416"/>      j := cy_to_index()
+<a name="1417"/>      every content_edit(i to j - 1,, attr.bg)
+<a name="1418"/>      invalidate_lines(i, j - 1)
+<a name="1419"/>   end
+<a name="1420"/>
+<a name="1421"/>   private do_erase_all()
+<a name="1422"/>      cx &gt;:= cols
+<a name="1423"/>      every content_edit(row_to_index(1) to *contents,, attr.bg)
+<a name="1424"/>      view.invalidate()
+<a name="1425"/>   end
+<a name="1426"/>
+<a name="1427"/>   private do_erase_history()
+<a name="1428"/>      local n
+<a name="1429"/>      n := *contents - rows
+<a name="1430"/>      if n &gt; 0 then {
+<a name="1431"/>         every 1 to n do
+<a name="1432"/>            content_delete(1)
+<a name="1433"/>         invalidate_line_count()
+<a name="1434"/>         compute_and_invalidate()
+<a name="1435"/>      }
+<a name="1436"/>   end
+<a name="1437"/>
+<a name="1438"/>   # Change line i in the contents; the caller is responsible for invalidating the line i.
+<a name="1439"/>   private content_edit(i, l, bg, join)
+<a name="1440"/>      contents[i] := Row(l, bg, join)
+<a name="1441"/>      if \mark_y &amp; region_contains(i) then {
+<a name="1442"/>         invalidate_region()
+<a name="1443"/>         clear_mark()
+<a name="1444"/>      }
+<a name="1445"/>   end
+<a name="1446"/>
+<a name="1447"/>   private do_move_cursor(r, c)
+<a name="1448"/>      if \origin_mode then {
+<a name="1449"/>         r +:= top_margin - 1
+<a name="1450"/>         r &gt;:= bottom_margin
+<a name="1451"/>      }
+<a name="1452"/>      move_cursor(c, r)
+<a name="1453"/>   end
+<a name="1454"/>
+<a name="1455"/>   private do_move_cursor_x(c)
+<a name="1456"/>      move_cursor(c)
+<a name="1457"/>   end
+<a name="1458"/>
+<a name="1459"/>   private do_set_margins(top, bottom)
+<a name="1460"/>      bottom &lt;:= 1
+<a name="1461"/>      bottom &gt;:= rows
+<a name="1462"/>      top &lt;:= 1
+<a name="1463"/>      top &gt;:= bottom
+<a name="1464"/>      top_margin := top
+<a name="1465"/>      bottom_margin := bottom
+<a name="1466"/>      do_move_cursor(1, 1)
+<a name="1467"/>   end
+<a name="1468"/>
+<a name="1469"/>   private static int_param(param, n, def)
+<a name="1470"/>      return (0 &lt; integer(param[n])) | \def
+<a name="1471"/>   end
+<a name="1472"/>
+<a name="1473"/>   private static int_params(param, def)
+<a name="1474"/>      local i
+<a name="1475"/>      if *param = 0 then
+<a name="1476"/>         return def
+<a name="1477"/>      every i := !param do
+<a name="1478"/>         suspend ((0 &lt; integer(i)) | \def)\1
+<a name="1479"/>   end
+<a name="1480"/>
+<a name="1481"/>   private static put_all_segments(l, others)
+<a name="1482"/>      if equals(l[-1].attr, others[1].attr) then {
+<a name="1483"/>         l[-1] := Segment(l[-1].s || others[1].s, others[1].attr)
+<a name="1484"/>         every put(l, others[2 to *others])
+<a name="1485"/>      } else
+<a name="1486"/>         every put(l, !others)
+<a name="1487"/>      return l
+<a name="1488"/>   end
+<a name="1489"/>
+<a name="1490"/>   private static put_segment(l, s, attr)
+<a name="1491"/>      if equals(attr, l[-1].attr) then
+<a name="1492"/>         l[-1] := Segment(l[-1].s || s, attr)
+<a name="1493"/>      else
+<a name="1494"/>         put(l, Segment(s, attr))
+<a name="1495"/>   end
+<a name="1496"/>
+<a name="1497"/>   private static split_upto(r, j, pad)
+<a name="1498"/>      local k, t, m, l, a
+<a name="1499"/>      l := r.l
+<a name="1500"/>      m := []
+<a name="1501"/>      k := 1
+<a name="1502"/>      while j &gt;= (a := *l[k].s) do {
+<a name="1503"/>         put(m, l[k])
+<a name="1504"/>         j -:= a
+<a name="1505"/>         k +:= 1
+<a name="1506"/>      }
+<a name="1507"/>      if j &gt; 0 then {
+<a name="1508"/>         if t := l[k] then
+<a name="1509"/>            # We know j &lt; *t.s from the above while loop
+<a name="1510"/>            put_segment(m, t.s[1:j+1], t.attr)
+<a name="1511"/>         else if \pad then
+<a name="1512"/>            put_segment(m, spc(j), Attr(, r.bg))
+<a name="1513"/>      }
+<a name="1514"/>      return m
+<a name="1515"/>   end
+<a name="1516"/>
+<a name="1517"/>   private static split_from(r, j, m)
+<a name="1518"/>      local k, t, l, a
+<a name="1519"/>      l := r.l
+<a name="1520"/>      k := 1
+<a name="1521"/>      while j &gt;= (a := *l[k].s) do {
+<a name="1522"/>         j -:= a
+<a name="1523"/>         k +:= 1
+<a name="1524"/>      }
+<a name="1525"/>      /m := []
+<a name="1526"/>      if j &gt; 0 &amp; t := l[k] then {
+<a name="1527"/>         put_segment(m, t.s[j+1:0], t.attr)
+<a name="1528"/>         k +:= 1
+<a name="1529"/>      }
+<a name="1530"/>      while put(m, l[k]) do k +:= 1
+<a name="1531"/>      return m
+<a name="1532"/>   end
+<a name="1533"/>
+<a name="1534"/>   private do_delete_chars(n)
+<a name="1535"/>      local i, r, m
+<a name="1536"/>      r := contents[i := cy_to_index()]
+<a name="1537"/>      cx &gt;:= cols
+<a name="1538"/>      m := split_upto(r, cx - 1)
+<a name="1539"/>      content_edit(i, split_from(r, cx + n - 1, m), r.bg, r.join)
+<a name="1540"/>      invalidate_line(i)
+<a name="1541"/>   end
+<a name="1542"/>
+<a name="1543"/>   #
+<a name="1544"/>   # Flowterm-specific; like do_erase_right(), but a no-op if the
+<a name="1545"/>   # cursor is in the "extra" last column.  This behaves like konsole
+<a name="1546"/>   # and gnome terminal's erase-right.
+<a name="1547"/>   #
+<a name="1548"/>   private do_custom_erase_right()
+<a name="1549"/>      if cx &lt;= cols then
+<a name="1550"/>         do_erase_right()
+<a name="1551"/>   end
+<a name="1552"/>
+<a name="1553"/>   private do_erase_right()
+<a name="1554"/>      local i, r
+<a name="1555"/>      r := contents[i := cy_to_index()]
+<a name="1556"/>      cx &gt;:= cols
+<a name="1557"/>      content_edit(i, split_upto(r, cx - 1, &amp;yes), attr.bg)
+<a name="1558"/>      invalidate_line(i)
+<a name="1559"/>   end
+<a name="1560"/>
+<a name="1561"/>   private do_erase_left()
+<a name="1562"/>      local i, r, m
+<a name="1563"/>      r := contents[i := cy_to_index()]
+<a name="1564"/>      cx &gt;:= cols
+<a name="1565"/>      m := [Segment(spc(cx), Attr(, attr.bg))]
+<a name="1566"/>      content_edit(i, split_from(r, cx, m), r.bg, r.join)
+<a name="1567"/>      invalidate_line(i)
+<a name="1568"/>   end
+<a name="1569"/>
+<a name="1570"/>   private do_erase_line()
+<a name="1571"/>      local i, r
+<a name="1572"/>      r := contents[i := cy_to_index()]
+<a name="1573"/>      cx &gt;:= cols
+<a name="1574"/>      content_edit(i,, attr.bg)
+<a name="1575"/>      invalidate_line(i)
+<a name="1576"/>   end
+<a name="1577"/>
+<a name="1578"/>   #
+<a name="1579"/>   # extra is a flag; if set then we allow the x cursor to go into the
+<a name="1580"/>   # "extra" cols+1 column; this is used when restoring a saved
+<a name="1581"/>   # cursor.
+<a name="1582"/>   #
+<a name="1583"/>   private move_cursor(x, y, extra)
+<a name="1584"/>      if \y then {
+<a name="1585"/>         y &lt;:= 1
+<a name="1586"/>         y &gt;:= rows
+<a name="1587"/>      } else
+<a name="1588"/>         y := cy
+<a name="1589"/>      if \x then
+<a name="1590"/>         x &lt;:= 1
+<a name="1591"/>      else
+<a name="1592"/>         x := cx
+<a name="1593"/>      x &gt;:= if /extra then cols else cols + 1
+<a name="1594"/>      unless cx = x &amp; cy = y then {
+<a name="1595"/>         reset_blink()
+<a name="1596"/>         unless cy = y then {
+<a name="1597"/>            invalidate_cursor()
+<a name="1598"/>            cy := y
+<a name="1599"/>         }
+<a name="1600"/>         cx := x
+<a name="1601"/>         invalidate_cursor()
+<a name="1602"/>      }
+<a name="1603"/>   end
+<a name="1604"/>
+<a name="1605"/>   private do_cursor_up(n)
+<a name="1606"/>      local lim, y1
+<a name="1607"/>      lim := if cy &lt; top_margin then 1 else top_margin
+<a name="1608"/>      y1 := cy - n
+<a name="1609"/>      y1 &lt;:= lim
+<a name="1610"/>      move_cursor(, y1)
+<a name="1611"/>   end
+<a name="1612"/>
+<a name="1613"/>   private do_cursor_down(n)
+<a name="1614"/>      local lim, y1
+<a name="1615"/>      lim := if cy &gt; bottom_margin then rows else bottom_margin
+<a name="1616"/>      y1 := cy + n
+<a name="1617"/>      y1 &gt;:= lim
+<a name="1618"/>      move_cursor(, y1)
+<a name="1619"/>   end
+<a name="1620"/>
+<a name="1621"/>   private do_cursor_right(n)
+<a name="1622"/>      move_cursor(cx + n)
+<a name="1623"/>   end
+<a name="1624"/>
+<a name="1625"/>   private do_cursor_left(n)
+<a name="1626"/>      cx &gt;:= cols
+<a name="1627"/>      move_cursor(cx - n)
+<a name="1628"/>   end
+<a name="1629"/>
+<a name="1630"/>   private static decode_list(l)
+<a name="1631"/>      local s, t
+<a name="1632"/>      t := []
+<a name="1633"/>      every s := !l do
+<a name="1634"/>         put(t, ucs(URL.percent_decode(\s))) | fail
+<a name="1635"/>      return t
+<a name="1636"/>   end
+<a name="1637"/>
+<a name="1638"/>   private do_popup(l)
+<a name="1639"/>      local t, e
+<a name="1640"/>      # Validate params; must be ucs encoded list, even number, and no empty ones.
+<a name="1641"/>      if (*l % 2 ~= 0) then
+<a name="1642"/>         fail
+<a name="1643"/>      l := decode_list(l) | fail
+<a name="1644"/>      t := []
+<a name="1645"/>      e := create !l
+<a name="1646"/>      while put(t, PopupElement(@e, @e))
+<a name="1647"/>      open_popup(t)
+<a name="1648"/>   end
+<a name="1649"/>
+<a name="1650"/>   private do_set_link(l)
+<a name="1651"/>      attr := copy(attr)
+<a name="1652"/>      attr.url := URL(\l[1]) | &amp;null
+<a name="1653"/>   end
+<a name="1654"/>
+<a name="1655"/>   #
+<a name="1656"/>   # This is called (from view's initially) just after cbwin has been
+<a name="1657"/>   # initialized, and just before view.cbwin is to be initialized.
+<a name="1658"/>   #
+<a name="1659"/>   package synch_view_colours()
+<a name="1660"/>      if /reverse_mode then {
+<a name="1661"/>         view.clear_wattribs()
+<a name="1662"/>         view.set_fg(\normal_fg)
+<a name="1663"/>         view.set_bg(\normal_bg)
+<a name="1664"/>      } else {
+<a name="1665"/>         view.set_fg(\reverse_fg | \normal_bg | cbwin.get_bg())
+<a name="1666"/>         view.set_bg(\reverse_bg | \normal_fg | cbwin.get_fg())
+<a name="1667"/>      }
+<a name="1668"/>   end
+<a name="1669"/>
+<a name="1670"/>   # ESC[{n}m
+<a name="1671"/>   private do_set_attr(n)
+<a name="1672"/>      if n = 0 then
+<a name="1673"/>         # Keep just the url setting.
+<a name="1674"/>         attr := Attr(,,,,,,,, attr.url)
+<a name="1675"/>      else {
+<a name="1676"/>         attr := copy(attr)
+<a name="1677"/>         case n of {
+<a name="1678"/>            1 : attr.bold := &amp;yes
+<a name="1679"/>            3 : attr.italic := &amp;yes
+<a name="1680"/>            4 : attr.underline := &amp;yes
+<a name="1681"/>            7 : attr.inverse := &amp;yes
+<a name="1682"/>            8 : attr.invisible := &amp;yes
+<a name="1683"/>            9 : attr.crossed := &amp;yes
+<a name="1684"/>            22 : attr.bold := &amp;no
+<a name="1685"/>            23 : attr.italic := &amp;no
+<a name="1686"/>            24 : attr.underline := &amp;no
+<a name="1687"/>            27 : attr.inverse := &amp;no
+<a name="1688"/>            28 : attr.invisible := &amp;no
+<a name="1689"/>            29 : attr.crossed := &amp;no
+<a name="1690"/>            30 to 37 : attr.fg := COLORS[n - 29]
+<a name="1691"/>            39: attr.fg := &amp;null
+<a name="1692"/>            40 to 47 : attr.bg := COLORS[n - 39]
+<a name="1693"/>            49: attr.bg := &amp;null
+<a name="1694"/>         }
+<a name="1695"/>      }
+<a name="1696"/>   end
+<a name="1697"/>
+<a name="1698"/>   private do_esc()
+<a name="1699"/>      local c
+<a name="1700"/>      c := get_ch()
+<a name="1701"/>      case string(c) of {
+<a name="1702"/>         "D" : do_index()
+<a name="1703"/>         "M" : do_reverse_index()
+<a name="1704"/>         "E" : do_next_line()
+<a name="1705"/>         "H" : do_tab_set()
+<a name="1706"/>         "#" : do_esc_hash()
+<a name="1707"/>         "[" : do_csi()
+<a name="1708"/>         "7" : do_save_cursor()
+<a name="1709"/>         "8" : do_restore_cursor()
+<a name="1710"/>         "&gt;" : do_application_keypad_mode(&amp;no)
+<a name="1711"/>         "=" : do_application_keypad_mode(&amp;yes)
+<a name="1712"/>         "(" : do_designate_charset(1)
+<a name="1713"/>         ")" : do_designate_charset(2)
+<a name="1714"/>         "*" : do_designate_charset(3)
+<a name="1715"/>         "+" : do_designate_charset(4)
+<a name="1716"/>         "n" : do_set_charset(3)
+<a name="1717"/>         "o" : do_set_charset(4)
+<a name="1718"/>         "N" : do_single_shift(3)
+<a name="1719"/>         "O" : do_single_shift(4)
+<a name="1720"/>         "c" : do_full_reset()
+<a name="1721"/>         "^" : do_privacy_message()
+<a name="1722"/>         "_" : do_apc()
+<a name="1723"/>         "P" : do_dcs()
+<a name="1724"/>         "]" : do_osc()
+<a name="1725"/>         "X" : do_sos()
+<a name="1726"/>         default : if \verbose_flag then ewrite("Unknown ESC char: ", c)
+<a name="1727"/>      }
+<a name="1728"/>   end
+<a name="1729"/>
+<a name="1730"/>   #
+<a name="1731"/>   # Read a string according to ecma 8.3.27, 8.3.89 and others.  The
+<a name="1732"/>   # stuck loop check is non-standard.
+<a name="1733"/>   #
+<a name="1734"/>   private read_string1()
+<a name="1735"/>      local t, c
+<a name="1736"/>      t := u""
+<a name="1737"/>      repeat {
+<a name="1738"/>         # Avoid stuck loop; see comment in read_params() above.
+<a name="1739"/>         if any('\r\n', peek_ch()) then
+<a name="1740"/>            break
+<a name="1741"/>         c := get_chs(OSC_CHAR -- '\r\n\e')
+<a name="1742"/>         if c == "\e" then {
+<a name="1743"/>            # ESC-\ terminates, as does ESC on its own.
+<a name="1744"/>            if peek_ch() == "\\" then
+<a name="1745"/>               get_ch()
+<a name="1746"/>            break
+<a name="1747"/>         }
+<a name="1748"/>         if any(OSC_CHAR, c) then
+<a name="1749"/>            t ||:= c
+<a name="1750"/>         else
+<a name="1751"/>            break
+<a name="1752"/>      }
+<a name="1753"/>      return t
+<a name="1754"/>   end
+<a name="1755"/>
+<a name="1756"/>   #
+<a name="1757"/>   # Read a string according to ecma 8.3.128.  The stuck loop check is
+<a name="1758"/>   # non-standard.
+<a name="1759"/>   #
+<a name="1760"/>   private read_string2()
+<a name="1761"/>      local t, c
+<a name="1762"/>      t := u""
+<a name="1763"/>      repeat {
+<a name="1764"/>         # Avoid stuck loop; see comment in read_params() above.
+<a name="1765"/>         if any('\r\n', peek_ch()) then
+<a name="1766"/>            break
+<a name="1767"/>         c := get_chs(~'\r\n\e')
+<a name="1768"/>         if c == "\e" then {
+<a name="1769"/>            # Only ESC-\ terminates.
+<a name="1770"/>            if peek_ch() == "\\" then {
+<a name="1771"/>               get_ch()
+<a name="1772"/>               break
+<a name="1773"/>            }
+<a name="1774"/>         }
+<a name="1775"/>         t ||:= c
+<a name="1776"/>      }
+<a name="1777"/>      return t
+<a name="1778"/>   end
+<a name="1779"/>
+<a name="1780"/>   private do_privacy_message()
+<a name="1781"/>      read_string1()
+<a name="1782"/>   end
+<a name="1783"/>
+<a name="1784"/>   private do_apc()
+<a name="1785"/>      read_string1()
+<a name="1786"/>   end
+<a name="1787"/>
+<a name="1788"/>   private do_dcs()
+<a name="1789"/>      read_string1()
+<a name="1790"/>   end
+<a name="1791"/>
+<a name="1792"/>   private do_osc()
+<a name="1793"/>      local s, u
+<a name="1794"/>      s := read_string1()
+<a name="1795"/>      # Recognize URLs according to the scheme described at
+<a name="1796"/>      #    https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+<a name="1797"/>      s ? {
+<a name="1798"/>         if ="8;" &amp;
+<a name="1799"/>            tab(upto(';') + 1) &amp;
+<a name="1800"/>            u := tab(0)
+<a name="1801"/>         then
+<a name="1802"/>            do_set_link(if *u = 0 then [] else [u])
+<a name="1803"/>      }
+<a name="1804"/>   end
+<a name="1805"/>
+<a name="1806"/>   private do_sos()
+<a name="1807"/>      read_string2()
+<a name="1808"/>   end
+<a name="1809"/>
+<a name="1810"/>   private do_application_keypad_mode(f)
+<a name="1811"/>      application_keypad_mode := f
+<a name="1812"/>   end
+<a name="1813"/>
+<a name="1814"/>   private do_application_cursor_keys_mode(f)
+<a name="1815"/>      application_cursor_mode := f
+<a name="1816"/>   end
+<a name="1817"/>
+<a name="1818"/>   private do_hide_cursor(f)
+<a name="1819"/>      if hide_cursor_mode ~===:= f then
+<a name="1820"/>         invalidate_cursor()
+<a name="1821"/>   end
+<a name="1822"/>
+<a name="1823"/>   private do_single_shift(n)
+<a name="1824"/>      local c
+<a name="1825"/>      c := get_ch()
+<a name="1826"/>      do_default_str(apply_charset(c, n))
+<a name="1827"/>   end
+<a name="1828"/>
+<a name="1829"/>   private do_designate_charset(n)
+<a name="1830"/>      local c
+<a name="1831"/>      c := get_ch()
+<a name="1832"/>      charsets[n] := member(CHARSET, string(c) | "B")
+<a name="1833"/>   end
+<a name="1834"/>
+<a name="1835"/>   private do_save_cursor()
+<a name="1836"/>      saved_cursor := SavedCursor(cx, cy, attr, copy(charsets), curr_charset)
+<a name="1837"/>   end
+<a name="1838"/>
+<a name="1839"/>   private do_restore_cursor()
+<a name="1840"/>      \saved_cursor | fail
+<a name="1841"/>      attr := saved_cursor.attr
+<a name="1842"/>      curr_charset := saved_cursor.curr_charset
+<a name="1843"/>      charsets := saved_cursor.charsets
+<a name="1844"/>      move_cursor(saved_cursor.cx, saved_cursor.cy, &amp;yes)
+<a name="1845"/>      saved_cursor := &amp;null
+<a name="1846"/>   end
+<a name="1847"/>
+<a name="1848"/>   private do_tab_set()
+<a name="1849"/>      insert(tab_stops, cx)
+<a name="1850"/>   end
+<a name="1851"/>
+<a name="1852"/>   private do_esc_hash()
+<a name="1853"/>      local c
+<a name="1854"/>      c := get_ch()
+<a name="1855"/>      case string(c) of {
+<a name="1856"/>         "8" : do_decaln()
+<a name="1857"/>         default : if \verbose_flag then ewrite("Unkown ESC# char: ", c)
+<a name="1858"/>      }
+<a name="1859"/>   end
+<a name="1860"/>
+<a name="1861"/>   private do_decaln()
+<a name="1862"/>      local s
+<a name="1863"/>      s := Segment(repl(u"E", cols), EMPTY_ATTR)
+<a name="1864"/>      every content_edit(row_to_index(1) to *contents, [s])
+<a name="1865"/>      view.invalidate()
+<a name="1866"/>   end
+<a name="1867"/>
+<a name="1868"/>   private scroll_down(r, n)
+<a name="1869"/>      local i, j
+<a name="1870"/>      if r &lt; 1 | r &gt; bottom_margin then
+<a name="1871"/>         fail
+<a name="1872"/>      /n := 1
+<a name="1873"/>      i := row_to_index(r)
+<a name="1874"/>      j := row_to_index(bottom_margin)
+<a name="1875"/>      every 1 to n do {
+<a name="1876"/>         content_delete(j)
+<a name="1877"/>         content_insert(i)
+<a name="1878"/>      }
+<a name="1879"/>      view.invalidate()
+<a name="1880"/>   end
+<a name="1881"/>
+<a name="1882"/>   # Trim the history list so that it is within range; caller must
+<a name="1883"/>   # invalidate line count.
+<a name="1884"/>   private trim_history()
+<a name="1885"/>      local n
+<a name="1886"/>      \rows | fail
+<a name="1887"/>      n := *contents - (rows + history_size)
+<a name="1888"/>      (n &gt; 0) | fail
+<a name="1889"/>      every 1 to n do
+<a name="1890"/>         content_delete(1)
+<a name="1891"/>      # Adjust the vsb so that if we are above the bottom then the
+<a name="1892"/>      # line we're looking at stays the same.
+<a name="1893"/>      unless at_bottom() then
+<a name="1894"/>         vsb.set_value(vsb.value - n * line_height)
+<a name="1895"/>   end
+<a name="1896"/>
+<a name="1897"/>   private scroll_up(r, n)
+<a name="1898"/>      local i, j, t
+<a name="1899"/>      if r &lt; 1 | r &gt; bottom_margin then
+<a name="1900"/>         fail
+<a name="1901"/>      /n := 1
+<a name="1902"/>      t := if r &lt; top_margin then 1 else top_margin
+<a name="1903"/>      i := row_to_index(r)
+<a name="1904"/>      if t = 1 &amp; history_size &gt; 0 then {
+<a name="1905"/>         every 1 to n do
+<a name="1906"/>            content_insert(i + 1)
+<a name="1907"/>         trim_history()
+<a name="1908"/>         invalidate_line_count()
+<a name="1909"/>         compute_and_invalidate()
+<a name="1910"/>      } else {
+<a name="1911"/>         j := row_to_index(t)
+<a name="1912"/>         every 1 to n do {
+<a name="1913"/>            content_delete(j)
+<a name="1914"/>            content_insert(i)
+<a name="1915"/>         }
+<a name="1916"/>         view.invalidate()
+<a name="1917"/>      }
+<a name="1918"/>   end
+<a name="1919"/>
+<a name="1920"/>   # Delete a line from the content; the caller must invalidate the view
+<a name="1921"/>   private content_delete(i)
+<a name="1922"/>      delete(contents, i)
+<a name="1923"/>      if \mark_y then {
+<a name="1924"/>         if region_contains(i) then
+<a name="1925"/>            clear_mark()
+<a name="1926"/>         else if cursor_y &gt; i then {
+<a name="1927"/>            cursor_y -:= 1
+<a name="1928"/>            mark_y -:= 1
+<a name="1929"/>         }
+<a name="1930"/>      }
+<a name="1931"/>   end
+<a name="1932"/>
+<a name="1933"/>   # Add a line to the content; the caller must invalidate the view
+<a name="1934"/>   private content_insert(i)
+<a name="1935"/>      insert(contents, i, Row(, attr.bg))
+<a name="1936"/>      if \mark_y then {
+<a name="1937"/>         if region_contains(i) then
+<a name="1938"/>            clear_mark()
+<a name="1939"/>         else if cursor_y &gt; i then {
+<a name="1940"/>            cursor_y +:= 1
+<a name="1941"/>            mark_y +:= 1
+<a name="1942"/>         }
+<a name="1943"/>      }
+<a name="1944"/>   end
+<a name="1945"/>
+<a name="1946"/>   private region_contains(i)
+<a name="1947"/>      return contained(i, i, cursor_y, mark_y)
+<a name="1948"/>   end
+<a name="1949"/>
+<a name="1950"/>   private delete_lines(r, n)
+<a name="1951"/>      local i, j
+<a name="1952"/>      if r &lt; 1 | r &gt; bottom_margin then
+<a name="1953"/>         fail
+<a name="1954"/>      /n := 1
+<a name="1955"/>      if n &gt; bottom_margin - r + 1 then
+<a name="1956"/>         fail
+<a name="1957"/>      i := row_to_index(r)
+<a name="1958"/>      j := row_to_index(bottom_margin)
+<a name="1959"/>      every 1 to n do {
+<a name="1960"/>         content_delete(i)
+<a name="1961"/>         content_insert(j)
+<a name="1962"/>      }
+<a name="1963"/>      view.invalidate()
+<a name="1964"/>   end
+<a name="1965"/>
+<a name="1966"/>   private do_index()
+<a name="1967"/>      if cy = bottom_margin then {
+<a name="1968"/>         cx &gt;:= cols
+<a name="1969"/>         scroll_up(cy)
+<a name="1970"/>      } else
+<a name="1971"/>         move_cursor(, cy + 1)
+<a name="1972"/>   end
+<a name="1973"/>
+<a name="1974"/>   private do_reverse_index()
+<a name="1975"/>      if cy = top_margin then {
+<a name="1976"/>         cx &gt;:= cols
+<a name="1977"/>         scroll_down(cy)
+<a name="1978"/>      } else
+<a name="1979"/>         move_cursor(, cy - 1)
+<a name="1980"/>   end
+<a name="1981"/>
+<a name="1982"/>   private do_next_line()
+<a name="1983"/>      if cy = bottom_margin then {
+<a name="1984"/>         scroll_up(cy)
+<a name="1985"/>         move_cursor(1)
+<a name="1986"/>      } else
+<a name="1987"/>         move_cursor(1, cy + 1)
+<a name="1988"/>   end
+<a name="1989"/>
+<a name="1990"/>   private cy_to_index()
+<a name="1991"/>      return *contents - rows + cy
+<a name="1992"/>   end
+<a name="1993"/>
+<a name="1994"/>   private row_to_index(r)
+<a name="1995"/>      return *contents - rows + r
+<a name="1996"/>   end
+<a name="1997"/>
+<a name="1998"/>   private do_cr()
+<a name="1999"/>      move_cursor(1)
+<a name="2000"/>   end
+<a name="2001"/>
+<a name="2002"/>   private do_nl()
+<a name="2003"/>      if cy = bottom_margin then
+<a name="2004"/>         scroll_up(cy)
+<a name="2005"/>      else
+<a name="2006"/>         move_cursor(, cy + 1)
+<a name="2007"/>   end
+<a name="2008"/>
+<a name="2009"/>   private do_crnl()
+<a name="2010"/>      do_cr()
+<a name="2011"/>      do_nl()
+<a name="2012"/>   end
+<a name="2013"/>
+<a name="2014"/>   private do_insert_or_put(s)
+<a name="2015"/>      if /insert_mode then
+<a name="2016"/>         do_put(s)
+<a name="2017"/>      else
+<a name="2018"/>         do_insert(s)
+<a name="2019"/>   end
+<a name="2020"/>
+<a name="2021"/>   private do_put(s)
+<a name="2022"/>      local i, r, m
+<a name="2023"/>      if *s = 0 then
+<a name="2024"/>         fail
+<a name="2025"/>      i := cy_to_index()
+<a name="2026"/>      r := contents[i]
+<a name="2027"/>      m := split_upto(r, cx - 1, &amp;yes)
+<a name="2028"/>      put_segment(m, s, attr)
+<a name="2029"/>      split_from(r, cx + *s - 1, m)
+<a name="2030"/>      content_edit(i, m, r.bg, r.join)
+<a name="2031"/>      invalidate_line(i)
+<a name="2032"/>   end
+<a name="2033"/>
+<a name="2034"/>   private static truncate(l, lim)
+<a name="2035"/>      local n, t
+<a name="2036"/>      n := line_len(l)
+<a name="2037"/>      while n &gt; lim do {
+<a name="2038"/>         t := l[-1]
+<a name="2039"/>         if *t.s &lt;= n - lim then {
+<a name="2040"/>            n -:= *t.s
+<a name="2041"/>            pull(l)
+<a name="2042"/>         } else {
+<a name="2043"/>            l[-1] := Segment(t.s[1:lim - n], t.attr)
+<a name="2044"/>            break
+<a name="2045"/>         }
+<a name="2046"/>      }
+<a name="2047"/>   end
+<a name="2048"/>
+<a name="2049"/>   private do_insert(s)
+<a name="2050"/>      local i, r, m
+<a name="2051"/>      if *s = 0 then
+<a name="2052"/>         fail
+<a name="2053"/>      i := cy_to_index()
+<a name="2054"/>      r := contents[i]
+<a name="2055"/>      m := split_upto(r, cx - 1, &amp;yes)
+<a name="2056"/>      put_segment(m, s, attr)
+<a name="2057"/>      split_from(r, cx - 1, m)
+<a name="2058"/>      truncate(m, cols)
+<a name="2059"/>      content_edit(i, m, r.bg, r.join)
+<a name="2060"/>      invalidate_line(i)
+<a name="2061"/>   end
+<a name="2062"/>
+<a name="2063"/>   private do_default_str(s)
+<a name="2064"/>      local s1, i, r
+<a name="2065"/>      if /wraparound_mode then {
+<a name="2066"/>         if *s &gt; cols - cx then {
+<a name="2067"/>            cx &gt;:= cols
+<a name="2068"/>            s := s[1+:cols - cx] || s[-1]
+<a name="2069"/>            do_insert_or_put(s)
+<a name="2070"/>            cx := cols
+<a name="2071"/>         } else {
+<a name="2072"/>            do_insert_or_put(s)
+<a name="2073"/>            cx +:= *s
+<a name="2074"/>         }
+<a name="2075"/>      } else {
+<a name="2076"/>         while *s &gt; 0 do {
+<a name="2077"/>            if cx &gt; cols then {
+<a name="2078"/>               r := contents[i := cy_to_index()]
+<a name="2079"/>               contents[i] := Row(r.l, r.bg, &amp;yes)
+<a name="2080"/>               do_crnl()
+<a name="2081"/>            }
+<a name="2082"/>            s ? {
+<a name="2083"/>               s1 := tab(cols - cx + 2 | 0)
+<a name="2084"/>               if *s1 = 0 then syserr("cx out of range")
+<a name="2085"/>               s := tab(0)
+<a name="2086"/>            }
+<a name="2087"/>            do_insert_or_put(s1)
+<a name="2088"/>            # Since *s1 &lt;= cols - cx + 1, this leaves cx &lt;= cols + 1
+<a name="2089"/>            cx +:= *s1
+<a name="2090"/>         }
+<a name="2091"/>      }
+<a name="2092"/>      reset_blink()
+<a name="2093"/>   end
+<a name="2094"/>
+<a name="2095"/>   public override keeps(e)
+<a name="2096"/>      return
+<a name="2097"/>   end
+<a name="2098"/>
+<a name="2099"/>   public override set_internal_fields()
+<a name="2100"/>      local bf
+<a name="2101"/>      bf := if at_bottom() then &amp;yes
+<a name="2102"/>      LineBasedScrollArea.set_internal_fields()
+<a name="2103"/>      if \bf then goto_bottom()
+<a name="2104"/>   end
+<a name="2105"/>
+<a name="2106"/>   public override calculate_line_count()
+<a name="2107"/>      return *contents
+<a name="2108"/>   end
+<a name="2109"/>
+<a name="2110"/>   public override calculate_line_height()
+<a name="2111"/>      return view.cbwin.get_line_height()
+<a name="2112"/>   end
+<a name="2113"/>
+<a name="2114"/>   public override calculate_subject_width()
+<a name="2115"/>      return 0
+<a name="2116"/>   end
+<a name="2117"/>
+<a name="2118"/>   public override optional draw_line()
+<a name="2119"/>
+<a name="2120"/>   public override draw()
+<a name="2121"/>      local n, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
+<a name="2122"/>         default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i,
+<a name="2123"/>         cursor_i, leading, bold_font, italic_font, bold_italic_font
+<a name="2124"/>
+<a name="2125"/>      cr := view.get_cbwin_clip()
+<a name="2126"/>      info := get_line_info(cr) | fail
+<a name="2127"/>      yp := cr.y - info.offset
+<a name="2128"/>      xp := get_subject_x() + Gui.TEXT_INSET
+<a name="2129"/>
+<a name="2130"/>      use { 
+<a name="2131"/>         W := view.cbwin.clone(), 
+<a name="2132"/>         {
+<a name="2133"/>            bg := default_bg := W.get_bg()
+<a name="2134"/>            fg := default_fg := W.get_fg()
+<a name="2135"/>            font := default_font := get_wattrib(WAttrib.FONT)
+<a name="2136"/>            leading := W.get_absolute_leading()
+<a name="2137"/>            if /hide_cursor_mode then
+<a name="2138"/>               cursor_i := cy_to_index()
+<a name="2139"/>
+<a name="2140"/>            #
+<a name="2141"/>            # Write the lines
+<a name="2142"/>            #
+<a name="2143"/>            every i := info.first to info.last do {
+<a name="2144"/>               # Don't draw partial lines at the top, since this looks poor
+<a name="2145"/>               # when running full-screen editing style apps (eg emacs)
+<a name="2146"/>               if yp &gt;= view.y then {
+<a name="2147"/>                  row := contents[i]
+<a name="2148"/>
+<a name="2149"/>                  x1 := xp
+<a name="2150"/>                  y1 := yp + leading
+<a name="2151"/>                  every seg := !row.l do {
+<a name="2152"/>                     a := seg.attr
+<a name="2153"/>                     ss := seg.s
+<a name="2154"/>                     want_fg := if \a.url === highlight then Style.FOCUS_COLOR else (\a.fg | default_fg)
+<a name="2155"/>                     want_bg := \a.bg | default_bg
+<a name="2156"/>                     if \a.inverse then
+<a name="2157"/>                        want_fg :=: want_bg
+<a name="2158"/>                     W.set_fg(fg ~===:= want_fg)
+<a name="2159"/>                     W.set_bg(bg ~===:= want_bg)
+<a name="2160"/>
+<a name="2161"/>                     # Figure out which font we want
+<a name="2162"/>                     want_font := if /a.bold &amp; /a.italic then
+<a name="2163"/>                        default_font
+<a name="2164"/>                     else if /a.bold then {
+<a name="2165"/>                        /italic_font := default_font || ",italic"
+<a name="2166"/>                        italic_font
+<a name="2167"/>                     } else if /a.italic then {
+<a name="2168"/>                        /bold_font := default_font || ",bold"
+<a name="2169"/>                        bold_font
+<a name="2170"/>                     } else {
+<a name="2171"/>                        /bold_italic_font := default_font || ",italic,bold"
+<a name="2172"/>                        bold_italic_font
+<a name="2173"/>                     }
+<a name="2174"/>                     # Note that want_font may be invalid; eg if we
+<a name="2175"/>                     # had a base of "typewriter,light", then on bold,
+<a name="2176"/>                     # "typewriter,light,bold" is invalid.  So if that
+<a name="2177"/>                     # happens, for consistency, display the base
+<a name="2178"/>                     # font, rather than whatever went just before (eg
+<a name="2179"/>                     # it might be "typewriter,light,italic" which is
+<a name="2180"/>                     # legal).
+<a name="2181"/>                     if font ~=== want_font then
+<a name="2182"/>                        W.set_font(font := want_font | default_font)
+<a name="2183"/>
+<a name="2184"/>                     w1 := char_w * *ss
+<a name="2185"/>                     if want_bg ~=== default_bg then
+<a name="2186"/>                        W.erase_area(x1, yp, w1, line_height)
+<a name="2187"/>
+<a name="2188"/>                     if /a.invisible then
+<a name="2189"/>                        W.draw_string(x1, y1 + W.get_font_ascent(), ss)
+<a name="2190"/>
+<a name="2191"/>                     if \a.underline then
+<a name="2192"/>                        W.fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+<a name="2193"/>                     else if \a.url ~=== last_highlight then
+<a name="2194"/>                        use { 
+<a name="2195"/>                           W2 := W.clone(),
+<a name="2196"/>                           W2.set_fg(EditRGBA(want_fg,,,, 16000)).      # 25% alpha of the current fg.
+<a name="2197"/>                                fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+<a name="2198"/>                        }
+<a name="2199"/>
+<a name="2200"/>                     if \a.crossed then
+<a name="2201"/>                        W.fill_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+<a name="2202"/>
+<a name="2203"/>                     if \a.url === last_highlight then
+<a name="2204"/>                        Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height, Gui.FINE_WIDTH)
+<a name="2205"/>                     if \a.url === over then
+<a name="2206"/>                        Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
+<a name="2207"/>
+<a name="2208"/>                     x1 +:= w1
+<a name="2209"/>                  }
+<a name="2210"/>
+<a name="2211"/>                  if \row.bg ~=== default_bg then {
+<a name="2212"/>                     w1 := xp + cols * char_w - x1
+<a name="2213"/>                     W.set_bg(bg ~===:= row.bg)
+<a name="2214"/>                     W.erase_area(x1, yp, w1, line_height)
+<a name="2215"/>                  }
+<a name="2216"/>
+<a name="2217"/>                  if \mark_y &amp; 
+<a name="2218"/>                     ((mark_y &lt;= i &lt;= cursor_y) | (mark_y &gt;= i &gt;= cursor_y))\1 &amp;
+<a name="2219"/>                     n := line_len(row.l) &amp;
+<a name="2220"/>                     (r := if (mark_y &lt; i &lt; cursor_y) | (mark_y &gt; i &gt; cursor_y) then
+<a name="2221"/>                      Range(1, 1 + (0 &lt; n))
+<a name="2222"/>                     else if i = mark_y = cursor_y then
+<a name="2223"/>                     range1(1, n + 1, cursor_x, mark_x)
+<a name="2224"/>                     else if i = mark_y then {
+<a name="2225"/>                        if mark_y &lt; cursor_y then
+<a name="2226"/>                           range1(1, n + 1, mark_x, n + 1)
+<a name="2227"/>                        else
+<a name="2228"/>                           range1(1, n + 1, 1, mark_x)
+<a name="2229"/>                     } else if i = cursor_y then {
+<a name="2230"/>                        if mark_y &gt; cursor_y then
+<a name="2231"/>                           range1(1, n + 1, cursor_x, n + 1)
+<a name="2232"/>                        else
+<a name="2233"/>                           range1(1, n + 1, 1, cursor_x)
+<a name="2234"/>                     })
+<a name="2235"/>                  then
+<a name="2236"/>                     Gui.style.fill_selection_rectangle(W, xp + (r.lo - 1) * char_w, yp,  
+<a name="2237"/>                                                        (r.hi - r.lo) * char_w, line_height)
+<a name="2238"/>
+<a name="2239"/>                  if i = \cursor_i then {
+<a name="2240"/>                     if should_draw_focus() then {
+<a name="2241"/>                        if cursor_on ~= 2 then
+<a name="2242"/>                           Gui.style.draw_text_cursor(W,
+<a name="2243"/>                                                      xp + (cx - 1) * char_w,
+<a name="2244"/>                                                      y1, 
+<a name="2245"/>                                                      view.cbwin.get_font_height())
+<a name="2246"/>                     } else 
+<a name="2247"/>                        Gui.style.draw_shadow_text_cursor(W,
+<a name="2248"/>                                                          xp + (cx - 1) * char_w,
+<a name="2249"/>                                                          y1, 
+<a name="2250"/>                                                          view.cbwin.get_font_height())
+<a name="2251"/>                  }
+<a name="2252"/>               }
+<a name="2253"/>               yp +:= line_height
+<a name="2254"/>            }
+<a name="2255"/>         }
+<a name="2256"/>      }
+<a name="2257"/>   end
+<a name="2258"/>
+<a name="2259"/>   #
+<a name="2260"/>   # Set cursor from the given event
+<a name="2261"/>   #
+<a name="2262"/>   private set_cursor_from_pos(e)
+<a name="2263"/>      cursor_y := get_nearest_line_to_pointer(e)
+<a name="2264"/>      # Adding char_w/2 notionally places the dividing points in the
+<a name="2265"/>      # middle of chars; this is better for selection of regions with
+<a name="2266"/>      # the "xterm" mouse cursor.
+<a name="2267"/>      cursor_x := col_for_x(e.x + integer(char_w / 2))
+<a name="2268"/>      cursor_x &gt;:= cols + 1
+<a name="2269"/>   end
+<a name="2270"/>
+<a name="2271"/>   private reset_blink()
+<a name="2272"/>      cursor_on := -1
+<a name="2273"/>   end
+<a name="2274"/>
+<a name="2275"/>   private clear_mark()
+<a name="2276"/>      reset_search()
+<a name="2277"/>      links_selection := text_selection := mark_x := mark_y := &amp;null
+<a name="2278"/>      link
+<a name="2279"/>   end
+<a name="2280"/>
+<a name="2281"/>   private static line_len(l)
+<a name="2282"/>      local n
+<a name="2283"/>      n := 0
+<a name="2284"/>      every n +:= *(!l).s
+<a name="2285"/>      return n
+<a name="2286"/>   end
+<a name="2287"/>
+<a name="2288"/>   private contents_str(i)
+<a name="2289"/>      return line_str(contents[i].l)
+<a name="2290"/>   end
+<a name="2291"/>
+<a name="2292"/>   private static line_str(l)
+<a name="2293"/>      local s
+<a name="2294"/>      s := u""
+<a name="2295"/>      every s ||:= (!l).s
+<a name="2296"/>      return s
+<a name="2297"/>   end
+<a name="2298"/>
+<a name="2299"/>   private handle_ldrag(e)
+<a name="2300"/>      if /held &amp; /no_drag &amp; \mark_y then {
+<a name="2301"/>         if cursor_y &gt; 1 &amp; e.y &lt; self.view.y then {
+<a name="2302"/>            going_up := &amp;yes
+<a name="2303"/>            check_scroll_ticker(self.view.y - e.y)
+<a name="2304"/>         } else if cursor_y &lt; *contents &amp; e.y &gt;= self.view.y + self.view.h then {
+<a name="2305"/>            going_up := &amp;no
+<a name="2306"/>            check_scroll_ticker(e.y - (self.view.y + self.view.h))
+<a name="2307"/>         } else {
+<a name="2308"/>            invalidate_region()
+<a name="2309"/>            scroll_ticker.stop()
+<a name="2310"/>            if e.y &lt; self.view.y then
+<a name="2311"/>               # cursor_y = 1
+<a name="2312"/>               cursor_x := 1
+<a name="2313"/>            else if e.y &gt;= self.view.y + self.view.h then
+<a name="2314"/>               # cursor_y = *contents
+<a name="2315"/>               cursor_x := *contents_str(cursor_y) + 1
+<a name="2316"/>            else
+<a name="2317"/>               set_cursor_from_pos(e)
+<a name="2318"/>            invalidate_region()
+<a name="2319"/>         }
+<a name="2320"/>      } else
+<a name="2321"/>         handle_mdrag(e)
+<a name="2322"/>   end
+<a name="2323"/>
+<a name="2324"/>   private check_scroll_ticker(d)
+<a name="2325"/>      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+<a name="2326"/>      scroll_ticker.change_time(scroll_ticker_interval)
+<a name="2327"/>      # Start it (if it isn't already running)
+<a name="2328"/>      scroll_ticker.start()
+<a name="2329"/>   end
+<a name="2330"/>
+<a name="2331"/>   private scroll_tick()
+<a name="2332"/>      local i
+<a name="2333"/>      repeat {
+<a name="2334"/>         if \going_up then {
+<a name="2335"/>            if cursor_y &gt; 1 &amp; i := get_line_info() then {
+<a name="2336"/>               invalidate_region()
+<a name="2337"/>               cursor_y := i.first_whole - 1
+<a name="2338"/>               cursor_y &lt;:= 1
+<a name="2339"/>               cursor_x := 1
+<a name="2340"/>               ensure_line_visible(cursor_y)
+<a name="2341"/>               invalidate_region()
+<a name="2342"/>            }
+<a name="2343"/>         } else {
+<a name="2344"/>            if cursor_y &lt; *contents &amp; i := get_line_info() then {
+<a name="2345"/>               invalidate_region()
+<a name="2346"/>               cursor_y := i.last_whole + 1
+<a name="2347"/>               cursor_y &gt;:= *contents
+<a name="2348"/>               cursor_x := *contents_str(cursor_y) + 1
+<a name="2349"/>               ensure_line_visible(cursor_y)
+<a name="2350"/>               invalidate_region()
+<a name="2351"/>            }
+<a name="2352"/>         }
+<a name="2353"/>         scroll_ticker.sleep(scroll_ticker_interval)
+<a name="2354"/>      }
+<a name="2355"/>   end
+<a name="2356"/>
+<a name="2357"/>   private cursor_tick()
+<a name="2358"/>      local t
+<a name="2359"/>      repeat {
+<a name="2360"/>         if /hide_cursor_mode &amp; should_draw_focus() &amp; is_unhidden() then {
+<a name="2361"/>            t := cursor_on
+<a name="2362"/>            cursor_on := if dont_blink(self) then
+<a name="2363"/>               0
+<a name="2364"/>            else
+<a name="2365"/>               (cursor_on + 1) % 3
+<a name="2366"/>
+<a name="2367"/>            if (t | cursor_on) = 2 then
+<a name="2368"/>               invalidate_cursor()
+<a name="2369"/>         }
+<a name="2370"/>         cursor_ticker.sleep(Gui.CURSOR_BLINK)
+<a name="2371"/>      }
+<a name="2372"/>   end
+<a name="2373"/>
+<a name="2374"/>   private send_tr_nl(s)
+<a name="2375"/>      send(replace(s, u"\N", u"\r"))
+<a name="2376"/>   end
+<a name="2377"/>
+<a name="2378"/>   private send(s)
+<a name="2379"/>      ui.send_tty(s)
+<a name="2380"/>   end
+<a name="2381"/>
+<a name="2382"/>   public handle_pgup(e)
+<a name="2383"/>      set_area_y(page_jump_impl(-1))
+<a name="2384"/>   end
+<a name="2385"/>
+<a name="2386"/>   public handle_pgdn(e)
+<a name="2387"/>      set_area_y(page_jump_impl(1))
+<a name="2388"/>   end
+<a name="2389"/>
+<a name="2390"/>   package page_jump_impl(n)
+<a name="2391"/>      local j
+<a name="2392"/>      j := max(rows - PAGE_MARGIN, 1)
+<a name="2393"/>      return if n &gt; 0 then
+<a name="2394"/>         get_cum_line_height(get_line_info().last_whole + j + 1) - view.h
+<a name="2395"/>      else
+<a name="2396"/>         get_cum_line_height(get_line_info().first_whole - j)
+<a name="2397"/>   end
+<a name="2398"/>
+<a name="2399"/>   package small_jump_impl(n)
+<a name="2400"/>      return if n &gt; 0 then
+<a name="2401"/>         get_cum_line_height(get_line_info().last_whole + n + 1) - view.h
+<a name="2402"/>      else
+<a name="2403"/>         get_cum_line_height(get_line_info().first_whole + n)
+<a name="2404"/>   end
+<a name="2405"/>
+<a name="2406"/>   public handle_copy(e)
+<a name="2407"/>      local l
+<a name="2408"/>      if l := \text_selection then
+<a name="2409"/>         parent_dialog.own_selection(Selection.CLIPBOARD, StaticAttrTextSelectionOwner(l))
+<a name="2410"/>   end
+<a name="2411"/>
+<a name="2412"/>   public handle_copy_links(e)
+<a name="2413"/>      local l
+<a name="2414"/>      if l := \links_selection then {
+<a name="2415"/>         parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
+<a name="2416"/>         ui.info_msg(*l || " URL(s) copied")
+<a name="2417"/>      } else
+<a name="2418"/>         ui.info_msg("No URLs in selection")
+<a name="2419"/>   end
+<a name="2420"/>
+<a name="2421"/>   # Put a string as though typed by the user.
+<a name="2422"/>   public put_user_string(s)
+<a name="2423"/>      send(s)
+<a name="2424"/>      if is_live() then {
+<a name="2425"/>         quieten_cursor_and_clear_msg()
+<a name="2426"/>         goto_bottom()
+<a name="2427"/>      }
+<a name="2428"/>      link
+<a name="2429"/>   end
+<a name="2430"/>
+<a name="2431"/>   private handle_default_key(e)
+<a name="2432"/>      local ch
+<a name="2433"/>      ch := e.code
+<a name="2434"/>      if type(ch) == ("string" | "ucs") then {
+<a name="2435"/>         ch := text_convert(ch, "ucs") | fail
+<a name="2436"/>         if \e.meta then
+<a name="2437"/>            ch := u"\e" || ch
+<a name="2438"/>         put_user_string(ch)
+<a name="2439"/>      }
+<a name="2440"/>   end
+<a name="2441"/>
+<a name="2442"/>   private get_key_flags(e)
+<a name="2443"/>      local i
+<a name="2444"/>      i := 0
+<a name="2445"/>      if \e.shift then i +:= S
+<a name="2446"/>      if \e.ctrl then i +:= C
+<a name="2447"/>      if \e.meta then i +:= M
+<a name="2448"/>      if \e.meta4 then i +:= M4
+<a name="2449"/>      if \e.meta5 then i +:= M5
+<a name="2450"/>      if \application_keypad_mode then i +:= K
+<a name="2451"/>      if \application_cursor_mode then i +:= U
+<a name="2452"/>      return i
+<a name="2453"/>   end
+<a name="2454"/>
+<a name="2455"/>   #
+<a name="2456"/>   # Given a key event e, lookup and call any matching defined custom
+<a name="2457"/>   # key.
+<a name="2458"/>   #
+<a name="2459"/>   public do_custom_key(e)
+<a name="2460"/>      local i, ke
+<a name="2461"/>      i := get_key_flags(e)
+<a name="2462"/>      if ke := custom_keys.lookup(e.code, i) then
+<a name="2463"/>         ke.val(ke.data, e)
+<a name="2464"/>      link
+<a name="2465"/>   end
+<a name="2466"/>
+<a name="2467"/>   private handle_table_key(e)
+<a name="2468"/>      local i, ke
+<a name="2469"/>      i := get_key_flags(e)
+<a name="2470"/>      if ke := custom_keys.lookup(e.code, i) then {
+<a name="2471"/>         ke.val(ke.data, e)
+<a name="2472"/>         return
+<a name="2473"/>      }
+<a name="2474"/>      if ke := KEY_TABLE.lookup(e.code, i) then {
+<a name="2475"/>         put_user_string(ke.val)
+<a name="2476"/>         return
+<a name="2477"/>      }
+<a name="2478"/>   end
+<a name="2479"/>
+<a name="2480"/>   private handle_popup_key(e, src, ty)
+<a name="2481"/>      local o
+<a name="2482"/>      \popup | fail
+<a name="2483"/>      if member(Key.NAVIGATE ++ set("\r"), e.code) then {
+<a name="2484"/>         popup.fire(ty, e)
+<a name="2485"/>         return
+<a name="2486"/>      }
+<a name="2487"/>      if e.code === "\t" then {
+<a name="2488"/>         # Pressing tab behaves just like selecting with return
+<a name="2489"/>         if o := popup.object_get_cursor() then {
+<a name="2490"/>            close_all()
+<a name="2491"/>            send_tr_nl(o.str)
+<a name="2492"/>         }
+<a name="2493"/>         return
+<a name="2494"/>      }
+<a name="2495"/>      if e.code === "\e" then {
+<a name="2496"/>         close_all()
+<a name="2497"/>         return
+<a name="2498"/>      }
+<a name="2499"/>      if type(e.code) == ("string" | "ucs") then {
+<a name="2500"/>         # A char has been pressed; close popup, fail, and so "fall
+<a name="2501"/>         # through" to the other key handlers
+<a name="2502"/>         close_all()
+<a name="2503"/>         fail
+<a name="2504"/>      }
+<a name="2505"/>      # Something else (eg a function or meta key); just ignore
+<a name="2506"/>      # (and don't pass onto custom handlers to avoid odd
+<a name="2507"/>      # interactions with the popup).
+<a name="2508"/>      return
+<a name="2509"/>   end
+<a name="2510"/>
+<a name="2511"/>   private handle_key(e, src, ty)
+<a name="2512"/>      handle_popup_key(e, src, ty) | handle_table_key(e) | handle_default_key(e)
+<a name="2513"/>   end
+<a name="2514"/>
+<a name="2515"/>   public gen_custom_key_codes()
+<a name="2516"/>      suspend custom_keys.gen_codes()
+<a name="2517"/>   end
+<a name="2518"/>
+<a name="2519"/>   public gen_custom_key_entries(code)
+<a name="2520"/>      suspend custom_keys.gen_entries(code)
+<a name="2521"/>   end
+<a name="2522"/>
+<a name="2523"/>   public add_custom_key(code, bits, mask, func, data)
+<a name="2524"/>      link custom_keys.add(code, bits, mask, func, data)
+<a name="2525"/>   end
+<a name="2526"/>
+<a name="2527"/>   public remove_custom_key(code, bits, mask)
+<a name="2528"/>      link custom_keys.remove(code, bits, mask)
+<a name="2529"/>   end
+<a name="2530"/>
+<a name="2531"/>   public reset_custom_keys()
+<a name="2532"/>      custom_keys := KeyTable()
+<a name="2533"/>      link
+<a name="2534"/>   end
+<a name="2535"/>
+<a name="2536"/>   private invalidate_link(l)
+<a name="2537"/>      local info, i, r
+<a name="2538"/>      info := get_line_info() | fail
+<a name="2539"/>      every i := info.first to info.last do {
+<a name="2540"/>         r := contents[i]
+<a name="2541"/>         if (!r.l).attr.url === l then
+<a name="2542"/>            invalidate_line(i, info)
+<a name="2543"/>      }
+<a name="2544"/>   end
+<a name="2545"/>
+<a name="2546"/>   private set_last_highlight(l)
+<a name="2547"/>      if l ~=== last_highlight then {
+<a name="2548"/>         invalidate_link(\last_highlight)
+<a name="2549"/>         last_highlight := l
+<a name="2550"/>         invalidate_link(\last_highlight)
+<a name="2551"/>      }
+<a name="2552"/>      link
+<a name="2553"/>   end
+<a name="2554"/>
+<a name="2555"/>   private set_highlight(l)
+<a name="2556"/>      if l ~=== highlight then {
+<a name="2557"/>         set_last_highlight(\l)
+<a name="2558"/>         invalidate_link(\highlight)
+<a name="2559"/>         highlight := l
+<a name="2560"/>         invalidate_link(\highlight)
+<a name="2561"/>      }
+<a name="2562"/>      link
+<a name="2563"/>   end
+<a name="2564"/>
+<a name="2565"/>   private col_for_x(x)
+<a name="2566"/>      x := x - (view.x + Gui.TEXT_INSET)
+<a name="2567"/>      x &lt;:= 0
+<a name="2568"/>      return 1 + integer(x / char_w)
+<a name="2569"/>   end
+<a name="2570"/>
+<a name="2571"/>   private get_segment_for_pos(ev)
+<a name="2572"/>      local r, c, seg
+<a name="2573"/>      r := contents[get_line_under_pointer(ev)] | fail
+<a name="2574"/>      c := col_for_x(ev.x)
+<a name="2575"/>      every seg := !r.l do {
+<a name="2576"/>         if c &lt;= *seg.s then
+<a name="2577"/>            return seg
+<a name="2578"/>         c -:= *seg.s
+<a name="2579"/>      }
+<a name="2580"/>   end
+<a name="2581"/>
+<a name="2582"/>   private set_over(u)
+<a name="2583"/>      if u ~=== over then {
+<a name="2584"/>         invalidate_link(\over)
+<a name="2585"/>         over := u
+<a name="2586"/>         invalidate_link(\over)
+<a name="2587"/>         if /over then {
+<a name="2588"/>            ui.msg()
+<a name="2589"/>            view.set_pointer("xterm")
+<a name="2590"/>         } else {
+<a name="2591"/>            ui.msg(u.ucs())
+<a name="2592"/>            view.set_pointer("hand1")
+<a name="2593"/>         }
+<a name="2594"/>      }
+<a name="2595"/>   end
+<a name="2596"/>
+<a name="2597"/>   private handle_mpress_response(target_type, data)
+<a name="2598"/>      if is_initialized() then
+<a name="2599"/>         send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
+<a name="2600"/>   end
+<a name="2601"/>
+<a name="2602"/>   private handle_mpress(e)
+<a name="2603"/>      parent_dialog.get_held_count() = 1 | fail
+<a name="2604"/>      if \over then {
+<a name="2605"/>         multi_begin := last_highlight
+<a name="2606"/>         ensure_pointer_line_visible(e)
+<a name="2607"/>         set_highlight(over)
+<a name="2608"/>         held := over
+<a name="2609"/>      } else {
+<a name="2610"/>         goto_bottom()
+<a name="2611"/>         parent_dialog.request_selection(Selection.PRIMARY, 
+<a name="2612"/>                                         [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+<a name="2613"/>                                         handle_mpress_response)
+<a name="2614"/>      }
+<a name="2615"/>   end
+<a name="2616"/>
+<a name="2617"/>   #
+<a name="2618"/>   # Return the currently selected text, or fail if none is selected.
+<a name="2619"/>   #
+<a name="2620"/>   public get_current_text_selection()
+<a name="2621"/>      return \.text_selection
+<a name="2622"/>   end
+<a name="2623"/>
+<a name="2624"/>   private static ts_add(r, l, fl)
+<a name="2625"/>      if /fl then
+<a name="2626"/>         put(r, l)
+<a name="2627"/>      else
+<a name="2628"/>         every put(r[-1], !l)
+<a name="2629"/>   end
+<a name="2630"/>
+<a name="2631"/>   private static segments_in_range(row, i, j)
+<a name="2632"/>      local seg, c
+<a name="2633"/>      c := 1
+<a name="2634"/>      /i := 1
+<a name="2635"/>      /j := line_len(row.l) + 1
+<a name="2636"/>      every seg := !row.l do {
+<a name="2637"/>         if range1(c, *seg.s + c, i, j) then
+<a name="2638"/>            suspend seg
+<a name="2639"/>         c +:= *seg.s
+<a name="2640"/>      }
+<a name="2641"/>   end
+<a name="2642"/>
+<a name="2643"/>   public get_current_links_selection()
+<a name="2644"/>      return \.links_selection
+<a name="2645"/>   end
+<a name="2646"/>
+<a name="2647"/>   private calculate_links_selection()
+<a name="2648"/>      local l
+<a name="2649"/>      links_selection := &amp;null
+<a name="2650"/>      \mark_y | fail
+<a name="2651"/>      l := urls_in_segments {
+<a name="2652"/>         if mark_y &lt; cursor_y then
+<a name="2653"/>            segments_in_range(contents[mark_y], mark_x) |
+<a name="2654"/>            !contents[mark_y + 1 to cursor_y - 1].l |
+<a name="2655"/>            segments_in_range(contents[cursor_y],, cursor_x)
+<a name="2656"/>         else if mark_y &gt; cursor_y then
+<a name="2657"/>            segments_in_range(contents[cursor_y], cursor_x) |
+<a name="2658"/>            !contents[cursor_y + 1 to mark_y - 1].l |
+<a name="2659"/>            segments_in_range(contents[mark_y],, mark_x)
+<a name="2660"/>         else
+<a name="2661"/>            # mark_y = cursor_y
+<a name="2662"/>            segments_in_range(contents[cursor_y], cursor_x, mark_x)
+<a name="2663"/>      }
+<a name="2664"/>      if *l &gt; 0 then
+<a name="2665"/>         links_selection := l
+<a name="2666"/>   end
+<a name="2667"/>
+<a name="2668"/>   private calculate_text_selection()
+<a name="2669"/>      local r, t, a, fl
+<a name="2670"/>      text_selection := &amp;null
+<a name="2671"/>      \mark_y | fail
+<a name="2672"/>      if mark_y &lt; cursor_y then {
+<a name="2673"/>         a := contents[mark_y]
+<a name="2674"/>         fl := a.join
+<a name="2675"/>         r := [ split_from(a, mark_x - 1) ]
+<a name="2676"/>         every a := contents[mark_y + 1 to cursor_y - 1] do {
+<a name="2677"/>            ts_add(r, a.l, fl)
+<a name="2678"/>            fl := a.join
+<a name="2679"/>         }
+<a name="2680"/>         ts_add(r, split_upto(contents[cursor_y], cursor_x - 1), fl)
+<a name="2681"/>      } else if mark_y &gt; cursor_y then {
+<a name="2682"/>         a := contents[cursor_y]
+<a name="2683"/>         fl := a.join
+<a name="2684"/>         r := [ split_from(a, cursor_x - 1) ]
+<a name="2685"/>         every a := contents[cursor_y + 1 to mark_y - 1] do {
+<a name="2686"/>            ts_add(r, a.l, fl)
+<a name="2687"/>            fl := a.join
+<a name="2688"/>         }
+<a name="2689"/>         ts_add(r, split_upto(contents[mark_y], mark_x - 1), fl)
+<a name="2690"/>      } else {
+<a name="2691"/>         # mark_y = cursor_y
+<a name="2692"/>         a := contents[cursor_y]
+<a name="2693"/>         t := range1(1, line_len(a.l) + 1, cursor_x, mark_x) | fail
+<a name="2694"/>         r := split_from(a, t.lo - 1)
+<a name="2695"/>         r := Row(r)
+<a name="2696"/>         r := [ split_upto(r, t.hi - t.lo) ]
+<a name="2697"/>      }
+<a name="2698"/>      text_selection := r
+<a name="2699"/>   end
+<a name="2700"/>
+<a name="2701"/>   private handle_lrelease(e)
+<a name="2702"/>      if \held then {
+<a name="2703"/>         if \over then {
+<a name="2704"/>            set_highlight()
+<a name="2705"/>            ui.link_left_clicked(over)
+<a name="2706"/>         }
+<a name="2707"/>         held := &amp;null
+<a name="2708"/>      } else {
+<a name="2709"/>         no_drag := &amp;null
+<a name="2710"/>         scroll_ticker.stop()
+<a name="2711"/>         own_primary()
+<a name="2712"/>      }
+<a name="2713"/>   end
+<a name="2714"/>
+<a name="2715"/>   private own_primary()
+<a name="2716"/>      calculate_text_selection()
+<a name="2717"/>      calculate_links_selection()
+<a name="2718"/>      if primary := \text_selection then
+<a name="2719"/>         parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
+<a name="2720"/>   end
+<a name="2721"/>
+<a name="2722"/>   public handle_select_all(e)
+<a name="2723"/>      mark_x := mark_y := 1
+<a name="2724"/>      cursor_y := *contents
+<a name="2725"/>      # Chop off blank lines at the end.
+<a name="2726"/>      while line_len(contents[1 &lt; cursor_y].l) = 0 do
+<a name="2727"/>         cursor_y -:= 1
+<a name="2728"/>      # ...but always leave a selection (cursor_y &gt; 1), and try to
+<a name="2729"/>      # leave a newline at the end.
+<a name="2730"/>      if cursor_y &lt; *contents then
+<a name="2731"/>         cursor_y +:= 1
+<a name="2732"/>      cursor_x := *contents_str(cursor_y) + 1
+<a name="2733"/>      reset_search()
+<a name="2734"/>      own_primary()
+<a name="2735"/>      view.invalidate()
+<a name="2736"/>   end
+<a name="2737"/>
+<a name="2738"/>   private handle_mdrag(e)
+<a name="2739"/>      if get_segment_for_pos(e).attr.url === \held then {
+<a name="2740"/>         set_over(held)
+<a name="2741"/>         set_highlight(held)
+<a name="2742"/>      } else {
+<a name="2743"/>         set_over()
+<a name="2744"/>         set_highlight()
+<a name="2745"/>      }
+<a name="2746"/>   end
+<a name="2747"/>
+<a name="2748"/>   private static urls_in_segments(e)
+<a name="2749"/>      return ipl.pdco.List{ Unique{ \Seq(e).attr.url }}
+<a name="2750"/>   end
+<a name="2751"/>
+<a name="2752"/>   private handle_mrelease(e)
+<a name="2753"/>      local l, i, j, r
+<a name="2754"/>      \held | fail
+<a name="2755"/>      if \over then {
+<a name="2756"/>         set_highlight()
+<a name="2757"/>         if \e.shift &amp; \multi_begin then {
+<a name="2758"/>            l := urls_in_segments{ !(!contents).l }
+<a name="2759"/>            if i := keyof(l, over) &amp; j := keyof(l, multi_begin) then
+<a name="2760"/>               r := if i &gt; j then l[j + 1:i + 1] else l[i:j]
+<a name="2761"/>         }
+<a name="2762"/>         /r := [over]
+<a name="2763"/>         ui.link_middle_clicked(r, e)
+<a name="2764"/>      }
+<a name="2765"/>      held := &amp;null
+<a name="2766"/>   end
+<a name="2767"/>
+<a name="2768"/>   private invalidate_region()
+<a name="2769"/>      invalidate_lines(\cursor_y, \mark_y)
+<a name="2770"/>   end
+<a name="2771"/>
+<a name="2772"/>   private invalidate_cursor()
+<a name="2773"/>      invalidate_line(cy_to_index())
+<a name="2774"/>   end
+<a name="2775"/>
+<a name="2776"/>   public override focus_changed(e) 
+<a name="2777"/>      if is_live() then
+<a name="2778"/>         invalidate_cursor()
+<a name="2779"/>   end
+<a name="2780"/>
+<a name="2781"/>   private handle_double_click()
+<a name="2782"/>      local s, l, r, m, t
+<a name="2783"/>      l := unflow_loc(cursor_x, cursor_y) | fail
+<a name="2784"/>      r := Index{unflowed(), l.y} | fail
+<a name="2785"/>      s := line_str(r.l)
+<a name="2786"/>      t := l.x
+<a name="2787"/>      while any(~'\t ', s, t) do
+<a name="2788"/>         t +:= 1
+<a name="2789"/>      if m := reflow_loc(t, l.y) then {
+<a name="2790"/>         cursor_x := m.x
+<a name="2791"/>         cursor_y := m.y
+<a name="2792"/>      }
+<a name="2793"/>      t := l.x
+<a name="2794"/>      while any(~'\t ', s, t - 1) do
+<a name="2795"/>         t -:= 1
+<a name="2796"/>      if m := reflow_loc(t, l.y) then {
+<a name="2797"/>         mark_x := m.x
+<a name="2798"/>         mark_y := m.y
+<a name="2799"/>      }
+<a name="2800"/>      no_drag := &amp;yes
+<a name="2801"/>   end
+<a name="2802"/>
+<a name="2803"/>   private handle_triple_click()
+<a name="2804"/>      local s, l, r, m
+<a name="2805"/>      l := unflow_loc(cursor_x, cursor_y) | fail
+<a name="2806"/>      r := Index{unflowed(), l.y} | fail
+<a name="2807"/>      s := line_str(r.l)
+<a name="2808"/>      if m := reflow_loc(*s + 1, l.y) then {
+<a name="2809"/>         cursor_x := m.x
+<a name="2810"/>         cursor_y := m.y
+<a name="2811"/>      }
+<a name="2812"/>      if m := reflow_loc(1, l.y) then {
+<a name="2813"/>         mark_x := m.x
+<a name="2814"/>         mark_y := m.y
+<a name="2815"/>      }
+<a name="2816"/>      no_drag := &amp;yes
+<a name="2817"/>   end
+<a name="2818"/>
+<a name="2819"/>   private handle_lpress1(e)
+<a name="2820"/>      invalidate_region()
+<a name="2821"/>      reset_search()
+<a name="2822"/>      set_cursor_from_pos(e)
+<a name="2823"/>      if \e.shift then {
+<a name="2824"/>         /mark_y := cursor_y
+<a name="2825"/>         /mark_x := cursor_x
+<a name="2826"/>      } else {
+<a name="2827"/>         case (parent_dialog.get_click_count() - 1) % 3 of {
+<a name="2828"/>            0 : {
+<a name="2829"/>               mark_y := cursor_y
+<a name="2830"/>               mark_x := cursor_x
+<a name="2831"/>            }
+<a name="2832"/>            1 : handle_double_click()
+<a name="2833"/>            2 : handle_triple_click()
+<a name="2834"/>         }
+<a name="2835"/>      }
+<a name="2836"/>      invalidate_region()
+<a name="2837"/>   end
+<a name="2838"/>
+<a name="2839"/>   private ensure_pointer_line_visible(e)
+<a name="2840"/>      ensure_line_visible(get_nearest_line_to_pointer(e))
+<a name="2841"/>   end
+<a name="2842"/>
+<a name="2843"/>   private handle_lpress(e)
+<a name="2844"/>      parent_dialog.get_held_count() = 1 | fail
+<a name="2845"/>      if \over then {
+<a name="2846"/>         ensure_pointer_line_visible(e)
+<a name="2847"/>         if /e.shift then {
+<a name="2848"/>            set_highlight(over)
+<a name="2849"/>            held := over
+<a name="2850"/>         } else {
+<a name="2851"/>            set_last_highlight(over)
+<a name="2852"/>            no_drag := &amp;yes
+<a name="2853"/>         }
+<a name="2854"/>      } else {
+<a name="2855"/>         handle_lpress1(e)
+<a name="2856"/>      }
+<a name="2857"/>   end
+<a name="2858"/>
+<a name="2859"/>   private handle_rpress(e)
+<a name="2860"/>      local m, pm
+<a name="2861"/>      parent_dialog.get_held_count() = 1 | fail
+<a name="2862"/>      if /over then {
+<a name="2863"/>         if m := ui.create_context_menu() then {
+<a name="2864"/>            pm := PopupMenu()
+<a name="2865"/>            pm.popup(self, m, e.x, e.y)
+<a name="2866"/>         }
+<a name="2867"/>      } else {
+<a name="2868"/>         if m := ui.create_link_menu(over) then {
+<a name="2869"/>            ensure_pointer_line_visible(e)
+<a name="2870"/>            set_highlight(over)
+<a name="2871"/>            set_over()
+<a name="2872"/>            pm := PopupMenu()
+<a name="2873"/>            pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+<a name="2874"/>            pm.popup(self, m, e.x, e.y)
+<a name="2875"/>         }
+<a name="2876"/>      }
+<a name="2877"/>   end
+<a name="2878"/>
+<a name="2879"/>   private on_popup_closed()
+<a name="2880"/>      set_highlight()
+<a name="2881"/>   end
+<a name="2882"/>
+<a name="2883"/>   private quieten_cursor_and_clear_msg()
+<a name="2884"/>      (/dont_quieten_flag &amp; parent_dialog.get_held_count() = 0) | fail
+<a name="2885"/>      if /quieten then {
+<a name="2886"/>         set_over()
+<a name="2887"/>         # No need to synch_pointer since we call this method out of the
+<a name="2888"/>         # keyboard handler.
+<a name="2889"/>         quieten := &amp;yes
+<a name="2890"/>         ui.quieten_cursor()
+<a name="2891"/>      }
+<a name="2892"/>      # This is done in order to clear any info message which may
+<a name="2893"/>      # still persist even after quieten cursor state has begun.
+<a name="2894"/>      ui.msg()
+<a name="2895"/>   end
+<a name="2896"/>
+<a name="2897"/>   public unquieten_cursor()
+<a name="2898"/>      quieten := &amp;null
+<a name="2899"/>   end
+<a name="2900"/>
+<a name="2901"/>   private handle_move(ev)
+<a name="2902"/>      unquieten_cursor()
+<a name="2903"/>   end
+<a name="2904"/>
+<a name="2905"/>   private handle_in_chain(ev)
+<a name="2906"/>      local seg, f
+<a name="2907"/>      (/quieten &amp; parent_dialog.get_held_count() = 0) | fail
+<a name="2908"/>      if ev.code === (Key.CONTROL_L | Key.CONTROL_R) then {
+<a name="2909"/>         if /ev.release then
+<a name="2910"/>            f := &amp;yes
+<a name="2911"/>      } else f := \ev.ctrl
+<a name="2912"/>      if /f &amp; (seg := get_segment_for_pos(ev)) &amp; \seg.attr.url then
+<a name="2913"/>         set_over(seg.attr.url)
+<a name="2914"/>      else
+<a name="2915"/>         set_over()
+<a name="2916"/>   end
+<a name="2917"/>
+<a name="2918"/>   private handle_exit(e)
+<a name="2919"/>      parent_dialog.get_held_count() = 0 | fail
+<a name="2920"/>      set_over()
+<a name="2921"/>   end
+<a name="2922"/>
+<a name="2923"/>   private handle_interrupted(e)
+<a name="2924"/>      set_highlight()
+<a name="2925"/>      set_over()
+<a name="2926"/>      held := &amp;null
+<a name="2927"/>      if view.is_held(Mouse.LEFT_PRESS) then
+<a name="2928"/>         handle_lrelease()
+<a name="2929"/>   end
+<a name="2930"/>
+<a name="2931"/>   #
+<a name="2932"/>   # Set the VtUI to use.
+<a name="2933"/>   #
+<a name="2934"/>   public set_ui(ui)
+<a name="2935"/>      self.ui := ui
+<a name="2936"/>      link
+<a name="2937"/>   end
+<a name="2938"/>
+<a name="2939"/>   public override should_close(e)
+<a name="2940"/>      succeed member(Mouse.PRESS, e.code) &amp; not(popup.in_region(e))
+<a name="2941"/>   end
+<a name="2942"/>
+<a name="2943"/>   public override gen_popup_components()
+<a name="2944"/>      return popup
+<a name="2945"/>   end
+<a name="2946"/>
+<a name="2947"/>   public override get_nesting_component()
+<a name="2948"/>   end
+<a name="2949"/>
+<a name="2950"/>   public override allow_nested(c)
+<a name="2951"/>   end
+<a name="2952"/>
+<a name="2953"/>   public override close_all()
+<a name="2954"/>      close_popup()
+<a name="2955"/>   end
+<a name="2956"/>
+<a name="2957"/>   private close_popup()
+<a name="2958"/>      \self.popup | fail
+<a name="2959"/>      self.parent_dialog.set_focus(self)
+<a name="2960"/>      if popup.parent_dialog === parent_dialog then {
+<a name="2961"/>         self.popup.invalidate()
+<a name="2962"/>         self.parent_dialog.remove(popup)
+<a name="2963"/>      } else {
+<a name="2964"/>         self.parent_dialog.remove_popup(self.popup.parent_dialog)
+<a name="2965"/>         self.popup.parent_dialog.dispose()
+<a name="2966"/>      }
+<a name="2967"/>      self.popup := &amp;null
+<a name="2968"/>      self.parent_dialog.exit_menu_mode(self)
+<a name="2969"/>   end
+<a name="2970"/>
+<a name="2971"/>   private on_popup_selection()
+<a name="2972"/>      local pe
+<a name="2973"/>      pe := popup.object_first_selection()
+<a name="2974"/>      close_all()
+<a name="2975"/>      send_tr_nl(pe.str)
+<a name="2976"/>   end
+<a name="2977"/>
+<a name="2978"/>   private static label_field(x)
+<a name="2979"/>      return x.label
+<a name="2980"/>   end
+<a name="2981"/>
+<a name="2982"/>   private open_popup(l)
+<a name="2983"/>      local spc_below, spc_right, d, dim, win,
+<a name="2984"/>         rs, max_h, max_w, info, px, py
+<a name="2985"/>
+<a name="2986"/>      close_popup()
+<a name="2987"/>      (*l &gt; 0) | fail
+<a name="2988"/>      px := view.x + Gui.TEXT_INSET + integer((cx - 1) * char_w) + Gui.TEXT_INSET
+<a name="2989"/>      info := get_line_info() | fail
+<a name="2990"/>      py := view.y - info.offset + (cy_to_index() - info.first) * line_height
+<a name="2991"/>      # Ensure cursor is entirely within view
+<a name="2992"/>      (view.y &lt;= py &amp; py + line_height - 1 &lt; view.y + view.h) | fail
+<a name="2993"/>      # Get perfect alignment between the cursor line and the first line in the popup.
+<a name="2994"/>      py -:= Gui.BORDER_WIDTH
+<a name="2995"/>
+<a name="2996"/>      win := parent_dialog.win
+<a name="2997"/>      dim := win.get_display_size()
+<a name="2998"/>      # Screen rectangle, in adjusted co-ordinates
+<a name="2999"/>      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
+<a name="3000"/>
+<a name="3001"/>      # Check popup position is in the visible part of the screen.
+<a name="3002"/>      parent_dialog.intersect(rs).inside(px, py) | fail
+<a name="3003"/>
+<a name="3004"/>      # This will fail if the parent dialog is iconic and can't grab the pointer.
+<a name="3005"/>      self.parent_dialog.enter_menu_mode(self) | fail
+<a name="3006"/>
+<a name="3007"/>      # Space available for popup limited by screen size
+<a name="3008"/>      spc_below := rs.y + rs.h - py
+<a name="3009"/>      spc_right := rs.x + rs.w - px
+<a name="3010"/>
+<a name="3011"/>      max_h := dim[2]
+<a name="3012"/>      max_w := spc_right
+<a name="3013"/>
+<a name="3014"/>      self.popup := ItemPaintList().
+<a name="3015"/>         set_item_paint(MapItemPaint(TextItemPaint(), label_field)).
+<a name="3016"/>         set_item_border(EmptyBorder().
+<a name="3017"/>                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+<a name="3018"/>                             set_x_align(Align.L)).
+<a name="3019"/>         set_wattrib_ancestor(view).
+<a name="3020"/>         connect(on_popup_selection, Event.SELECTION_CHANGED).
+<a name="3021"/>         set_select_mode(Select.ONE).
+<a name="3022"/>         set_accepts_focus(&amp;no).
+<a name="3023"/>         set_draggable_cursor(&amp;yes).
+<a name="3024"/>         set_motion_cursor(&amp;yes).
+<a name="3025"/>         set_always_show_focus_cursor(&amp;yes).
+<a name="3026"/>         set_wrap_on_up_down(&amp;yes).
+<a name="3027"/>         set_selection_on_key_moves(&amp;no).
+<a name="3028"/>         set_contents(l).
+<a name="3029"/>         set_z(self.parent_dialog.get_top_z())
+<a name="3030"/>
+<a name="3031"/>      self.parent_dialog.add(popup)
+<a name="3032"/>      self.popup.set_ideal_size(scale(25), max_w,
+<a name="3033"/>                                scale(5), max_h)
+<a name="3034"/>
+<a name="3035"/>      if popup.h_spec &gt; spc_below then
+<a name="3036"/>         py -:= popup.h_spec - spc_below
+<a name="3037"/>
+<a name="3038"/>      popup.
+<a name="3039"/>         set_pos(win.get_dx() + px,
+<a name="3040"/>                 win.get_dy() + py).
+<a name="3041"/>         resize()
+<a name="3042"/>
+<a name="3043"/>      if Gui.allow_internal_popups() &amp; parent_dialog.contains(popup) then {
+<a name="3044"/>         popup.invalidate()
+<a name="3045"/>      } else {
+<a name="3046"/>         # Remove popup from dialog and add to popup window.
+<a name="3047"/>         self.parent_dialog.remove(popup)
+<a name="3048"/>         d := PureDialog().
+<a name="3049"/>            set_canvas(Canvas.POPUP).
+<a name="3050"/>            set_width(popup.w_spec).
+<a name="3051"/>            set_height(popup.h_spec).
+<a name="3052"/>            set_dx(-popup.x).
+<a name="3053"/>            set_dy(-popup.y).
+<a name="3054"/>            set_x(win.get_x() + win.get_dx() + popup.x).
+<a name="3055"/>            set_y(win.get_y() + win.get_dy() + popup.y).
+<a name="3056"/>            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
+<a name="3057"/>            add(popup)
+<a name="3058"/>
+<a name="3059"/>         popup.set_pos(0, 0)
+<a name="3060"/>         parent_dialog.add_popup(d)
+<a name="3061"/>         d.show()
+<a name="3062"/>      }
+<a name="3063"/>   end
+<a name="3064"/>
+<a name="3065"/>   public do_search(s)
+<a name="3066"/>      reset_search()
+<a name="3067"/>      if *s = 0 then {
+<a name="3068"/>         search_term := search_term_c1 := &amp;null
+<a name="3069"/>         invalidate_region()
+<a name="3070"/>         clear_mark()
+<a name="3071"/>         ui.search_msg("No results")
+<a name="3072"/>      } else {
+<a name="3073"/>         search_term := Text.lower(s)
+<a name="3074"/>         search_term_c1 := Text.caseless_cset(search_term[1])
+<a name="3075"/>         do_search_prev()
+<a name="3076"/>      }
+<a name="3077"/>      link
+<a name="3078"/>   end
+<a name="3079"/>
+<a name="3080"/>   private search_helper(str)
+<a name="3081"/>      local p
+<a name="3082"/>      every p := upto(search_term_c1, str) do {
+<a name="3083"/>         if search_term == Text.lower(str[p +: *search_term]) then
+<a name="3084"/>            suspend p
+<a name="3085"/>      }
+<a name="3086"/>   end
+<a name="3087"/>
+<a name="3088"/>   public do_search_prev()
+<a name="3089"/>      local i, j, num, curr, prev, last, matching, r
+<a name="3090"/>      \search_term | fail
+<a name="3091"/>      if \search_increment_flag then
+<a name="3092"/>         curr := unflow_loc(mark_x, \mark_y)
+<a name="3093"/>      num := 0
+<a name="3094"/>      i := 1
+<a name="3095"/>      every r := unflowed() do {
+<a name="3096"/>         every j := search_helper(line_str(r.l)) do {
+<a name="3097"/>            num +:= 1
+<a name="3098"/>            last := Locn(j, i)
+<a name="3099"/>            if \curr &amp; ((i &lt; curr.y) | (i = curr.y &amp; j &lt; curr.x)) then {
+<a name="3100"/>               prev := last
+<a name="3101"/>               matching := num
+<a name="3102"/>            }
+<a name="3103"/>         }
+<a name="3104"/>         i +:= 1
+<a name="3105"/>      }
+<a name="3106"/>      if /prev := \last then
+<a name="3107"/>         matching := num
+<a name="3108"/>      done_search(prev, matching, num)
+<a name="3109"/>      link
+<a name="3110"/>   end
+<a name="3111"/>
+<a name="3112"/>   public do_search_next()
+<a name="3113"/>      local i, j, num, curr, first, matching, nxt, r, p
+<a name="3114"/>      \search_term | fail
+<a name="3115"/>      if \search_increment_flag then
+<a name="3116"/>         curr := unflow_loc(mark_x, \mark_y)
+<a name="3117"/>      num := 0
+<a name="3118"/>      i := 1
+<a name="3119"/>      every r := unflowed() do {
+<a name="3120"/>         every j := search_helper(line_str(r.l)) do {
+<a name="3121"/>            num +:= 1
+<a name="3122"/>            p := Locn(j, i)
+<a name="3123"/>            /first := p
+<a name="3124"/>            if /nxt &amp; \curr &amp; ((i &gt; curr.y) | (i = curr.y &amp; j &gt; curr.x)) then {
+<a name="3125"/>               nxt := p
+<a name="3126"/>               matching := num
+<a name="3127"/>            }
+<a name="3128"/>         }
+<a name="3129"/>         i +:= 1
+<a name="3130"/>      }
+<a name="3131"/>      if /nxt := \first then
+<a name="3132"/>         matching := 1
+<a name="3133"/>      done_search(nxt, matching, num)
+<a name="3134"/>      link
+<a name="3135"/>   end
+<a name="3136"/>
+<a name="3137"/>   private done_search(pos, matching, num)
+<a name="3138"/>      local at_c, at_m
+<a name="3139"/>      if \pos &amp;
+<a name="3140"/>         at_m := reflow_loc(pos.x, pos.y) &amp;
+<a name="3141"/>         at_c := reflow_loc(pos.x + *search_term, pos.y) then
+<a name="3142"/>      {
+<a name="3143"/>         invalidate_region()
+<a name="3144"/>         cursor_x := at_c.x
+<a name="3145"/>         cursor_y := at_c.y
+<a name="3146"/>         mark_x := at_m.x
+<a name="3147"/>         mark_y := at_m.y
+<a name="3148"/>         # Ensure the search selection is visible with context of at
+<a name="3149"/>         # least 3 lines above/below.
+<a name="3150"/>         ensure_region_visible(get_area_line_rect(cursor_y).
+<a name="3151"/>                                  union(get_area_line_rect(mark_y)).
+<a name="3152"/>                                  pad(0, 3 * line_height))
+<a name="3153"/>         own_primary()
+<a name="3154"/>         search_increment_flag := &amp;yes
+<a name="3155"/>         invalidate_region()
+<a name="3156"/>         ui.search_msg(matching || "/" || num)
+<a name="3157"/>      } else if num &gt; 0 then
+<a name="3158"/>         # This should only happen if we got some matches, but
+<a name="3159"/>         # couldn't reflow the selected one.
+<a name="3160"/>         ui.search_msg(num || " matches")
+<a name="3161"/>      else
+<a name="3162"/>         ui.search_msg("No results")
+<a name="3163"/>   end
+<a name="3164"/>
+<a name="3165"/>   private reset_search()
+<a name="3166"/>      ui.search_msg()
+<a name="3167"/>      search_increment_flag := &amp;no
+<a name="3168"/>   end
+<a name="3169"/>
+<a name="3170"/>   public override new()
+<a name="3171"/>      LineBasedScrollArea.new()
+<a name="3172"/>      reset_custom_keys()
+<a name="3173"/>      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+<a name="3174"/>      cursor_ticker := Dispatcher.new_task{cursor_tick()}
+<a name="3175"/>      cursor_on := -1
+<a name="3176"/>      primary_selection_owner := VtPrimarySelectionOwner(self)
+<a name="3177"/>      contents := []
+<a name="3178"/>      buff := u""
+<a name="3179"/>      part_ch := got := ""
+<a name="3180"/>      set_accepts_focus(&amp;yes)
+<a name="3181"/>      view.
+<a name="3182"/>         set_pointer("xterm").
+<a name="3183"/>         connect(handle_in_chain, Event.IN_POINT_CHAIN).
+<a name="3184"/>         connect(handle_move, Event.MOUSE_MOVEMENT).
+<a name="3185"/>         connect(handle_mdrag, Event.MOUSE_MIDDLE_DRAG).
+<a name="3186"/>         connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE).
+<a name="3187"/>         connect(handle_exit, Event.MOUSE_EXIT).
+<a name="3188"/>         connect(handle_lpress, Event.MOUSE_LEFT_PRESS).
+<a name="3189"/>         connect(handle_rpress, Event.MOUSE_RIGHT_PRESS).
+<a name="3190"/>         connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS).
+<a name="3191"/>         connect(handle_ldrag, Event.MOUSE_LEFT_DRAG).
+<a name="3192"/>         connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+<a name="3193"/>      connect(handle_key, Event.KEY_PRESS)
+<a name="3194"/>      connect(handle_interrupted, Event.INTERRUPTED)
+<a name="3195"/>      connect(create cursor_ticker.start(), Event.GOT_FOCUS)
+<a name="3196"/>      connect(create cursor_ticker.stop(), Event.LOST_FOCUS)
+<a name="3197"/>      input_handler_coex := create input_handler()
+<a name="3198"/>      history_size := DEFAULT_HISTORY_SIZE
+<a name="3199"/>      set_font(DEFAULT_FONT)
+<a name="3200"/>      vt_width := DEFAULT_VT_WIDTH
+<a name="3201"/>      vt_height := DEFAULT_VT_HEIGHT
+<a name="3202"/>      reset_term()
+<a name="3203"/>      return
+<a name="3204"/>   end
+<a name="3205"/>end
+</pre></body></html>

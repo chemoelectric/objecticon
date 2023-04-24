@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>CachedClone</title></head><body>
+<h1>CachedClone</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.filegui.ColorFilesItemPaint.html">ipl.filegui.ColorFilesItemPaint</a><br>
+<a href="gui.WithClonePaint.html">gui.WithClonePaint</a><br>
+<a href="gui.WithCloneItemPaint.html">gui.WithCloneItemPaint</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A helper class for caching a cloned window.
+<p/><a href="gui-guiprocs.icn.html#1199" target="displayFrame">Source - guiprocs.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="gui.CachedClone.html">gui.CachedClone</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#get_clone">get_clone()</a>
+<a href="#make_clone">make_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ct">ct</a>
+<a href="#cw">cw</a>
+<a href="#wt">wt</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+This must be invoked to dispose of the cached clone window.
+<p/><a href="gui-guiprocs.icn.html#1243" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clone"/>
+<h3>get_clone(W, ignore_clip)</h3>
+public<p/>
+<dl>
+<dd>
+Return a clone of <code>W</code>.  A fresh clone will only be created if
+necessary.  If <code>ignore_clip</code> is set, then differences in the clip
+regions of the cache and <code>W</code> won't cause a fresh clone to be made.
+<p/><a href="gui-guiprocs.icn.html#1218" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="make_clone"/>
+<h3>make_clone(W)</h3>
+protected abstract<p/>
+<dl>
+<dd>
+This method must be implemented to create the cloned window.
+This method should not be invoked directly; rather <code><a href="gui.CachedClone.html#get_clone">get_clone()</a></code>
+should be used.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>W</code> - the base window to clone from
+</dd>
+</dl>
+<p/><a href="gui-guiprocs.icn.html#1208" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ct"/>
+<h3>ct</h3>
+private<p/>
+<dl>
+<dd>
+The corresponding clip rectangle (or &amp;null)
+<p/><a href="gui-guiprocs.icn.html#1206" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="cw"/>
+<h3>cw</h3>
+private<p/>
+<dl>
+<dd>
+The current cloned window
+<p/><a href="gui-guiprocs.icn.html#1204" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+<a name="wt"/>
+<h3>wt</h3>
+private<p/>
+<dl>
+<dd>
+The corresponding source window
+<p/><a href="gui-guiprocs.icn.html#1205" target="displayFrame">Source - guiprocs.icn </a>
+</dd>
+</dl><hr>
+</body></html>

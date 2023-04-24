@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TaskStream</title></head><body>
+<h1>TaskStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.Stream.html" target="displayFrame">io.Stream</a><br>
+<a href="io.HasTask.html" target="displayFrame">io.HasTask</a><br>
+<a href="util.HasCloseUnderlying.html" target="displayFrame">util.HasCloseUnderlying</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+This stream wraps another stream (normally a <code><a href="io.SocketStream.html" target="displayFrame">SocketStream</a></code>).  The
+<code><a href="io.TaskStream.html#in">in</a></code> and <code><a href="io.TaskStream.html#out">out</a></code> methods are invoked from the co-expression of the
+owning <code><a href="io.Task.html" target="displayFrame">Task</a></code>.  Those methods activate the <code><a href="io.Task.html" target="displayFrame">Task</a></code>'s <code><a href="io.Scheduler.html" target="displayFrame">Scheduler</a></code>'s
+co-expression.  The stream's co-expression is re-activated only when
+the <code><a href="io.Scheduler.html" target="displayFrame">Scheduler</a></code> determines the stream is ready for i/o.
+<p/><a href="io-scheduler.icn.html#5" target="displayFrame">Source - scheduler.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html">util.HasCloseUnderlying</a>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.TaskStream.html">io.TaskStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#set_close_underlying">set_close_underlying()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.HasCloseUnderlying</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasCloseUnderlying.html#close_underlying_flag">close_underlying_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#in">in()</a>
+<a href="#new">new()</a>
+<a href="#out">out()</a>
+<a href="#seek">seek()</a>
+<a href="#set_timeout">set_timeout()</a>
+<a href="#tell">tell()</a>
+<a href="#truncate">truncate()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#other">other</a>
+<a href="#timeout">timeout</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="io-scheduler.icn.html#44" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="io-scheduler.icn.html#50" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="in"/>
+<h3>in(n)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#in">in()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-scheduler.icn.html#18" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(other, task, timeout)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#75" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="out"/>
+<h3>out(s)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#out">out()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-scheduler.icn.html#31" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="seek"/>
+<h3>seek(offset)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#seek">seek()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-scheduler.icn.html#54" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="set_timeout"/>
+<h3>set_timeout(timeout)</h3>
+public<p/>
+<dl>
+<dd>
+Set the timeout in ms to use.  If <code>&amp;null</code>, then no timeout will
+be used.
+<p/><a href="io-scheduler.icn.html#66" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="tell"/>
+<h3>tell()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#tell">tell()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-scheduler.icn.html#58" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="truncate"/>
+<h3>truncate(len)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#truncate">truncate()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-scheduler.icn.html#62" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="other"/>
+<h3>other</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#15" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+<a name="timeout"/>
+<h3>timeout</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="io-scheduler.icn.html#13" target="displayFrame">Source - scheduler.icn </a>
+</dd>
+</dl><hr>
+</body></html>

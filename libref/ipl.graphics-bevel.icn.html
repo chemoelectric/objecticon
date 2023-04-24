@@ -1,0 +1,457 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>bevel.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     bevel.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for drawing beveled objects
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     April 1, 1997
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	These procedures draw objects having a raised or sunken appearance.
+<a name="18"/>#
+<a name="19"/>#	BevelCircle(win, x, y, r, bw)		draws a beveled circle.
+<a name="20"/>#
+<a name="21"/>#	BevelDiamond(win, x, y, r, bw)		draws a beveled diamond.
+<a name="22"/>#
+<a name="23"/>#	BevelTriangle(win, x, y, r, o, bw)	draws a beveled triangle.
+<a name="24"/>#
+<a name="25"/>#	BevelSquare(win, x, y, r, bw)		draws a beveled square.
+<a name="26"/>#
+<a name="27"/>#	FillSquare(win, x, y, r)		fills a square.
+<a name="28"/>#
+<a name="29"/>#	FillDiamond(win, x, y, r)		fills a diamond.
+<a name="30"/>#
+<a name="31"/>#	FillTriangle(win, x, y, r, o)		fills a triangle.
+<a name="32"/>#
+<a name="33"/>#	RidgeRectangle(win, x, y, w, h, bw)	draws a ridged rectangle.
+<a name="34"/>#
+<a name="35"/>#	GrooveRectangle(win, x, y, w, h, bw)	draws a grooved rectangle.
+<a name="36"/>#
+<a name="37"/>#	BevelRectangle(win, x, y, w, h, bw)	draws a beveled rectangle.
+<a name="38"/>#
+<a name="39"/>#	DrawRidge(win, x1, y1, x2, y2, w)	draws a ridged line.
+<a name="40"/>#
+<a name="41"/>#	DrawGroove(win, x1, y1, x2, y2, w)	draws a grooved line.
+<a name="42"/>#
+<a name="43"/>############################################################################
+<a name="44"/>#
+<a name="45"/>#  These procedures allow the drawing of buttons and other objects
+<a name="46"/>#  with a three-dimensional appearance.  They are intended to be
+<a name="47"/>#  used like other graphics primitives (DrawRectangle() etc.).
+<a name="48"/>#  However, this abstraction fails if the background color changes
+<a name="49"/>#  or if clipping is set, due to the use of cached graphics contexts.
+<a name="50"/>#
+<a name="51"/>#
+<a name="52"/>#  BevelCircle(win, x, y, r, bw) -- draw beveled circle
+<a name="53"/>#  BevelDiamond(win, x, y, r, bw) -- draw beveled diamond
+<a name="54"/>#  BevelTriangle(win, x, y, r, o, bw) -- draw beveled triangle
+<a name="55"/>#  BevelSquare(win, x, y, r, bw) -- draw beveled square
+<a name="56"/>#	These procedures draw a figure centered at (x,y) and having
+<a name="57"/>#	a "radius" of r.  bw is the bevel width, in pixels.
+<a name="58"/>#       o is the triangle orientation: "n", "s", "e", or "w".
+<a name="59"/>#
+<a name="60"/>#  FillSquare(win, x, y, r) -- fill square centered at (x,y)
+<a name="61"/>#  FillDiamond(win, x, y, r) -- fill diamond centered at (x,y)
+<a name="62"/>#  FillTriangle(win, x, y, r, o) -- fill triangle centered at (x,y)
+<a name="63"/>#	These procedures complement the beveled outline procedures
+<a name="64"/>#	by filling a figure centered at (x,y).  Fillcircle is already
+<a name="65"/>#	an Icon function and so is not included here.
+<a name="66"/>#
+<a name="67"/>#  RidgeRectangle(win, x, y, w, h, bw) -- draw ridged rectangle
+<a name="68"/>#  GrooveRectangle(win, x, y, w, h, bw) -- draw grooved rectangle
+<a name="69"/>#  BevelRectangle(win, x, y, w, h, bw) -- draw beveled rectangle
+<a name="70"/>#	These procedures draw a rectangle with the given external
+<a name="71"/>#	dimensions and border width.  Beveled rectangles are raised
+<a name="72"/>#	if bw &gt; 0 or sunken if bw &lt; 0.
+<a name="73"/>#
+<a name="74"/>#  DrawRidge(win, x1, y1, x2, y2, w) -- draw a ridged line
+<a name="75"/>#  DrawGroove(win, x1, y1, x2, y2, w) -- draw a grooved line
+<a name="76"/>#	These procedures draw a groove or ridge of width 2 at any angle.
+<a name="77"/>#	If w = 0, a groove or ridge is erased to the background color.
+<a name="78"/>#
+<a name="79"/>#  For BevelSquare() and FillSquare(), the width drawn is 2 * r + 1,
+<a name="80"/>#  not just 2 * r.  This is necessary to keep the visual center at the
+<a name="81"/>#  specified (x, y) and is consistent with the other centered procedures
+<a name="82"/>#  and the built-in function FillCircle.
+<a name="83"/>#
+<a name="84"/>############################################################################
+<a name="85"/>#
+<a name="86"/>#  Links:  graphics
+<a name="87"/>#
+<a name="88"/>############################################################################
+<a name="89"/>#
+<a name="90"/>#  Requires:  Version 9 graphics
+<a name="91"/>#
+<a name="92"/>############################################################################
+<a name="93"/>
+<a name="94"/>
+<a name="95"/>package ipl.graphics
+<a name="96"/>
+<a name="97"/>import util(Math)
+<a name="98"/>
+<a name="99"/>procedure GetHiliteColor(win)
+<a name="100"/>   local c, hls, r
+<a name="101"/>   static hilite_table
+<a name="102"/>   initial
+<a name="103"/>      hilite_table := table()
+<a name="104"/>   c := win.get_bg()
+<a name="105"/>   if r := member(hilite_table, c) then
+<a name="106"/>      return r
+<a name="107"/>
+<a name="108"/>   hls := rgb2hls(color2rgb(c))
+<a name="109"/>   if hls.l &lt; 0.1 then        hls.l := 0.5
+<a name="110"/>   else if hls.l &lt; 0.25 then  hls.l +:= 0.25
+<a name="111"/>   else if hls.l &lt; 0.5 then   hls.l +:= 0.25
+<a name="112"/>   else if hls.l &lt; 0.75 then  hls.l +:= 0.25
+<a name="113"/>   else if hls.l &lt; 0.9 then   hls.l := 1.0 
+<a name="114"/>   else                       hls.l := 0.75
+<a name="115"/>   hls.s /:= 2
+<a name="116"/>   insert(hilite_table, c, r := rgb2color(hls2rgb(hls)))
+<a name="117"/>   return r
+<a name="118"/>end
+<a name="119"/>
+<a name="120"/>procedure GetShadowColor(win)
+<a name="121"/>   local c, hls, r
+<a name="122"/>   static shadow_table
+<a name="123"/>   initial
+<a name="124"/>      shadow_table := table()
+<a name="125"/>   c := win.get_bg()
+<a name="126"/>   if r := member(shadow_table, c) then
+<a name="127"/>      return r
+<a name="128"/>
+<a name="129"/>   hls := rgb2hls(color2rgb(c))
+<a name="130"/>   if hls.l &lt; 0.1 then        hls.l := 0.25
+<a name="131"/>   else if hls.l &lt; 0.25 then  hls.l := 0.0
+<a name="132"/>   else if hls.l &lt; 0.5 then   hls.l -:= 0.25
+<a name="133"/>   else if hls.l &lt; 0.75 then  hls.l := 0.25
+<a name="134"/>   else if hls.l &lt; 0.9 then   hls.l -:= 0.50 
+<a name="135"/>   else                       hls.l := 0.40
+<a name="136"/>   hls.s /:= 2
+<a name="137"/>   insert(shadow_table, c, r := rgb2color(hls2rgb(hls)))
+<a name="138"/>   return r
+<a name="139"/>end
+<a name="140"/>
+<a name="141"/>procedure GetHiliteClone(win)
+<a name="142"/>   win := win.clone()
+<a name="143"/>   win.set_fg(GetHiliteColor(win))
+<a name="144"/>   return win
+<a name="145"/>end
+<a name="146"/>
+<a name="147"/>procedure GetShadowClone(win)
+<a name="148"/>   win := win.clone()
+<a name="149"/>   win.set_fg(GetShadowColor(win))
+<a name="150"/>   return win
+<a name="151"/>end
+<a name="152"/>
+<a name="153"/>
+<a name="154"/>#  BevelCircle(win, x, y, r, bw) -- draw beveled circle
+<a name="155"/>
+<a name="156"/># draw beveled circle
+<a name="157"/>procedure BevelCircle(win, x, y, r, bw)		
+<a name="158"/>   local upper, lower, a
+<a name="159"/>
+<a name="160"/>   /r := 6
+<a name="161"/>   /bw := 2
+<a name="162"/>   if bw &gt;= 0 then {
+<a name="163"/>      upper := GetHiliteClone(win)
+<a name="164"/>      lower := GetShadowClone(win)
+<a name="165"/>   }
+<a name="166"/>   else {
+<a name="167"/>      upper := GetShadowClone(win)
+<a name="168"/>      lower := GetHiliteClone(win)
+<a name="169"/>      bw := -bw
+<a name="170"/>   }
+<a name="171"/>
+<a name="172"/>   upper.set_line_width(2)
+<a name="173"/>   lower.set_line_width(2)
+<a name="174"/>
+<a name="175"/>   a := -Math.PI / 8
+<a name="176"/>   while (bw -:= 1) &gt;= 0 do {
+<a name="177"/>      lower.draw_circle(x, y, r, a, Math.PI)
+<a name="178"/>      upper.draw_circle(x, y, r, a + Math.PI, Math.PI)
+<a name="179"/>      r -:= 1
+<a name="180"/>   }
+<a name="181"/>   upper.close()
+<a name="182"/>   lower.close()
+<a name="183"/>   return win
+<a name="184"/>end
+<a name="185"/>
+<a name="186"/>
+<a name="187"/>#  BevelDiamond(win, x, y, r, bw) -- draw beveled diamond
+<a name="188"/>
+<a name="189"/># draw beveled diamond
+<a name="190"/>procedure BevelDiamond(win, x, y, r, bw)	
+<a name="191"/>   local upper, lower
+<a name="192"/>
+<a name="193"/>   /r := 6
+<a name="194"/>   /bw := 3
+<a name="195"/>   if bw &gt;= 0 then {
+<a name="196"/>      upper := GetHiliteClone(win)
+<a name="197"/>      lower := GetShadowClone(win)
+<a name="198"/>   }
+<a name="199"/>   else {
+<a name="200"/>      upper := GetShadowClone(win)
+<a name="201"/>      lower := GetHiliteClone(win)
+<a name="202"/>      bw := -bw
+<a name="203"/>   }
+<a name="204"/>
+<a name="205"/>   upper.set_line_width(1)
+<a name="206"/>   lower.set_line_width(1)
+<a name="207"/>
+<a name="208"/>   while (bw -:= 1) &gt;= 0 do {
+<a name="209"/>      lower.draw_line(x - r, y, x, y + r, x + r, y)
+<a name="210"/>      upper.draw_line(x - r, y, x, y - r, x + r, y)
+<a name="211"/>      r -:= 1
+<a name="212"/>   }
+<a name="213"/>   upper.close()
+<a name="214"/>   lower.close()
+<a name="215"/>   return win
+<a name="216"/>end
+<a name="217"/>
+<a name="218"/>
+<a name="219"/>#  BevelTriangle(win, x, y, r, o, bw) -- draw beveled triangle
+<a name="220"/>
+<a name="221"/>procedure BevelTriangle(win, x, y, r, o, bw)
+<a name="222"/>   local upper, lower
+<a name="223"/>
+<a name="224"/>   /r := 6
+<a name="225"/>   /bw := 2
+<a name="226"/>   if bw &gt;= 0 then {
+<a name="227"/>      upper := GetHiliteClone(win)
+<a name="228"/>      lower := GetShadowClone(win)
+<a name="229"/>   }
+<a name="230"/>   else {
+<a name="231"/>      upper := GetShadowClone(win)
+<a name="232"/>      lower := GetHiliteClone(win)
+<a name="233"/>      bw := -bw
+<a name="234"/>   }
+<a name="235"/>
+<a name="236"/>   upper.set_line_width(1)
+<a name="237"/>   lower.set_line_width(1)
+<a name="238"/>
+<a name="239"/>   while (bw -:= 1) &gt;= 0 do {
+<a name="240"/>      case o of {
+<a name="241"/>         default: {  #"n"
+<a name="242"/>            lower.draw_line(x - r, y + r, x + r, y + r, x, y - r)
+<a name="243"/>            upper.draw_line(x - r, y + r, x, y - r)
+<a name="244"/>         }
+<a name="245"/>         "s": {
+<a name="246"/>            lower.draw_line(x, y + r, x + r, y - r)
+<a name="247"/>            upper.draw_line(x, y + r, x - r, y - r, x + r, y - r)
+<a name="248"/>         }
+<a name="249"/>         "e": {
+<a name="250"/>            lower.draw_line(x - r, y + r, x + r, y)
+<a name="251"/>            upper.draw_line(x - r, y + r, x - r, y - r, x + r, y)
+<a name="252"/>         }
+<a name="253"/>         "w": {
+<a name="254"/>            lower.draw_line(x - r, y, x + r, y + r)
+<a name="255"/>            lower.draw_line(x + r, y + r, x + r, y-r)
+<a name="256"/>            upper.draw_line(x - r, y, x + r, y - r)
+<a name="257"/>         }
+<a name="258"/>      }
+<a name="259"/>      r -:= 1
+<a name="260"/>   }
+<a name="261"/>   upper.close()
+<a name="262"/>   lower.close()
+<a name="263"/>   return win
+<a name="264"/>end
+<a name="265"/>
+<a name="266"/>
+<a name="267"/>#  BevelSquare(win, x, y, r, bw) -- draw beveled square
+<a name="268"/>
+<a name="269"/># draw beveled square
+<a name="270"/>procedure BevelSquare(win, x, y, r, bw)		
+<a name="271"/>   /r := 6
+<a name="272"/>   return BevelRectangle(win, x - r, y - r, 2 * r + 1, 2 * r + 1, bw)
+<a name="273"/>end
+<a name="274"/>
+<a name="275"/>
+<a name="276"/>#  RidgeRectangle(win, x, y, w, h, bw) -- draw ridged rectangle
+<a name="277"/>
+<a name="278"/># draw ridged rectangle
+<a name="279"/>procedure RidgeRectangle(win, x, y, w, h, bw)	
+<a name="280"/>   /bw := 2
+<a name="281"/>   return GrooveRectangle(win, x, y, w, h, -bw)
+<a name="282"/>end
+<a name="283"/>
+<a name="284"/>
+<a name="285"/>#  GrooveRectangle(win, x, y, w, h, bw) -- draw grooved rectangle
+<a name="286"/>
+<a name="287"/># draw grooved rectangle
+<a name="288"/>procedure GrooveRectangle(win, x, y, w, h, bw)	
+<a name="289"/>   local abw
+<a name="290"/>
+<a name="291"/>   if (w | h) &lt; 0 then
+<a name="292"/>      return win
+<a name="293"/>
+<a name="294"/>   /bw := 2
+<a name="295"/>   if bw &gt;= 0 then
+<a name="296"/>      bw := (bw + 1) / 2
+<a name="297"/>   else
+<a name="298"/>      bw := -((-bw + 1) / 2)
+<a name="299"/>   abw := abs(bw)
+<a name="300"/>
+<a name="301"/>   BevelRectangle(win, x, y, w, h, -bw)
+<a name="302"/>   BevelRectangle(win, x + abw, y + abw, w - 2 * abw, h - 2 * abw, bw)
+<a name="303"/>   return win
+<a name="304"/>end
+<a name="305"/>
+<a name="306"/>
+<a name="307"/>#  BevelRectangle(win, x, y, w, h, bw) -- draw beveled rectangle
+<a name="308"/>#
+<a name="309"/>#  bw is the border width (&gt;0 for raised bevel, &lt;0 for sunken bevel).
+<a name="310"/>#  (x,y,w,h) bounds the entire beveled rectangle, not the usable area inside.
+<a name="311"/>
+<a name="312"/># draw beveled rectangle
+<a name="313"/>procedure BevelRectangle(win, x, y, w, h, bw)	
+<a name="314"/>   local upper, lower, xx, yy
+<a name="315"/>
+<a name="316"/>   if (w | h) &lt; 0 then
+<a name="317"/>      return win
+<a name="318"/>
+<a name="319"/>   /bw := 2
+<a name="320"/>   if bw &gt;= 0 then {
+<a name="321"/>      upper := GetHiliteClone(win)
+<a name="322"/>      lower := GetShadowClone(win)
+<a name="323"/>   }
+<a name="324"/>   else {
+<a name="325"/>      upper := GetShadowClone(win)
+<a name="326"/>      lower := GetHiliteClone(win)
+<a name="327"/>      bw := -bw
+<a name="328"/>   }
+<a name="329"/>
+<a name="330"/>   xx := x + w
+<a name="331"/>   yy := y + h
+<a name="332"/>   lower.fill_rectangle(x, yy - bw, w, bw)
+<a name="333"/>   lower.fill_rectangle(xx - bw, y, bw, h)
+<a name="334"/>
+<a name="335"/>   while (bw -:= 1) &gt;= 0 do {
+<a name="336"/>      upper.fill_rectangle(x, y, 1, h)
+<a name="337"/>      upper.fill_rectangle(x + 1, y, w - 1, 1)
+<a name="338"/>      h -:= 2
+<a name="339"/>      w -:= 2
+<a name="340"/>      x +:= 1
+<a name="341"/>      y +:= 1
+<a name="342"/>   }
+<a name="343"/>
+<a name="344"/>   upper.close()
+<a name="345"/>   lower.close()
+<a name="346"/>   return win
+<a name="347"/>end
+<a name="348"/>
+<a name="349"/>
+<a name="350"/>#  DrawRidge(win, x1, y1, x2, y2, w) -- draw a ridged line
+<a name="351"/>#
+<a name="352"/>#  If w is negative, a groove is drawn instead.
+<a name="353"/>
+<a name="354"/># draw ridged line
+<a name="355"/>procedure DrawRidge(win, x1, y1, x2, y2, w)	
+<a name="356"/>   /w := 2
+<a name="357"/>
+<a name="358"/>   DrawGroove(win, x1, y1, x2, y2, -w)
+<a name="359"/>   return win
+<a name="360"/>end
+<a name="361"/>
+<a name="362"/>
+<a name="363"/>#  DrawGroove(win, x1, y1, x2, y2, w) -- draw a grooved line
+<a name="364"/>#
+<a name="365"/>#  If w &gt; 0, draw groove of width 2.
+<a name="366"/>#  If w = 0, erase groove/ridge of width 2.
+<a name="367"/>#  If w &lt; 0, draw ridge of width 2.
+<a name="368"/>#
+<a name="369"/>#  Horizontal and vertical grooves fill the same pixels as lines drawn
+<a name="370"/>#  line_width=2.  Angled grooves are not necessarily the same, though.
+<a name="371"/>
+<a name="372"/># draw grooved line
+<a name="373"/>procedure DrawGroove(win, x1, y1, x2, y2, w)	
+<a name="374"/>   local a, n, upper, lower
+<a name="375"/>
+<a name="376"/>   /w := 2
+<a name="377"/>   x1 := integer(x1)
+<a name="378"/>   y1 := integer(y1)
+<a name="379"/>   x2 := integer(x2)
+<a name="380"/>   y2 := integer(y2)
+<a name="381"/>
+<a name="382"/>   if w ~= 0 then {			# if really drawing
+<a name="383"/>      upper := GetShadowClone(win)
+<a name="384"/>      lower := GetHiliteClone(win)
+<a name="385"/>      }
+<a name="386"/>   else {
+<a name="387"/>      upper := win.clone().set_fg(win.get_bg())
+<a name="388"/>      lower := win.clone().set_fg(win.get_bg())
+<a name="389"/>      }
+<a name="390"/>
+<a name="391"/>   upper.set_line_width(1)
+<a name="392"/>   lower.set_line_width(1)
+<a name="393"/>
+<a name="394"/>   a := Math.atan(y2 - y1, x2 - x1)
+<a name="395"/>   if a &lt; 0 then
+<a name="396"/>      a +:= Math.PI
+<a name="397"/>   n := integer(8 * a / Math.PI)
+<a name="398"/>
+<a name="399"/>   if w &lt; 0 then			# if groove/ridge swap
+<a name="400"/>      upper :=: lower
+<a name="401"/>   if n = 2 then			# if tricky illumination angle
+<a name="402"/>      upper :=: lower
+<a name="403"/>
+<a name="404"/>   if 2 &lt;= n &lt;= 5 then {		# approximately vertical
+<a name="405"/>      upper.draw_line(x1 - 1, y1, x2 - 1, y2)
+<a name="406"/>      lower.draw_line(x1, y1, x2, y2)
+<a name="407"/>      }
+<a name="408"/>   else {				# approximately horizontal
+<a name="409"/>      upper.draw_line(x1, y1 - 1, x2, y2 - 1)
+<a name="410"/>      lower.draw_line(x1, y1, x2, y2)
+<a name="411"/>      }
+<a name="412"/>
+<a name="413"/>   upper.close()
+<a name="414"/>   lower.close()
+<a name="415"/>
+<a name="416"/>   return win
+<a name="417"/>end
+<a name="418"/>
+<a name="419"/>
+<a name="420"/>#  FillSquare(win, x, y, r) -- fill square centered at (x,y)
+<a name="421"/>
+<a name="422"/># draw filled square
+<a name="423"/>procedure FillSquare(win, x, y, r)		
+<a name="424"/>   return win.fill_rectangle( x - r, y - r, 2 * r + 1, 2 * r + 1)
+<a name="425"/>end
+<a name="426"/>
+<a name="427"/>
+<a name="428"/>#  FillDiamond(win, x, y, r) -- fill diamond centered at (x,y)
+<a name="429"/>
+<a name="430"/># draw filled diamond
+<a name="431"/>procedure FillDiamond(win, x, y, r)		
+<a name="432"/>   return win.fill_polygon( x - r, y, x, y + r + 1, x + r + 1, y, x, y - r - 1)
+<a name="433"/>end
+<a name="434"/>
+<a name="435"/>
+<a name="436"/>#  FillTriangle(win, x, y, r, o) -- fill triangle centered at (x,y)
+<a name="437"/>#
+<a name="438"/>#  r is "radius" (1/2 of side of enclosing square)
+<a name="439"/>#  o is orientation ("n", "s", "e", "w")
+<a name="440"/>
+<a name="441"/># draw filled triangle
+<a name="442"/>procedure FillTriangle(win, x, y, r, o)		
+<a name="443"/>   return case o of {
+<a name="444"/>      default:  #"n"
+<a name="445"/>         win.fill_polygon( x - r - 1, y + r + 1, x, y - r, x + r + 1, y + r + 1)
+<a name="446"/>      "s":
+<a name="447"/>         win.fill_polygon( x - r, y - r, x, y + r, x + r, y - r)
+<a name="448"/>      "e":
+<a name="449"/>         win.fill_polygon( x - r, y - r, x + r, y, x - r, y + r)
+<a name="450"/>      "w":
+<a name="451"/>         win.fill_polygon( x + r + 1, y - r - 1, x - r, y, x + r + 1, y + r + 1)
+<a name="452"/>      }
+<a name="453"/>end
+<a name="454"/>
+</pre></body></html>

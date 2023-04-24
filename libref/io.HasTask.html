@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>HasTask</title></head><body>
+<h1>HasTask</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="net.NetClient.html">net.NetClient</a><br>
+<a href="io.FilterStreamBase.html">io.FilterStreamBase</a><br>
+<a href="io.TaskStream.html">io.TaskStream</a><br>
+<a href="io.LineEditorStream.html">io.LineEditorStream</a><br>
+<a href="util.Process.html">util.Process</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+Convenient superclass of classes which have an optional <code><a href="io.Task.html" target="displayFrame">Task</a></code> to
+use for polling.
+<p/><a href="io-streams.icn.html#1436" target="displayFrame">Source - streams.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#choose_poll">choose_poll()</a>
+<a href="#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#task">task</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="choose_poll"/>
+<h3>choose_poll(l, timeout)</h3>
+protected<p/>
+<dl>
+<dd>
+Poll, either using the task's poll, or <code><a href="io.DescStream.html#poll">DescStream.poll</a></code> if task
+is unset.
+<p/><a href="io-streams.icn.html#1451" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="set_task"/>
+<h3>set_task(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set a <code><a href="io.Task.html" target="displayFrame">Task</a></code> to use when polling
+<p/><a href="io-streams.icn.html#1443" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="task"/>
+<h3>task</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1440" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+</body></html>

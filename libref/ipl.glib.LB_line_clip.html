@@ -1,0 +1,17 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>LB_line_clip</title></head><body>
+<h1>LB_line_clip(line, box)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.glib-package.html" target="listFrame">ipl.glib</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Note: Liang-Barsky algorithms (or variants) are used.  If you
+have fast FP hardware, they are faster than Cohen-Sutherland
+(and *much* slower if you *don't*!).  Anyway, they're more
+fun to code and easier to extend to 3-D.
+<p/>
+LB_line_clip -- takes a 2-D line (two points) and returns it clipped to
+a box (normally the viewport).
+<p/><a href="ipl.glib-glib.icn.html#73" target="displayFrame">Source - glib.icn </a>
+<p/>
+</body></html>

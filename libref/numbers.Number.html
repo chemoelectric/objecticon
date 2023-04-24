@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Number</title></head><body>
+<h1>Number</h1>
+<dl>
+<dt>Type :</dt><dd>protected abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="numbers.Cpx.html">numbers.Cpx</a><br>
+<a href="numbers.RealNumber.html">numbers.RealNumber</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="numbers-package.html" target="listFrame">numbers</a></dd>
+</dl><p/>
+Abstract parent class for the three number types, <code><a href="numbers.Cpx.html" target="displayFrame">Cpx</a></code>, <code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> and
+<code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.  The latter two are in fact subclasses via <code><a href="numbers.RealNumber.html" target="displayFrame">RealNumber</a></code>.
+<p/><a href="numbers-numbers.icn.html#172" target="displayFrame">Source - numbers.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="numbers.Number.html">numbers.Number</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#div">div()</a>
+<a href="#init">init()</a>
+<a href="#mul">mul()</a>
+<a href="#neg">neg()</a>
+<a href="#object_output">object_output()</a>
+<a href="#reduce">reduce()</a>
+<a href="#str">str()</a>
+<a href="#sub">sub()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#REAL_DIGS">REAL_DIGS</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(x, rnd)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Add this instance to another instance of the same type.
+<p/><a href="numbers-numbers.icn.html#184" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="div"/>
+<h3>div(x, rnd)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Divide this instance by another instance of the same type, with
+optional rounding <code>rnd</code>, if applicable to the type concerned.
+<p/><a href="numbers-numbers.icn.html#190" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#180" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="mul"/>
+<h3>mul(x, rnd)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Multiply this instance by another instance of the same type.
+<p/><a href="numbers-numbers.icn.html#187" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="neg"/>
+<h3>neg()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return this instance negated.
+<p/><a href="numbers-numbers.icn.html#194" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+<p/><a href="numbers-numbers.icn.html#208" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="reduce"/>
+<h3>reduce()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Return a simplified equivalent to this instance; for example a
+<code><a href="numbers.Rat.html" target="displayFrame">Rat</a></code> with denominator 1 returns its numerator (as a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>).  If
+no simplification is possible, <code>self</code> is returned.
+<p/><a href="numbers-numbers.icn.html#197" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="str"/>
+<h3>str(fmt, dp)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Produce formatted string output.
+<p/><a href="numbers-numbers.icn.html#202" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<a name="sub"/>
+<h3>sub(x, rnd)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Subtract the other instance of the same type from this instance.
+<p/><a href="numbers-numbers.icn.html#205" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="REAL_DIGS"/>
+<h3>REAL_DIGS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="numbers-numbers.icn.html#176" target="displayFrame">Source - numbers.icn </a>
+</dd>
+</dl><hr>
+</body></html>

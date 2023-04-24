@@ -74,7 +74,7 @@ someprog.exe</code></pre>
 <h1 id="ieval">ieval</h1>
 <p><code>ieval</code> should work acceptably in the Windows console, but the program’s built-in line editing will be disabled. However, the console’s own line editing can of course be used instead. Alternatively, the graphics version of <code>ieval</code> (option <code>-g</code>) can be used.</p>
 <h1 id="openssl">OpenSSL</h1>
-<p>The binary distribution includes the <a href="http://objecticon.sourceforge.net/libref/index.html?ssl-package.html"><code>ssl</code></a> library (in <code>lib/native</code>). This DLL is statically linked to the OpenSSL libraries.</p>
+<p>The binary distribution includes the <a href="libref/index.html?ssl-package.html"><code>ssl</code></a> library (in <code>lib/native</code>). This DLL is statically linked to the OpenSSL libraries.</p>
 <p>To be useful, OpenSSL needs to have access to a set of root authority certificates. This enables the identity of remote hosts to be verified. A helpful page containing up-to-date certificates extracted from Mozilla is <a href="https://curl.haxx.se/docs/caextract.html" class="uri">https://curl.haxx.se/docs/caextract.html</a>. The certificates are contained in a single “.pem” file. After saving this file, OpenSSL can be directed to use it by setting the environment variable “SSL_CERT_FILE” to the location of the file.</p>
 <h1 id="compilation">Compilation</h1>
 <p>This section describes how to compile Object Icon on Windows (32 and 64 bit).</p>
@@ -110,7 +110,7 @@ export LIBPATH=&#39;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;C:\Program F
 <pre><code>tar xfz objecticon-1234.tar.gz</code></pre>
 <p>This will create a directory <code>objecticon-1234</code> under the current directory. The number is the subversion version number from which the .tar.gz was built, and will of course be different. You can rename this directory if you like, but it must not be renamed (or moved) after configuration and compilation.</p>
 <h2 id="third-party-libraries">Third-party libraries</h2>
-<p>Microsoft’s <code>vcpkg</code> (see <a href="https://github.com/microsoft/vcpkg" class="uri">https://github.com/microsoft/vcpkg</a>) can be used to provide the external libraries for zlib, OpenSSL and MySQL. <code>zlib</code> is just used to provide the <code>-Z</code> option to <code>oit</code>, whilst OpenSSL and MySQL provide the <a href="http://objecticon.sourceforge.net/libref/index.html?ssl-package.html"><code>ssl</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?mysql-package.html"><code>mysql</code></a> libraries (in <code>lib/native</code>).</p>
+<p>Microsoft’s <code>vcpkg</code> (see <a href="https://github.com/microsoft/vcpkg" class="uri">https://github.com/microsoft/vcpkg</a>) can be used to provide the external libraries for zlib, OpenSSL and MySQL. <code>zlib</code> is just used to provide the <code>-Z</code> option to <code>oit</code>, whilst OpenSSL and MySQL provide the <a href="libref/index.html?ssl-package.html"><code>ssl</code></a> and <a href="libref/index.html?mysql-package.html"><code>mysql</code></a> libraries (in <code>lib/native</code>).</p>
 <p>After installation of <code>vcpkg</code>, use one or more of the following commands to install the desired libraries (for a 64-bit build) :-</p>
 <pre><code>vcpkg install openssl:x64-windows-static
 vcpkg install libmysql:x64-windows-static

@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>polynom.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     polynom.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to manipulate multi-variate polynomials
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     June 11, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  The format for strings omits symbols for multiplication and
+<a name="18"/>#  exponentiation.  For example, 3*a^2 is entered as 3a2.
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>#
+<a name="22"/>#  Links:  strings, tables
+<a name="23"/>#
+<a name="24"/>############################################################################
+<a name="25"/>
+<a name="26"/>package ipl.polynom
+<a name="27"/>
+<a name="28"/>import
+<a name="29"/>   ipl.sets(elementset),
+<a name="30"/>   ipl.strings(csort),
+<a name="31"/>   ipl.tables(keylist)
+<a name="32"/>
+<a name="33"/># convert string to polynomial
+<a name="34"/>procedure str2poly(str)			
+<a name="35"/>   local poly, var, vars, term, factor, power
+<a name="36"/>
+<a name="37"/>   poly := table(0)
+<a name="38"/>
+<a name="39"/>   str ? {
+<a name="40"/>      while term := (move(1) || tab(upto('\-+') | 0)) do {	# possible sign
+<a name="41"/>         term ? {
+<a name="42"/>            factor := 1			# default
+<a name="43"/>            factor := tab(many(&amp;digits ++ '+\-'))
+<a name="44"/>            tab(0) ? {
+<a name="45"/>               vars := ""
+<a name="46"/>               while var := move(1) do {
+<a name="47"/>                  power := 1		# default
+<a name="48"/>                  power := integer(tab(many(&amp;digits)))
+<a name="49"/>                  vars ||:= repl(var, power)
+<a name="50"/>                  }
+<a name="51"/>               }
+<a name="52"/>            poly[csort(vars)] +:= integer(factor)
+<a name="53"/>            }
+<a name="54"/>         }
+<a name="55"/>      }
+<a name="56"/>
+<a name="57"/>   return poly
+<a name="58"/>
+<a name="59"/>end
+<a name="60"/>
+<a name="61"/># add polynomials
+<a name="62"/>procedure polyadd(poly1, poly2)		
+<a name="63"/>   local poly, keys, k
+<a name="64"/>
+<a name="65"/>   keys := sort(elementset(keylist(poly1)) ++ elementset(keylist(poly2)))
+<a name="66"/>
+<a name="67"/>   poly := table(0)
+<a name="68"/>
+<a name="69"/>   every k := !keys do
+<a name="70"/>      poly[k] := poly1[k] + poly2[k]
+<a name="71"/>
+<a name="72"/>   return poly
+<a name="73"/>
+<a name="74"/>end
+<a name="75"/>
+<a name="76"/># subtract polynomials
+<a name="77"/>procedure polysub(poly1, poly2)		
+<a name="78"/>   local poly, keys, k
+<a name="79"/>
+<a name="80"/>   keys := sort(elementset(keylist(poly1)) ++ elementset(keylist(poly2)))
+<a name="81"/>
+<a name="82"/>   poly := table(0)
+<a name="83"/>
+<a name="84"/>   every k := !keys do
+<a name="85"/>      poly[k] := poly1[k] - poly2[k]
+<a name="86"/>
+<a name="87"/>   return poly
+<a name="88"/>
+<a name="89"/>end
+<a name="90"/>
+<a name="91"/># multiply polynomials
+<a name="92"/>procedure polymul(poly1, poly2)		
+<a name="93"/>   local poly, keys1, keys2, k1, k2
+<a name="94"/>
+<a name="95"/>   keys1 := keylist(poly1)
+<a name="96"/>   keys2 := keylist(poly2)
+<a name="97"/>
+<a name="98"/>   poly := table(0)
+<a name="99"/>
+<a name="100"/>   every k1 := !keys1 do
+<a name="101"/>      every k2 := !keys2 do
+<a name="102"/>         poly[csort(k1 || k2)] +:= poly1[k1] * poly2[k2]
+<a name="103"/>
+<a name="104"/>   return poly
+<a name="105"/>
+<a name="106"/>end
+<a name="107"/>
+<a name="108"/># exponentiate polynomial
+<a name="109"/>procedure polyexp(poly1, i)		
+<a name="110"/>   local poly
+<a name="111"/>
+<a name="112"/>   poly := copy(poly1)
+<a name="113"/>
+<a name="114"/>   every 1 to i - 1 do 
+<a name="115"/>      poly := polymul(poly, poly1)
+<a name="116"/>
+<a name="117"/>   return poly
+<a name="118"/>
+<a name="119"/>end
+<a name="120"/>
+<a name="121"/># polynomial to string
+<a name="122"/>procedure poly2str(poly)		
+<a name="123"/>   local str, keys, k, count, var
+<a name="124"/>
+<a name="125"/>   keys := keylist(poly)
+<a name="126"/>
+<a name="127"/>   str := ""
+<a name="128"/>
+<a name="129"/>   every k := !keys do {
+<a name="130"/>      if poly[k] = 0 then next		# skip term
+<a name="131"/>      else if poly[k] &gt; 1 then str ||:= "+" || poly[k]
+<a name="132"/>      else if poly[k] = -1 then str ||:= "-"
+<a name="133"/>      else if poly[k] &lt; 0 then str ||:= poly[k]
+<a name="134"/>      else str ||:= "+"
+<a name="135"/>      k ? {
+<a name="136"/>         while var := move(1) do {
+<a name="137"/>            count := 1
+<a name="138"/>            count +:= *tab(many(var))
+<a name="139"/>            if count = 1 then str ||:= var
+<a name="140"/>            else str ||:= var || count
+<a name="141"/>            }
+<a name="142"/>         }
+<a name="143"/>      }
+<a name="144"/>
+<a name="145"/>   return str[2:0]
+<a name="146"/>
+<a name="147"/>end
+<a name="148"/>
+<a name="149"/># polynomial to profile sequence
+<a name="150"/>procedure poly2profile(poly)		
+<a name="151"/>   local str, keys, k
+<a name="152"/>
+<a name="153"/>   keys := keylist(poly)
+<a name="154"/>
+<a name="155"/>   str := ""
+<a name="156"/>
+<a name="157"/>   every k := !keys do
+<a name="158"/>      str ||:= repl(k, (0 &lt; poly[k]))
+<a name="159"/>
+<a name="160"/>   return str
+<a name="161"/>
+<a name="162"/>end
+</pre></body></html>

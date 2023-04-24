@@ -1,0 +1,1070 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lists.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     lists.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to manipulate lists
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     June 11, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Contributor:  Richard L. Goerwitz
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>
+<a name="21"/>package ipl.lists
+<a name="22"/>
+<a name="23"/>import
+<a name="24"/>   io(open),
+<a name="25"/>   ipl.indices(indices),
+<a name="26"/>   ipl.numbers(mod1),
+<a name="27"/>   ipl.sets(elementset),
+<a name="28"/>   ipl.strings(separate,separate_lines),
+<a name="29"/>   ipl.pdco(String, String2, List),
+<a name="30"/>   lang(equals,Prog),
+<a name="31"/>   util(cvpos, cvslice, cvslice_def, cvpos_item, use)
+<a name="32"/>
+<a name="33"/># Create list from lines in file
+<a name="34"/>#
+<a name="35"/># :Parameters :
+<a name="36"/># :  `s` - the file name
+<a name="37"/>#
+<a name="38"/>procedure file2list(s)
+<a name="39"/>   local input
+<a name="40"/>   return use {
+<a name="41"/>      input := open(s),
+<a name="42"/>      stream2list(input)
+<a name="43"/>   }
+<a name="44"/>end
+<a name="45"/>
+<a name="46"/># Create list from reading lines from a stream
+<a name="47"/>#
+<a name="48"/># :Parameters :
+<a name="49"/># :  `s` - the `io.Stream`
+<a name="50"/>#
+<a name="51"/>procedure stream2list(s)
+<a name="52"/>   local l, t
+<a name="53"/>   l := []
+<a name="54"/>   repeat {
+<a name="55"/>      t := s.read_line() | fail
+<a name="56"/>      if /t then
+<a name="57"/>         return l
+<a name="58"/>      put(l, t)
+<a name="59"/>   }
+<a name="60"/>end
+<a name="61"/>
+<a name="62"/># Output a list to a file, with one line per element.
+<a name="63"/>#
+<a name="64"/># :Parameters :
+<a name="65"/># :  `l` - the list to output
+<a name="66"/># :  `s` - the file name
+<a name="67"/>#
+<a name="68"/>procedure list2file(l, s)
+<a name="69"/>   local output
+<a name="70"/>   return use {
+<a name="71"/>      output := open(s, "w"),
+<a name="72"/>      list2stream(l, output)
+<a name="73"/>   }
+<a name="74"/>end
+<a name="75"/>
+<a name="76"/># Output a list to a stream, with one line per element.
+<a name="77"/>#
+<a name="78"/># :Parameters :
+<a name="79"/># :  `l` - the list to output
+<a name="80"/># :  `s` - the `io.Stream`
+<a name="81"/>#
+<a name="82"/>procedure list2stream(l, s)
+<a name="83"/>   local t
+<a name="84"/>   every t := !l do
+<a name="85"/>      s.write(t) | fail
+<a name="86"/>   return
+<a name="87"/>end
+<a name="88"/>
+<a name="89"/># Convert `limage()` output to list
+<a name="90"/>procedure imag2lst(seqimage)		
+<a name="91"/>   local seq, term
+<a name="92"/>
+<a name="93"/>   seq := []
+<a name="94"/>
+<a name="95"/>   every term := separate(seqimage[2:-1]) do {
+<a name="96"/>      term := numeric(term)			# special interest
+<a name="97"/>      put(seq, term)
+<a name="98"/>      }
+<a name="99"/>
+<a name="100"/>   return seq
+<a name="101"/>
+<a name="102"/>end
+<a name="103"/>
+<a name="104"/>procedure lblock(L1, L2)
+<a name="105"/>   local L3, i, j
+<a name="106"/>
+<a name="107"/>   if *L1 &lt; *L2 then L1 := lextend(L1, *L2) | fail
+<a name="108"/>   else if *L2 &lt; *L1 then L2 := lextend(L2, *L1) | fail
+<a name="109"/>
+<a name="110"/>   L3 := []
+<a name="111"/>
+<a name="112"/>    every i := 1 to *L1 do
+<a name="113"/>       every j := 1 to L2[i] do
+<a name="114"/>          put(L3, L2[i])
+<a name="115"/>
+<a name="116"/>      return L3
+<a name="117"/>
+<a name="118"/>end
+<a name="119"/>
+<a name="120"/># Layer and interleave `args[1], args[2], ...`
+<a name="121"/>procedure llayer(args[])		
+<a name="122"/>   local offsets, offset, seq, arg, lists, k
+<a name="123"/>
+<a name="124"/>   lists := List{ lcompact(!args) }
+<a name="125"/>
+<a name="126"/>   offsets := []
+<a name="127"/>
+<a name="128"/>   offset := 0
+<a name="129"/>
+<a name="130"/>   every arg := !lists do {
+<a name="131"/>      put(offsets, offset)
+<a name="132"/>      offset +:= max ! arg
+<a name="133"/>      }
+<a name="134"/>
+<a name="135"/>   seq := []
+<a name="136"/>
+<a name="137"/>   repeat {
+<a name="138"/>      every k := 1 to *lists do {
+<a name="139"/>         arg := lists[k]
+<a name="140"/>         put(seq, get(arg) + offsets[k]) | break break
+<a name="141"/>         }
+<a name="142"/>      }
+<a name="143"/>
+<a name="144"/>   return seq
+<a name="145"/>
+<a name="146"/>end
+<a name="147"/>
+<a name="148"/># Compact list, mapping out missing values
+<a name="149"/>procedure lcompact(seq)			
+<a name="150"/>   local unique, target
+<a name="151"/>
+<a name="152"/>   unique := elementset(seq)
+<a name="153"/>
+<a name="154"/>   target := List{ 1 to *unique }
+<a name="155"/>
+<a name="156"/>   return lmap(seq, sort(unique), target)
+<a name="157"/>
+<a name="158"/>end
+<a name="159"/>
+<a name="160"/># Close open palindrome
+<a name="161"/>procedure lclose(L)			
+<a name="162"/>
+<a name="163"/>   if equals(L, lreverse(L)) then return L
+<a name="164"/>   else {
+<a name="165"/>      L := copy(L)
+<a name="166"/>      put(L, L[1])
+<a name="167"/>      return L
+<a name="168"/>      }
+<a name="169"/>
+<a name="170"/>end
+<a name="171"/>
+<a name="172"/>package procedure lcomb1(L, start, R, k)
+<a name="173"/>   local i
+<a name="174"/>   if *R - k &gt; *L - start then
+<a name="175"/>      fail
+<a name="176"/>   if k &gt; *R then
+<a name="177"/>      return R
+<a name="178"/>   every i := start to *L do {
+<a name="179"/>      R[k] := L[i]
+<a name="180"/>      suspend lcomb1(L, i + 1, R, k + 1)
+<a name="181"/>   }
+<a name="182"/>end
+<a name="183"/>
+<a name="184"/># Generate all combinations of length `i` from list `L`.  NB: the same results
+<a name="185"/># list is suspended each time.
+<a name="186"/>procedure lcomb(L,i)			
+<a name="187"/>   suspend lcomb1(L, 1, list(i), 1)
+<a name="188"/>end
+<a name="189"/>
+<a name="190"/>
+<a name="191"/># List decollation
+<a name="192"/>procedure ldecollate(indices, L)	
+<a name="193"/>   local result, i, x
+<a name="194"/>
+<a name="195"/>   indices := copy(indices)
+<a name="196"/>
+<a name="197"/>   result := list(max ! indices)	# list of lists to return
+<a name="198"/>   every !result := []			# initially empty
+<a name="199"/>
+<a name="200"/>   every x := !L do {
+<a name="201"/>      i := get(indices)	| fail
+<a name="202"/>      put(indices, i)
+<a name="203"/>      put(result[i], x)
+<a name="204"/>      }
+<a name="205"/>
+<a name="206"/>   return result
+<a name="207"/>
+<a name="208"/>end
+<a name="209"/>
+<a name="210"/># Delete all instances of `x` from the list `l`.
+<a name="211"/>procedure ldel(l, x)
+<a name="212"/>   local i, e
+<a name="213"/>   i := 1
+<a name="214"/>   every e := !l do {
+<a name="215"/>      while e === x do {
+<a name="216"/>         delete(l, i)
+<a name="217"/>         e := l[i] | return l
+<a name="218"/>      }
+<a name="219"/>      i +:= 1
+<a name="220"/>   }
+<a name="221"/>   return l
+<a name="222"/>end
+<a name="223"/>
+<a name="224"/># Delete just the first occurence of `x` from list `l`.
+<a name="225"/># Returns `l` if `x` was found in `l`, fails otherwise.
+<a name="226"/>#
+<a name="227"/>procedure ldel1(l, x)
+<a name="228"/>   return delete(l, keyof(l, x))
+<a name="229"/>end
+<a name="230"/>
+<a name="231"/># Delete specified list elements; returns a new list
+<a name="232"/>procedure ldelelements(L, spec)		
+<a name="233"/>   local i, tmp
+<a name="234"/>
+<a name="235"/>   tmp := indices(spec, *L) | fail		# bad specification
+<a name="236"/>
+<a name="237"/>   while i := pull(tmp) do
+<a name="238"/>      L := L[1+:i - 1] ||| L[i + 1:0]
+<a name="239"/>
+<a name="240"/>   return L
+<a name="241"/>
+<a name="242"/>end
+<a name="243"/>
+<a name="244"/># List term duplication
+<a name="245"/>procedure ldupl(L1, L2)			
+<a name="246"/>   local L3, i, j
+<a name="247"/>
+<a name="248"/>   if integer(L2) then L2 := [L2]
+<a name="249"/>
+<a name="250"/>   L3 := []
+<a name="251"/>
+<a name="252"/>   every i := !L2 do
+<a name="253"/>      every j := !L1 do
+<a name="254"/>        every 1 to i do
+<a name="255"/>           put(L3, j)
+<a name="256"/>
+<a name="257"/>   return L3
+<a name="258"/>
+<a name="259"/>end
+<a name="260"/>
+<a name="261"/># Compare lists for equivalence
+<a name="262"/>procedure lequiv(x,y)			
+<a name="263"/>   local i
+<a name="264"/>
+<a name="265"/>   if x === y then return y
+<a name="266"/>   if type(x) == type(y) == "list" then {
+<a name="267"/>      if *x ~= *y then fail
+<a name="268"/>      every i := 1 to *x do
+<a name="269"/>         lequiv(x[i],y[i]) | fail
+<a name="270"/>      return y
+<a name="271"/>     }
+<a name="272"/>
+<a name="273"/>end
+<a name="274"/>
+<a name="275"/># Elevate values
+<a name="276"/>procedure levate(seq, m, n)		
+<a name="277"/>   local shafts, reseq, i, j, k
+<a name="278"/>
+<a name="279"/>   shafts := list(m)
+<a name="280"/>
+<a name="281"/>   every !shafts := []
+<a name="282"/>
+<a name="283"/>   every i := 1 to m do
+<a name="284"/>      every put(shafts[i], i to n by m)
+<a name="285"/>
+<a name="286"/>   reseq := []
+<a name="287"/>
+<a name="288"/>   while j := get(seq) do {
+<a name="289"/>      i := j % m + 1
+<a name="290"/>      k := get(shafts[i])
+<a name="291"/>      put(reseq, k)
+<a name="292"/>      put(shafts[i], k)
+<a name="293"/>      }
+<a name="294"/>
+<a name="295"/>   return reseq
+<a name="296"/>
+<a name="297"/>end
+<a name="298"/>	
+<a name="299"/># List extension
+<a name="300"/>procedure lextend(L, i)			
+<a name="301"/>   local result
+<a name="302"/>
+<a name="303"/>   if *L = 0 then fail
+<a name="304"/>
+<a name="305"/>   result := copy(L)
+<a name="306"/>
+<a name="307"/>   until *result &gt;= i do
+<a name="308"/>      result |||:= L
+<a name="309"/>
+<a name="310"/>   result := result[1+:i]
+<a name="311"/>
+<a name="312"/>   return result
+<a name="313"/> 
+<a name="314"/>end
+<a name="315"/>
+<a name="316"/># List horizontal flip (reversal)
+<a name="317"/>procedure lfliph(L)			
+<a name="318"/>
+<a name="319"/>   return lreverse(L)
+<a name="320"/>
+<a name="321"/>end
+<a name="322"/>
+<a name="323"/># List vertical flip
+<a name="324"/>procedure lflipv(L)			
+<a name="325"/>   local L1, m, i
+<a name="326"/>
+<a name="327"/>   m := max ! L
+<a name="328"/>
+<a name="329"/>   L1 := []
+<a name="330"/>
+<a name="331"/>   every i := !L do
+<a name="332"/>      put(L1, mod1(-i + 1, m))
+<a name="333"/>
+<a name="334"/>   return L1
+<a name="335"/>
+<a name="336"/>end
+<a name="337"/>
+<a name="338"/># String image of list
+<a name="339"/>procedure limage(L)			
+<a name="340"/>   return "[" || String{ image(!L), "," } || "]"
+<a name="341"/>end
+<a name="342"/>
+<a name="343"/># Generalized list collation;; like `linterl()` except stops on short list.
+<a name="344"/>procedure lcollate(args[])		
+<a name="345"/>   local seq, arg, lists, k
+<a name="346"/>
+<a name="347"/>   lists := List{ copy(!args) }
+<a name="348"/>
+<a name="349"/>   seq := []
+<a name="350"/>
+<a name="351"/>   repeat {
+<a name="352"/>      every k := 1 to *lists do {
+<a name="353"/>         arg := lists[k]
+<a name="354"/>         put(seq, get(arg)) | break break
+<a name="355"/>         }
+<a name="356"/>      }
+<a name="357"/>
+<a name="358"/>   return seq
+<a name="359"/>
+<a name="360"/>end
+<a name="361"/>
+<a name="362"/># Succeeds and returns element if all elements are the same
+<a name="363"/>procedure lconstant(L)			
+<a name="364"/>
+<a name="365"/>   if *elementset(L) = 1 then return .L[1]
+<a name="366"/>   else fail
+<a name="367"/>
+<a name="368"/>end
+<a name="369"/>
+<a name="370"/># List interleaving
+<a name="371"/>procedure linterl(L1, L2)		
+<a name="372"/>   local L3, i
+<a name="373"/>
+<a name="374"/>   if *L1 &lt; *L2 then L1 := lextend(L1, *L2) | fail
+<a name="375"/>   else if *L2 &lt; *L1 then L2 := lextend(L2, *L1) | fail
+<a name="376"/>
+<a name="377"/>   L3 := []
+<a name="378"/>
+<a name="379"/>   every i := 1 to *L1 do
+<a name="380"/>      every put(L3, L1[i] | L2[i])
+<a name="381"/>
+<a name="382"/>   return L3
+<a name="383"/>
+<a name="384"/>end
+<a name="385"/>
+<a name="386"/># List padding at left
+<a name="387"/>procedure llpad(L, i, x)		
+<a name="388"/>
+<a name="389"/>   L := copy(L)
+<a name="390"/>
+<a name="391"/>   while *L &lt; i do push(L, x)
+<a name="392"/>
+<a name="393"/>   return L
+<a name="394"/>
+<a name="395"/>end
+<a name="396"/>
+<a name="397"/># List run up
+<a name="398"/>procedure lrunup(L1, L2, L3)		
+<a name="399"/>
+<a name="400"/>   /L3 := [1]		# could be /L3 := 1 ...
+<a name="401"/>
+<a name="402"/>   return List{ !L1 to !L2 by !L3 }
+<a name="403"/>
+<a name="404"/>end
+<a name="405"/>
+<a name="406"/># List run down
+<a name="407"/>procedure lrundown(L1, L2, L3)		
+<a name="408"/>
+<a name="409"/>   /L3 := [1]		# could be /L3 := 1 ...
+<a name="410"/>
+<a name="411"/>   return List{ !L1 to !L2 by -!L3 }
+<a name="412"/>
+<a name="413"/>end
+<a name="414"/>
+<a name="415"/>
+<a name="416"/># List left trimming
+<a name="417"/>procedure lltrim(L, S)			
+<a name="418"/>
+<a name="419"/>   L := copy(L)
+<a name="420"/>
+<a name="421"/>   while member(S, L[1]) do
+<a name="422"/>      get(L)
+<a name="423"/>
+<a name="424"/>    return L
+<a name="425"/>
+<a name="426"/>end
+<a name="427"/>
+<a name="428"/>#  __About List Mapping__
+<a name="429"/>#
+<a name="430"/>#  The procedure `lmap(L1,L2,L3)` maps elements of `L1` according to
+<a name="431"/>#  `L2` and `L3`.  This procedure is the analog for lists of the
+<a name="432"/>#  built-in string-mapping function `map(s1,s2,s3)`. Elements in `L1`
+<a name="433"/>#  that are the same as elements in `L2` are mapped into the
+<a name="434"/>#  corresponding elements of `L3`. For example, given the lists
+<a name="435"/>#  ~
+<a name="436"/>#     L1 := [1,2,3,4]
+<a name="437"/>#     L2 := [4,3,2,1]
+<a name="438"/>#     L3 := ["a","b","c","d"]
+<a name="439"/>#  ~
+<a name="440"/>#  then
+<a name="441"/>#  ~
+<a name="442"/>#     lmap(L1,L2,L3)
+<a name="443"/>#  ~
+<a name="444"/>#  produces a new list
+<a name="445"/>#  ~
+<a name="446"/>#     ["d","c","b","a"]
+<a name="447"/>#  ~
+<a name="448"/>#     Lists that are mapped can have any kinds of elements. The
+<a name="449"/>#  operation
+<a name="450"/>#  ~
+<a name="451"/>#     x === y
+<a name="452"/>#  ~
+<a name="453"/>#  is used to determine if elements `x` and `y` are equivalent.
+<a name="454"/>#  
+<a name="455"/>#     All cases in `lmap` are handled as they are in `map`, except
+<a name="456"/>#  that no defaults are provided for omitted arguments. As with `map`,
+<a name="457"/>#  `lmap` can be used for transposition as well as substitution.
+<a name="458"/>#  
+<a name="459"/>#  **Warning:**
+<a name="460"/>#
+<a name="461"/>#     If `lmap` is called with the same lists `L2` and `L3` as in the
+<a name="462"/>#  immediately preceding call, the same mapping is performed, even if
+<a name="463"/>#  the values in `L2` and `L3` have been changed. This improves
+<a name="464"/>#  performance, but it may cause unexpected effects.
+<a name="465"/>#  
+<a name="466"/>#     This "caching" of the mapping table based on `L2` and `L3`
+<a name="467"/>#  can be easily removed to avoid this potential problem.
+<a name="468"/>#
+<a name="469"/>procedure lmap(L1,L2,L3)		
+<a name="470"/>   static lmem2, lmem3, lmaptbl, tdefault
+<a name="471"/>   local i, a
+<a name="472"/>
+<a name="473"/>   initial tdefault := []
+<a name="474"/>
+<a name="475"/>   if type(a := L1 | L2 | L3) ~== "list" then runerr(108,a)
+<a name="476"/>   if *L2 ~= *L3 then runerr(208,L2)
+<a name="477"/>
+<a name="478"/>   L1 := copy(L1)
+<a name="479"/>
+<a name="480"/>   unless lmem2 === L2 &amp; lmem3 === L3 then {	# if an argument is new, rebuild
+<a name="481"/>      lmem2 := L2				# save for future reference
+<a name="482"/>      lmem3 := L3
+<a name="483"/>      lmaptbl := table(tdefault)		# new mapping table
+<a name="484"/>      every i := 1 to *L2 do			# build the map
+<a name="485"/>         lmaptbl[L2[i]] := L3[i]
+<a name="486"/>      }
+<a name="487"/>   every i := 1 to *L1 do			# map the values
+<a name="488"/>      L1[i] := (tdefault ~=== lmaptbl[L1[i]])
+<a name="489"/>   return L1
+<a name="490"/>
+<a name="491"/>end
+<a name="492"/>
+<a name="493"/># List palindrome
+<a name="494"/>procedure lpalin(L, x)			
+<a name="495"/>
+<a name="496"/>   L |||:= lreverse(L)
+<a name="497"/>
+<a name="498"/>   if /x then pull(L)
+<a name="499"/>
+<a name="500"/>   return L
+<a name="501"/>
+<a name="502"/>end
+<a name="503"/>
+<a name="504"/># Heap's algorithm for permutation generation.
+<a name="505"/># See : &lt;https://en.wikipedia.org/wiki/Heap%27s_algorithm&gt;
+<a name="506"/>#
+<a name="507"/>package procedure lpermute1(L, n)
+<a name="508"/>   local i
+<a name="509"/>   if n &lt;= 1 then
+<a name="510"/>      return L
+<a name="511"/>   every i := 1 to n - 1 do {
+<a name="512"/>      suspend lpermute1(L, n - 1)
+<a name="513"/>      if i % 2 = 1 then
+<a name="514"/>         L[i] :=: L[n]
+<a name="515"/>      else
+<a name="516"/>         L[1] :=: L[n]
+<a name="517"/>   }
+<a name="518"/>   suspend lpermute1(L, n - 1)
+<a name="519"/>end
+<a name="520"/>
+<a name="521"/># List permutations.  NB: the same result list is suspended each time.
+<a name="522"/>#
+<a name="523"/>procedure lpermute(L)			
+<a name="524"/>   suspend lpermute1(copy(L), *L)
+<a name="525"/>end
+<a name="526"/>
+<a name="527"/>
+<a name="528"/># List reflection.  Returns `L` concatenated with its reversal to
+<a name="529"/># produce palindrome; the values of `i` determine "end conditions" for
+<a name="530"/># the reversal:
+<a name="531"/>#  *  0       omit first and last elements; default
+<a name="532"/>#  *  1       omit first element
+<a name="533"/>#  *  2       omit last element
+<a name="534"/>#  *  3       don't omit element
+<a name="535"/>#
+<a name="536"/>procedure lreflect(L, i)		
+<a name="537"/>   local L1
+<a name="538"/>
+<a name="539"/>   /i := 0
+<a name="540"/>
+<a name="541"/>   if i &gt; 3 then runerr("*** invalid argument to lreflect()")
+<a name="542"/>
+<a name="543"/>   if i &lt; 3 then L1 := copy(L)
+<a name="544"/>
+<a name="545"/>   return L ||| lreverse(
+<a name="546"/>      case i of {
+<a name="547"/>         0:   {get(L1); pull(L1); L1}
+<a name="548"/>         1:   {get(L1); L1}
+<a name="549"/>         2:   {pull(L1); L1}
+<a name="550"/>         3:   L
+<a name="551"/>         }
+<a name="552"/>      )
+<a name="553"/>
+<a name="554"/>end
+<a name="555"/>
+<a name="556"/># Remove values from list
+<a name="557"/>procedure lremvals(L, x[])		
+<a name="558"/>   local result, y
+<a name="559"/>
+<a name="560"/>   result := []
+<a name="561"/>
+<a name="562"/>   every y := !L do
+<a name="563"/>      if y === !x then next
+<a name="564"/>      else put(result, y)
+<a name="565"/>
+<a name="566"/>   return result
+<a name="567"/>
+<a name="568"/>end
+<a name="569"/>
+<a name="570"/># List replication
+<a name="571"/>procedure lrepl(L, i)			
+<a name="572"/>   local j, k
+<a name="573"/>
+<a name="574"/>   i := (0 &lt; integer(i)) | runerr("*** invalid replication factor in lrepl()")
+<a name="575"/>
+<a name="576"/>   L := copy(L)
+<a name="577"/>
+<a name="578"/>   j := *L
+<a name="579"/>
+<a name="580"/>   every 1 to i - 1 do
+<a name="581"/>      every k := 1 to j do
+<a name="582"/>         put(L, L[k])
+<a name="583"/>
+<a name="584"/>   return L
+<a name="585"/>
+<a name="586"/>end
+<a name="587"/>
+<a name="588"/># List reverse, returning a new list.  If `pos1` and `pos2` are given,
+<a name="589"/># then only the sublist `pos1:pos2` is reversed.
+<a name="590"/>#
+<a name="591"/>procedure lreverse(L, pos1, pos2)			
+<a name="592"/>   return lreverse_mod(copy(L), pos1, pos2)
+<a name="593"/>end
+<a name="594"/>
+<a name="595"/># List reverse, modifying `L`.  If `pos1` and `pos2` are given, then
+<a name="596"/># only the sublist `pos1:pos2` is reversed.
+<a name="597"/>#
+<a name="598"/>procedure lreverse_mod(L, pos1, pos2)
+<a name="599"/>   local s, i, j
+<a name="600"/>   s := cvslice_def(pos1, pos2, *L) | fail
+<a name="601"/>   i := s.lo
+<a name="602"/>   j := s.hi - 1
+<a name="603"/>   while i &lt; j do {
+<a name="604"/>      L[i] :=: L[j]
+<a name="605"/>      i +:= 1
+<a name="606"/>      j -:= 1
+<a name="607"/>   }
+<a name="608"/>   return L
+<a name="609"/>end
+<a name="610"/>
+<a name="611"/># List rotation
+<a name="612"/>procedure lrotate(L, i)			
+<a name="613"/>
+<a name="614"/>   /i := 1
+<a name="615"/>
+<a name="616"/>   L := copy(L)
+<a name="617"/>
+<a name="618"/>   if i &gt; 0 then
+<a name="619"/>      every 1 to i do
+<a name="620"/>         put(L, get(L))
+<a name="621"/>   else
+<a name="622"/>      every 1 to -i do
+<a name="623"/>         push(L, pull(L))
+<a name="624"/>
+<a name="625"/>   return L
+<a name="626"/>
+<a name="627"/>end
+<a name="628"/>
+<a name="629"/># List right padding
+<a name="630"/>procedure lrpad(L, i, x)		
+<a name="631"/>
+<a name="632"/>   L := copy(L)
+<a name="633"/>
+<a name="634"/>   while *L &lt; i do put(L, x)
+<a name="635"/>
+<a name="636"/>   return L
+<a name="637"/>
+<a name="638"/>end
+<a name="639"/>
+<a name="640"/># List right trimming
+<a name="641"/>procedure lrtrim(L, S)			
+<a name="642"/>
+<a name="643"/>   L := copy(L)
+<a name="644"/>
+<a name="645"/>   while member(S, L[-1]) do
+<a name="646"/>      pull(L)
+<a name="647"/>
+<a name="648"/>    return L
+<a name="649"/>
+<a name="650"/>end
+<a name="651"/>
+<a name="652"/># Shift list terms
+<a name="653"/>procedure lshift(L, i)			
+<a name="654"/>
+<a name="655"/>   L := copy(L)
+<a name="656"/>
+<a name="657"/>   every !L +:= i
+<a name="658"/>
+<a name="659"/>   return L
+<a name="660"/>
+<a name="661"/>end
+<a name="662"/>
+<a name="663"/># List element swap
+<a name="664"/>procedure lswap(L)			
+<a name="665"/>   local i
+<a name="666"/>
+<a name="667"/>   L := copy(L)
+<a name="668"/>
+<a name="669"/>   every i := 1 to *L by 2 do
+<a name="670"/>      L[i] :=: L[i + 1]
+<a name="671"/>
+<a name="672"/>   return L
+<a name="673"/>
+<a name="674"/>end
+<a name="675"/>
+<a name="676"/>#
+<a name="677"/># Keep only unique list elements.  L is unchanged, and a new list is
+<a name="678"/># returned.
+<a name="679"/>#
+<a name="680"/>procedure lunique(L)			
+<a name="681"/>   local result, seen, x
+<a name="682"/>
+<a name="683"/>   result := []
+<a name="684"/>   seen := set()
+<a name="685"/>
+<a name="686"/>   every x := !L do
+<a name="687"/>      unless member(seen, x) then {
+<a name="688"/>         put(result, x)
+<a name="689"/>         insert(seen, x)
+<a name="690"/>         }
+<a name="691"/>
+<a name="692"/>   return result
+<a name="693"/>end
+<a name="694"/>
+<a name="695"/>#
+<a name="696"/># Like `lunique`, but modify L.
+<a name="697"/>#
+<a name="698"/>procedure lunique_mod(L)			
+<a name="699"/>   local seen, x, i
+<a name="700"/>
+<a name="701"/>   seen := set()
+<a name="702"/>   i := 1
+<a name="703"/>
+<a name="704"/>   every x := !L do {
+<a name="705"/>      while member(seen, x) do {
+<a name="706"/>         delete(L, i)
+<a name="707"/>         x := L[i] | return L
+<a name="708"/>      }
+<a name="709"/>      insert(seen, x)
+<a name="710"/>      i +:= 1
+<a name="711"/>   }
+<a name="712"/>
+<a name="713"/>   return L
+<a name="714"/>end
+<a name="715"/>
+<a name="716"/># Returns the size of the largest value in `L`.  If `p` is given, it
+<a name="717"/># is applied to each string as as a "length" procedure.  The default
+<a name="718"/># for `p` is :-
+<a name="719"/># ~
+<a name="720"/>#      Prog.get_operator("*", 1)
+<a name="721"/># ~
+<a name="722"/>procedure lmaxlen(L, p)			
+<a name="723"/>   local i
+<a name="724"/>
+<a name="725"/>   /p := Prog.get_operator("*", 1)
+<a name="726"/>
+<a name="727"/>   i := p(L[1]) | fail
+<a name="728"/>
+<a name="729"/>   every i &lt;:= p(!L)
+<a name="730"/>
+<a name="731"/>   return i
+<a name="732"/>
+<a name="733"/>end
+<a name="734"/>
+<a name="735"/># Returns the size of the smallest value in `L`.  If `p` is given, it
+<a name="736"/># is applied to each string as a "length" procedure.  The default for
+<a name="737"/># `p` is
+<a name="738"/># ~
+<a name="739"/>#      Prog.get_operator("*", 1)
+<a name="740"/># ~
+<a name="741"/>procedure lminlen(L, p)			
+<a name="742"/>   local i
+<a name="743"/>
+<a name="744"/>   /p := Prog.get_operator("*", 1)
+<a name="745"/>
+<a name="746"/>   i := p(L[1]) | fail
+<a name="747"/>
+<a name="748"/>   every i &gt;:= p(!L)
+<a name="749"/>
+<a name="750"/>   return i
+<a name="751"/>
+<a name="752"/>end
+<a name="753"/>
+<a name="754"/># Extract keys from sorted list, returning list of keys from `L`,
+<a name="755"/># where `L` is the result of sorting a table with option 3 or 4.
+<a name="756"/>#
+<a name="757"/>procedure sortkeys(L)			
+<a name="758"/>   return List{ L[1 to *L by 2] }
+<a name="759"/>end
+<a name="760"/>
+<a name="761"/># Extract values from sorted list, returning list of values from `L`,
+<a name="762"/># where `L` is the result of sorting a table with option 3 or 4.
+<a name="763"/>#
+<a name="764"/>procedure sortvalues(L)			
+<a name="765"/>   return List{ L[2 to *L by 2] }
+<a name="766"/>end
+<a name="767"/>
+<a name="768"/>#
+<a name="769"/># Convert a string to a list.
+<a name="770"/>#
+<a name="771"/># :Parameters :
+<a name="772"/># :  `s` - the string to convert
+<a name="773"/># :  `sep` - cset of the separator chars, default ',' - note each separator
+<a name="774"/>#        in the string is always one character wide.
+<a name="775"/>#
+<a name="776"/>procedure str2list(s, sep)
+<a name="777"/>   return List{ separate(s, sep) }
+<a name="778"/>end
+<a name="779"/>
+<a name="780"/>#
+<a name="781"/># Convert a list to a string.  Note: to be compatible for re-input to str2list above,
+<a name="782"/># the separator must be one character long.
+<a name="783"/>#
+<a name="784"/># :Parameters :
+<a name="785"/># :  `l` - the list
+<a name="786"/># :  `sep` - the separator char, default ","
+<a name="787"/>#
+<a name="788"/>procedure list2str(l, sep)
+<a name="789"/>   /sep := ","
+<a name="790"/>   return String2{!l, sep}
+<a name="791"/>end
+<a name="792"/>
+<a name="793"/>#
+<a name="794"/># Convert a string to a list, breaking on lines ending with \n or \r\n.
+<a name="795"/>#
+<a name="796"/># :Parameters :
+<a name="797"/># :  `s` - the string to convert
+<a name="798"/>#
+<a name="799"/>procedure break_lines(s)
+<a name="800"/>   return List{ separate_lines(s) }
+<a name="801"/>end
+<a name="802"/>
+<a name="803"/>#
+<a name="804"/># Convert a list to a string, separating elements by the platform's
+<a name="805"/># end-of-line character(s).
+<a name="806"/>#
+<a name="807"/># :Parameters :
+<a name="808"/># :  `l` - the list
+<a name="809"/>#
+<a name="810"/>procedure cat_lines(l)
+<a name="811"/>   return list2str(l, "\N")
+<a name="812"/>end
+<a name="813"/>
+<a name="814"/>#
+<a name="815"/># Put all the parameters on the given list.
+<a name="816"/>#
+<a name="817"/>procedure put_n(l, a[])
+<a name="818"/>   every put(l, !a)
+<a name="819"/>   return l
+<a name="820"/>end
+<a name="821"/>
+<a name="822"/># Push all the parameters on the given list.  Note that the order of
+<a name="823"/># the given items is maintained, so that for example :-
+<a name="824"/># ~
+<a name="825"/>#   l := [1,2,3]
+<a name="826"/>#   push_n(l, 4,5,6)
+<a name="827"/>#   # Now l is [4,5,6,1,2,3]
+<a name="828"/># ~
+<a name="829"/>#
+<a name="830"/>procedure push_n(l, a[])
+<a name="831"/>   every push(l, back(a))
+<a name="832"/>   return l
+<a name="833"/>end
+<a name="834"/>
+<a name="835"/>#
+<a name="836"/># Move the element in `L` at position `i` to position `j`.
+<a name="837"/>#
+<a name="838"/>procedure lmove(L, i, j)
+<a name="839"/>   i := cvpos_item(i, *L) | fail
+<a name="840"/>   j := cvpos_item(j, *L) | fail
+<a name="841"/>   if i ~= j then {
+<a name="842"/>      if i &gt; j then {
+<a name="843"/>         insert(L, j, L[i])
+<a name="844"/>         delete(L, i + 1)
+<a name="845"/>      } else {
+<a name="846"/>         insert(L, j + 1, L[i])
+<a name="847"/>         delete(L, i)
+<a name="848"/>      }
+<a name="849"/>   }
+<a name="850"/>   return L
+<a name="851"/>end
+<a name="852"/>
+<a name="853"/>#
+<a name="854"/># Extract the elements L[i:j], from L, returning them as a list.
+<a name="855"/># i defaults to 1, j to 0.
+<a name="856"/>#
+<a name="857"/>procedure lextract(L, i, j)
+<a name="858"/>   local l, s
+<a name="859"/>   s := cvslice_def(i, j, *L) | fail
+<a name="860"/>   i := s.lo; j := s.hi
+<a name="861"/>   l := L[i:j]
+<a name="862"/>   every 1 to j - i do
+<a name="863"/>      delete(L, i)
+<a name="864"/>   return l
+<a name="865"/>end
+<a name="866"/>
+<a name="867"/>#
+<a name="868"/># Insert the elements of `l` into `L`, starting at `i`.  `l` is left unchanged.
+<a name="869"/>#
+<a name="870"/>procedure linsert(L, l, i)
+<a name="871"/>   /i := 0
+<a name="872"/>   i := cvpos(i, *L) | fail
+<a name="873"/>   every insert(L, i, back(l))
+<a name="874"/>   return L
+<a name="875"/>end
+<a name="876"/>
+<a name="877"/># Remove the elements `i:j` from `L`, and insert the elements of `l` in their place.
+<a name="878"/>#
+<a name="879"/>procedure lsplice(L, l, i, j)
+<a name="880"/>   local s
+<a name="881"/>   s := cvslice(i, j, *L) | fail
+<a name="882"/>   i := s.lo; j := s.hi
+<a name="883"/>   every 1 to j - i do
+<a name="884"/>      delete(L, i)
+<a name="885"/>   linsert(L, \l, i)
+<a name="886"/>   return L
+<a name="887"/>end
+<a name="888"/>
+<a name="889"/>package record itemsplit_rec(item, rest)
+<a name="890"/>
+<a name="891"/># Generate the elements of x (a list or a set), together with
+<a name="892"/># the other elements of x.  So for [1,2,3] we generate 1,[2,3];
+<a name="893"/># 2,[1,3]; and 3,[1,2].
+<a name="894"/>#
+<a name="895"/># An `itemsplit_rec` record is generated with each result; note that
+<a name="896"/># the same record instance and contained structure is suspended each
+<a name="897"/># time.
+<a name="898"/>#
+<a name="899"/>procedure itemsplit(x)
+<a name="900"/>   local res, i, e
+<a name="901"/>   case type(x) of {
+<a name="902"/>      "list": {
+<a name="903"/>         res := itemsplit_rec(, copy(x))
+<a name="904"/>         every i := 1 to *x do {
+<a name="905"/>            res.item := x[i]
+<a name="906"/>            delete(res.rest, i)
+<a name="907"/>            suspend res
+<a name="908"/>            insert(res.rest, i, res.item)
+<a name="909"/>         }
+<a name="910"/>      }
+<a name="911"/>      "set": {
+<a name="912"/>         res := itemsplit_rec(, copy(x))
+<a name="913"/>         every e := !x do {
+<a name="914"/>            res.item := e
+<a name="915"/>            delete(res.rest, e)
+<a name="916"/>            suspend res
+<a name="917"/>            insert(res.rest, e)
+<a name="918"/>         }
+<a name="919"/>      }
+<a name="920"/>      default: runerr(179, x)
+<a name="921"/>   }
+<a name="922"/>end
+<a name="923"/>
+<a name="924"/>package record powersplit_rec(items, rest)
+<a name="925"/>
+<a name="926"/># Generate all possible 2^(*x) splits into two parts of x (a list or a
+<a name="927"/># set).  For example, given x=[1,2] we generate four pairs :-
+<a name="928"/># [1,2],[]; [1],[2]; [2],[1]; and [],[1,2].
+<a name="929"/>#
+<a name="930"/># A `powersplit_rec` record is generated with each result; note that
+<a name="931"/># the same record instance and contained structures is suspended each
+<a name="932"/># time, although these are distinct from x.
+<a name="933"/>#
+<a name="934"/>procedure powersplit(x)
+<a name="935"/>   case type(x) of {
+<a name="936"/>      "list": {
+<a name="937"/>         suspend listpowersplit(copy(x))
+<a name="938"/>      }
+<a name="939"/>      "set": {
+<a name="940"/>         suspend setpowersplit(copy(x))
+<a name="941"/>      }
+<a name="942"/>      default: runerr(179, x)
+<a name="943"/>   }
+<a name="944"/>end
+<a name="945"/>
+<a name="946"/>package procedure listpowersplit(l)
+<a name="947"/>   local t, v
+<a name="948"/>   if t := get(l) then {
+<a name="949"/>      every v := listpowersplit(l) do {
+<a name="950"/>         push(v.items, t)
+<a name="951"/>         suspend v
+<a name="952"/>         pop(v.items)
+<a name="953"/>         push(v.rest, t)
+<a name="954"/>         suspend v
+<a name="955"/>         pop(v.rest)
+<a name="956"/>      }
+<a name="957"/>   } else
+<a name="958"/>      return powersplit_rec(l, [])
+<a name="959"/>end
+<a name="960"/>
+<a name="961"/>package procedure setpowersplit(s)
+<a name="962"/>   local t, v
+<a name="963"/>   if t := !s then {
+<a name="964"/>      delete(s, t)
+<a name="965"/>      every v := setpowersplit(s) do {
+<a name="966"/>         insert(v.items, t)
+<a name="967"/>         suspend v
+<a name="968"/>         delete(v.items, t)
+<a name="969"/>         insert(v.rest, t)
+<a name="970"/>         suspend v
+<a name="971"/>         delete(v.rest, t)
+<a name="972"/>      }
+<a name="973"/>   } else
+<a name="974"/>      return powersplit_rec(s, set())
+<a name="975"/>end
+<a name="976"/>
+<a name="977"/># Given a list l and a table (int-&gt;list) of alternative elements,
+<a name="978"/># generate all possible modified lists.  For example, given l=[1,2,3]
+<a name="979"/># and t={1-&gt;a,b 3-&gt;c,d} we generate :-
+<a name="980"/>#
+<a name="981"/>#    [a,2,c],[a,2,d],[a,2,3],[b,2,c],[b,2,d],[b,2,3],[1,2,c],[1,2,d]
+<a name="982"/>#
+<a name="983"/># Note that the original list l is not generated, only modifications.
+<a name="984"/># The same list is returned each time.
+<a name="985"/>#
+<a name="986"/># The no. of results generated is :-
+<a name="987"/>#   (product of (*!alts + 1)) - 1
+<a name="988"/># For the example above, (2+1)*(2+1) - 1 = 8.
+<a name="989"/>#
+<a name="990"/>procedure altlists(l, alts)
+<a name="991"/>   if *alts &gt; 0 then
+<a name="992"/>      suspend altlists1(l, alts, 1, list(*l))
+<a name="993"/>end
+<a name="994"/>
+<a name="995"/>package procedure altlists1(l, alts, i, res, mod)
+<a name="996"/>   local a
+<a name="997"/>
+<a name="998"/>   if i &gt; *l then
+<a name="999"/>      return if \mod then res
+<a name="1000"/>
+<a name="1001"/>   every a := !member(alts, i) do {
+<a name="1002"/>      res[i] := a
+<a name="1003"/>      suspend altlists1(l, alts, i+1, res, &amp;yes)
+<a name="1004"/>   }
+<a name="1005"/>
+<a name="1006"/>   res[i] := l[i]
+<a name="1007"/>   suspend altlists1(l, alts, i+1, res, mod)
+<a name="1008"/>end
+<a name="1009"/>
+<a name="1010"/>package procedure setdivisions(s)
+<a name="1011"/>   local e, i, x, es
+<a name="1012"/>   e := !s | return []
+<a name="1013"/>   s := delete(copy(s), e)
+<a name="1014"/>   es := set(e)
+<a name="1015"/>   every x := setdivisions(s) do {
+<a name="1016"/>      every i := 1 to *x do
+<a name="1017"/>         suspend x[1:i]  ||| [es ++ x[i]] ||| x[i+1:0]
+<a name="1018"/>      suspend [es] ||| x
+<a name="1019"/>   }
+<a name="1020"/>end
+<a name="1021"/>
+<a name="1022"/>package procedure listdivisions(l)
+<a name="1023"/>   local e, el, i, x
+<a name="1024"/>   e := l[1] | return []
+<a name="1025"/>   el := [e]
+<a name="1026"/>   every x := listdivisions(l[2:0]) do {
+<a name="1027"/>      every i := 1 to *x do
+<a name="1028"/>         suspend x[1:i]  ||| [el ||| x[i]] ||| x[i+1:0]
+<a name="1029"/>      suspend [el] ||| x
+<a name="1030"/>   }
+<a name="1031"/>end
+<a name="1032"/>
+<a name="1033"/># Given a list or set x, generate all possible divisions into sublists (or subsets).
+<a name="1034"/># For example, if x is `[1,2,3]` we generate :-
+<a name="1035"/># ~
+<a name="1036"/># [ [1,2,3] ]
+<a name="1037"/># [ [1], [2,3] ]
+<a name="1038"/># [ [1,2], [3] ]
+<a name="1039"/># [ [2], [1,3] ]
+<a name="1040"/># [ [1], [2], [3] ]
+<a name="1041"/># ~
+<a name="1042"/># Notes :-
+<a name="1043"/>#
+<a name="1044"/># * the empty list or set is never included in any result (unless `x` is empty).
+<a name="1045"/># * for lists, the order of elements within each sublist is maintained.
+<a name="1046"/># * the results are in no special order, although the first result always
+<a name="1047"/>#   has a single element (a copy of `x`) and the last has `*x` elements.
+<a name="1048"/># * each result list and the sublists or subsets are distinct instances.
+<a name="1049"/>#
+<a name="1050"/>procedure divisions(x)
+<a name="1051"/>   case type(x) of {
+<a name="1052"/>      "list": {
+<a name="1053"/>         suspend listdivisions(x)
+<a name="1054"/>      }
+<a name="1055"/>      "set": {
+<a name="1056"/>         suspend setdivisions(x)
+<a name="1057"/>      }
+<a name="1058"/>      default: runerr(179, x)
+<a name="1059"/>   }
+<a name="1060"/>end
+<a name="1061"/>
+<a name="1062"/>#
+<a name="1063"/># This procedure simply returns its arguments as a list.
+<a name="1064"/>#
+<a name="1065"/>procedure mklist(a[])
+<a name="1066"/>   return a
+<a name="1067"/>end
+</pre></body></html>

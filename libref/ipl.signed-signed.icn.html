@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>signed.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     signed.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to put bits into signed integer
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     April 2, 1990
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  signed(s,n) -- Puts raw bits of characters of string s into an
+<a name="18"/>#  integer.  The value is taken as signed.
+<a name="19"/>#
+<a name="20"/>#  If large integers are supported, this routine will work for integers
+<a name="21"/>#  of arbitrary size.
+<a name="22"/>#
+<a name="23"/>#  If large integers are not supported, the following are true:
+<a name="24"/>#
+<a name="25"/>#    If the size of s is the same as or greater than the size of an
+<a name="26"/>#    integer in the Icon implementation, the result will be negative or
+<a name="27"/>#    positive depending on the value of the integer's sign bit.
+<a name="28"/>#
+<a name="29"/>#    If the size of s is less than the size of an integer, the bytes are
+<a name="30"/>#    put into the low order part of the integer, with the remaining high
+<a name="31"/>#    order bytes filled with sign bits (the high order bit of the first
+<a name="32"/>#    character of the string).  If the string is too large, the most
+<a name="33"/>#    significant bytes will be lost.
+<a name="34"/>#
+<a name="35"/>#  This procedure is normally used for processing of binary data read
+<a name="36"/>#  from a file.
+<a name="37"/>#
+<a name="38"/>
+<a name="39"/>package ipl.signed
+<a name="40"/>
+<a name="41"/>procedure signed(s)
+<a name="42"/>   local i
+<a name="43"/>   s := string(s) | runerr(103, s)
+<a name="44"/>   i := if ord(s[1]) &gt;= 128 then -1 else 0
+<a name="45"/>   every i := ior(ord(s),ishift(i,8))
+<a name="46"/>   return i
+<a name="47"/>end
+</pre></body></html>

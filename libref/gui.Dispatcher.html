@@ -1,0 +1,305 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Dispatcher</title></head><body>
+<h1>Dispatcher</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This class handles Icon events, dispatching them to
+the appropriate dialog.  It also controls any active Tasks,
+activating them between events as and when appropriate.
+<p/><a href="gui-dispatcher.icn.html#23" target="displayFrame">Source - dispatcher.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_dialog">add_dialog()</a>
+<a href="#do_event">do_event()</a>
+<a href="#do_scheduler">do_scheduler()</a>
+<a href="#do_validate">do_validate()</a>
+<a href="#find_dialog">find_dialog()</a>
+<a href="#get_curr_task">get_curr_task()</a>
+<a href="#init">init()</a>
+<a href="#list_unblocked">list_unblocked()</a>
+<a href="#message_loop">message_loop()</a>
+<a href="#message_loop_forever">message_loop_forever()</a>
+<a href="#new_task">new_task()</a>
+<a href="#poller">poller()</a>
+<a href="#remove_dialog">remove_dialog()</a>
+<a href="#service">service()</a>
+<a href="#setup_poll_list">setup_poll_list()</a>
+<a href="#setup_poll_task">setup_poll_task()</a>
+<a href="#use_poll_timeout">use_poll_timeout()</a>
+<a href="#work">work()</a>
+<a href="#work_or_sleep">work_or_sleep()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#BLOCKED_ALLOW">BLOCKED_ALLOW</a>
+<a href="#BLOCKED_QUIET">BLOCKED_QUIET</a>
+<a href="#dialogs">dialogs</a>
+<a href="#poll_list">poll_list</a>
+<a href="#poll_task">poll_task</a>
+<a href="#REPEATING">REPEATING</a>
+<a href="#scheduler">scheduler</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_dialog"/>
+<h3>add_dialog(d)</h3>
+public static<p/>
+<dl>
+<dd>
+Add a dialog
+<p/><a href="gui-dispatcher.icn.html#85" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="do_event"/>
+<h3>do_event()</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#165" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="do_scheduler"/>
+<h3>do_scheduler()</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#214" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="do_validate"/>
+<h3>do_validate()</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#200" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="find_dialog"/>
+<h3>find_dialog(cl)</h3>
+public static<p/>
+<dl>
+<dd>
+Generate any (unblocked) dialogs which are instances of
+the given class.  If the parameter is omitted, all unblocked
+dialogs are generated.
+<p/><a href="gui-dispatcher.icn.html#232" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="get_curr_task"/>
+<h3>get_curr_task()</h3>
+public static<p/>
+<dl>
+<dd>
+Return the <code><a href="io.Scheduler.html" target="displayFrame">Scheduler</a></code>'s current task (if any).
+<p/><a href="gui-dispatcher.icn.html#254" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#43" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="list_unblocked"/>
+<h3>list_unblocked()</h3>
+public static<p/>
+<dl>
+<dd>
+Return a list of unblocked dialogs.
+<p/><a href="gui-dispatcher.icn.html#218" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="message_loop"/>
+<h3>message_loop(r)</h3>
+public static<p/>
+<dl>
+<dd>
+Loop until dialog r is closed processing events and <code><a href="io.Task.html" target="displayFrame">Task</a></code>s.  If r
+is omitted, then loop until there are no open dialogs.
+<p/><a href="gui-dispatcher.icn.html#110" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="message_loop_forever"/>
+<h3>message_loop_forever()</h3>
+public static<p/>
+<dl>
+<dd>
+A further variant of the message loop which never returns.  Even
+when there are no dialogs open, <code><a href="io.Task.html" target="displayFrame">Task</a></code>s continue to be activated.
+<p/><a href="gui-dispatcher.icn.html#146" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="new_task"/>
+<h3>new_task(e, v)</h3>
+public static<p/>
+<dl>
+<dd>
+Helpful method to create a new <code><a href="io.Task.html" target="displayFrame">Task</a></code> using the <code><a href="gui.Dispatcher.html" target="displayFrame">Dispatcher</a></code>'s
+<code><a href="io.Scheduler.html" target="displayFrame">Scheduler</a></code>.
+<p/><a href="gui-dispatcher.icn.html#246" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="poller"/>
+<h3>poller()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#54" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_dialog"/>
+<h3>remove_dialog(d)</h3>
+public static<p/>
+<dl>
+<dd>
+Delete a dialog
+<p/><a href="gui-dispatcher.icn.html#94" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="service"/>
+<h3>service(r)</h3>
+public static<p/>
+<dl>
+<dd>
+This is similar to the normal <code><a href="gui.Dispatcher.html#message_loop">message_loop</a></code> method, but instead
+of returning only when there are no dialogs open, this method
+will also return when it first finds it has no work to do,
+allowing the caller to undertake some activity before calling it
+again.  When using this method, it is best to configure the
+<code><a href="gui.Dispatcher.html" target="displayFrame">Dispatcher</a></code>'s scheduler so that it does not sleep in poll, (with
+<code><a href="gui.Dispatcher.html#use_poll_timeout">use_poll_timeout</a></code>(&amp;no)).  This prevents <code><a href="gui.Dispatcher.html#work">work</a></code> from ever
+sleeping.
+<p/><a href="gui-dispatcher.icn.html#125" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_poll_list"/>
+<h3>setup_poll_list()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#66" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_poll_task"/>
+<h3>setup_poll_task()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#59" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="use_poll_timeout"/>
+<h3>use_poll_timeout(fl)</h3>
+public static<p/>
+<dl>
+<dd>
+Indicate whether the <code><a href="gui.Dispatcher.html" target="displayFrame">Dispatcher</a></code>'s <code><a href="io.Scheduler.html" target="displayFrame">Scheduler</a></code> should use a poll
+timeout or not. <code>fl</code> is a flag value, with <code>&amp;yes</code> indicating a
+timeout should be used (the default initial setting).  If a poll
+timeout is not used, then <code><a href="gui.Dispatcher.html#work">work()</a></code> will never sleep.
+<p/><a href="gui-dispatcher.icn.html#73" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="work"/>
+<h3>work()</h3>
+public static<p/>
+<dl>
+<dd>
+Try to do some work, succeeding if something was done, failing if it wasn't.
+<p/><a href="gui-dispatcher.icn.html#103" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="work_or_sleep"/>
+<h3>work_or_sleep()</h3>
+public static<p/>
+<dl>
+<dd>
+Convenient method to call work(), and if no work is done, to
+sleep for the idle period, possibly adjusted downwards to account
+for any sleeping or polling <code><a href="io.Task.html" target="displayFrame">Task</a></code>s.
+<p/><a href="gui-dispatcher.icn.html#155" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="BLOCKED_ALLOW"/>
+<h3>BLOCKED_ALLOW</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#39" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="BLOCKED_QUIET"/>
+<h3>BLOCKED_QUIET</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#40" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="dialogs"/>
+<h3>dialogs</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#31" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="poll_list"/>
+<h3>poll_list</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#35" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="poll_task"/>
+<h3>poll_task</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#36" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="REPEATING"/>
+<h3>REPEATING</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#41" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+<a name="scheduler"/>
+<h3>scheduler</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="gui-dispatcher.icn.html#32" target="displayFrame">Source - dispatcher.icn </a>
+</dd>
+</dl><hr>
+</body></html>

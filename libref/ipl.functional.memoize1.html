@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>memoize1</title></head><body>
+<h1>memoize1(f, t)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This is a simpler (but faster) version of <code><a href="ipl.functional.memoize.html" target="displayFrame">memoize()</a></code>.  Only a
+single parameter is passed to the given function, and only a single
+result is cached.  Further, by default a <code><a href="datastruct.BuiltinTable.html" target="displayFrame">BuiltinTable</a></code> is used to
+cache results, rather than an <code><a href="datastruct.EqTable.html" target="displayFrame">EqTable</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> - the function to memoize
+</dd>
+<dd>
+<code>t</code> - the <code>Table</code> to use to cache results; by default an
+<code><a href="datastruct.BuiltinTable.html" target="displayFrame">BuiltinTable</a></code>.  An <code><a href="datastruct.EqTable.html" target="displayFrame">EqTable</a></code> could be used if the cost
+of evaluating <code>f</code> were large compared to the cost of
+<code><a href="lang.hash.html" target="displayFrame">lang.hash</a></code> and <code><a href="lang.equals.html" target="displayFrame">lang.equals</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.functional-highorder.icn.html#285" target="displayFrame">Source - highorder.icn </a>
+<p/>
+</body></html>

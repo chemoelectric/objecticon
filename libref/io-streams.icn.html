@@ -1,0 +1,2614 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>streams.icn</title></head><body><pre>
+<a name="1"/>package io
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   util(error, need_flag, need_integer, need_string,
+<a name="5"/>        save_why, HasMode, HasCloseUnderlying, HasClose,
+<a name="6"/>        error_if, lclose, need_coexpression),
+<a name="7"/>   lang(Class, NoCopy),
+<a name="8"/>   posix(System),
+<a name="9"/>   ipl.strings(replace),
+<a name="10"/>   ipl.pdco(String, Sum),
+<a name="11"/>   ipl.printf
+<a name="12"/>
+<a name="13"/>$if _UNIX
+<a name="14"/>import util(env_string)
+<a name="15"/>$endif
+<a name="16"/>
+<a name="17"/>#
+<a name="18"/># This is the top-level stream class.  It is not instantiated
+<a name="19"/># directly.
+<a name="20"/>#
+<a name="21"/>abstract class Stream(HasClose, HasMode)
+<a name="22"/>   public static const
+<a name="23"/>      # Constant indicating read capability
+<a name="24"/>      READ,
+<a name="25"/>      # Constant indicating write capability
+<a name="26"/>      WRITE,
+<a name="27"/>      # Constant indicating seek (and tell) capability
+<a name="28"/>      SEEK,
+<a name="29"/>      # Constant indicating truncate capability
+<a name="30"/>      TRUNCATE,
+<a name="31"/>      # Constant indicating read and write capability
+<a name="32"/>      READ_WRITE,
+<a name="33"/>      # Constant representing all capabilities (read, write, seek and
+<a name="34"/>      # truncate).
+<a name="35"/>      ALL
+<a name="36"/>
+<a name="37"/>   private static init()
+<a name="38"/>      READ := 1
+<a name="39"/>      WRITE := 2
+<a name="40"/>      SEEK := 4
+<a name="41"/>      TRUNCATE := 8
+<a name="42"/>      READ_WRITE := READ + WRITE
+<a name="43"/>      ALL := READ + WRITE + SEEK + TRUNCATE
+<a name="44"/>   end
+<a name="45"/>
+<a name="46"/>   #
+<a name="47"/>   # Return at least one, and up to n characters from the stream.  On
+<a name="48"/>   # end-of-file, return `&amp;null`.  On error, fail and set `&amp;why`.
+<a name="49"/>   #
+<a name="50"/>   # :Parameters :
+<a name="51"/>   # :  `n` - the maximum number of chars to read; n must be &gt; 0.
+<a name="52"/>   #
+<a name="53"/>   public optional in(n)
+<a name="54"/>
+<a name="55"/>   #
+<a name="56"/>   # Output the given string to the stream.  The number of characters
+<a name="57"/>   # output is returned, which will always be greater than zero
+<a name="58"/>   # (unless s is empty), but may be less than `*s`.  Fails on an
+<a name="59"/>   # error, setting `&amp;why`.
+<a name="60"/>   #
+<a name="61"/>   # :Parameters :
+<a name="62"/>   # :  `s` - the string to write
+<a name="63"/>   #
+<a name="64"/>   public optional out(s)
+<a name="65"/>
+<a name="66"/>   #
+<a name="67"/>   # Seek to the given offset.  Icon-style offsets are used, so 1 is
+<a name="68"/>   # the beginning of the stream, and 0 the end.  Not all types of stream
+<a name="69"/>   # support `seek` - see `get_mode`.
+<a name="70"/>   #
+<a name="71"/>   # :Parameters :
+<a name="72"/>   # :  `offset` - the position to seek to
+<a name="73"/>   # :Returns :
+<a name="74"/>   # :  the new position.
+<a name="75"/>   #
+<a name="76"/>   public optional seek(offset)
+<a name="77"/>
+<a name="78"/>   #
+<a name="79"/>   # Return the current position of the stream.
+<a name="80"/>   #
+<a name="81"/>   public optional tell()
+<a name="82"/>
+<a name="83"/>   #
+<a name="84"/>   # Truncate this stream to the given length.  The file position
+<a name="85"/>   # remains unchanged.  Returns `self` on success.
+<a name="86"/>   #
+<a name="87"/>   public optional truncate(len)
+<a name="88"/>
+<a name="89"/>   #
+<a name="90"/>   # Read a complete line from the stream, reading up to the next "\n"
+<a name="91"/>   # or end-of-file.  In the former case, the "\n" and also any "\r"
+<a name="92"/>   # immediately before it is stripped from the result.
+<a name="93"/>   #
+<a name="94"/>   # Returns `&amp;null` on end-of-file
+<a name="95"/>   #
+<a name="96"/>   public read_line()
+<a name="97"/>      local s, c
+<a name="98"/>      s := ""
+<a name="99"/>      repeat {
+<a name="100"/>         c := in(1) | fail
+<a name="101"/>         if /c then {
+<a name="102"/>            if *s &gt; 0 then
+<a name="103"/>               return s
+<a name="104"/>            else
+<a name="105"/>               return
+<a name="106"/>         }
+<a name="107"/>         if c == "\n" then {
+<a name="108"/>            if s[-1] == "\r" then
+<a name="109"/>               s[-1] := ""
+<a name="110"/>            return s
+<a name="111"/>         } else
+<a name="112"/>            s ||:= c
+<a name="113"/>      }
+<a name="114"/>   end
+<a name="115"/>
+<a name="116"/>   #
+<a name="117"/>   # Read `n` chars from the stream.  This method will try and return
+<a name="118"/>   # exactly `n` characters, and will only return less because of
+<a name="119"/>   # reaching the end-of-file.
+<a name="120"/>   # 
+<a name="121"/>   # If end-of-file is encountered before any characters were read, 
+<a name="122"/>   # then `&amp;null` is returned.
+<a name="123"/>   #
+<a name="124"/>   public read_exactly(n)
+<a name="125"/>      local s, t
+<a name="126"/>      n := need_integer(n, 1)
+<a name="127"/>      s := ""
+<a name="128"/>      while n &gt; 0 do {
+<a name="129"/>         t := in(n) | fail
+<a name="130"/>         if /t then {
+<a name="131"/>            if *s &gt; 0 then
+<a name="132"/>               return s
+<a name="133"/>            else
+<a name="134"/>               return
+<a name="135"/>         }
+<a name="136"/>         s ||:= t
+<a name="137"/>         n -:= *t
+<a name="138"/>      }
+<a name="139"/>      return s
+<a name="140"/>   end
+<a name="141"/>
+<a name="142"/>   #
+<a name="143"/>   # Generate all the remaining lines in the file
+<a name="144"/>   #
+<a name="145"/>   public gen()
+<a name="146"/>      suspend |\read_line()
+<a name="147"/>   end
+<a name="148"/>
+<a name="149"/>   #
+<a name="150"/>   # This method is the same as `read_line`, except that on end of
+<a name="151"/>   # file it fails, setting `&amp;why` to "End of file", rather than
+<a name="152"/>   # returning `&amp;null`.
+<a name="153"/>   #
+<a name="154"/>   public read()
+<a name="155"/>      local s
+<a name="156"/>      s := read_line() | fail
+<a name="157"/>      return \s | error("End of file")
+<a name="158"/>   end
+<a name="159"/>
+<a name="160"/>   #
+<a name="161"/>   # This method is the same as `read_exactly`, except that on end of
+<a name="162"/>   # file it fails, setting `&amp;why` to "End of file", rather than
+<a name="163"/>   # returning `&amp;null`.
+<a name="164"/>   #
+<a name="165"/>   public reads(n)
+<a name="166"/>      local s
+<a name="167"/>      s := read_exactly(n) | fail
+<a name="168"/>      return \s | error("End of file")
+<a name="169"/>   end
+<a name="170"/>
+<a name="171"/>   #
+<a name="172"/>   # Output the string `s`, by calling `out` several times until it is
+<a name="173"/>   # fully output.
+<a name="174"/>   #
+<a name="175"/>   public writes1(s)
+<a name="176"/>      local n
+<a name="177"/>      s := need_string(s)
+<a name="178"/>      while *s &gt; 0 do {
+<a name="179"/>         n := out(s) | fail
+<a name="180"/>         s := s[n + 1:0]
+<a name="181"/>      }
+<a name="182"/>      link
+<a name="183"/>   end
+<a name="184"/>
+<a name="185"/>   #
+<a name="186"/>   # Output the string `s`, followed by a newline.
+<a name="187"/>   # 
+<a name="188"/>   public write1(s)
+<a name="189"/>      local e
+<a name="190"/>      every e := s | "\N" do
+<a name="191"/>         writes1(e) | fail
+<a name="192"/>      link
+<a name="193"/>   end
+<a name="194"/>
+<a name="195"/>   #
+<a name="196"/>   # This writes each parameter to the stream.  Each parameter is
+<a name="197"/>   # guaranteed to be completely output, except on error, in which
+<a name="198"/>   # case the method fails and sets &amp;why.
+<a name="199"/>   #
+<a name="200"/>   public writes(a[])
+<a name="201"/>      local e
+<a name="202"/>      every e := !a do
+<a name="203"/>         writes1(e) | fail
+<a name="204"/>      link
+<a name="205"/>   end
+<a name="206"/>
+<a name="207"/>   #
+<a name="208"/>   # This behaves just like `writes`, except that a newline is
+<a name="209"/>   # appended after all the parameters are output.
+<a name="210"/>   #
+<a name="211"/>   public write(a[])
+<a name="212"/>      local e
+<a name="213"/>      every e := !a | "\N" do
+<a name="214"/>         writes1(e) | fail
+<a name="215"/>      link
+<a name="216"/>   end
+<a name="217"/>
+<a name="218"/>   #
+<a name="219"/>   # Read from this stream until end-of-file, collecting the result as
+<a name="220"/>   # a string.
+<a name="221"/>   #
+<a name="222"/>   public read_all()
+<a name="223"/>      local s, t
+<a name="224"/>      s := ""
+<a name="225"/>      repeat {
+<a name="226"/>         t := in(1048576) | fail
+<a name="227"/>         if /t then
+<a name="228"/>            return s
+<a name="229"/>         s ||:= t
+<a name="230"/>      }
+<a name="231"/>   end
+<a name="232"/>
+<a name="233"/>   #
+<a name="234"/>   # Read from this stream until end-of-file, copying the result to the
+<a name="235"/>   # given stream `f`.
+<a name="236"/>   #
+<a name="237"/>   public copy_to(f)
+<a name="238"/>      local s
+<a name="239"/>      repeat {
+<a name="240"/>         s := in(1048576) | fail
+<a name="241"/>         if /s then
+<a name="242"/>            link
+<a name="243"/>         f.writes1(s) | fail
+<a name="244"/>      }
+<a name="245"/>   end
+<a name="246"/>end
+<a name="247"/>
+<a name="248"/># Check that x is a `Stream`, signalling a runtime error otherwise.
+<a name="249"/>#
+<a name="250"/>procedure need_Stream(x)
+<a name="251"/>   is(x, Stream) | runerr("Stream expected", x)
+<a name="252"/>   return x
+<a name="253"/>end
+<a name="254"/>
+<a name="255"/>#
+<a name="256"/># This is a stream based on an Icon string.  An initial string can be
+<a name="257"/># provided to the constructor.  Reading from the stream will be quite
+<a name="258"/># efficient, but writing will be relatively slow, particularly if the
+<a name="259"/># string is long.  For a much faster alternative, see `RamStream`.
+<a name="260"/>#
+<a name="261"/>class StringStream(Stream)
+<a name="262"/>   private 
+<a name="263"/>      subj,
+<a name="264"/>      pos
+<a name="265"/>
+<a name="266"/>   public override in(n)
+<a name="267"/>      local t, e
+<a name="268"/>      n := need_integer(n, 1)
+<a name="269"/>      if pos &gt; *subj then
+<a name="270"/>         return
+<a name="271"/>      e := min(pos + n, *subj + 1)
+<a name="272"/>      t := subj[pos:e]
+<a name="273"/>      pos := e
+<a name="274"/>      return t
+<a name="275"/>   end
+<a name="276"/>
+<a name="277"/>   public override out(s)
+<a name="278"/>      local e
+<a name="279"/>      s := need_string(s)
+<a name="280"/>      if pos &gt; *subj then {
+<a name="281"/>         subj ||:= repl("\0", pos - *subj - 1) || s
+<a name="282"/>         pos := *subj + 1
+<a name="283"/>      } else {
+<a name="284"/>         e := min(pos + *s, *subj + 1)
+<a name="285"/>         subj[pos:e] := s
+<a name="286"/>         pos +:= *s
+<a name="287"/>      }
+<a name="288"/>      return *s
+<a name="289"/>   end
+<a name="290"/>
+<a name="291"/>   public override read_line()
+<a name="292"/>      local i, s
+<a name="293"/>      if pos &gt; *subj then
+<a name="294"/>         return
+<a name="295"/>      if i := upto('\n', subj, pos) then {
+<a name="296"/>         s := subj[pos:i]
+<a name="297"/>         pos := i + 1
+<a name="298"/>         if s[-1] == "\r" then
+<a name="299"/>            s[-1] := ""
+<a name="300"/>      } else {
+<a name="301"/>         s := subj[pos:0]
+<a name="302"/>         pos := *subj + 1
+<a name="303"/>      }
+<a name="304"/>      return s
+<a name="305"/>   end
+<a name="306"/>
+<a name="307"/>   public override seek(offset)
+<a name="308"/>      offset := need_integer(offset)
+<a name="309"/>      return .if offset &gt; 0 then
+<a name="310"/>         pos := offset
+<a name="311"/>      else if -offset &lt;= *subj then
+<a name="312"/>         pos := *subj + 1 + offset
+<a name="313"/>      else
+<a name="314"/>         error("Seek out of range")
+<a name="315"/>   end
+<a name="316"/>
+<a name="317"/>   public override tell()
+<a name="318"/>      return .pos
+<a name="319"/>   end
+<a name="320"/>
+<a name="321"/>   public override get_mode()
+<a name="322"/>      return ALL
+<a name="323"/>   end
+<a name="324"/>
+<a name="325"/>   public override truncate(len)
+<a name="326"/>      len := need_integer(len)
+<a name="327"/>      if len &gt; *subj then
+<a name="328"/>         subj ||:= repl("\0", len - *subj)
+<a name="329"/>      else if len &gt;= 0 then
+<a name="330"/>         subj := subj[1:len + 1]
+<a name="331"/>      else
+<a name="332"/>         return error("Negative truncate length")
+<a name="333"/>      link
+<a name="334"/>   end
+<a name="335"/>
+<a name="336"/>   public str()
+<a name="337"/>      return .subj
+<a name="338"/>   end
+<a name="339"/>
+<a name="340"/>   #
+<a name="341"/>   # Create a new `StringStream`, with initial value of `subj`.
+<a name="342"/>   #
+<a name="343"/>   # :Parameters :
+<a name="344"/>   # :  `subj` - the initial value of the stream; defaults to empty 
+<a name="345"/>   #        string.
+<a name="346"/>   #
+<a name="347"/>   public new(subj)
+<a name="348"/>      self.subj := need_string(\subj) | ""
+<a name="349"/>      self.pos := 1
+<a name="350"/>      return
+<a name="351"/>   end
+<a name="352"/>end
+<a name="353"/>
+<a name="354"/>#
+<a name="355"/># This is a stream that mimics /dev/null.  Writes always succeed with
+<a name="356"/># no effect, and reads always fail with end of file.
+<a name="357"/>#
+<a name="358"/>class NullStream(Stream)
+<a name="359"/>   public override in(n)
+<a name="360"/>      return
+<a name="361"/>   end
+<a name="362"/>
+<a name="363"/>   public override out(s)
+<a name="364"/>      s := need_string(s)
+<a name="365"/>      return *s
+<a name="366"/>   end
+<a name="367"/>
+<a name="368"/>   public override seek(offset)
+<a name="369"/>      return 1
+<a name="370"/>   end
+<a name="371"/>
+<a name="372"/>   public override tell()
+<a name="373"/>      return 1
+<a name="374"/>   end
+<a name="375"/>
+<a name="376"/>   public override get_mode()
+<a name="377"/>      return ALL
+<a name="378"/>   end
+<a name="379"/>
+<a name="380"/>   public override truncate(len)
+<a name="381"/>      link
+<a name="382"/>   end
+<a name="383"/>end
+<a name="384"/>
+<a name="385"/>#
+<a name="386"/># This is a stream that mimics /dev/zero.  Writes always succeed with
+<a name="387"/># no effect, and reads return however many zero bytes were requested.
+<a name="388"/>#
+<a name="389"/>class ZeroStream(Stream)
+<a name="390"/>   public override in(n)
+<a name="391"/>      return repl("\0", need_integer(n, 1))
+<a name="392"/>   end
+<a name="393"/>
+<a name="394"/>   public override out(s)
+<a name="395"/>      s := need_string(s)
+<a name="396"/>      return *s
+<a name="397"/>   end
+<a name="398"/>
+<a name="399"/>   public override seek(offset)
+<a name="400"/>      return 1
+<a name="401"/>   end
+<a name="402"/>
+<a name="403"/>   public override tell()
+<a name="404"/>      return 1
+<a name="405"/>   end
+<a name="406"/>
+<a name="407"/>   public override get_mode()
+<a name="408"/>      return ALL
+<a name="409"/>   end
+<a name="410"/>
+<a name="411"/>   public override truncate(len)
+<a name="412"/>      link
+<a name="413"/>   end
+<a name="414"/>end
+<a name="415"/>
+<a name="416"/>#
+<a name="417"/># This class takes another stream and provides read/write buffers so
+<a name="418"/># that input/output to the inner stream tends to take place in larger
+<a name="419"/># chunks.
+<a name="420"/>#
+<a name="421"/>class BufferStream(Stream, HasCloseUnderlying)
+<a name="422"/>   private const
+<a name="423"/>      other
+<a name="424"/>   private
+<a name="425"/>      rpos,
+<a name="426"/>      wbuff,
+<a name="427"/>      wbuff_len,
+<a name="428"/>      rbuff,
+<a name="429"/>      flush_on_nl_flag,
+<a name="430"/>      buff_size
+<a name="431"/>
+<a name="432"/>   #
+<a name="433"/>   # If set, the stream is flushed whenever a newline is written.
+<a name="434"/>   #
+<a name="435"/>   public set_flush_on_nl(s)
+<a name="436"/>      self.flush_on_nl_flag := need_flag(s)
+<a name="437"/>      link
+<a name="438"/>   end
+<a name="439"/>
+<a name="440"/>   #
+<a name="441"/>   # Set the buffer size to use.
+<a name="442"/>   #
+<a name="443"/>   public set_buff_size(n)
+<a name="444"/>      self.buff_size := n
+<a name="445"/>      link
+<a name="446"/>   end
+<a name="447"/>
+<a name="448"/>   #
+<a name="449"/>   # Push the string s onto the read buffer, so that it is read next.
+<a name="450"/>   #
+<a name="451"/>   public push(s)
+<a name="452"/>      s := need_string(s)
+<a name="453"/>      unbuff() | fail
+<a name="454"/>      rbuff := s || rbuff
+<a name="455"/>      link
+<a name="456"/>   end
+<a name="457"/>
+<a name="458"/>   #
+<a name="459"/>   # Push the string s followed by an end-of-line.
+<a name="460"/>   #
+<a name="461"/>   public push_line(s)
+<a name="462"/>      return push(s || "\N")
+<a name="463"/>   end
+<a name="464"/>
+<a name="465"/>   public override read_line()
+<a name="466"/>      local t
+<a name="467"/>      flush() | fail
+<a name="468"/>      repeat {
+<a name="469"/>         rbuff ? {
+<a name="470"/>            if t := tab(upto('\n')) then {
+<a name="471"/>               move(1)
+<a name="472"/>               rbuff := tab(0)
+<a name="473"/>               \rpos +:= *t + 1
+<a name="474"/>               if t[-1] == "\r" then
+<a name="475"/>                  t[-1] := ""
+<a name="476"/>               return t
+<a name="477"/>            }
+<a name="478"/>         }
+<a name="479"/>         if *rbuff = 0 &amp; other.can(SEEK) then
+<a name="480"/>            rpos := other.tell() | fail
+<a name="481"/>         t := other.in(buff_size) | fail
+<a name="482"/>         if /t then {
+<a name="483"/>            rpos := &amp;null
+<a name="484"/>            if *rbuff = 0 then
+<a name="485"/>               return
+<a name="486"/>            t := rbuff
+<a name="487"/>            rbuff := ""
+<a name="488"/>            return t
+<a name="489"/>         }
+<a name="490"/>         rbuff ||:= t
+<a name="491"/>      }
+<a name="492"/>   end
+<a name="493"/>
+<a name="494"/>   public override in(n)
+<a name="495"/>      local t
+<a name="496"/>      n := need_integer(n, 1)
+<a name="497"/>      flush() | fail
+<a name="498"/>      if *rbuff &gt; 0 then {
+<a name="499"/>         rbuff ? {
+<a name="500"/>            t := move(n) | tab(0)
+<a name="501"/>            rbuff := tab(0)
+<a name="502"/>            \rpos +:= *t
+<a name="503"/>         }
+<a name="504"/>      } else if n &lt; buff_size then {
+<a name="505"/>         if other.can(SEEK) then
+<a name="506"/>            rpos := other.tell() | fail
+<a name="507"/>         t := other.in(buff_size) | fail
+<a name="508"/>         if /t then
+<a name="509"/>            return
+<a name="510"/>         t ? {
+<a name="511"/>            t := move(n) | tab(0)
+<a name="512"/>            rbuff := tab(0)
+<a name="513"/>            \rpos +:= *t
+<a name="514"/>         }
+<a name="515"/>      } else {
+<a name="516"/>         t := other.in(n) | fail
+<a name="517"/>         if /t then
+<a name="518"/>            return
+<a name="519"/>      }
+<a name="520"/>      return t
+<a name="521"/>   end
+<a name="522"/>
+<a name="523"/>   public override out(s)
+<a name="524"/>      s := need_string(s)
+<a name="525"/>      unbuff() | fail
+<a name="526"/>      # Avoid concatenating a large s in flush().
+<a name="527"/>      if *s &gt; buff_size then
+<a name="528"/>         flush() | fail
+<a name="529"/>      if *s &gt; 0 then {
+<a name="530"/>         put(wbuff, s)
+<a name="531"/>         wbuff_len +:= *s
+<a name="532"/>      }
+<a name="533"/>      if wbuff_len &gt; buff_size | (\flush_on_nl_flag &amp; upto('\n', s)) then
+<a name="534"/>         flush() | fail
+<a name="535"/>      return *s
+<a name="536"/>   end
+<a name="537"/>
+<a name="538"/>   #
+<a name="539"/>   # Flush the write buffer.
+<a name="540"/>   #
+<a name="541"/>   public flush()
+<a name="542"/>      local s
+<a name="543"/>      \wbuff | runerr(219, self)
+<a name="544"/>      if *wbuff = 0 then
+<a name="545"/>         link
+<a name="546"/>      s := ""
+<a name="547"/>      every s ||:= !wbuff
+<a name="548"/>      clear(wbuff)
+<a name="549"/>      wbuff_len := 0
+<a name="550"/>      link other.writes1(s)
+<a name="551"/>   end
+<a name="552"/>
+<a name="553"/>   #
+<a name="554"/>   # Un-buffer the read buffer.  For a seekable stream this involves
+<a name="555"/>   # discarding the read buffer and seeking to the position
+<a name="556"/>   # corresponding to the start of the buffer.  For a non-seekable
+<a name="557"/>   # stream, this call has no effect.
+<a name="558"/>   #
+<a name="559"/>   public unbuff()
+<a name="560"/>      \rbuff | runerr(219, self)
+<a name="561"/>      if *rbuff &gt; 0 &amp; \rpos &amp; other.can(SEEK) then {
+<a name="562"/>         other.seek(rpos) | fail
+<a name="563"/>         rbuff := ""
+<a name="564"/>         rpos := &amp;null
+<a name="565"/>      }
+<a name="566"/>      link
+<a name="567"/>   end
+<a name="568"/>
+<a name="569"/>   #
+<a name="570"/>   # Calls `unbuff` and `flush`
+<a name="571"/>   #
+<a name="572"/>   public synch()
+<a name="573"/>      unbuff() | fail
+<a name="574"/>      flush() | fail
+<a name="575"/>      link
+<a name="576"/>   end
+<a name="577"/>
+<a name="578"/>   public override close()
+<a name="579"/>      local f
+<a name="580"/>      flush() | (f := &amp;why)
+<a name="581"/>      if \close_underlying_flag then
+<a name="582"/>         other.close() | (/f := &amp;why)
+<a name="583"/>      rbuff := wbuff := &amp;null
+<a name="584"/>      link error_if(f)
+<a name="585"/>   end
+<a name="586"/>
+<a name="587"/>   public override seek(offset)
+<a name="588"/>      synch() | fail
+<a name="589"/>      return other.seek(offset)
+<a name="590"/>   end
+<a name="591"/>
+<a name="592"/>   public override tell()
+<a name="593"/>      synch() | fail
+<a name="594"/>      return other.tell()
+<a name="595"/>   end
+<a name="596"/>
+<a name="597"/>   public override truncate(len)
+<a name="598"/>      synch() | fail
+<a name="599"/>      link other.truncate(len)
+<a name="600"/>   end
+<a name="601"/>
+<a name="602"/>   public override get_mode()
+<a name="603"/>      return other.get_mode()
+<a name="604"/>   end
+<a name="605"/>
+<a name="606"/>   public new(other)
+<a name="607"/>      self.other := need_Stream(other)
+<a name="608"/>      self.rbuff := ""
+<a name="609"/>      self.wbuff := []
+<a name="610"/>      self.wbuff_len := 0
+<a name="611"/>      self.buff_size := 8192
+<a name="612"/>      self.close_underlying_flag := &amp;yes
+<a name="613"/>      return
+<a name="614"/>   end
+<a name="615"/>end
+<a name="616"/>
+<a name="617"/>#
+<a name="618"/># This is the parent class of streams based on a posix-style
+<a name="619"/># integer-based file descriptor.
+<a name="620"/>#
+<a name="621"/>abstract class DescStream(Stream, NoCopy)
+<a name="622"/>   protected 
+<a name="623"/>      fd,
+<a name="624"/>      mode
+<a name="625"/>
+<a name="626"/>   #
+<a name="627"/>   # Return the integer file descriptor; fails if the stream is
+<a name="628"/>   # closed.
+<a name="629"/>   #
+<a name="630"/>   public get_fd()
+<a name="631"/>      return .\fd
+<a name="632"/>   end
+<a name="633"/>
+<a name="634"/>   public override get_mode()
+<a name="635"/>      return .mode
+<a name="636"/>   end
+<a name="637"/>
+<a name="638"/>   #
+<a name="639"/>   # Performs a poll on one or more streams, each of which must be a
+<a name="640"/>   # `DescStream`.  The parameter `l` is a list of pairs.  Each pair
+<a name="641"/>   # is a `Stream` followed by flags, which should be selected from
+<a name="642"/>   # those constants in the `Poll` class.  The last argument is the
+<a name="643"/>   # optional timeout. The result is a list of the flags corresponding
+<a name="644"/>   # to each `Stream` provided.  This method fails on error, setting
+<a name="645"/>   # `&amp;why` accordingly.  On a timeout, it succeeds and returns
+<a name="646"/>   # `&amp;null`.
+<a name="647"/>   #
+<a name="648"/>   public static native poll(l, timeout)
+<a name="649"/>
+<a name="650"/>   #
+<a name="651"/>   # Utility to check whether the result of a `poll` for `Poll.IN` indicates
+<a name="652"/>   # a call to `in`.
+<a name="653"/>   #
+<a name="654"/>   public static poll_in_test(v)
+<a name="655"/>      local x
+<a name="656"/>      # Ignore OUT
+<a name="657"/>      v := iand(v, icom(Poll.OUT))
+<a name="658"/>      # Succeed if either IN or HUP is set, but no other.
+<a name="659"/>      x := iand(v, ior(Poll.IN,Poll.HUP))
+<a name="660"/>      succeed x ~= 0 &amp; x = v
+<a name="661"/>   end
+<a name="662"/>
+<a name="663"/>   #
+<a name="664"/>   # Utility to check whether the result of a `poll` for `Poll.OUT` indicates
+<a name="665"/>   # a call to `out`.
+<a name="666"/>   #
+<a name="667"/>   public static poll_out_test(v)
+<a name="668"/>      # Ignore IN
+<a name="669"/>      v := iand(v, icom(Poll.IN))
+<a name="670"/>      # Succeed if OUT is set, but no other.
+<a name="671"/>      succeed v = Poll.OUT
+<a name="672"/>   end
+<a name="673"/>
+<a name="674"/>   #
+<a name="675"/>   # Try to set `&amp;why` to a helpful value based on any error value
+<a name="676"/>   # stored in the stream.  This is particularly useful after `poll`
+<a name="677"/>   # has indicated an error.  `v` is an optional default value of
+<a name="678"/>   # `&amp;why`.
+<a name="679"/>   #
+<a name="680"/>   public improve_why(v)
+<a name="681"/>      &amp;why := \v | "I/O error"
+<a name="682"/>   end
+<a name="683"/>
+<a name="684"/>   #
+<a name="685"/>   # Turn the specified flags on or off, and return the new set of
+<a name="686"/>   # flags.  The flags should be selected from the constants in
+<a name="687"/>   # `FileOpt`.
+<a name="688"/>   # :Parameters :
+<a name="689"/>   # :  `on` - the flags to turn on
+<a name="690"/>   # :  `off` - the flags to turn off
+<a name="691"/>   # :Returns :
+<a name="692"/>   # :  the new flags
+<a name="693"/>   #
+<a name="694"/>   public native flag(on, off)
+<a name="695"/>
+<a name="696"/>   #
+<a name="697"/>   # Turn the specified descriptor flags on or off, and return the new
+<a name="698"/>   # set of flags.  The flags should be selected from the constants in
+<a name="699"/>   # `DescOpt`.
+<a name="700"/>   # :Parameters :
+<a name="701"/>   # :  `on` - the flags to turn on
+<a name="702"/>   # :  `off` - the flags to turn off
+<a name="703"/>   # :Returns :
+<a name="704"/>   # :  the new flags
+<a name="705"/>   #
+<a name="706"/>   public native dflag(on, off)
+<a name="707"/>
+<a name="708"/>   #
+<a name="709"/>   # Invokes the system function dup2(oldfd, newfd), with oldfd set to
+<a name="710"/>   # this instance's `fd`, and newfd set to the given parameter's `fd`.
+<a name="711"/>   #
+<a name="712"/>   # On error this method fails and sets `&amp;why`.  On success, it sets
+<a name="713"/>   # the mode of the target to this instances's mode (since they both
+<a name="714"/>   # now point to the same file), and returns `&amp;null`.
+<a name="715"/>   #
+<a name="716"/>   # For example :-
+<a name="717"/>   # ~
+<a name="718"/>   #   f := FileStream("/tmp/xyz", 
+<a name="719"/>   #       ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&amp;why)
+<a name="720"/>   #   f.dup2(FileStream.stdout) | stop(&amp;why)
+<a name="721"/>   #   f.close()
+<a name="722"/>   #   write("hello world")  # writes to /tmp/xyz
+<a name="723"/>   # ~
+<a name="724"/>   # :Parameters :
+<a name="725"/>   # :  `other` - a `DescStream`
+<a name="726"/>   public dup2(other)
+<a name="727"/>      dup2_impl(other) | fail
+<a name="728"/>      other.mode := self.mode
+<a name="729"/>      link
+<a name="730"/>   end
+<a name="731"/>
+<a name="732"/>   private native dup2_impl()
+<a name="733"/>
+<a name="734"/>   protected native dup_impl()
+<a name="735"/>
+<a name="736"/>   #
+<a name="737"/>   # Return a `Stat` object with info about this file.
+<a name="738"/>   #
+<a name="739"/>   public stat()
+<a name="740"/>      return Stat!stat_impl()
+<a name="741"/>   end
+<a name="742"/>
+<a name="743"/>   private native stat_impl()
+<a name="744"/>
+<a name="745"/>   #
+<a name="746"/>   # Write selected attributes about a file.  If any of the parameters
+<a name="747"/>   # are `&amp;null`, they are left unchanged.  The nanosecond parameters
+<a name="748"/>   # are ignored unless their corresponding time fields are being set.
+<a name="749"/>   #
+<a name="750"/>   # :Parameters :
+<a name="751"/>   # :  `mode` - the mode (an integer)
+<a name="752"/>   # :  `uid` - the owner id
+<a name="753"/>   # :  `gid` - the group id
+<a name="754"/>   # :  `atime` - the access time (an integer)
+<a name="755"/>   # :  `mtime` - the modification time (an integer)
+<a name="756"/>   # :  `atime_ns` - the access time nanosecond part (an integer, default 0)
+<a name="757"/>   # :  `mtime_ns` - the modification time nanosecond part (an integer, default 0)
+<a name="758"/>   #
+<a name="759"/>   public native wstat(mode, uid, gid, atime, mtime, atime_ns, mtime_ns)
+<a name="760"/>
+<a name="761"/>   # Helper function for initialization methods.
+<a name="762"/>   #
+<a name="763"/>   protected setup(fd, mode)
+<a name="764"/>      self.fd := fd
+<a name="765"/>      self.mode := mode
+<a name="766"/>      link
+<a name="767"/>   end
+<a name="768"/>end
+<a name="769"/>
+<a name="770"/>#
+<a name="771"/># This procedure emulates the old Icon builtin function of the same
+<a name="772"/># name.  It always returns a `BufferStream` or fails and sets `&amp;why`.
+<a name="773"/># 
+<a name="774"/># :Parameters :
+<a name="775"/># :  `name` - The file name
+<a name="776"/># :  `mode` - The mode; possible values are :-
+<a name="777"/>#    :  "r" - `FileStream` with `FileOpt.RDONLY`.  This is the default mode.
+<a name="778"/>#    :  "w" - `FileStream` with `FileOpt.WRONLY`, `FileOpt.TRUNC`, `FileOpt.CREAT`
+<a name="779"/>#    :  "b"|"rw"|"r+" - `FileStream` with `FileOpt.RDWR`
+<a name="780"/>#    :  "crw"|"w+" - `FileStream` with `FileOpt.RDWR`, `FileOpt.TRUNC`, `FileOpt.CREAT`
+<a name="781"/>#    :  "a" - `FileStream` with `FileOpt.WRONLY`, `FileOpt.APPEND`, `FileOpt.CREAT`
+<a name="782"/>#    :  "a+" - `FileStream` with `FileOpt.RDWR`, `FileOpt.APPEND`, `FileOpt.CREAT`
+<a name="783"/>#    :  "p"|"pr" - `ProgInputStream`, using shell interpreter
+<a name="784"/>#    :  "pw" - `ProgOutputStream`, using shell interpreter
+<a name="785"/>#    :  "prw" - `ProgInputOutputStream`, using shell interpreter
+<a name="786"/>#
+<a name="787"/>procedure open(name, mode)
+<a name="788"/>   name := need_string(name)
+<a name="789"/>   mode := need_string(\mode) | "r"
+<a name="790"/>   return BufferStream(case mode of {
+<a name="791"/>      "r" : FileStream(name, FileOpt.RDONLY)
+<a name="792"/>      "w" : FileStream(name, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))
+<a name="793"/>      "b"|"rw"|"r+" : FileStream(name, FileOpt.RDWR)
+<a name="794"/>      "crw"|"w+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))
+<a name="795"/>      "a" : FileStream(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
+<a name="796"/>      "a+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
+<a name="797"/>$if _UNIX
+<a name="798"/>      "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
+<a name="799"/>      "pw" : ProgOutputStream("/bin/sh", ["-c", name])
+<a name="800"/>      "prw" : ProgInputOutputStream("/bin/sh", ["-c", name])
+<a name="801"/>$elsif _MS_WIN32
+<a name="802"/>      "p"|"pr" : WProgInputStream(, name)
+<a name="803"/>      "pw" : WProgOutputStream(, name)
+<a name="804"/>      "prw" : error("Mode not supported")
+<a name="805"/>$else
+<a name="806"/>      "p"|"pr"|"pw"|"prw" : error("Mode not supported")
+<a name="807"/>$endif
+<a name="808"/>      default: runerr("Invalid mode flag: " || mode)
+<a name="809"/>   })
+<a name="810"/>end
+<a name="811"/>
+<a name="812"/>#
+<a name="813"/># Convenient method to call `write` with standard error as output.
+<a name="814"/>#
+<a name="815"/>procedure ewrite(a[])
+<a name="816"/>   return write!push(a, FileStream.stderr)
+<a name="817"/>end
+<a name="818"/>
+<a name="819"/>#
+<a name="820"/># Convenient method to call `writes` with standard error as output.
+<a name="821"/>#
+<a name="822"/>procedure ewrites(a[])
+<a name="823"/>   return writes!push(a, FileStream.stderr)
+<a name="824"/>end
+<a name="825"/>
+<a name="826"/>#
+<a name="827"/># This procedure emulates the old Icon builtin `write` function.
+<a name="828"/>#
+<a name="829"/>procedure write(a[])
+<a name="830"/>   local e, f, r
+<a name="831"/>   r := a[-1]
+<a name="832"/>   f := if is(a[1], Stream) then
+<a name="833"/>      pop(a)
+<a name="834"/>   else
+<a name="835"/>      FileStream.stdout
+<a name="836"/>   every e := \!a | "\N" do {
+<a name="837"/>      if is(e, Stream) then {
+<a name="838"/>         f.writes1("\N") | fail
+<a name="839"/>         f := e
+<a name="840"/>      } else
+<a name="841"/>         f.writes1(e) | fail
+<a name="842"/>   }
+<a name="843"/>   return r
+<a name="844"/>end
+<a name="845"/>
+<a name="846"/>#
+<a name="847"/># This procedure emulates the old Icon builtin `writes` function.
+<a name="848"/>#
+<a name="849"/>procedure writes(a[])
+<a name="850"/>   local e, f, r
+<a name="851"/>   r := a[-1]
+<a name="852"/>   f := if is(a[1], Stream) then
+<a name="853"/>      pop(a)
+<a name="854"/>   else
+<a name="855"/>      FileStream.stdout
+<a name="856"/>   every e := \!a do {
+<a name="857"/>      if is(e, Stream) then
+<a name="858"/>         f := e
+<a name="859"/>      else
+<a name="860"/>         f.writes1(e) | fail
+<a name="861"/>   }
+<a name="862"/>   return r
+<a name="863"/>end
+<a name="864"/>
+<a name="865"/>#
+<a name="866"/># This procedure emulates the old Icon builtin `stop` function.
+<a name="867"/>#
+<a name="868"/>procedure stop(a[])
+<a name="869"/>   write!push(a, FileStream.stderr)
+<a name="870"/>   exit(1)
+<a name="871"/>end
+<a name="872"/>
+<a name="873"/>#
+<a name="874"/># This procedure emulates the old Icon builtin `read` function.
+<a name="875"/>#
+<a name="876"/>procedure read(f)
+<a name="877"/>   /f := FileStream.stdin
+<a name="878"/>   return f.read()
+<a name="879"/>end
+<a name="880"/>
+<a name="881"/>#
+<a name="882"/># This procedure emulates the old Icon builtin `reads` function.
+<a name="883"/>#
+<a name="884"/>procedure reads(f, n)
+<a name="885"/>   /f := FileStream.stdin
+<a name="886"/>   /n := 1
+<a name="887"/>   return f.reads(n)
+<a name="888"/>end
+<a name="889"/>
+<a name="890"/>#
+<a name="891"/># This procedure emulates the old Icon builtin `close` function.
+<a name="892"/>#
+<a name="893"/>procedure close(f)
+<a name="894"/>   return f.close()
+<a name="895"/>end
+<a name="896"/>
+<a name="897"/>#
+<a name="898"/># This class represents a stream based on a local file.
+<a name="899"/>#
+<a name="900"/>class FileStream(DescStream)
+<a name="901"/>   public static const
+<a name="902"/>      # A `FileStream` representing standard input
+<a name="903"/>      stdin, 
+<a name="904"/>      # A `FileStream` representing standard output
+<a name="905"/>      stdout,
+<a name="906"/>      # A `FileStream` representing standard error
+<a name="907"/>      stderr
+<a name="908"/>
+<a name="909"/>   private static create_for_fd(fd, mode)
+<a name="910"/>      return Class.create_instance().setup(fd, mode)
+<a name="911"/>   end
+<a name="912"/>
+<a name="913"/>   #
+<a name="914"/>   # Return a new instance which has a duplicated file descriptor
+<a name="915"/>   # (using the dup() system call), and the same mode as this
+<a name="916"/>   # instance.
+<a name="917"/>   #
+<a name="918"/>   public dup()
+<a name="919"/>      return create_for_fd(dup_impl(), mode)
+<a name="920"/>   end
+<a name="921"/>
+<a name="922"/>   #
+<a name="923"/>   # Open a new `FileStream` using the underlying system open
+<a name="924"/>   # function.
+<a name="925"/>   # :Parameters :
+<a name="926"/>   # :  `name` - the file name
+<a name="927"/>   # :  `flags` - the flags, selected from `FileOpt`, if perm
+<a name="928"/>   #        and mode are omitted, defaults to `FileOpt.RDONLY`
+<a name="929"/>   # :  `perm` - the create permissions to use if a file is
+<a name="930"/>   #        created, selected from `Mode`.
+<a name="931"/>   # :  `mode` - the resulting `Stream`'s mode; if omitted
+<a name="932"/>   #        this is deduced from `flags` parameter and the
+<a name="933"/>   #        type of file being opened.
+<a name="934"/>   #
+<a name="935"/>   public new(name, flags, perm, mode)
+<a name="936"/>      if \mode then
+<a name="937"/>         return setup(new_impl(name, flags, perm), mode)
+<a name="938"/>      if /perm then
+<a name="939"/>        /flags := FileOpt.RDONLY
+<a name="940"/>      #
+<a name="941"/>      # Set the READ/WRITE mode flags based on the FileOpt flags.
+<a name="942"/>      #
+<a name="943"/>      mode := case iand(flags, FileOpt.ACCMODE) of {
+<a name="944"/>         FileOpt.RDONLY: READ
+<a name="945"/>         FileOpt.WRONLY: WRITE
+<a name="946"/>         FileOpt.RDWR: READ_WRITE
+<a name="947"/>         default: return error("Invalid flags combination")
+<a name="948"/>      }
+<a name="949"/>      return setup(new_impl(name, flags, perm), mode).adjust_mode()
+<a name="950"/>   end
+<a name="951"/>
+<a name="952"/>   # Adjust this FileStream's mode based on the file type returned by
+<a name="953"/>   # stat().  If it is a regular file, add SEEK capability, and
+<a name="954"/>   # TRUNCATE too for a writable file.
+<a name="955"/>   #
+<a name="956"/>   private adjust_mode()
+<a name="957"/>      if stat().mode_str[1] == "-" then {
+<a name="958"/>         if can(WRITE) then
+<a name="959"/>            mode := ior(mode, TRUNCATE)
+<a name="960"/>         mode := ior(mode, SEEK)
+<a name="961"/>      } else {
+<a name="962"/>         if save_why{tell()} then
+<a name="963"/>            mode := ior(mode, SEEK)
+<a name="964"/>      }
+<a name="965"/>      link
+<a name="966"/>   end
+<a name="967"/>
+<a name="968"/>   private static native new_impl(path, flags, perm)
+<a name="969"/>
+<a name="970"/>   private static init()
+<a name="971"/>      stdin := create_for_fd(0, READ).adjust_mode()
+<a name="972"/>      stdout := create_for_fd(1, WRITE).adjust_mode()
+<a name="973"/>      stderr := create_for_fd(2, WRITE).adjust_mode()
+<a name="974"/>   end
+<a name="975"/>
+<a name="976"/>   #
+<a name="977"/>   # Create a pair of `PipeStream`s using the pipe system call.
+<a name="978"/>   #
+<a name="979"/>   public static pipe()
+<a name="980"/>      local t
+<a name="981"/>      t := pipe_impl() | fail
+<a name="982"/>      return [PipeStream(t[1], READ), PipeStream(t[2], WRITE)]
+<a name="983"/>   end
+<a name="984"/>
+<a name="985"/>   private static native pipe_impl()
+<a name="986"/>
+<a name="987"/>   #
+<a name="988"/>   # This method provides an interface to the system pread function.
+<a name="989"/>   #
+<a name="990"/>   # NB - for consistency with `seek` and `tell`, `offset` is one
+<a name="991"/>   # based.
+<a name="992"/>   #
+<a name="993"/>   # :Parameters :
+<a name="994"/>   # :  `n` - the maximum number of chars to read; n must be &gt; 0.
+<a name="995"/>   # :  `offset` - the one-based offset to seek to before reading.
+<a name="996"/>   #
+<a name="997"/>   public native pread(n, offset)
+<a name="998"/>
+<a name="999"/>   #
+<a name="1000"/>   # This method provides an interface to the system pwrite function.
+<a name="1001"/>   #
+<a name="1002"/>   # NB - for consistency with `seek` and `tell`, `offset` is one
+<a name="1003"/>   # based.
+<a name="1004"/>   #
+<a name="1005"/>   # :Parameters :
+<a name="1006"/>   # :  `s` - the string to write
+<a name="1007"/>   # :  `offset` - the one-based offset to seek to before writing.
+<a name="1008"/>   #
+<a name="1009"/>   public native pwrite(s, offset)
+<a name="1010"/>
+<a name="1011"/>   #
+<a name="1012"/>   # Succeed if this `FileStream` represents a tty supporting links.
+<a name="1013"/>   #
+<a name="1014"/>   public is_flowterm_tty()
+<a name="1015"/>$if _UNIX
+<a name="1016"/>      static flowterm
+<a name="1017"/>      initial
+<a name="1018"/>         flowterm := integer(env_string("FLOWTERM"))
+<a name="1019"/>      return case flowterm of {
+<a name="1020"/>         1 : isatty()
+<a name="1021"/>         2 : &amp;null
+<a name="1022"/>      }
+<a name="1023"/>$endif
+<a name="1024"/>   end
+<a name="1025"/>
+<a name="1026"/>   public override native in(n)
+<a name="1027"/>
+<a name="1028"/>   public override native out(s)
+<a name="1029"/>
+<a name="1030"/>   public override native seek(offset)
+<a name="1031"/>
+<a name="1032"/>   public override native tell()
+<a name="1033"/>
+<a name="1034"/>   public override native truncate(len)
+<a name="1035"/>
+<a name="1036"/>   public native chdir()
+<a name="1037"/>
+<a name="1038"/>   public native isatty()
+<a name="1039"/>
+<a name="1040"/>   public native ttyname()
+<a name="1041"/>
+<a name="1042"/>   public override native close()
+<a name="1043"/>end
+<a name="1044"/>
+<a name="1045"/>#
+<a name="1046"/># This subclass of `FileStream` is the type returned by
+<a name="1047"/># `FileStream.pipe`; it overrides the `out` method to catch signals on
+<a name="1048"/># writing to a closed pipe.  These cause simple failure of `out`,
+<a name="1049"/># rather than terminating the program.
+<a name="1050"/>#
+<a name="1051"/>class PipeStream(FileStream)
+<a name="1052"/>   public override dup()
+<a name="1053"/>      return PipeStream(dup_impl(), mode)
+<a name="1054"/>   end
+<a name="1055"/>
+<a name="1056"/>   public override native out(s)
+<a name="1057"/>
+<a name="1058"/>   package override new(fd, mode)
+<a name="1059"/>      setup(fd, mode)
+<a name="1060"/>      return
+<a name="1061"/>   end
+<a name="1062"/>end
+<a name="1063"/>
+<a name="1064"/>#
+<a name="1065"/># This class encapsulates data received from a particular source
+<a name="1066"/># address.
+<a name="1067"/>#
+<a name="1068"/>class Received()
+<a name="1069"/>   public const
+<a name="1070"/>      data, src
+<a name="1071"/>
+<a name="1072"/>   package new(data, src)
+<a name="1073"/>      self.data := data
+<a name="1074"/>      self.src := src
+<a name="1075"/>      return
+<a name="1076"/>   end
+<a name="1077"/>end
+<a name="1078"/>
+<a name="1079"/>#
+<a name="1080"/># This class represents a stream based on a socket.
+<a name="1081"/>#
+<a name="1082"/>class SocketStream(DescStream)
+<a name="1083"/>   private static create_for_fd(fd, mode)
+<a name="1084"/>      return Class.create_instance().setup(fd, mode)
+<a name="1085"/>   end
+<a name="1086"/>
+<a name="1087"/>   #
+<a name="1088"/>   # Return a new instance which has a duplicated file descriptor
+<a name="1089"/>   # (using the dup() system call), and the same mode as this
+<a name="1090"/>   # instance.
+<a name="1091"/>   #
+<a name="1092"/>   public dup()
+<a name="1093"/>      return create_for_fd(dup_impl(), mode)
+<a name="1094"/>   end
+<a name="1095"/>
+<a name="1096"/>   #
+<a name="1097"/>   # Create a socket with the given domain and type.
+<a name="1098"/>   #
+<a name="1099"/>   # :Parameters :
+<a name="1100"/>   # :  `domain` - from `ProtocolFormat`.  The default is
+<a name="1101"/>   #      `ProtocolFormat.INET` 
+<a name="1102"/>   # :  `typ` - the type from `SocketType`.  The default is
+<a name="1103"/>   #      `SocketType.STREAM`.
+<a name="1104"/>   #
+<a name="1105"/>   public new(domain, typ)
+<a name="1106"/>      return setup(new_impl(domain, typ), READ_WRITE)
+<a name="1107"/>   end
+<a name="1108"/>
+<a name="1109"/>   #
+<a name="1110"/>   # Create a pair of sockets of the given type
+<a name="1111"/>   #
+<a name="1112"/>   # :Parameters :
+<a name="1113"/>   # :  `typ` - the type from `SocketType`.  The default is
+<a name="1114"/>   #   `SocketType.STREAM`.
+<a name="1115"/>   #
+<a name="1116"/>   public static socketpair(typ)
+<a name="1117"/>      local t
+<a name="1118"/>      t := socketpair_impl(typ) | fail
+<a name="1119"/>      return [create_for_fd(t[1], READ_WRITE), create_for_fd(t[2], READ_WRITE)]
+<a name="1120"/>   end
+<a name="1121"/>
+<a name="1122"/>   #
+<a name="1123"/>   # Create a pair of sockets of the given type, but communication is limited to
+<a name="1124"/>   # one direction.  The first socket is the reader, and the second the writer.
+<a name="1125"/>   #
+<a name="1126"/>   # :Parameters :
+<a name="1127"/>   # :  `typ` - the type from `SocketType`.  The default is
+<a name="1128"/>   #   `SocketType.STREAM`.
+<a name="1129"/>   #
+<a name="1130"/>   public static one_way_socketpair(typ)
+<a name="1131"/>      local t, l
+<a name="1132"/>      t := socketpair_impl(typ) | fail
+<a name="1133"/>      l := [create_for_fd(t[1], READ), create_for_fd(t[2], WRITE)]
+<a name="1134"/>      l[2].shutdown(Shut.RD)
+<a name="1135"/>      l[1].shutdown(Shut.WR)
+<a name="1136"/>      return l
+<a name="1137"/>   end
+<a name="1138"/>
+<a name="1139"/>   public override native in(n)
+<a name="1140"/>
+<a name="1141"/>   #
+<a name="1142"/>   # Connect a socket to the given address.  The address is a string
+<a name="1143"/>   # in the form "unix:&lt;filename&gt;" for an `AF_UNIX` address,
+<a name="1144"/>   # "inet:&lt;host&gt;:&lt;port&gt;" for an `AF_INET` address, or
+<a name="1145"/>   # "inet6:&lt;host&gt;:&lt;port&gt;" for an `AF_INET6` address.  The "wildcard"
+<a name="1146"/>   # host can be specified by using the host string "*".
+<a name="1147"/>   #
+<a name="1148"/>   public native connect(addr)
+<a name="1149"/>
+<a name="1150"/>   #
+<a name="1151"/>   # Bind a socket to the given address, which is in the same form as
+<a name="1152"/>   # for `connect`.
+<a name="1153"/>   #
+<a name="1154"/>   public native bind(addr)
+<a name="1155"/>
+<a name="1156"/>   #
+<a name="1157"/>   # Listen for connections with the given backlog.
+<a name="1158"/>   #
+<a name="1159"/>   public native listen(backlog)
+<a name="1160"/>
+<a name="1161"/>   #
+<a name="1162"/>   # Returns a string giving the address and port of the peer
+<a name="1163"/>   # connected to the socket, in the format used by the
+<a name="1164"/>   # `connect` method.
+<a name="1165"/>   #
+<a name="1166"/>   public native get_peer()
+<a name="1167"/>
+<a name="1168"/>   #
+<a name="1169"/>   # Returns the local address of the socket, in the same format
+<a name="1170"/>   # as returned by `get_peer()`.
+<a name="1171"/>   #
+<a name="1172"/>   public native get_local()
+<a name="1173"/>
+<a name="1174"/>   #
+<a name="1175"/>   # Accept a new connection, returning a new `SocketStream`.
+<a name="1176"/>   #
+<a name="1177"/>   public accept()
+<a name="1178"/>      return create_for_fd(accept_impl(), READ_WRITE)
+<a name="1179"/>   end
+<a name="1180"/>
+<a name="1181"/>   #
+<a name="1182"/>   # Perform a shutdown on the socket.
+<a name="1183"/>   # :Parameters :
+<a name="1184"/>   # :  `how` - one of the constants in `Shut`
+<a name="1185"/>   #
+<a name="1186"/>   public native shutdown(how)
+<a name="1187"/>
+<a name="1188"/>   #
+<a name="1189"/>   # Send the given string `s` (which may be empty) to the address
+<a name="1190"/>   # `dest`, which should be in the format used by the `connect`
+<a name="1191"/>   # method.
+<a name="1192"/>   #
+<a name="1193"/>   # :Parameters :
+<a name="1194"/>   # :  `s` - the message to send (a string)
+<a name="1195"/>   # :  `dest` - the destination
+<a name="1196"/>   # :  `flags` - optional selection of flags from `MessageOpt`
+<a name="1197"/>   #
+<a name="1198"/>   public native sendto(s, dest, flags)
+<a name="1199"/>
+<a name="1200"/>   #
+<a name="1201"/>   # Receive a message of up to length `n`. The result on success is
+<a name="1202"/>   # a `Received` object encapsulating data and source address, which
+<a name="1203"/>   # will be in the format used by the `connect` method.  Unlike
+<a name="1204"/>   # `in()`, the data returned may be the empty string (and never
+<a name="1205"/>   # `&amp;null`).
+<a name="1206"/>   #
+<a name="1207"/>   # :Parameters :
+<a name="1208"/>   # :  `n` - the limit of the message length
+<a name="1209"/>   # :  `flags` - optional selection of flags from `MessageOpt`
+<a name="1210"/>   #
+<a name="1211"/>   public recvfrom(n, flags)
+<a name="1212"/>      return Received!recvfrom_impl(n, flags)
+<a name="1213"/>   end
+<a name="1214"/>
+<a name="1215"/>   private native recvfrom_impl(n, flags)
+<a name="1216"/>
+<a name="1217"/>   #
+<a name="1218"/>   # Set values using the underlying setsockopt call.  The options
+<a name="1219"/>   # listed in the following table are recognized :-
+<a name="1220"/>   #
+<a name="1221"/>   # &lt;https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_10_16&gt;
+<a name="1222"/>   # 
+<a name="1223"/>   # Symbolic options can be found in the `SocketOpt` class.
+<a name="1224"/>   #
+<a name="1225"/>   # Flag values should have a `&amp;yes` or `&amp;no` argument.  `LINGER`
+<a name="1226"/>   # accepts `&amp;null` meaning "off", or an integer value meaning on
+<a name="1227"/>   # with that seconds value.  The timeout values are in milliseconds.
+<a name="1228"/>   #
+<a name="1229"/>   public native setopt(opt, arg)
+<a name="1230"/>
+<a name="1231"/>   #
+<a name="1232"/>   # Get values using the underlying getopt call; see `setopt` above.
+<a name="1233"/>   # `ERROR` will return `&amp;null` if no error is set, or an error string
+<a name="1234"/>   # in the same format as `&amp;why`.
+<a name="1235"/>   #
+<a name="1236"/>   public native getopt(opt)
+<a name="1237"/>
+<a name="1238"/>   public override improve_why(v)
+<a name="1239"/>      &amp;why := \getopt(SocketOpt.ERROR) | \v | "I/O error"
+<a name="1240"/>   end
+<a name="1241"/>
+<a name="1242"/>   #
+<a name="1243"/>   # Return a list of IP numerical addresses for the given host.
+<a name="1244"/>   # 
+<a name="1245"/>   # The second parameter, `ver`, an integer, specifies the IP
+<a name="1246"/>   # versions which the result list can contain.  Possible values
+<a name="1247"/>   # are :-
+<a name="1248"/>   #
+<a name="1249"/>   # * 4 - return only v4 addresses
+<a name="1250"/>   # * 6 - return only v6 addresses
+<a name="1251"/>   # * 46 - return either v4 or v6 addresses, with v4 coming first
+<a name="1252"/>   # * 64 - return either v4 or v6 addresses, with v6 coming first
+<a name="1253"/>   # * 0 - return either v4 or v6 addresses, in the order returned by
+<a name="1254"/>   #       the underlying system call.
+<a name="1255"/>   #
+<a name="1256"/>   # If `ver` is omitted, the value given by the environment variable
+<a name="1257"/>   # `OI_IP_VERSION` is used; if that is unset then `4` is used.
+<a name="1258"/>   #
+<a name="1259"/>   # :Parameters :
+<a name="1260"/>   # :  `host` - the host name (a string)
+<a name="1261"/>   # :  `ver` - the IP version(s) to try
+<a name="1262"/>   public static native dns_query(host, ver)
+<a name="1263"/>
+<a name="1264"/>   private native accept_impl()
+<a name="1265"/>
+<a name="1266"/>   public override native out(s)
+<a name="1267"/>
+<a name="1268"/>   public override native close()
+<a name="1269"/>
+<a name="1270"/>   private static native socketpair_impl(typ)
+<a name="1271"/>
+<a name="1272"/>   private static native new_impl(domain, typ)
+<a name="1273"/>end
+<a name="1274"/>
+<a name="1275"/>#
+<a name="1276"/># Parent class for classes which wish to define in() in terms of
+<a name="1277"/># reading one line at time, rather than the other way round.
+<a name="1278"/>#
+<a name="1279"/>abstract class LineBasedInputStream(Stream)
+<a name="1280"/>   private
+<a name="1281"/>      line
+<a name="1282"/>
+<a name="1283"/>   public override read_line()
+<a name="1284"/>      local t
+<a name="1285"/>      if *line &gt; 0 then {
+<a name="1286"/>         t := line[1:-*"\N"]
+<a name="1287"/>         line := ""
+<a name="1288"/>         return t
+<a name="1289"/>      }
+<a name="1290"/>      return read_line_impl()
+<a name="1291"/>   end
+<a name="1292"/>
+<a name="1293"/>   public override in(n)
+<a name="1294"/>      local t
+<a name="1295"/>      n := need_integer(n, 1)
+<a name="1296"/>      if *line = 0 then {
+<a name="1297"/>         t := read_line_impl() | fail
+<a name="1298"/>         if /t then
+<a name="1299"/>            return
+<a name="1300"/>         line := t || "\N"
+<a name="1301"/>      }
+<a name="1302"/>      line ? {
+<a name="1303"/>         t := move(n) | tab(0)
+<a name="1304"/>         line := tab(0)
+<a name="1305"/>      }
+<a name="1306"/>      return t
+<a name="1307"/>   end
+<a name="1308"/>
+<a name="1309"/>   public override get_mode()
+<a name="1310"/>      return READ
+<a name="1311"/>   end
+<a name="1312"/>
+<a name="1313"/>   #
+<a name="1314"/>   # Implemented to read a single line.  The EOL should not be
+<a name="1315"/>   # included.  Fails on error and returns `&amp;null` on end-of-file
+<a name="1316"/>   #
+<a name="1317"/>   protected abstract read_line_impl()
+<a name="1318"/>
+<a name="1319"/>   public new()
+<a name="1320"/>      line := ""
+<a name="1321"/>      return
+<a name="1322"/>   end
+<a name="1323"/>end
+<a name="1324"/>
+<a name="1325"/>#
+<a name="1326"/># Parent class for classes which wish to define out() in terms of
+<a name="1327"/># writing one line at time, rather than the other way round.
+<a name="1328"/>#
+<a name="1329"/>abstract class LineBasedOutputStream(Stream)
+<a name="1330"/>   private const
+<a name="1331"/>      buff
+<a name="1332"/>
+<a name="1333"/>   public override out(s)
+<a name="1334"/>      local t, c
+<a name="1335"/>      s := need_string(s)
+<a name="1336"/>      if *s &gt; 0 then {
+<a name="1337"/>         put(buff, s)
+<a name="1338"/>         if upto('\n', s) then {
+<a name="1339"/>            c := ""
+<a name="1340"/>            every c ||:= !buff
+<a name="1341"/>            clear(buff)
+<a name="1342"/>            c ? {
+<a name="1343"/>               while t := tab(upto('\n')) do {
+<a name="1344"/>                  if t[-1] == "\r" then
+<a name="1345"/>                     t[-1] := ""
+<a name="1346"/>                  write_line_impl(t) | fail
+<a name="1347"/>                  move(1)
+<a name="1348"/>               }
+<a name="1349"/>               pos(0) | put(buff, tab(0))
+<a name="1350"/>            }
+<a name="1351"/>         }
+<a name="1352"/>      }
+<a name="1353"/>      return *s
+<a name="1354"/>   end
+<a name="1355"/>
+<a name="1356"/>   #
+<a name="1357"/>   # Implemented to output a single line.  The EOL is not included in
+<a name="1358"/>   # `s`.
+<a name="1359"/>   #
+<a name="1360"/>   protected abstract write_line_impl(s)
+<a name="1361"/>   
+<a name="1362"/>   public override get_mode()
+<a name="1363"/>      return WRITE
+<a name="1364"/>   end
+<a name="1365"/>
+<a name="1366"/>   public new()
+<a name="1367"/>      buff := []
+<a name="1368"/>      return
+<a name="1369"/>   end
+<a name="1370"/>end
+<a name="1371"/>
+<a name="1372"/>#
+<a name="1373"/># This class is used to read directory contents.
+<a name="1374"/>#
+<a name="1375"/>final class DirStream(LineBasedInputStream, NoCopy)
+<a name="1376"/>   private 
+<a name="1377"/>      ptr
+<a name="1378"/>
+<a name="1379"/>   protected override native read_line_impl()
+<a name="1380"/>
+<a name="1381"/>   public override native close()
+<a name="1382"/>
+<a name="1383"/>   private static native new_impl(path)
+<a name="1384"/>
+<a name="1385"/>   public override new(path)
+<a name="1386"/>      LineBasedInputStream.new()
+<a name="1387"/>$if _MS_WIN32
+<a name="1388"/>      if *path = 0 then
+<a name="1389"/>         return error("Empty path")
+<a name="1390"/>      if any('\\/:', path[-1]) then
+<a name="1391"/>         path ||:= "*"
+<a name="1392"/>      else unless upto('*?', path) then
+<a name="1393"/>         path ||:= "\\*"
+<a name="1394"/>$endif
+<a name="1395"/>      self.ptr := new_impl(path) | fail
+<a name="1396"/>      return
+<a name="1397"/>   end
+<a name="1398"/>end
+<a name="1399"/>
+<a name="1400"/># Convenient superclass of classes which use a background process.
+<a name="1401"/>#
+<a name="1402"/>abstract class HasBgProc()
+<a name="1403"/>   protected
+<a name="1404"/>      pid,
+<a name="1405"/>      exit_info
+<a name="1406"/>
+<a name="1407"/>   #
+<a name="1408"/>   # Wait for the child to exit, setting `exit_info`.
+<a name="1409"/>   #
+<a name="1410"/>   protected do_wait()
+<a name="1411"/>      \pid | runerr("do_wait() called out of sequence")
+<a name="1412"/>      # wait should never fail (even if the child crashed).
+<a name="1413"/>      exit_info := System.wait(pid) | syserr("System.wait failed unexpectedly: " || &amp;why)
+<a name="1414"/>$if _MS_WIN32
+<a name="1415"/>      System.close_handle(pid)
+<a name="1416"/>$endif
+<a name="1417"/>      pid := &amp;null
+<a name="1418"/>      return
+<a name="1419"/>   end
+<a name="1420"/>
+<a name="1421"/>   #
+<a name="1422"/>   # Return `ExitInfo` of the child process
+<a name="1423"/>   #
+<a name="1424"/>   public get_exit_info()
+<a name="1425"/>      return .\exit_info
+<a name="1426"/>   end
+<a name="1427"/>
+<a name="1428"/>   #
+<a name="1429"/>   # Return process id of the child process
+<a name="1430"/>   #
+<a name="1431"/>   public get_pid()
+<a name="1432"/>      return .\pid
+<a name="1433"/>   end
+<a name="1434"/>end
+<a name="1435"/>
+<a name="1436"/># Convenient superclass of classes which have an optional `Task` to
+<a name="1437"/># use for polling.
+<a name="1438"/>#
+<a name="1439"/>abstract class HasTask()
+<a name="1440"/>   protected
+<a name="1441"/>      task
+<a name="1442"/>
+<a name="1443"/>   #
+<a name="1444"/>   # Set a `Task` to use when polling
+<a name="1445"/>   #
+<a name="1446"/>   public set_task(t)
+<a name="1447"/>      self.task := t
+<a name="1448"/>      link
+<a name="1449"/>   end
+<a name="1450"/>
+<a name="1451"/>   #
+<a name="1452"/>   # Poll, either using the task's poll, or `DescStream.poll` if task
+<a name="1453"/>   # is unset.
+<a name="1454"/>   #
+<a name="1455"/>   protected choose_poll(l, timeout)
+<a name="1456"/>      return (if /task then DescStream else task).poll(l, timeout)
+<a name="1457"/>   end
+<a name="1458"/>end
+<a name="1459"/>
+<a name="1460"/>#
+<a name="1461"/># Base class for ProgOutputStream, ProgInputStream and
+<a name="1462"/># ProgInputOutputStream
+<a name="1463"/>#
+<a name="1464"/>package abstract class ProgStreamBase(SocketStream, HasBgProc)
+<a name="1465"/>   protected const
+<a name="1466"/>      cmd
+<a name="1467"/>
+<a name="1468"/>   protected set_cmd(cmd)
+<a name="1469"/>      self.cmd := need_string(cmd)
+<a name="1470"/>      link
+<a name="1471"/>   end
+<a name="1472"/>
+<a name="1473"/>   #
+<a name="1474"/>   # Convenient function to check that the command exited
+<a name="1475"/>   # successfully.  If it did, this function returns, otherwise it
+<a name="1476"/>   # fails and sets `&amp;why` appropriately, based on the exit code.
+<a name="1477"/>   #
+<a name="1478"/>   public succeeded()
+<a name="1479"/>      local x
+<a name="1480"/>      x := get_exit_info() | runerr("succeeded() can only be called after close()")
+<a name="1481"/>      return x.succeeded() |
+<a name="1482"/>         whyf("%s failed: %w", cmd)
+<a name="1483"/>   end
+<a name="1484"/>end
+<a name="1485"/>
+<a name="1486"/>#
+<a name="1487"/># This stream represents a pipe to a command running in a forked child
+<a name="1488"/># process.
+<a name="1489"/>#
+<a name="1490"/>class ProgInputStream(ProgStreamBase)
+<a name="1491"/>   #
+<a name="1492"/>   # Close the stream.  This waits for the child process to terminate.
+<a name="1493"/>   #
+<a name="1494"/>   public override close()
+<a name="1495"/>      shutdown(Shut.RD)
+<a name="1496"/>      SocketStream.close()
+<a name="1497"/>      do_wait()
+<a name="1498"/>      link
+<a name="1499"/>   end
+<a name="1500"/>
+<a name="1501"/>   #
+<a name="1502"/>   # Open a new readable `Stream` based on the given command.  The
+<a name="1503"/>   # first three parameters are the same as for the method
+<a name="1504"/>   # `posix.System.exec`;  the last two optionally give the standard
+<a name="1505"/>   # input and standard error of the command; by default the command
+<a name="1506"/>   # inherits these from the parent.  If the stderr param is the string
+<a name="1507"/>   # "pipe", then stderr is sent to the pipe along with stdout.
+<a name="1508"/>   #
+<a name="1509"/>   # For example :-
+<a name="1510"/>   # ~
+<a name="1511"/>   #     g := FileStream("/tmp/data",FileOpt.RDONLY) | stop(&amp;why)
+<a name="1512"/>   #     f := ProgInputStream("wc", ["-l"],,g) | stop(&amp;why)
+<a name="1513"/>   #     g.close()
+<a name="1514"/>   #     while write(f.read())   # writes the number of lines in /tmp/data
+<a name="1515"/>   #     f.close()
+<a name="1516"/>   # ~
+<a name="1517"/>   public override new(cmd, args, env, stdin, stderr)
+<a name="1518"/>      local l
+<a name="1519"/>      set_cmd(cmd)
+<a name="1520"/>      l := one_way_socketpair() | fail
+<a name="1521"/>      unless pid := System.fork() then {
+<a name="1522"/>         save_why{ lclose(l) }
+<a name="1523"/>         fail
+<a name="1524"/>      }
+<a name="1525"/>      if pid &gt; 0 then {
+<a name="1526"/>         # Parent
+<a name="1527"/>         l[2].close()
+<a name="1528"/>         return setup(l[1].get_fd(), READ)
+<a name="1529"/>      } else {
+<a name="1530"/>         # Child
+<a name="1531"/>         if \stdin then
+<a name="1532"/>            stdin.dup2(FileStream.stdin) | stop(&amp;why)
+<a name="1533"/>         if \stderr then {
+<a name="1534"/>            if stderr === "pipe" then
+<a name="1535"/>               l[2].dup2(FileStream.stderr) | stop(&amp;why)
+<a name="1536"/>            else
+<a name="1537"/>               stderr.dup2(FileStream.stderr) | stop(&amp;why)
+<a name="1538"/>         }
+<a name="1539"/>         l[2].dup2(FileStream.stdout) | stop(&amp;why)
+<a name="1540"/>         lclose(l)
+<a name="1541"/>         System.exec(self.cmd, args, env) | stop(&amp;why)
+<a name="1542"/>         syserr("Not reached")
+<a name="1543"/>      }
+<a name="1544"/>   end
+<a name="1545"/>end
+<a name="1546"/>
+<a name="1547"/>#
+<a name="1548"/># This stream represents a pipe from a command running in a forked child
+<a name="1549"/># process.
+<a name="1550"/>#
+<a name="1551"/>class ProgOutputStream(ProgStreamBase)
+<a name="1552"/>   #
+<a name="1553"/>   # Close the stream.  This waits for the child process to terminate.
+<a name="1554"/>   #
+<a name="1555"/>   public override close()
+<a name="1556"/>      shutdown(Shut.WR)
+<a name="1557"/>      SocketStream.close()
+<a name="1558"/>      do_wait()
+<a name="1559"/>      link
+<a name="1560"/>   end
+<a name="1561"/>
+<a name="1562"/>   #
+<a name="1563"/>   # Open a new writeable `Stream` based on the given command. The
+<a name="1564"/>   # first three parameters are the same as for the method
+<a name="1565"/>   # `posix.System.exec`; the last two optionally give the standard
+<a name="1566"/>   # output and standard error of the command; by default the command
+<a name="1567"/>   # inherits these from the parent.
+<a name="1568"/>   #
+<a name="1569"/>   # For example :-
+<a name="1570"/>   # ~
+<a name="1571"/>   #      g := FileStream("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&amp;why)
+<a name="1572"/>   #      f := ProgOutputStream("wc", ["-l"],,g) | stop(&amp;why)
+<a name="1573"/>   #      g.close()
+<a name="1574"/>   #      f.write("data")
+<a name="1575"/>   #      f.close()
+<a name="1576"/>   #      # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
+<a name="1577"/>   # ~
+<a name="1578"/>   public override new(cmd, args, env, stdout, stderr)
+<a name="1579"/>      local l
+<a name="1580"/>      set_cmd(cmd)
+<a name="1581"/>      l := one_way_socketpair() | fail
+<a name="1582"/>      unless l[2].dflag(DescOpt.CLOEXEC) &amp; pid := System.fork() then {
+<a name="1583"/>         save_why{ lclose(l) }
+<a name="1584"/>         fail
+<a name="1585"/>      }
+<a name="1586"/>      if pid &gt; 0 then {
+<a name="1587"/>         # Parent
+<a name="1588"/>         l[1].close()
+<a name="1589"/>         return setup(l[2].get_fd(), WRITE)
+<a name="1590"/>      } else {
+<a name="1591"/>         # Child
+<a name="1592"/>         if \stdout then
+<a name="1593"/>            stdout.dup2(FileStream.stdout) | stop(&amp;why)
+<a name="1594"/>         if \stderr then
+<a name="1595"/>            stderr.dup2(FileStream.stderr) | stop(&amp;why)
+<a name="1596"/>         l[1].dup2(FileStream.stdin) | stop(&amp;why)
+<a name="1597"/>         lclose(l)
+<a name="1598"/>         System.exec(self.cmd, args, env) | stop(&amp;why)
+<a name="1599"/>         syserr("Not reached")
+<a name="1600"/>      }
+<a name="1601"/>   end
+<a name="1602"/>end
+<a name="1603"/>
+<a name="1604"/>#
+<a name="1605"/># This stream represents a bi-directional pipe to a command running in
+<a name="1606"/># a forked child process.
+<a name="1607"/>#
+<a name="1608"/>class ProgInputOutputStream(ProgStreamBase)
+<a name="1609"/>   #
+<a name="1610"/>   # Close the stream.  This waits for the child process to terminate.
+<a name="1611"/>   #
+<a name="1612"/>   public override close()
+<a name="1613"/>      shutdown(Shut.RDWR)
+<a name="1614"/>      SocketStream.close()
+<a name="1615"/>      do_wait()
+<a name="1616"/>      link
+<a name="1617"/>   end
+<a name="1618"/>
+<a name="1619"/>   # Open a new readable and writeable `Stream` based on the given
+<a name="1620"/>   # command.  The first three parameters are the same as for the
+<a name="1621"/>   # method `posix.System.exec`; `stderr` optionally gives the
+<a name="1622"/>   # standard error of the command; by default the command inherits
+<a name="1623"/>   # this from the parent.  If the stderr param is the string "pipe",
+<a name="1624"/>   # then stderr is sent to the pipe along with stdout.
+<a name="1625"/>   #
+<a name="1626"/>   # For example :-
+<a name="1627"/>   # ~
+<a name="1628"/>   #     f := ProgInputOutputStream("myprog", []) | stop(&amp;why)
+<a name="1629"/>   #     f.write("Some input")
+<a name="1630"/>   #     s := f.read()  # The response
+<a name="1631"/>   #     f.close()
+<a name="1632"/>   # ~
+<a name="1633"/>   public override new(cmd, args, env, stderr)
+<a name="1634"/>      local l
+<a name="1635"/>      set_cmd(cmd)
+<a name="1636"/>      l := SocketStream.socketpair() | fail
+<a name="1637"/>      unless l[1].dflag(DescOpt.CLOEXEC) &amp; pid := System.fork() then {
+<a name="1638"/>         save_why{ lclose(l) }
+<a name="1639"/>         fail
+<a name="1640"/>      }
+<a name="1641"/>      if pid &gt; 0 then {
+<a name="1642"/>         # Parent
+<a name="1643"/>         l[2].close()
+<a name="1644"/>         return setup(l[1].get_fd(), READ_WRITE)
+<a name="1645"/>      } else {
+<a name="1646"/>         # Child
+<a name="1647"/>         if \stderr then {
+<a name="1648"/>            if stderr === "pipe" then
+<a name="1649"/>               l[2].dup2(FileStream.stderr) | stop(&amp;why)
+<a name="1650"/>            else
+<a name="1651"/>               stderr.dup2(FileStream.stderr) | stop(&amp;why)
+<a name="1652"/>         }
+<a name="1653"/>         l[2].dup2(FileStream.stdout) | stop(&amp;why)
+<a name="1654"/>         l[2].dup2(FileStream.stdin) | stop(&amp;why)
+<a name="1655"/>         lclose(l)
+<a name="1656"/>         System.exec(self.cmd, args, env) | stop(&amp;why)
+<a name="1657"/>         syserr("Not reached")
+<a name="1658"/>      }
+<a name="1659"/>   end
+<a name="1660"/>end
+<a name="1661"/>
+<a name="1662"/>#
+<a name="1663"/># Base class for FilterOutputStream and FilterInputStream
+<a name="1664"/>#
+<a name="1665"/>package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, HasTask, NoCopy)
+<a name="1666"/>   protected const
+<a name="1667"/>      cmd,
+<a name="1668"/>      err_sink
+<a name="1669"/>   protected
+<a name="1670"/>      cin,
+<a name="1671"/>      cout,
+<a name="1672"/>      cerr
+<a name="1673"/>
+<a name="1674"/>   # Convenient function to check that the command exited
+<a name="1675"/>   # successfully.  If it did, this function returns, otherwise it
+<a name="1676"/>   # fails and sets `&amp;why` appropriately, based on the exit code and
+<a name="1677"/>   # stderr output.  The error sink must be set to a `StringStream` to
+<a name="1678"/>   # use this function.
+<a name="1679"/>   #
+<a name="1680"/>   public succeeded()
+<a name="1681"/>      local x
+<a name="1682"/>      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
+<a name="1683"/>      x := get_exit_info() | runerr("succeeded() can only be called after close()")
+<a name="1684"/>      return x.succeeded() |
+<a name="1685"/>         whyf("%s failed: %w: %s", cmd, trim(replace(err_sink.str(), "\n", " ")))
+<a name="1686"/>   end
+<a name="1687"/>
+<a name="1688"/>   protected do_poll()
+<a name="1689"/>      local x, l, v
+<a name="1690"/>      l := []
+<a name="1691"/>      if \cin then
+<a name="1692"/>         every put(l, cin | Poll.IN)
+<a name="1693"/>      if \cerr then
+<a name="1694"/>         every put(l, cerr | Poll.IN)
+<a name="1695"/>      if \cout then
+<a name="1696"/>         every put(l, cout | Poll.OUT)
+<a name="1697"/>      if *l = 0 then
+<a name="1698"/>         runerr(219, self)
+<a name="1699"/>      x := choose_poll(l) | fail
+<a name="1700"/>      if \cin &amp; (v := pop(x)) &gt; 0 then {
+<a name="1701"/>         return if DescStream.poll_in_test(v) then
+<a name="1702"/>            cin
+<a name="1703"/>         else {
+<a name="1704"/>            cin.improve_why()
+<a name="1705"/>            whyf("Error on cin poll: %w")
+<a name="1706"/>         }
+<a name="1707"/>      }
+<a name="1708"/>      if \cerr &amp; (v := pop(x)) &gt; 0 then {
+<a name="1709"/>         return if DescStream.poll_in_test(v) then
+<a name="1710"/>            cerr
+<a name="1711"/>         else {
+<a name="1712"/>            cerr.improve_why()
+<a name="1713"/>            whyf("Error on cerr poll: %w")
+<a name="1714"/>         }
+<a name="1715"/>      }
+<a name="1716"/>      if \cout &amp; (v := pop(x)) &gt; 0 then {
+<a name="1717"/>         return if DescStream.poll_out_test(v) then
+<a name="1718"/>            cout
+<a name="1719"/>         else {
+<a name="1720"/>            cout.improve_why()
+<a name="1721"/>            whyf("Error on cout poll: %w")
+<a name="1722"/>         }
+<a name="1723"/>      }
+<a name="1724"/>      syserr("Invalid poll result")
+<a name="1725"/>   end
+<a name="1726"/>
+<a name="1727"/>   protected close_cin()
+<a name="1728"/>      if \cin then {
+<a name="1729"/>         cin.shutdown(Shut.RD)
+<a name="1730"/>         cin.close()
+<a name="1731"/>         cin := &amp;null
+<a name="1732"/>      }
+<a name="1733"/>   end
+<a name="1734"/>
+<a name="1735"/>   protected close_cerr()
+<a name="1736"/>      if \cerr then {
+<a name="1737"/>         cerr.shutdown(Shut.RD)
+<a name="1738"/>         cerr.close()
+<a name="1739"/>         cerr := &amp;null
+<a name="1740"/>      }
+<a name="1741"/>   end
+<a name="1742"/>
+<a name="1743"/>   protected close_cout()
+<a name="1744"/>      if \cout then {
+<a name="1745"/>         cout.shutdown(Shut.WR)
+<a name="1746"/>         cout.close()
+<a name="1747"/>         cout := &amp;null
+<a name="1748"/>      }
+<a name="1749"/>   end
+<a name="1750"/>
+<a name="1751"/>   protected setup(cmd, args, env, err_sink)
+<a name="1752"/>      local l
+<a name="1753"/>      self.cmd := need_string(cmd)
+<a name="1754"/>      /err_sink := StringStream()
+<a name="1755"/>      self.err_sink := err_sink
+<a name="1756"/>      l := SocketStream.one_way_socketpair() | fail
+<a name="1757"/>      unless
+<a name="1758"/>         l |||:= SocketStream.one_way_socketpair() &amp;
+<a name="1759"/>         l |||:= SocketStream.one_way_socketpair() &amp;
+<a name="1760"/>         l[1].flag(FileOpt.NONBLOCK) &amp; 
+<a name="1761"/>         l[4].dflag(DescOpt.CLOEXEC) &amp;
+<a name="1762"/>         l[4].flag(FileOpt.NONBLOCK) &amp; 
+<a name="1763"/>         l[5].flag(FileOpt.NONBLOCK) &amp;
+<a name="1764"/>         pid := System.fork()
+<a name="1765"/>      then {
+<a name="1766"/>          save_why{ lclose(l) }
+<a name="1767"/>          fail
+<a name="1768"/>       }
+<a name="1769"/>      if pid &gt; 0 then {
+<a name="1770"/>         # Parent
+<a name="1771"/>         cin := l[1]
+<a name="1772"/>         cout := l[4]
+<a name="1773"/>         cerr := l[5]
+<a name="1774"/>         l[2].close()
+<a name="1775"/>         l[3].close()
+<a name="1776"/>         l[6].close()
+<a name="1777"/>         return
+<a name="1778"/>      } else {
+<a name="1779"/>         # Child
+<a name="1780"/>         l[2].dup2(FileStream.stdout) | stop(&amp;why)
+<a name="1781"/>         l[3].dup2(FileStream.stdin) | stop(&amp;why)
+<a name="1782"/>         l[6].dup2(FileStream.stderr) | stop(&amp;why)
+<a name="1783"/>         lclose(l)
+<a name="1784"/>         System.exec(self.cmd, args, env) | stop(&amp;why)
+<a name="1785"/>         syserr("Not reached")
+<a name="1786"/>      }
+<a name="1787"/>   end
+<a name="1788"/>end
+<a name="1789"/>
+<a name="1790"/>#
+<a name="1791"/># This stream filters output written to it through a background
+<a name="1792"/># process and outputs the results to an arbitrary sink `Stream`.
+<a name="1793"/>#
+<a name="1794"/># For example :-
+<a name="1795"/># ~
+<a name="1796"/>#   # Encode s, putting the result in a RamStream
+<a name="1797"/>#   r := RamStream()
+<a name="1798"/>#   g := FilterOutputStream(r, "gzip", ["-c"])
+<a name="1799"/>#   g.write(s)
+<a name="1800"/># ~
+<a name="1801"/>class FilterOutputStream(FilterStreamBase)
+<a name="1802"/>   private const
+<a name="1803"/>      sink
+<a name="1804"/>
+<a name="1805"/>   private cp_cin()
+<a name="1806"/>      local t
+<a name="1807"/>      t := cin.in(1048576) | fail
+<a name="1808"/>      if /t then
+<a name="1809"/>         close_cin()
+<a name="1810"/>      else
+<a name="1811"/>         sink.writes1(t) | fail
+<a name="1812"/>      return
+<a name="1813"/>   end
+<a name="1814"/>
+<a name="1815"/>   private cp_cerr()
+<a name="1816"/>      local t
+<a name="1817"/>      t := cerr.in(1048576) | fail
+<a name="1818"/>      if /t then
+<a name="1819"/>         close_cerr()
+<a name="1820"/>      else
+<a name="1821"/>         err_sink.writes1(t) | fail
+<a name="1822"/>      return
+<a name="1823"/>   end
+<a name="1824"/>
+<a name="1825"/>   public override out(s)
+<a name="1826"/>      s := need_string(s)
+<a name="1827"/>      repeat {
+<a name="1828"/>         case do_poll() of {
+<a name="1829"/>            cin: cp_cin()
+<a name="1830"/>            cerr: cp_cerr()
+<a name="1831"/>            cout: return cout.out(s)
+<a name="1832"/>         } | fail
+<a name="1833"/>      }
+<a name="1834"/>   end
+<a name="1835"/>
+<a name="1836"/>   private flush_remaining()
+<a name="1837"/>      while \cin | \cerr do {
+<a name="1838"/>         case do_poll() of {
+<a name="1839"/>            cin: cp_cin()
+<a name="1840"/>            cerr: cp_cerr()
+<a name="1841"/>            default: syserr("Unexpected result from do_poll")
+<a name="1842"/>         } | fail
+<a name="1843"/>      }
+<a name="1844"/>      return
+<a name="1845"/>   end
+<a name="1846"/>
+<a name="1847"/>   # Close the stream.  This waits for the child process to terminate,
+<a name="1848"/>   # flushing any remaining output to `sink`.  NB: `sink` and
+<a name="1849"/>   # `err_sink` are not closed unless the `set_close_underlying` has
+<a name="1850"/>   # been set to `&amp;yes`.
+<a name="1851"/>   #
+<a name="1852"/>   public override close()
+<a name="1853"/>      local f
+<a name="1854"/>      \pid | runerr(219, self)
+<a name="1855"/>      close_cout()
+<a name="1856"/>      flush_remaining() | (f := &amp;why)
+<a name="1857"/>      close_cin()
+<a name="1858"/>      close_cerr()
+<a name="1859"/>      if \close_underlying_flag then {
+<a name="1860"/>         sink.close() | (/f := &amp;why)
+<a name="1861"/>         (err_sink === sink) | err_sink.close() | (/f := &amp;why)
+<a name="1862"/>      }
+<a name="1863"/>      do_wait()
+<a name="1864"/>      link error_if(f)
+<a name="1865"/>   end
+<a name="1866"/>
+<a name="1867"/>   public override get_mode()
+<a name="1868"/>      return WRITE
+<a name="1869"/>   end
+<a name="1870"/>
+<a name="1871"/>   #
+<a name="1872"/>   # Create a new instance.
+<a name="1873"/>   #
+<a name="1874"/>   # :Parameters :
+<a name="1875"/>   # :  `sink` - the `Stream` to which data is output from the command.
+<a name="1876"/>   #        Defaults to a `NullStream`.
+<a name="1877"/>   # :  `cmd` - the name of the command                                    
+<a name="1878"/>   # :  `args` - the arg list                                              
+<a name="1879"/>   # :  `env` - the env list                                               
+<a name="1880"/>   # :  `err_sink` - optional stream to send standard error to.  If omitted,
+<a name="1881"/>   #        defaults to a `StringStream`, which can then be used together
+<a name="1882"/>   #        with `succeeded()` to check the command's exit status.
+<a name="1883"/>   public new(sink, cmd, args, env, err_sink)
+<a name="1884"/>      /sink := NullStream()
+<a name="1885"/>      self.sink := sink
+<a name="1886"/>      setup(cmd, args, env, err_sink) | fail
+<a name="1887"/>      return
+<a name="1888"/>   end
+<a name="1889"/>end
+<a name="1890"/>
+<a name="1891"/>#
+<a name="1892"/># This stream filters data taken from an arbitrary source `Stream`
+<a name="1893"/># through a background process.  The output from that process can then
+<a name="1894"/># be read as this `Stream`'s output.
+<a name="1895"/>#
+<a name="1896"/># For example :-
+<a name="1897"/># ~
+<a name="1898"/>#   g := FilterInputStream(StringStream(s), "gzip", ["-c"])
+<a name="1899"/>#   # Reading from g will give the compressed value of the string s.
+<a name="1900"/>#   res := g.read_all()
+<a name="1901"/># ~
+<a name="1902"/>class FilterInputStream(FilterStreamBase)
+<a name="1903"/>   private const
+<a name="1904"/>      source
+<a name="1905"/>   private
+<a name="1906"/>      buff
+<a name="1907"/>
+<a name="1908"/>   public override in(n)
+<a name="1909"/>      local x, i, t
+<a name="1910"/>      repeat {
+<a name="1911"/>         unless x := do_poll() then {
+<a name="1912"/>            if \cout then {
+<a name="1913"/>               # The child has exited, but the data has yet to reach
+<a name="1914"/>               # the input pipes; close cout and go round again to
+<a name="1915"/>               # wait for input or hup on cin/cerr.
+<a name="1916"/>               close_cout()
+<a name="1917"/>               next
+<a name="1918"/>            }
+<a name="1919"/>            fail
+<a name="1920"/>         }
+<a name="1921"/>         case x of {
+<a name="1922"/>            cin: {
+<a name="1923"/>               t := cin.in(n) | fail
+<a name="1924"/>               if /t then
+<a name="1925"/>                  close_cout()
+<a name="1926"/>               return t
+<a name="1927"/>            }
+<a name="1928"/>            cerr: {
+<a name="1929"/>               t := cerr.in(1048576) | fail
+<a name="1930"/>               if /t then {
+<a name="1931"/>                  close_cout()
+<a name="1932"/>                  close_cerr()
+<a name="1933"/>               } else
+<a name="1934"/>                  err_sink.writes1(t) | fail
+<a name="1935"/>            }
+<a name="1936"/>            cout: {
+<a name="1937"/>               if *buff = 0 then {
+<a name="1938"/>                  buff := source.in(1048576) | fail
+<a name="1939"/>                  if /buff then {
+<a name="1940"/>                     close_cout()
+<a name="1941"/>                     next
+<a name="1942"/>                  }
+<a name="1943"/>               }
+<a name="1944"/>               unless i := cout.out(buff) then {
+<a name="1945"/>                  # Broken pipe; this is caused by the command exiting
+<a name="1946"/>                  # between the do_poll() and the out() call.
+<a name="1947"/>                  close_cout()
+<a name="1948"/>                  next
+<a name="1949"/>               }
+<a name="1950"/>               buff := buff[i + 1:0]
+<a name="1951"/>            }
+<a name="1952"/>         }
+<a name="1953"/>      }
+<a name="1954"/>   end
+<a name="1955"/>
+<a name="1956"/>   #
+<a name="1957"/>   # Exchange the handling of the command's stdout and stderr, so that
+<a name="1958"/>   # stdout goes to the stderr sink and stderr is read by calling
+<a name="1959"/>   # `in()`
+<a name="1960"/>   #
+<a name="1961"/>   public swap_outputs()
+<a name="1962"/>      cin :=: cerr
+<a name="1963"/>      link
+<a name="1964"/>   end
+<a name="1965"/>
+<a name="1966"/>   private flush_cerr()
+<a name="1967"/>      local x, t
+<a name="1968"/>      while \cerr do {
+<a name="1969"/>         x := do_poll() | fail
+<a name="1970"/>         case x of {
+<a name="1971"/>            cerr: {
+<a name="1972"/>               t := cerr.in(1048576) | fail
+<a name="1973"/>               if /t then
+<a name="1974"/>                  close_cerr()
+<a name="1975"/>               else
+<a name="1976"/>                  err_sink.writes1(t) | fail
+<a name="1977"/>            }
+<a name="1978"/>            default:
+<a name="1979"/>               syserr("Unexpected result from do_poll")
+<a name="1980"/>         }
+<a name="1981"/>      }
+<a name="1982"/>      return
+<a name="1983"/>   end
+<a name="1984"/>
+<a name="1985"/>   #
+<a name="1986"/>   # Close the stream.  This waits for the child process to terminate.
+<a name="1987"/>   # NB: `source` and `err_sink` are not closed unless the
+<a name="1988"/>   # `set_close_underlying` has been set to `&amp;yes`.
+<a name="1989"/>   #
+<a name="1990"/>   public override close()
+<a name="1991"/>      local f
+<a name="1992"/>      \pid | runerr(219, self)
+<a name="1993"/>      close_cout()
+<a name="1994"/>      close_cin()
+<a name="1995"/>      flush_cerr() | (f := &amp;why)
+<a name="1996"/>      close_cerr()
+<a name="1997"/>      if \close_underlying_flag then {
+<a name="1998"/>         source.close() | (/f := &amp;why)
+<a name="1999"/>         err_sink.close() | (/f := &amp;why)
+<a name="2000"/>      }
+<a name="2001"/>      do_wait()
+<a name="2002"/>      self.buff := &amp;null
+<a name="2003"/>      link error_if(f)
+<a name="2004"/>   end
+<a name="2005"/>
+<a name="2006"/>   public override get_mode()
+<a name="2007"/>      return READ
+<a name="2008"/>   end
+<a name="2009"/>   
+<a name="2010"/>   #
+<a name="2011"/>   # Create a new instance.
+<a name="2012"/>   #
+<a name="2013"/>   # :Parameters :
+<a name="2014"/>   # :  `source` - the `Stream` from which data is given to the command.
+<a name="2015"/>   #        Defaults to a `NullStream`.
+<a name="2016"/>   # :  `cmd` - the name of the command                                    
+<a name="2017"/>   # :  `args` - the arg list                                              
+<a name="2018"/>   # :  `env` - the env list                                               
+<a name="2019"/>   # :  `err_sink` - optional stream to send standard error to.  If omitted,
+<a name="2020"/>   #        defaults to a `StringStream`, which can then be used together
+<a name="2021"/>   #        with `succeeded()` to check the command's exit status.
+<a name="2022"/>   public new(source, cmd, args, env, err_sink)
+<a name="2023"/>      /source := NullStream()
+<a name="2024"/>      self.source := source
+<a name="2025"/>      self.buff := ""
+<a name="2026"/>      setup(cmd, args, env, err_sink) | fail
+<a name="2027"/>      return
+<a name="2028"/>   end
+<a name="2029"/>end
+<a name="2030"/>
+<a name="2031"/>#
+<a name="2032"/># This class provides a `Stream` which stores its data in memory.  It
+<a name="2033"/># can be used to efficiently concatenate together many strings, or as
+<a name="2034"/># a convenient temporary stream.
+<a name="2035"/>#
+<a name="2036"/>final class RamStream(Stream, NoCopy)
+<a name="2037"/>   private
+<a name="2038"/>      ptr
+<a name="2039"/>
+<a name="2040"/>   public override native in(n)
+<a name="2041"/>
+<a name="2042"/>   public override native out(s)
+<a name="2043"/>
+<a name="2044"/>   public override native read_line()
+<a name="2045"/>
+<a name="2046"/>   public override native seek(offset)
+<a name="2047"/>
+<a name="2048"/>   public override native tell()
+<a name="2049"/>
+<a name="2050"/>   public override native truncate(len)
+<a name="2051"/>
+<a name="2052"/>   #
+<a name="2053"/>   # Return the current content of the `RamStream` as a string.
+<a name="2054"/>   #
+<a name="2055"/>   public native str()
+<a name="2056"/>
+<a name="2057"/>   public override native close()
+<a name="2058"/>
+<a name="2059"/>   #
+<a name="2060"/>   # Close the stream and return the finished content as a string.
+<a name="2061"/>   #
+<a name="2062"/>   public done()
+<a name="2063"/>      local s
+<a name="2064"/>      s := str()
+<a name="2065"/>      close()
+<a name="2066"/>      return s
+<a name="2067"/>   end
+<a name="2068"/>
+<a name="2069"/>   private static native new_impl(s, wiggle)
+<a name="2070"/>
+<a name="2071"/>   public override get_mode()
+<a name="2072"/>      return ALL
+<a name="2073"/>   end
+<a name="2074"/>
+<a name="2075"/>   #
+<a name="2076"/>   # Create a new `RamStream`, with initial value of `s`.
+<a name="2077"/>   #
+<a name="2078"/>   # :Parameters :
+<a name="2079"/>   # :  `s` - the initial value of the stream; defaults to empty 
+<a name="2080"/>   #        string.
+<a name="2081"/>   # :  `wiggle` - the extra space to reserve for growth of the buffer,
+<a name="2082"/>   #        default is 512 bytes.
+<a name="2083"/>   #
+<a name="2084"/>   public new(s, wiggle)
+<a name="2085"/>      ptr := new_impl(s, wiggle)
+<a name="2086"/>      return
+<a name="2087"/>   end
+<a name="2088"/>end
+<a name="2089"/>
+<a name="2090"/>#
+<a name="2091"/># This stream takes a list of other streams.  Its output is the concatenation of
+<a name="2092"/># the output of those streams.
+<a name="2093"/>#
+<a name="2094"/>class SequenceStream(Stream, HasCloseUnderlying)
+<a name="2095"/>   private const
+<a name="2096"/>      a, ac
+<a name="2097"/>
+<a name="2098"/>   public override in(n)
+<a name="2099"/>      local s
+<a name="2100"/>      repeat {
+<a name="2101"/>         if *a = 0 then
+<a name="2102"/>            return
+<a name="2103"/>         s := a[1].in(n) | fail
+<a name="2104"/>         if \s then
+<a name="2105"/>            return s
+<a name="2106"/>         pop(a)
+<a name="2107"/>      }
+<a name="2108"/>   end
+<a name="2109"/>
+<a name="2110"/>   public override get_mode()
+<a name="2111"/>      return READ
+<a name="2112"/>   end
+<a name="2113"/>
+<a name="2114"/>   public override close()
+<a name="2115"/>      if \close_underlying_flag then
+<a name="2116"/>         lclose(ac) | fail
+<a name="2117"/>      link
+<a name="2118"/>   end
+<a name="2119"/>
+<a name="2120"/>   public new(a[])
+<a name="2121"/>      self.a := a
+<a name="2122"/>      self.ac := copy(a)
+<a name="2123"/>      return
+<a name="2124"/>   end
+<a name="2125"/>end
+<a name="2126"/>
+<a name="2127"/># A `Stream` which takes its data from a co-expression.  Each result
+<a name="2128"/># provides one line of output.  End-of-file is signalled by the
+<a name="2129"/># co-expression generating `&amp;null` and errors are signalled by it
+<a name="2130"/># failing and setting `&amp;why`.
+<a name="2131"/>#
+<a name="2132"/># For example :-
+<a name="2133"/># ~
+<a name="2134"/>#     # A stream with 10 lines
+<a name="2135"/>#     e := LineBasedGeneratorStream{ (1 to 10) | &amp;null }
+<a name="2136"/># ~
+<a name="2137"/>class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
+<a name="2138"/>   private
+<a name="2139"/>      coex
+<a name="2140"/>
+<a name="2141"/>   protected override read_line_impl()
+<a name="2142"/>      local t
+<a name="2143"/>      if /coex then
+<a name="2144"/>         return
+<a name="2145"/>      unless t := @coex then {
+<a name="2146"/>         coex := &amp;null
+<a name="2147"/>         fail
+<a name="2148"/>      }
+<a name="2149"/>      if /t then {
+<a name="2150"/>         coex := &amp;null
+<a name="2151"/>         return
+<a name="2152"/>      }
+<a name="2153"/>      return need_string(t)
+<a name="2154"/>   end
+<a name="2155"/>
+<a name="2156"/>   public override new(coex)
+<a name="2157"/>      self.coex := need_coexpression(coex)
+<a name="2158"/>      LineBasedInputStream.new()
+<a name="2159"/>      return
+<a name="2160"/>   end
+<a name="2161"/>end
+<a name="2162"/>
+<a name="2163"/># A `Stream` which takes its data from a co-expression.  Each result
+<a name="2164"/># provides a chunk of output of arbitrary size.  End-of-file is
+<a name="2165"/># signalled by the co-expression generating `&amp;null` and errors are
+<a name="2166"/># signalled by it failing and setting `&amp;why`.
+<a name="2167"/>#
+<a name="2168"/># For example :-
+<a name="2169"/># ~
+<a name="2170"/>#     # A stream containing a string repeated indefinitely.
+<a name="2171"/>#     e := GeneratorStream{ |"The quick brown fox" }
+<a name="2172"/>#
+<a name="2173"/>#     # A stream containing lines of random digits.
+<a name="2174"/>#     e := GeneratorStream{ |?(&amp;digits ++ '\n') }
+<a name="2175"/># ~
+<a name="2176"/>class GeneratorStream(Stream, NoCopy)
+<a name="2177"/>   private
+<a name="2178"/>      coex, buff
+<a name="2179"/>
+<a name="2180"/>   public override get_mode()
+<a name="2181"/>      return READ
+<a name="2182"/>   end
+<a name="2183"/>
+<a name="2184"/>   public override in(n)
+<a name="2185"/>      local t
+<a name="2186"/>      n := need_integer(n, 1)
+<a name="2187"/>      if /coex then
+<a name="2188"/>         return
+<a name="2189"/>      while *buff = 0 do {
+<a name="2190"/>         unless t := @coex then {
+<a name="2191"/>            coex := &amp;null
+<a name="2192"/>            fail
+<a name="2193"/>         }
+<a name="2194"/>         if /t then {
+<a name="2195"/>            coex := &amp;null
+<a name="2196"/>            return
+<a name="2197"/>         }
+<a name="2198"/>         buff := need_string(t)
+<a name="2199"/>      }
+<a name="2200"/>      buff ? {
+<a name="2201"/>         t := move(n) | tab(0)
+<a name="2202"/>         buff := tab(0)
+<a name="2203"/>      }
+<a name="2204"/>      return t
+<a name="2205"/>   end
+<a name="2206"/>
+<a name="2207"/>   public new(e)
+<a name="2208"/>      self.coex := need_coexpression(e)
+<a name="2209"/>      self.buff := ""
+<a name="2210"/>      return
+<a name="2211"/>   end
+<a name="2212"/>end
+<a name="2213"/>
+<a name="2214"/>#
+<a name="2215"/># This is a write-only `Stream` which can be used to accumulate
+<a name="2216"/># strings in a list, which can then be concatenated together in an
+<a name="2217"/># efficient loop (see `str()`).  `RamStream` can do the same thing
+<a name="2218"/># (and more), but this class has the advantage that it doesn't need to
+<a name="2219"/># be closed, since it uses no external resources (`close()` is a
+<a name="2220"/># no-op).
+<a name="2221"/>#
+<a name="2222"/># For example :-
+<a name="2223"/># ~
+<a name="2224"/>#   f := Accumulator()
+<a name="2225"/>#   f.out("Hello ")
+<a name="2226"/>#   f.write("World")
+<a name="2227"/>#   s := f.str()     # "Hello World\n"
+<a name="2228"/>#   # No need to close() f
+<a name="2229"/># ~
+<a name="2230"/>#
+<a name="2231"/>class Accumulator(Stream)
+<a name="2232"/>   private const
+<a name="2233"/>      buff
+<a name="2234"/>
+<a name="2235"/>   public override get_mode()
+<a name="2236"/>      return WRITE
+<a name="2237"/>   end
+<a name="2238"/>
+<a name="2239"/>   public override out(s)
+<a name="2240"/>      s := need_string(s)
+<a name="2241"/>      if *s &gt; 0 then
+<a name="2242"/>         put(buff, s)
+<a name="2243"/>      return *s
+<a name="2244"/>   end
+<a name="2245"/>
+<a name="2246"/>   #
+<a name="2247"/>   # Return the accumulated string content.
+<a name="2248"/>   #
+<a name="2249"/>   public str()
+<a name="2250"/>      return String{ !buff }
+<a name="2251"/>   end
+<a name="2252"/>
+<a name="2253"/>   #
+<a name="2254"/>   # Return the length of the accumulated string content (equivalent
+<a name="2255"/>   # to `*str()`).
+<a name="2256"/>   #
+<a name="2257"/>   public len()
+<a name="2258"/>      return Sum{ *!buff }
+<a name="2259"/>   end
+<a name="2260"/>
+<a name="2261"/>   #
+<a name="2262"/>   # Reset the string list buffer.
+<a name="2263"/>   #
+<a name="2264"/>   public clear()
+<a name="2265"/>      default.clear(buff)
+<a name="2266"/>      link
+<a name="2267"/>   end
+<a name="2268"/>
+<a name="2269"/>   #
+<a name="2270"/>   # Combine `str()` and `clear()` into one operation, so the stream
+<a name="2271"/>   # can then be reused for a new accumulation.
+<a name="2272"/>   #
+<a name="2273"/>   public done()
+<a name="2274"/>      local s
+<a name="2275"/>      s := str()
+<a name="2276"/>      clear()
+<a name="2277"/>      return s
+<a name="2278"/>   end
+<a name="2279"/>
+<a name="2280"/>   public new()
+<a name="2281"/>      buff := []
+<a name="2282"/>      return
+<a name="2283"/>   end
+<a name="2284"/>end
+<a name="2285"/>
+<a name="2286"/># A `FileStream` which wraps a unix pseudo-terminal file.  This can be
+<a name="2287"/># used to communicate with a child process, such as a shell.
+<a name="2288"/>#
+<a name="2289"/>class PttyStream(FileStream)
+<a name="2290"/>   public const
+<a name="2291"/>      slave_name
+<a name="2292"/>
+<a name="2293"/>   public native set_size(cols, rows)
+<a name="2294"/>
+<a name="2295"/>   private static native new_impl()
+<a name="2296"/>   private static native prepare_slave(f)
+<a name="2297"/>
+<a name="2298"/>   #
+<a name="2299"/>   # Open the slave corresponding to this instance (the master file).
+<a name="2300"/>   # This is called by the child process to establish its end of the
+<a name="2301"/>   # communication channel.
+<a name="2302"/>   #
+<a name="2303"/>   public open_slave()
+<a name="2304"/>      local f
+<a name="2305"/>      f := FileStream(slave_name, FileOpt.RDWR) | fail
+<a name="2306"/>      unless prepare_slave(f) then {
+<a name="2307"/>         save_why{ f.close() }
+<a name="2308"/>         fail
+<a name="2309"/>      }
+<a name="2310"/>      return f
+<a name="2311"/>   end
+<a name="2312"/>
+<a name="2313"/>   public override new()
+<a name="2314"/>      local l
+<a name="2315"/>      l := new_impl() | fail
+<a name="2316"/>      slave_name := l[2]
+<a name="2317"/>      return setup(l[1], READ_WRITE)
+<a name="2318"/>   end
+<a name="2319"/>end
+<a name="2320"/>
+<a name="2321"/>$if _MS_WIN32
+<a name="2322"/>
+<a name="2323"/>#
+<a name="2324"/># Win32 Winsock socket stream.
+<a name="2325"/>#
+<a name="2326"/>class WinsockStream(Stream, NoCopy)
+<a name="2327"/>   private
+<a name="2328"/>      socket
+<a name="2329"/>
+<a name="2330"/>   private static create_for_socket(socket)
+<a name="2331"/>      local o
+<a name="2332"/>      o := Class.create_instance()
+<a name="2333"/>      o.socket := socket
+<a name="2334"/>      return o
+<a name="2335"/>   end
+<a name="2336"/>
+<a name="2337"/>   #
+<a name="2338"/>   # Create a socket with the given domain and type.
+<a name="2339"/>   #
+<a name="2340"/>   # :Parameters :
+<a name="2341"/>   # :  `domain` - from `ProtocolFormat`.  The default is
+<a name="2342"/>   #      `ProtocolFormat.INET` 
+<a name="2343"/>   # :  `typ` - the type from `SocketType`.  The default is
+<a name="2344"/>   #      `SocketType.STREAM`.
+<a name="2345"/>   #
+<a name="2346"/>   public new(domain, typ)
+<a name="2347"/>      self.socket := new_impl(domain, typ) | fail
+<a name="2348"/>      return
+<a name="2349"/>   end
+<a name="2350"/>
+<a name="2351"/>   public override native in(n)
+<a name="2352"/>
+<a name="2353"/>   public override native out(s)
+<a name="2354"/>
+<a name="2355"/>   #
+<a name="2356"/>   # Connect a socket to the given address.  The address is a string
+<a name="2357"/>   # in the form "inet:&lt;host&gt;:&lt;port&gt;" for an `AF_INET` address, or
+<a name="2358"/>   # "inet6:&lt;host&gt;:&lt;port&gt;" for an `AF_INET6` address.  The "wildcard"
+<a name="2359"/>   # host can be specified by using the host string "*".
+<a name="2360"/>   #
+<a name="2361"/>   public native connect(addr)
+<a name="2362"/>
+<a name="2363"/>   public override get_mode()
+<a name="2364"/>      return READ_WRITE
+<a name="2365"/>   end
+<a name="2366"/>
+<a name="2367"/>   #
+<a name="2368"/>   # Bind a socket to the given address, which is in the same form as
+<a name="2369"/>   # for `connect`.
+<a name="2370"/>   #
+<a name="2371"/>   public native bind(addr)
+<a name="2372"/>
+<a name="2373"/>   #
+<a name="2374"/>   # Listen for connections with the given backlog.
+<a name="2375"/>   #
+<a name="2376"/>   public native listen(backlog)
+<a name="2377"/>
+<a name="2378"/>   #
+<a name="2379"/>   # Returns a string giving the address and port of the peer
+<a name="2380"/>   # connected to the socket, in the format used by the
+<a name="2381"/>   # `connect` method.
+<a name="2382"/>   #
+<a name="2383"/>   public native get_peer()
+<a name="2384"/>
+<a name="2385"/>   #
+<a name="2386"/>   # Returns the local address of the socket, in the same format
+<a name="2387"/>   # as returned by `get_peer()`.
+<a name="2388"/>   #
+<a name="2389"/>   public native get_local()
+<a name="2390"/>
+<a name="2391"/>   #
+<a name="2392"/>   # Accept a new connection, returning a new `WinsockStream`.
+<a name="2393"/>   #
+<a name="2394"/>   public accept()
+<a name="2395"/>      return create_for_socket(accept_impl())
+<a name="2396"/>   end
+<a name="2397"/>
+<a name="2398"/>   #
+<a name="2399"/>   # Perform a shutdown on the socket.
+<a name="2400"/>   # :Parameters :
+<a name="2401"/>   # :  `how` - one of the constants in `Shut`
+<a name="2402"/>   #
+<a name="2403"/>   public native shutdown(how)
+<a name="2404"/>
+<a name="2405"/>   #
+<a name="2406"/>   # Set whether or not the socket is in blocking mode.
+<a name="2407"/>   #
+<a name="2408"/>   public native set_blocking_mode(flag)
+<a name="2409"/>
+<a name="2410"/>   #
+<a name="2411"/>   # Send the given string `s` (which may be empty) to the address
+<a name="2412"/>   # `dest`, which should be in the format used by the `connect`
+<a name="2413"/>   # method.
+<a name="2414"/>   #
+<a name="2415"/>   # :Parameters :
+<a name="2416"/>   # :  `s` - the message to send (a string)
+<a name="2417"/>   # :  `dest` - the destination
+<a name="2418"/>   # :  `flags` - optional selection of flags from `MessageOpt`
+<a name="2419"/>   #
+<a name="2420"/>   public native sendto(s, dest, flags)
+<a name="2421"/>
+<a name="2422"/>   #
+<a name="2423"/>   # Receive a message of up to length `n`. The result on success is
+<a name="2424"/>   # a `Received` object encapsulating data and source address, which
+<a name="2425"/>   # will be in the format used by the `connect` method.  Unlike
+<a name="2426"/>   # `in()`, the data returned may be the empty string (and never
+<a name="2427"/>   # `&amp;null`).
+<a name="2428"/>   #
+<a name="2429"/>   # :Parameters :
+<a name="2430"/>   # :  `n` - the limit of the message length
+<a name="2431"/>   # :  `flags` - optional selection of flags from `MessageOpt`
+<a name="2432"/>   #
+<a name="2433"/>   public recvfrom(n, flags)
+<a name="2434"/>      return Received!recvfrom_impl(n, flags)
+<a name="2435"/>   end
+<a name="2436"/>
+<a name="2437"/>   private native recvfrom_impl(n, flags)
+<a name="2438"/>
+<a name="2439"/>   #
+<a name="2440"/>   # Set values using the underlying setsockopt call.  The options
+<a name="2441"/>   # listed in the following table are recognized :-
+<a name="2442"/>   #
+<a name="2443"/>   # &lt;https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_10_16&gt;
+<a name="2444"/>   # 
+<a name="2445"/>   # Symbolic options can be found in the `SocketOpt` class.
+<a name="2446"/>   #
+<a name="2447"/>   # Flag values should have a `&amp;yes` or `&amp;no` argument.  `LINGER`
+<a name="2448"/>   # accepts `&amp;null` meaning "off", or an integer value meaning on
+<a name="2449"/>   # with that seconds value.  The timeout values are in milliseconds.
+<a name="2450"/>   #
+<a name="2451"/>   public native setopt(opt, arg)
+<a name="2452"/>
+<a name="2453"/>   #
+<a name="2454"/>   # Get values using the underlying getopt call; see `setopt` above.
+<a name="2455"/>   # `ERROR` will return `&amp;null` if no error is set, or an error string
+<a name="2456"/>   # in the same format as `&amp;why`.
+<a name="2457"/>   #
+<a name="2458"/>   public native getopt(opt)
+<a name="2459"/>
+<a name="2460"/>   #
+<a name="2461"/>   # Try to set `&amp;why` to a helpful value based on any error value
+<a name="2462"/>   # stored in the stream.  This is particularly useful after `poll`
+<a name="2463"/>   # has indicated an error.  `v` is an optional default value of
+<a name="2464"/>   # `&amp;why`.
+<a name="2465"/>   #
+<a name="2466"/>   public improve_why(v)
+<a name="2467"/>      &amp;why := \getopt(SocketOpt.ERROR) | \v | "I/O error"
+<a name="2468"/>   end
+<a name="2469"/>
+<a name="2470"/>   #
+<a name="2471"/>   # Return a list of IP numerical addresses for the given host.
+<a name="2472"/>   # 
+<a name="2473"/>   # The second parameter, `ver`, an integer, specifies the IP
+<a name="2474"/>   # versions which the result list can contain.  Possible values
+<a name="2475"/>   # are :-
+<a name="2476"/>   #
+<a name="2477"/>   # * 4 - return only v4 addresses
+<a name="2478"/>   # * 6 - return only v6 addresses
+<a name="2479"/>   # * 46 - return either v4 or v6 addresses, with v4 coming first
+<a name="2480"/>   # * 64 - return either v4 or v6 addresses, with v6 coming first
+<a name="2481"/>   # * 0 - return either v4 or v6 addresses, in the order returned by
+<a name="2482"/>   #       the underlying system call.
+<a name="2483"/>   #
+<a name="2484"/>   # If `ver` is omitted, the value given by the environment variable
+<a name="2485"/>   # `OI_IP_VERSION` is used; if that is unset then `4` is used.
+<a name="2486"/>   #
+<a name="2487"/>   # :Parameters :
+<a name="2488"/>   # :  `host` - the host name (a string)
+<a name="2489"/>   # :  `ver` - the IP version(s) to try
+<a name="2490"/>   public static native dns_query(host, ver)
+<a name="2491"/>
+<a name="2492"/>   private native accept_impl()
+<a name="2493"/>
+<a name="2494"/>   public override native close()
+<a name="2495"/>
+<a name="2496"/>   private static native new_impl(domain, typ)
+<a name="2497"/>end
+<a name="2498"/>
+<a name="2499"/>#
+<a name="2500"/># Base class for WProgOutputStream and WProgInputStream.
+<a name="2501"/>#
+<a name="2502"/>package abstract class WProgStreamBase(PipeStream, HasBgProc)
+<a name="2503"/>   protected const
+<a name="2504"/>      cmd
+<a name="2505"/>
+<a name="2506"/>   #
+<a name="2507"/>   # Close the stream.  This waits for the child process to terminate.
+<a name="2508"/>   #
+<a name="2509"/>   public override close()
+<a name="2510"/>      PipeStream.close()
+<a name="2511"/>      do_wait()
+<a name="2512"/>      link
+<a name="2513"/>   end
+<a name="2514"/>
+<a name="2515"/>   protected set_cmd(cmd)
+<a name="2516"/>      self.cmd := need_string(\cmd) | "program"
+<a name="2517"/>      link
+<a name="2518"/>   end
+<a name="2519"/>
+<a name="2520"/>   #
+<a name="2521"/>   # Convenient function to check that the command exited
+<a name="2522"/>   # successfully.  If it did, this function returns, otherwise it
+<a name="2523"/>   # fails and sets `&amp;why` appropriately, based on the exit code.
+<a name="2524"/>   #
+<a name="2525"/>   public succeeded()
+<a name="2526"/>      local x
+<a name="2527"/>      x := get_exit_info() | runerr("succeeded() can only be called after close()")
+<a name="2528"/>      return x.succeeded() |
+<a name="2529"/>         whyf("%s failed: %w", cmd)
+<a name="2530"/>   end
+<a name="2531"/>end
+<a name="2532"/>
+<a name="2533"/>#
+<a name="2534"/># This stream represents a pipe to a command running in a child
+<a name="2535"/># process.
+<a name="2536"/>#
+<a name="2537"/>class WProgInputStream(WProgStreamBase)
+<a name="2538"/>   #
+<a name="2539"/>   # Open a new readable `Stream` based on the given app and/or
+<a name="2540"/>   # command line.  The first three parameters are the same as for the
+<a name="2541"/>   # method `posix.System.create_process`; the last two optionally
+<a name="2542"/>   # give the standard input and standard error of the command; by
+<a name="2543"/>   # default the command inherits these from the parent.  If the
+<a name="2544"/>   # stderr param is the string "pipe", then stderr is sent to the
+<a name="2545"/>   # pipe along with stdout.
+<a name="2546"/>   #
+<a name="2547"/>   # For example :-
+<a name="2548"/>   # ~
+<a name="2549"/>   #     f := WProgInputStream(, "netstat") | stop(&amp;why)
+<a name="2550"/>   #     while write(f.read())
+<a name="2551"/>   #     f.close()
+<a name="2552"/>   # ~
+<a name="2553"/>   public override new(app_name, cmd_line, cwd, stdin, stderr)
+<a name="2554"/>      local l
+<a name="2555"/>      set_cmd(app_name)
+<a name="2556"/>      l := pipe() | fail
+<a name="2557"/>      /stdin := FileStream.stdin
+<a name="2558"/>      if \stderr then {
+<a name="2559"/>         if stderr === "pipe" then
+<a name="2560"/>            stderr := l[2]
+<a name="2561"/>      } else
+<a name="2562"/>         stderr := FileStream.stderr
+<a name="2563"/>      unless pid := System.create_process(app_name, cmd_line,
+<a name="2564"/>                                          cwd,
+<a name="2565"/>                                          stdin, l[2], stderr)
+<a name="2566"/>      then {
+<a name="2567"/>         save_why{ lclose(l) }
+<a name="2568"/>         fail
+<a name="2569"/>      }
+<a name="2570"/>      l[2].close()
+<a name="2571"/>      return setup(l[1].get_fd(), READ)
+<a name="2572"/>   end
+<a name="2573"/>end
+<a name="2574"/>
+<a name="2575"/>#
+<a name="2576"/># This stream represents a pipe to a command running in a child
+<a name="2577"/># process.
+<a name="2578"/>#
+<a name="2579"/>class WProgOutputStream(WProgStreamBase)
+<a name="2580"/>   #
+<a name="2581"/>   # Open a new writeable `Stream` based on the given command. The
+<a name="2582"/>   # first three parameters are the same as for the method
+<a name="2583"/>   # `posix.System.create_process`; the last two optionally give the
+<a name="2584"/>   # standard output and standard error of the command; by default the
+<a name="2585"/>   # command inherits these from the parent.
+<a name="2586"/>   #
+<a name="2587"/>   # For example :-
+<a name="2588"/>   # ~
+<a name="2589"/>   #      f := WProgOutputStream(, "prog arg1 arg2") | stop(&amp;why)
+<a name="2590"/>   #      f.write("data")
+<a name="2591"/>   #      f.close()
+<a name="2592"/>   # ~
+<a name="2593"/>   public override new(app_name, cmd_line, cwd, stdout, stderr)
+<a name="2594"/>      local l
+<a name="2595"/>      set_cmd(app_name)
+<a name="2596"/>      l := pipe() | fail
+<a name="2597"/>      /stdout := FileStream.stdout
+<a name="2598"/>      /stderr := FileStream.stderr
+<a name="2599"/>      unless pid := System.create_process(app_name, cmd_line,
+<a name="2600"/>                                          cwd,
+<a name="2601"/>                                          l[1], stdout, stderr)
+<a name="2602"/>      then {
+<a name="2603"/>         save_why{ lclose(l) }
+<a name="2604"/>         fail
+<a name="2605"/>      }
+<a name="2606"/>      l[1].close()
+<a name="2607"/>      return setup(l[2].get_fd(), WRITE)
+<a name="2608"/>   end
+<a name="2609"/>end
+<a name="2610"/>
+<a name="2611"/>$endif
+</pre></body></html>

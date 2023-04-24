@@ -1,0 +1,332 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>system.icn</title></head><body><pre>
+<a name="1"/>package posix
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   io,
+<a name="5"/>   util
+<a name="6"/>
+<a name="7"/>$if _BSD
+<a name="8"/>import
+<a name="9"/>   json, ipl.printf, ipl.io
+<a name="10"/>$endif
+<a name="11"/>
+<a name="12"/>final abstract class System()
+<a name="13"/>   # This provides a slightly easier to use interface to `execve`.
+<a name="14"/>   # The first argument is searched on the PATH and if found pushed
+<a name="15"/>   # onto the arg list (making the arg0 of the target program).  Then
+<a name="16"/>   # `execve` is called.  For example :-
+<a name="17"/>   # ~
+<a name="18"/>   #    System.exec("ls", ["-l", "/home"])
+<a name="19"/>   # ~
+<a name="20"/>   # :Parameters :
+<a name="21"/>   # :  `cmd` - the name of the command
+<a name="22"/>   # :  `args` - the arg list, excluding the command name.  Defaults to []
+<a name="23"/>   # :  `env` - the env list, defaults to the current environment
+<a name="24"/>   #             if omitted
+<a name="25"/>   #
+<a name="26"/>   public static exec(cmd, args, env)
+<a name="27"/>      local abs_cmd
+<a name="28"/>      abs_cmd := Files.find_exe(cmd) | return error("Command not found: " || cmd)
+<a name="29"/>      /args := []
+<a name="30"/>      push(args, cmd)
+<a name="31"/>      return execve(abs_cmd, args, env)
+<a name="32"/>   end
+<a name="33"/>
+<a name="34"/>   # Replace the executing Icon program with a new program, using the
+<a name="35"/>   # execve system call.  The first parameter is the file to execute,
+<a name="36"/>   # the second parameter is a list of strings which must have at least
+<a name="37"/>   # one parameter, and the third optional parameter is also a list of
+<a name="38"/>   # strings, which provide the environment variables - if omitted then
+<a name="39"/>   # the current program's environment is passed (obtained via the 
+<a name="40"/>   # environ variable).  For example :-
+<a name="41"/>   # ~
+<a name="42"/>   #          System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
+<a name="43"/>   #                                   ["ABC=DEF", "NUM=123"])
+<a name="44"/>   # ~
+<a name="45"/>   public static native execve(f, args, env)
+<a name="46"/>
+<a name="47"/>   # Spawn a new identical process.
+<a name="48"/>   public static native fork()
+<a name="49"/>
+<a name="50"/>   # Send a signal to a process.
+<a name="51"/>   public static native kill(pid, signal)
+<a name="52"/>
+<a name="53"/>   # Wait for process to terminate or stop.
+<a name="54"/>   public static wait(pid, options)
+<a name="55"/>      return ExitInfo!wait_impl(pid, options)
+<a name="56"/>   end
+<a name="57"/>
+<a name="58"/>   # Return the process ID of the calling process.
+<a name="59"/>   public static native getpid()
+<a name="60"/>
+<a name="61"/>   # Return the process ID of the parent of the calling process.
+<a name="62"/>   public static native getppid()
+<a name="63"/>
+<a name="64"/>   private static native wait_impl()
+<a name="65"/>
+<a name="66"/>   # Return a list of the environment values as key=value strings
+<a name="67"/>   public static native environ()
+<a name="68"/>
+<a name="69"/>   # Return contents of environment variable s.
+<a name="70"/>   public static native getenv(s)
+<a name="71"/>   
+<a name="72"/>   # Set an environment variable.
+<a name="73"/>   public static native setenv(name, value)
+<a name="74"/>
+<a name="75"/>   # Unset an environment variable.
+<a name="76"/>   public static native unsetenv(name)
+<a name="77"/>
+<a name="78"/>   # Get name and information about current kernel.  A UtsName object is returned, with
+<a name="79"/>   # fields corresponding to the posix utsname structure.
+<a name="80"/>   public static uname()
+<a name="81"/>      return UtsName!uname_impl()
+<a name="82"/>   end
+<a name="83"/>
+<a name="84"/>   private static native uname_impl()
+<a name="85"/>
+<a name="86"/>   # Return the real user ID of the calling process.
+<a name="87"/>   public static native getuid()
+<a name="88"/>
+<a name="89"/>   # Return the effective user ID of the calling process.
+<a name="90"/>   public static native geteuid()
+<a name="91"/>
+<a name="92"/>   # Return the real group ID of the calling process.
+<a name="93"/>   public static native getgid()
+<a name="94"/>
+<a name="95"/>   # Return the effective group ID of the calling process.
+<a name="96"/>   public static native getegid()
+<a name="97"/>
+<a name="98"/>   # Return the supplementary group IDs of the calling process
+<a name="99"/>   public static native getgroups()
+<a name="100"/>
+<a name="101"/>   private static native getpw_impl(v)
+<a name="102"/>   private static native getgr_impl(v)
+<a name="103"/>
+<a name="104"/>   # Return a `Passwd` structure given either a user id (as an
+<a name="105"/>   # integer), or a string user name.
+<a name="106"/>   public static getpw(v)
+<a name="107"/>      return Passwd!getpw_impl(v)
+<a name="108"/>   end
+<a name="109"/>
+<a name="110"/>   # Return a `Group` structure given either a group id (as an
+<a name="111"/>   # integer), or a string group name.
+<a name="112"/>   public static getgr(v)
+<a name="113"/>      return Group!getgr_impl(v)
+<a name="114"/>   end
+<a name="115"/>
+<a name="116"/>   # Set the effective user ID of the calling process.
+<a name="117"/>   public static native setuid(uid)
+<a name="118"/>
+<a name="119"/>   # Set the effective group ID of the calling process.
+<a name="120"/>   public static native setgid(gid)
+<a name="121"/>
+<a name="122"/>   # Creates a session and sets the process group ID, returning the
+<a name="123"/>   # new process group ID of the calling process.
+<a name="124"/>   public static native setsid()
+<a name="125"/>
+<a name="126"/>   # Return the session ID of the process with the given process ID
+<a name="127"/>   public static native getsid(id)
+<a name="128"/>
+<a name="129"/>   # Set process group ID for job control
+<a name="130"/>   public static native setpgid(pid, pgid)
+<a name="131"/>
+<a name="132"/>   # Get the process group ID for a process
+<a name="133"/>   public static native getpgid(pid)
+<a name="134"/>
+<a name="135"/>   # Get current working directory of the given process
+<a name="136"/>$if _SOLARIS
+<a name="137"/>   public static getcwd(pid)
+<a name="138"/>      return Files.readlink("/proc/" || need_integer(pid, 0) || "/path/cwd") | error("No such pid or permission denied")
+<a name="139"/>   end
+<a name="140"/>$elsif _BSD
+<a name="141"/>   # Helper for FreeBSD.
+<a name="142"/>   private static freebsd_getcwd1(t, pid)
+<a name="143"/>      local e
+<a name="144"/>      t := walk(t, "procstat", "files", string(pid), "files") | fail
+<a name="145"/>      type(t) == "list" | fail
+<a name="146"/>      every e := !t do {
+<a name="147"/>         if type(e) == "table" &amp; member(e, "fd") == "cwd" then {
+<a name="148"/>            (e := member(e, "path") &amp;
+<a name="149"/>             type(e) == "string" &amp;
+<a name="150"/>             any('/', e)) | fail
+<a name="151"/>            return e
+<a name="152"/>         }
+<a name="153"/>      }
+<a name="154"/>   end
+<a name="155"/>
+<a name="156"/>   private static freebsd_getcwd(pid)
+<a name="157"/>      local s, t
+<a name="158"/>      s := run_prog("/usr/bin/procstat", ["--libxo=json", "-f", pid]) | return error("No such pid")
+<a name="159"/>      t := JSONParser().parse(s) | return whyf("Invalid json from procstat: %w")
+<a name="160"/>      return freebsd_getcwd1(t, pid) | error("Permission denied")
+<a name="161"/>   end
+<a name="162"/>
+<a name="163"/>   private static openbsd_getcwd(pid)
+<a name="164"/>      local s
+<a name="165"/>      static header, o_opt
+<a name="166"/>      initial {
+<a name="167"/>         # The header dictates the maximum length of the output, so
+<a name="168"/>         # make it the same size as PATH_MAX.
+<a name="169"/>         header := repl("#", 1024)
+<a name="170"/>         o_opt := "cwd=" || header
+<a name="171"/>      }
+<a name="172"/>      s := run_prog("/bin/ps", ["-p", pid, "-o", o_opt], ["LC_CTYPE=C.UTF-8"]) | return error("No such pid")
+<a name="173"/>      return s ? 4(=header, ="\n", any('/'), tab(-1), ="\n") | error("Permission denied")
+<a name="174"/>   end
+<a name="175"/>
+<a name="176"/>   public static getcwd(pid)
+<a name="177"/>      static kind
+<a name="178"/>      initial
+<a name="179"/>         kind := uname().sysname
+<a name="180"/>      pid := need_integer(pid, 0)
+<a name="181"/>      return case kind of {
+<a name="182"/>         "OpenBSD":
+<a name="183"/>            openbsd_getcwd(pid)
+<a name="184"/>         "FreeBSD":
+<a name="185"/>            freebsd_getcwd(pid)
+<a name="186"/>         default: 
+<a name="187"/>            Files.readlink("/proc/" || pid || "/cwd") | error("No such pid or permission denied")
+<a name="188"/>      }
+<a name="189"/>   end
+<a name="190"/>$elsif _DARWIN
+<a name="191"/>   public static native getcwd(pid)
+<a name="192"/>$elsif _MS_WIN32
+<a name="193"/>   public static getcwd(pid)
+<a name="194"/>      error("Function not supported")
+<a name="195"/>   end
+<a name="196"/>$else
+<a name="197"/>   public static getcwd(pid)
+<a name="198"/>      return Files.readlink("/proc/" || need_integer(pid, 0) || "/cwd") | error("No such pid or permission denied")
+<a name="199"/>   end
+<a name="200"/>$endif
+<a name="201"/>
+<a name="202"/>$if _MS_WIN32
+<a name="203"/>   #
+<a name="204"/>   # Create a child process using CreateProcessW().  `app_name` and
+<a name="205"/>   # `cmd_line` provide the application name and command line
+<a name="206"/>   # respectively; at least one must be non-null.  `cwd` optionally
+<a name="207"/>   # gives the working directory.  The last three parameters provide
+<a name="208"/>   # the standard file handles for the new process.  They must all be
+<a name="209"/>   # null, or must all be non-null `FileStream`s.
+<a name="210"/>   #
+<a name="211"/>   # On success, an integer handle value is returned.  This may be
+<a name="212"/>   # used with `wait()` to wait for the process to finish.  In any
+<a name="213"/>   # case the handle must be disposed of with `close_handle()`.
+<a name="214"/>   #
+<a name="215"/>   public static native create_process(app_name, cmd_line, cwd, in, out, err)
+<a name="216"/>
+<a name="217"/>   #
+<a name="218"/>   # Free a handle previously returned by `create_process()`.
+<a name="219"/>   #
+<a name="220"/>   public static native close_handle(h)
+<a name="221"/>$endif
+<a name="222"/>
+<a name="223"/>end
+<a name="224"/>
+<a name="225"/># A structure returned by the `System.uname` method.
+<a name="226"/>final class UtsName()
+<a name="227"/>   public const
+<a name="228"/>      sysname,
+<a name="229"/>      nodename,
+<a name="230"/>      release,
+<a name="231"/>      version,
+<a name="232"/>      machine
+<a name="233"/>
+<a name="234"/>   package new(sysname, nodename, release, version, machine)
+<a name="235"/>      self.sysname := sysname
+<a name="236"/>      self.nodename := nodename
+<a name="237"/>      self.release := release
+<a name="238"/>      self.version := version
+<a name="239"/>      self.machine := machine
+<a name="240"/>      return
+<a name="241"/>   end
+<a name="242"/>end
+<a name="243"/>
+<a name="244"/># Provides info about an exited process
+<a name="245"/>final class ExitInfo()
+<a name="246"/>   public static const
+<a name="247"/>      STOPPED,
+<a name="248"/>      COREDUMP,
+<a name="249"/>      TERMINATED,
+<a name="250"/>      EXITED
+<a name="251"/>
+<a name="252"/>   public const
+<a name="253"/>      pid,
+<a name="254"/>      reason,
+<a name="255"/>      param
+<a name="256"/>
+<a name="257"/>   private static init()
+<a name="258"/>      STOPPED := "stopped"
+<a name="259"/>      COREDUMP := "coredump"
+<a name="260"/>      TERMINATED := "terminated"
+<a name="261"/>      EXITED := "exited"
+<a name="262"/>   end
+<a name="263"/>
+<a name="264"/>   # Convenient method to check if the exit info represents a command
+<a name="265"/>   # success.  If not, then &amp;why is set appropriately.
+<a name="266"/>   #
+<a name="267"/>   public succeeded()
+<a name="268"/>      case reason of {
+<a name="269"/>         EXITED: {
+<a name="270"/>            if param = 0 then
+<a name="271"/>               return
+<a name="272"/>            return error("Exited with status " || param)
+<a name="273"/>         }
+<a name="274"/>         STOPPED:
+<a name="275"/>            return error("Stopped with signal " || param)
+<a name="276"/>         TERMINATED:
+<a name="277"/>            return error("Terminated with signal " || param)
+<a name="278"/>         COREDUMP:
+<a name="279"/>            return error("Dumped core with signal " || param)
+<a name="280"/>         default:
+<a name="281"/>            return error("Finished for unknown reason " || reason || "; param " || image(param))
+<a name="282"/>      }
+<a name="283"/>   end
+<a name="284"/>
+<a name="285"/>   package new(pid, reason, param)
+<a name="286"/>      self.pid := pid
+<a name="287"/>      self.reason := reason
+<a name="288"/>      self.param := param
+<a name="289"/>      return
+<a name="290"/>   end
+<a name="291"/>end
+<a name="292"/>
+<a name="293"/># A structure representing a user group
+<a name="294"/>final class Group()
+<a name="295"/>   public const
+<a name="296"/>      name,
+<a name="297"/>      passwd,
+<a name="298"/>      gid,
+<a name="299"/>      members
+<a name="300"/>
+<a name="301"/>   package new(name, passwd, gid, members)
+<a name="302"/>      self.name := name
+<a name="303"/>      self.passwd := passwd
+<a name="304"/>      self.gid := gid
+<a name="305"/>      self.members := members
+<a name="306"/>      return
+<a name="307"/>   end
+<a name="308"/>end
+<a name="309"/>
+<a name="310"/># A structure representing a user in the passwd database
+<a name="311"/>final class Passwd()
+<a name="312"/>   public const
+<a name="313"/>      name,
+<a name="314"/>      passwd,
+<a name="315"/>      uid,
+<a name="316"/>      gid,
+<a name="317"/>      dir,
+<a name="318"/>      shell
+<a name="319"/>
+<a name="320"/>   package new(name, passwd, uid, gid, dir, shell)
+<a name="321"/>      self.name := name
+<a name="322"/>      self.passwd := passwd
+<a name="323"/>      self.uid := uid
+<a name="324"/>      self.gid := gid
+<a name="325"/>      self.dir := dir
+<a name="326"/>      self.shell := shell
+<a name="327"/>      return
+<a name="328"/>   end
+<a name="329"/>end
+</pre></body></html>

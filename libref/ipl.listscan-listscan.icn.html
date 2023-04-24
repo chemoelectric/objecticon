@@ -1,0 +1,626 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>listscan.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     listscan.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to manipulate lists
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     June 11, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Contributor:  Richard L. Goerwitz
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#
+<a name="22"/>#	l_Bscan(e1)	begin list scanning
+<a name="23"/>#
+<a name="24"/>#	l_Escan(l_OuterEnvir, e2)
+<a name="25"/>#			end list scanning
+<a name="26"/>#
+<a name="27"/>#	l_any(l1,l2,i,j)
+<a name="28"/>#			any() for list scanning
+<a name="29"/>#
+<a name="30"/>#	l_bal(l1,l2,l3,l,i,j
+<a name="31"/>#			bal() for list scanning
+<a name="32"/>#
+<a name="33"/>#	l_find(l1,l2,i,j)
+<a name="34"/>#			find() for list scanning
+<a name="35"/>#
+<a name="36"/>#	l_many(l1,l2,i,j)
+<a name="37"/>#			many() for list scanning
+<a name="38"/>#
+<a name="39"/>#	l_match(l1,l2,i,j)
+<a name="40"/>#			match() for list scanning
+<a name="41"/>#
+<a name="42"/>#	l_move(i)	move() for list scanning
+<a name="43"/>#
+<a name="44"/>#	l_pos(i)	pos() for list scanning
+<a name="45"/>#
+<a name="46"/>#	l_tab(i)	tab() for list scanning
+<a name="47"/>#
+<a name="48"/>#	l_upto(l1,l2,i,j)
+<a name="49"/>#			upto() for list scanning
+<a name="50"/>#
+<a name="51"/>#  
+<a name="52"/>############################################################################
+<a name="53"/>#
+<a name="54"/>#	About List Scanning by Richard L. Goerwitz
+<a name="55"/>#
+<a name="56"/>#  PURPOSE: String scanning is terrific, but often I am forced to
+<a name="57"/>#  tokenize and work with lists.  So as to make operations on these
+<a name="58"/>#  lists as close to corresponding string operations as possible, I've
+<a name="59"/>#  implemented a series of list analogues to any(), bal(), find(),
+<a name="60"/>#  many(), match(), move(), pos(), tab(), and upto().  Their names are
+<a name="61"/>#  just like corresponding string functions, except with a prepended
+<a name="62"/>#  "l_" (e.g. l_any()).  Functionally, the list routines parallel the
+<a name="63"/>#  string ones closely, except that in place of strings, l_find and
+<a name="64"/>#  l_match accept lists as their first argument.  L_any(), l_many(),
+<a name="65"/>#  and l_upto() all take either sets of lists or lists of lists (e.g.
+<a name="66"/>#  l_tab(l_upto([["a"],["b"],["j","u","n","k"]])).  Note that l_bal(),
+<a name="67"/>#  unlike the builtin bal(), has no defaults for the first four
+<a name="68"/>#  arguments.  This just seemed appropriate, given that no precise
+<a name="69"/>#  list analogue to &amp;cset, etc. occurs.
+<a name="70"/>#
+<a name="71"/>#  The default subject for list scans (analogous to &amp;subject) is
+<a name="72"/>#  l_SUBJ.  The equivalent of &amp;pos is l_POS.  Naturally, these
+<a name="73"/>#  variables are both global.  They are used pretty much like &amp;subject
+<a name="74"/>#  and &amp;pos, except that they are null until a list scanning
+<a name="75"/>#  expression has been encountered containing a call to l_Bscan() (on
+<a name="76"/>#  which, see below).
+<a name="77"/>#
+<a name="78"/>#  Note that environments cannot be maintained quite as elegantly as
+<a name="79"/>#  they can be for the builtin string-scanning functions.  One must
+<a name="80"/>#  use instead a set of nested procedure calls, as explained in the
+<a name="81"/>#  _Icon Analyst_ 1:6 (June, 1991), p. 1-2.  In particular, one cannot
+<a name="82"/>#  suspend, return, or otherwise break out of the nested procedure
+<a name="83"/>#  calls.  They can only be exited via failure.  The names of these
+<a name="84"/>#  procedures, at least in this implementation, are l_Escan and
+<a name="85"/>#  l_Bscan.  Here is one example of how they might be invoked:
+<a name="86"/>#
+<a name="87"/>#      suspend l_Escan(l_Bscan(some_list_or_other), {
+<a name="88"/>#          l_tab(10 to *l_SUBJ) &amp; {
+<a name="89"/>#              if l_any(l1) | l_match(l2) then
+<a name="90"/>#                  old_l_POS + (l_POS-1)
+<a name="91"/>#          }
+<a name="92"/>#      })
+<a name="93"/>#
+<a name="94"/>#  Note that you cannot do this:
+<a name="95"/>#
+<a name="96"/>#      l_Escan(l_Bscan(some_list_or_other), {
+<a name="97"/>#          l_tab(10 to *l_SUBJ) &amp; {
+<a name="98"/>#              if l_any(l1) | l_match(l2) then
+<a name="99"/>#                  suspend old_l_POS + (l_POS-1)
+<a name="100"/>#          }
+<a name="101"/>#      })
+<a name="102"/>#
+<a name="103"/>#  Remember, it's no fair to use suspend within the list scanning
+<a name="104"/>#  expression.  l_Escan must do all the suspending.  It is perfectly OK,
+<a name="105"/>#  though, to nest well-behaved list scanning expressions.  And they can
+<a name="106"/>#  be reliably used to generate a series of results as well.
+<a name="107"/>#
+<a name="108"/>############################################################################
+<a name="109"/>#
+<a name="110"/>#  Here's another simple example of how one might invoke the l_scan
+<a name="111"/>#  routines:
+<a name="112"/>#
+<a name="113"/>#  procedure main()
+<a name="114"/>#
+<a name="115"/>#      l := ["h","e","l","l","o"," ","t","t","t","h","e","r","e"]
+<a name="116"/>#
+<a name="117"/>#      l_Escan(l_Bscan(l), {
+<a name="118"/>#          hello_list := l_tab(l_match(["h","e","l","l","o"]))
+<a name="119"/>#          every writes(!hello_list)
+<a name="120"/>#          write()
+<a name="121"/>#
+<a name="122"/>#          # Note the nested list-scanning expressions.
+<a name="123"/>#	   l_Escan(l_Bscan(l_tab(0)), {
+<a name="124"/>#	       l_tab(l_many([[" "],["t"]]) - 1)
+<a name="125"/>#              every writes(!l_tab(0))
+<a name="126"/>#	       write()
+<a name="127"/>#          })
+<a name="128"/>#      })
+<a name="129"/>#  
+<a name="130"/>#  end
+<a name="131"/>#
+<a name="132"/>#  The above program simply writes "hello" and "there" on successive
+<a name="133"/>#  lines to the standard output.
+<a name="134"/>#
+<a name="135"/>############################################################################
+<a name="136"/>#
+<a name="137"/>#  PITFALLS: In general, note that we are comparing lists here instead
+<a name="138"/>#  of strings, so l_find("h", l), for instance, will yield an error
+<a name="139"/>#  message (use l_find(["h"], l) instead).  The point at which I
+<a name="140"/>#  expect this nuance will be most confusing will be in cases where
+<a name="141"/>#  one is looking for lists within lists.  Suppose we have a list,
+<a name="142"/>#
+<a name="143"/>#      l1 := ["junk",[["hello"]," ",["there"]],"!","m","o","r","e","junk"]
+<a name="144"/>#
+<a name="145"/>#  and suppose, moreover, that we wish to find the position in l1 at
+<a name="146"/>#  which the list
+<a name="147"/>#
+<a name="148"/>#      [["hello"]," ",["there"]]
+<a name="149"/>#
+<a name="150"/>#  occurs.  If, say, we assign [["hello"]," ",["there"]] to the
+<a name="151"/>#  variable l2, then our l_find() expression will need to look like
+<a name="152"/>#
+<a name="153"/>#      l_find([l2],l1)
+<a name="154"/>#
+<a name="155"/>############################################################################
+<a name="156"/>#
+<a name="157"/>#  Extending scanning to lists is really very difficult.  What I think
+<a name="158"/>#  (at least tonight) is that scanning should never have been
+<a name="159"/>#  restricted to strings.  It should have been designed to operate on
+<a name="160"/>#  all homogenous one-dimensional arrays (vectors, for you LISPers).
+<a name="161"/>#  You should be able, in other words, to scan vectors of ints, longs,
+<a name="162"/>#  characters - any data type that seems useful.  The only question in
+<a name="163"/>#  my mind is how to represent vectors as literals.  Extending strings
+<a name="164"/>#  to lists goes beyond the bounds of scanning per-se.  This library is
+<a name="165"/>#  therefore something of a stab in the dark.
+<a name="166"/>#
+<a name="167"/>############################################################################
+<a name="168"/>#
+<a name="169"/>#  Links:  equiv, indices, numbers
+<a name="170"/>#
+<a name="171"/>############################################################################
+<a name="172"/>
+<a name="173"/>package ipl.listscan
+<a name="174"/>
+<a name="175"/>global l_POS
+<a name="176"/>global l_SUBJ
+<a name="177"/>
+<a name="178"/>record l_ScanEnvir(subject,pos)
+<a name="179"/>
+<a name="180"/># begin list scanning
+<a name="181"/>procedure l_Bscan(e1)			
+<a name="182"/>
+<a name="183"/>    #
+<a name="184"/>    # Prototype list scan initializer.  Based on code published in
+<a name="185"/>    # the _Icon Analyst_ 1:6 (June, 1991), p. 1-2.
+<a name="186"/>    #
+<a name="187"/>    local l_OuterEnvir
+<a name="188"/>    initial {
+<a name="189"/>	l_SUBJ := []
+<a name="190"/>	l_POS := 1
+<a name="191"/>    }
+<a name="192"/>
+<a name="193"/>    #
+<a name="194"/>    # Save outer scanning environment.
+<a name="195"/>    #
+<a name="196"/>    l_OuterEnvir := l_ScanEnvir(l_SUBJ, l_POS)
+<a name="197"/>
+<a name="198"/>    #
+<a name="199"/>    # Set current scanning environment to subject e1 (arg 1).  Pos
+<a name="200"/>    # defaults to 1.  Suspend the saved environment.  Later on, the
+<a name="201"/>    # l_Escan procedure will need this in case the scanning expres-
+<a name="202"/>    # sion as a whole sends a result back to the outer environment,
+<a name="203"/>    # and the outer environment changes l_SUBJ and l_POS.
+<a name="204"/>    #
+<a name="205"/>    l_SUBJ := e1
+<a name="206"/>    l_POS  := 1
+<a name="207"/>    suspend l_OuterEnvir
+<a name="208"/>
+<a name="209"/>    #
+<a name="210"/>    # Restore the saved environment (plus any changes that might have
+<a name="211"/>    # been made to it as noted in the previous run of comments).
+<a name="212"/>    #
+<a name="213"/>    l_SUBJ := l_OuterEnvir.subject
+<a name="214"/>    l_POS := l_OuterEnvir.pos
+<a name="215"/>
+<a name="216"/>    #
+<a name="217"/>    # Signal failure of the scanning expression (we're done producing
+<a name="218"/>    # results if we get to here).
+<a name="219"/>    #
+<a name="220"/>    fail
+<a name="221"/>
+<a name="222"/>end
+<a name="223"/>
+<a name="224"/>
+<a name="225"/>
+<a name="226"/># end list scanning
+<a name="227"/>procedure l_Escan(l_OuterEnvir, e2)	
+<a name="228"/>
+<a name="229"/>    local l_InnerEnvir
+<a name="230"/>
+<a name="231"/>    #
+<a name="232"/>    # Set the inner scanning environment to the values assigned to it
+<a name="233"/>    # by l_Bscan.  Remember that l_SUBJ and l_POS are global.  They
+<a name="234"/>    # don't need to be passed as parameters from l_Bscan.  What
+<a name="235"/>    # l_Bscan() needs to pass on is the l_OuterEnvir record,
+<a name="236"/>    # containing the values of l_SUBJ and l_POS before l_Bscan() was
+<a name="237"/>    # called.  l_Escan receives this "outer environment" as its first
+<a name="238"/>    # argument, l_OuterEnvir.
+<a name="239"/>    #
+<a name="240"/>    l_InnerEnvir := l_ScanEnvir(l_SUBJ, l_POS)
+<a name="241"/>
+<a name="242"/>    #
+<a name="243"/>    # Whatever expression produced e2 has passed us a result.  Now we
+<a name="244"/>    # restore l_SUBJ and l_POS, and send that result back to the outer
+<a name="245"/>    # environment.
+<a name="246"/>    #
+<a name="247"/>    l_SUBJ := l_OuterEnvir.subject
+<a name="248"/>    l_POS := l_OuterEnvir.pos
+<a name="249"/>    suspend e2
+<a name="250"/>
+<a name="251"/>    #
+<a name="252"/>    # Okay, we've resumed to (attempt to) produce another result.  Re-
+<a name="253"/>    # store the inner scanning environment (the one we're using in the
+<a name="254"/>    # current scanning expression).  Remember?  It was saved in l_Inner-
+<a name="255"/>    # Envir just above.
+<a name="256"/>    #
+<a name="257"/>    l_SUBJ := l_InnerEnvir.subject
+<a name="258"/>    l_POS := l_InnerEnvir.pos
+<a name="259"/>
+<a name="260"/>    #
+<a name="261"/>    # Fail so that the second argument (the one that produced e2) gets
+<a name="262"/>    # resumed.  If it fails to produce another result, then the first
+<a name="263"/>    # argument is resumed, which is l_Bscan().  If l_Bscan is resumed, it
+<a name="264"/>    # will restore the outer environment and fail, causing the entire
+<a name="265"/>    # scanning expression to fail.
+<a name="266"/>    #
+<a name="267"/>    fail
+<a name="268"/>
+<a name="269"/>end
+<a name="270"/>
+<a name="271"/>
+<a name="272"/>
+<a name="273"/># any() for list scanning
+<a name="274"/>procedure l_any(l1,l2,i,j)		
+<a name="275"/>
+<a name="276"/>    #
+<a name="277"/>    # Like any(c,s2,i,j) except that the string &amp; cset arguments are
+<a name="278"/>    # replaced by list arguments.  l1 must be a list of one-element
+<a name="279"/>    # lists, while l2 can be any list (l_SUBJ by default).
+<a name="280"/>    #
+<a name="281"/>
+<a name="282"/>    local x, sub_l
+<a name="283"/>
+<a name="284"/>    /l1 &amp; runerr("l_any:  Null first argument!")
+<a name="285"/>    if type(l1) == "set" then l1 := sort(l1)
+<a name="286"/>
+<a name="287"/>    /l2 := l_SUBJ
+<a name="288"/>    if \i then {
+<a name="289"/>	if i &lt; 1 then
+<a name="290"/>	    i := *l2 + (i+1)
+<a name="291"/>    }
+<a name="292"/>    else i := \l_POS | 1
+<a name="293"/>    if \j then {
+<a name="294"/>	if j &lt; 1 then
+<a name="295"/>	    j := *l2 + (j+1)
+<a name="296"/>    }
+<a name="297"/>    else j := *l_SUBJ+1
+<a name="298"/>
+<a name="299"/>    (i+1) &gt; j &amp; i :=: j
+<a name="300"/>    every sub_l := !l1 do {
+<a name="301"/>	unless type(sub_l) == "list" &amp; *sub_l = 1 then
+<a name="302"/>	    runerr("l_any:  Elements of l1 must be lists of length 1.")
+<a name="303"/>	# Let l_match check to see if i+1 is out of range.
+<a name="304"/>	if x := l_match(sub_l,l2,i,i+1) then
+<a name="305"/>	    return x
+<a name="306"/>    }
+<a name="307"/>    
+<a name="308"/>end
+<a name="309"/>
+<a name="310"/>
+<a name="311"/>
+<a name="312"/># bal() for list scanning
+<a name="313"/>procedure l_bal(l1,l2,l3,l,i,j)		
+<a name="314"/>
+<a name="315"/>    local default_val, l2_count, l3_count, x
+<a name="316"/>
+<a name="317"/>    /l1 &amp; runerr("l_bal:  Null first argument!")
+<a name="318"/>    if type(l1) == "set" then l1 := sort(l1)  # convert to a list
+<a name="319"/>    if type(l2) == "set" then l1 := sort(l2)
+<a name="320"/>    if type(l3) == "set" then l1 := sort(l3)
+<a name="321"/>
+<a name="322"/>    if /l2 := l_SUBJ
+<a name="323"/>    then default_val := \l_POS | 1
+<a name="324"/>    else default_val := 1
+<a name="325"/>
+<a name="326"/>    if \i then {
+<a name="327"/>	if i &lt; 1 then
+<a name="328"/>	    i := *l2 + (i+1)
+<a name="329"/>    }
+<a name="330"/>    else i := default_val
+<a name="331"/>
+<a name="332"/>    if \j then {
+<a name="333"/>	if j &lt; 1 then
+<a name="334"/>	    j := *l2 + (j+1)
+<a name="335"/>    }
+<a name="336"/>    else j := *l_SUBJ+1
+<a name="337"/>
+<a name="338"/>    l2_count := l3_count := 0
+<a name="339"/>
+<a name="340"/>    every x := i to j-1 do {
+<a name="341"/>
+<a name="342"/>	if l_any(l2, l, x, x+1) then {
+<a name="343"/>	    l2_count +:= 1
+<a name="344"/>	}
+<a name="345"/>	if l_any(l3, l, x, x+1) then {
+<a name="346"/>	    l3_count +:= 1
+<a name="347"/>	}
+<a name="348"/>	if l2_count = l3_count then {
+<a name="349"/>	    if l_any(l1,l,x,x+1)
+<a name="350"/>	    then suspend x
+<a name="351"/>	}
+<a name="352"/>    }
+<a name="353"/>
+<a name="354"/>end
+<a name="355"/>
+<a name="356"/>    
+<a name="357"/>
+<a name="358"/># list comparison
+<a name="359"/>procedure l_comp(l1,l2)			
+<a name="360"/>
+<a name="361"/>    #
+<a name="362"/>    # List comparison routine basically taken from Griswold &amp; Griswold
+<a name="363"/>    # (1st ed.), p. 174.
+<a name="364"/>    #
+<a name="365"/>
+<a name="366"/>    local i
+<a name="367"/>
+<a name="368"/>    /l1 | /l2 &amp; runerr("l_comp:  Null argument!")
+<a name="369"/>    l1 === l2 &amp; (return l2)
+<a name="370"/>
+<a name="371"/>    if type(l1) == type(l2) == "list" then {
+<a name="372"/>	*l1 ~= *l2 &amp; fail
+<a name="373"/>	every i := 1 to *l1
+<a name="374"/>	do l_comp(l1[i],l2[i]) | fail
+<a name="375"/>	return l2
+<a name="376"/>    }
+<a name="377"/>
+<a name="378"/>end
+<a name="379"/>
+<a name="380"/>
+<a name="381"/>
+<a name="382"/># find() for list scanning
+<a name="383"/>procedure l_find(l1,l2,i,j)		
+<a name="384"/>
+<a name="385"/>    #
+<a name="386"/>    # Like the builtin find(s1,s2,i,j), but for lists.
+<a name="387"/>    #
+<a name="388"/>
+<a name="389"/>    local old_l_POS, default_val
+<a name="390"/>
+<a name="391"/>    /l1 &amp; runerr("l_find:  Null first argument!")
+<a name="392"/>
+<a name="393"/>    if /l2 := l_SUBJ
+<a name="394"/>    then default_val := \l_POS | 1
+<a name="395"/>    else default_val := 1
+<a name="396"/>
+<a name="397"/>    if \i then {
+<a name="398"/>	if i &lt; 1 then
+<a name="399"/>	    i := *l2 + (i+1)
+<a name="400"/>    }
+<a name="401"/>    else i := default_val
+<a name="402"/>
+<a name="403"/>    if \j then {
+<a name="404"/>	if j &lt; 1 then
+<a name="405"/>	    j := *l2 + (j+1)
+<a name="406"/>    }
+<a name="407"/>    else j := *l_SUBJ+1
+<a name="408"/>
+<a name="409"/>    #
+<a name="410"/>    # See l_upto() below for a discussion of why things have to be done
+<a name="411"/>    # in this manner.
+<a name="412"/>    #
+<a name="413"/>    old_l_POS := l_POS
+<a name="414"/>
+<a name="415"/>    suspend l_Escan(l_Bscan(l2[i:j]), {
+<a name="416"/>	l_tab(1 to *l_SUBJ) &amp; {
+<a name="417"/>	    if l_match(l1) then
+<a name="418"/>		old_l_POS + (l_POS-1)
+<a name="419"/>	}
+<a name="420"/>    })
+<a name="421"/>    
+<a name="422"/>end
+<a name="423"/>
+<a name="424"/>
+<a name="425"/>
+<a name="426"/># many() for list scanning
+<a name="427"/>procedure l_many(l1,l2,i,j)		
+<a name="428"/>
+<a name="429"/>    local x, old_l_POS, default_val
+<a name="430"/>
+<a name="431"/>    /l1 &amp; runerr("l_many:  Null first argument!")
+<a name="432"/>    if type(l1) == "set" then l1 := sort(l1)
+<a name="433"/>
+<a name="434"/>    if /l2 := l_SUBJ
+<a name="435"/>    then default_val := \l_POS | 1
+<a name="436"/>    else default_val := 1
+<a name="437"/>
+<a name="438"/>    if \i then {
+<a name="439"/>	if i &lt; 1 then
+<a name="440"/>	    i := *l2 + (i+1)
+<a name="441"/>    }
+<a name="442"/>    else i := default_val
+<a name="443"/>
+<a name="444"/>    if \j then {
+<a name="445"/>	if j &lt; 1 then
+<a name="446"/>	    j := *l2 + (j+1)
+<a name="447"/>    }
+<a name="448"/>    else j := *l_SUBJ+1
+<a name="449"/>
+<a name="450"/>    #
+<a name="451"/>    # L_many(), like many(), is not a generator.  We can therefore
+<a name="452"/>    # save one final result in x, and then later return (rather than
+<a name="453"/>    # suspend) that result.
+<a name="454"/>    #
+<a name="455"/>    old_l_POS := l_POS
+<a name="456"/>    l_Escan(l_Bscan(l2[i:j]), {
+<a name="457"/>	while l_tab(l_any(l1))
+<a name="458"/>	x := old_l_POS + (l_POS-1)
+<a name="459"/>    })
+<a name="460"/>
+<a name="461"/>    #
+<a name="462"/>    # Fails if there was no positional change (i.e. l_any() did not
+<a name="463"/>    # succeed even once).
+<a name="464"/>    #
+<a name="465"/>    return old_l_POS ~= x
+<a name="466"/>
+<a name="467"/>end
+<a name="468"/>
+<a name="469"/>
+<a name="470"/>
+<a name="471"/># match() for list scanning
+<a name="472"/>procedure l_match(l1,l2,i,j)		
+<a name="473"/>
+<a name="474"/>    #
+<a name="475"/>    # Analogous to match(s1,s2,i,j), except that s1 and s2 are lists,
+<a name="476"/>    # and l_match returns the next position in l2 after that portion
+<a name="477"/>    # (if any) which is structurally identical to l1.  If a match is not
+<a name="478"/>    # found, l_match fails.
+<a name="479"/>    #
+<a name="480"/>    local default_val
+<a name="481"/>
+<a name="482"/>    if /l1
+<a name="483"/>    then runerr("l_match:  Null first argument!")
+<a name="484"/>    if type(l1) ~== "list"
+<a name="485"/>    then runerr("l_match:  Call me with a list as the first arg.")
+<a name="486"/>
+<a name="487"/>    if /l2 := l_SUBJ
+<a name="488"/>    then default_val := \l_POS | 1
+<a name="489"/>    else default_val := 1
+<a name="490"/>
+<a name="491"/>    if \i then {
+<a name="492"/>	if i &lt; 1 then
+<a name="493"/>	    i := *l2 + (i+1)
+<a name="494"/>    }
+<a name="495"/>    else i := default_val
+<a name="496"/>    
+<a name="497"/>    if \j then {
+<a name="498"/>	if j &lt; 1 then
+<a name="499"/>	    j := *l2 + (j+1)
+<a name="500"/>    }
+<a name="501"/>    else j := *l_SUBJ+1
+<a name="502"/>
+<a name="503"/>    i + *l1 &gt; j &amp; i :=: j
+<a name="504"/>    i + *l1 &gt; j &amp; fail
+<a name="505"/>    if l_comp(l1,l2[i+:*l1]) then
+<a name="506"/>	return i + *l1
+<a name="507"/>
+<a name="508"/>end
+<a name="509"/>
+<a name="510"/>    
+<a name="511"/>
+<a name="512"/># move() for list scanning
+<a name="513"/>procedure l_move(i)			
+<a name="514"/>
+<a name="515"/>    /i &amp; runerr("l_move:  Null argument.")
+<a name="516"/>    if /l_POS | /l_SUBJ then
+<a name="517"/>	runerr("l_move:  Call l_Bscan() first.")
+<a name="518"/>
+<a name="519"/>    #
+<a name="520"/>    # Sets l_POS to l_POS+i; suspends that portion of l_SUBJ extending
+<a name="521"/>    # from the old l_POS to the new one.  Resets l_POS if resumed,
+<a name="522"/>    # just the way matching procedures are supposed to.  Fails if l_POS
+<a name="523"/>    # plus i is larger than l_SUBJ+1 or if l_POS+i is less than 1.
+<a name="524"/>    #
+<a name="525"/>    suspend l_SUBJ[.l_POS:l_POS &lt;- (0 &lt; (*l_SUBJ+1 &gt;= l_POS+i))]
+<a name="526"/>
+<a name="527"/>end
+<a name="528"/>
+<a name="529"/>
+<a name="530"/>
+<a name="531"/># pos() for list scanning
+<a name="532"/>procedure l_pos(i)			
+<a name="533"/>
+<a name="534"/>    local x
+<a name="535"/>
+<a name="536"/>    if /l_POS | /l_SUBJ
+<a name="537"/>    then runerr("l_move:  Call l_Bscan() first.")
+<a name="538"/>
+<a name="539"/>    if i &lt;= 0
+<a name="540"/>    then x := 0 &lt; (*l_SUBJ+1 &gt;= (*l_SUBJ+1)+i) | fail
+<a name="541"/>    else x := 0 &lt; (*l_SUBJ+1 &gt;= i) | fail
+<a name="542"/>
+<a name="543"/>    if x = l_POS
+<a name="544"/>    then return x
+<a name="545"/>    else fail
+<a name="546"/>
+<a name="547"/>end
+<a name="548"/>
+<a name="549"/>
+<a name="550"/>
+<a name="551"/># tab() for list scanning
+<a name="552"/>procedure l_tab(i)			
+<a name="553"/>
+<a name="554"/>    /i &amp; runerr("l_tab:  Null argument.")
+<a name="555"/>    if /l_POS | /l_SUBJ then
+<a name="556"/>	runerr("l_tab:  Call l_Bscan() first.")
+<a name="557"/>
+<a name="558"/>    if i &lt;= 0
+<a name="559"/>    then suspend l_SUBJ[.l_POS:l_POS &lt;- 0 &lt; (*l_SUBJ+1 &gt;= (*l_SUBJ+1)+i)]
+<a name="560"/>    else suspend l_SUBJ[.l_POS:l_POS &lt;- 0 &lt; (*l_SUBJ+1 &gt;= i)]
+<a name="561"/>
+<a name="562"/>end
+<a name="563"/>
+<a name="564"/>
+<a name="565"/>
+<a name="566"/># upto() for list scanning
+<a name="567"/>procedure l_upto(l1,l2,i,j)		
+<a name="568"/>
+<a name="569"/>    #
+<a name="570"/>    # See l_any() above.  This procedure just moves through l2, calling
+<a name="571"/>    # l_any() for each member of l2[i:j].
+<a name="572"/>    #
+<a name="573"/>
+<a name="574"/>    local old_l_POS, default_val
+<a name="575"/>
+<a name="576"/>    /l1 &amp; runerr("l_upto:  Null first argument!")
+<a name="577"/>    if type(l1) == "set" then l1 := sort(l1)
+<a name="578"/>
+<a name="579"/>    if /l2 := l_SUBJ
+<a name="580"/>    then default_val := \l_POS | 1
+<a name="581"/>    else default_val := 1
+<a name="582"/>
+<a name="583"/>    if \i then {
+<a name="584"/>	if i &lt; 1 then
+<a name="585"/>	    i := *l2 + (i+1)
+<a name="586"/>    }
+<a name="587"/>    else i := default_val
+<a name="588"/>
+<a name="589"/>    if \j then {
+<a name="590"/>	if j &lt; 1 then
+<a name="591"/>	    j := *l2 + (j+1)
+<a name="592"/>    }
+<a name="593"/>    else j := *l_SUBJ+1
+<a name="594"/>
+<a name="595"/>    #
+<a name="596"/>    # Save the old pos, then try arb()ing through the list to see if we
+<a name="597"/>    # can do an l_any(l1) at any position.
+<a name="598"/>    #
+<a name="599"/>    old_l_POS := l_POS
+<a name="600"/>
+<a name="601"/>    suspend l_Escan(l_Bscan(l2[i:j]), {
+<a name="602"/>	l_tab(1 to *l_SUBJ) &amp; {
+<a name="603"/>	    if l_any(l1) then
+<a name="604"/>		old_l_POS + (l_POS-1)
+<a name="605"/>	}
+<a name="606"/>    })
+<a name="607"/>
+<a name="608"/>    #
+<a name="609"/>    # Note that it WILL NOT WORK if you say:
+<a name="610"/>    #
+<a name="611"/>    # l_Escan(l_Bscan(l2[i:j]), {
+<a name="612"/>    #     l_tab(1 to *l_SUBJ) &amp; {
+<a name="613"/>    #         if l_any(l1) then
+<a name="614"/>    #             suspend old_l_POS + (l_POS-1)
+<a name="615"/>    #     }
+<a name="616"/>    # })
+<a name="617"/>    #
+<a name="618"/>    # If we are to suspend a result, l_Escan must suspend that result.
+<a name="619"/>    # Otherwise scanning environments are not saved and/or restored
+<a name="620"/>    # properly.
+<a name="621"/>    #
+<a name="622"/>    
+<a name="623"/>end
+</pre></body></html>

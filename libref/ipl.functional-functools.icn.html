@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>functools.icn</title></head><body><pre>
+<a name="1"/>package ipl.functional
+<a name="2"/>
+<a name="3"/>#-------------------------------------------------------------------------------
+<a name="4"/># Name:        functools
+<a name="5"/># Purpose:     Small functional programming library
+<a name="6"/>#
+<a name="7"/># Author:      Oleg Baharew aka ArqricCat (IDP Team)
+<a name="8"/>#
+<a name="9"/># Created:     03.08.2013
+<a name="10"/># Copyright:   (c) IDP Team, 2013
+<a name="11"/># Licence:     MIT License
+<a name="12"/>
+<a name="13"/># Class summary:
+<a name="14"/>
+<a name="15"/>#  FuncTools - This class provides some higher-order and other functions, borrowed from functional languages.
+<a name="16"/>
+<a name="17"/>#  Methods defined in this class:
+<a name="18"/>#     * head(l) - head of list
+<a name="19"/>#     * tail(l) - tail of list
+<a name="20"/>#     * mapf(f,l) - application of function to all elements of the list
+<a name="21"/>#     * filter(f,l) - creates a list of values for which function is true
+<a name="22"/>#     * foldl(f,l) - left-associative list folding
+<a name="23"/>#     * foldr(f,l) - right-associative list folding
+<a name="24"/>#     * enumerate(seq) - creates a table with iterated keys and values, taken from sequence
+<a name="25"/>#     * sum(l) - sum of list elements
+<a name="26"/>#     * min(l) - minimal value from list
+<a name="27"/>#     * max(l) - maximal value from list
+<a name="28"/>#     * product(l) - product of all elements of the list
+<a name="29"/>#     * iota(a,b) - creates a list of integers from a to b
+<a name="30"/>#     * also(flist,x) - generator that applies function from the list to argument
+<a name="31"/>#     * lsequental(flist,x) - left-associative function composition of the list to the argument
+<a name="32"/>#     * rsequental(flist,x) - right-associative function composition of the list to the argument
+<a name="33"/>#     * joinfuncs(flist,x) - list generated from the results of the application functions from flist
+<a name="34"/>#     * joinfuncs2(flist,x) - list formed from a list of functions and the results of their application
+<a name="35"/>#     * iterf(f,l) - transform function application to generator
+<a name="36"/>#     * traverse(l) - nested list traversal, activating &amp;source with successive elements
+<a name="37"/>#     * rtraverse(l) - nested list reverse order traversal, activating &amp;source with successive elements
+<a name="38"/>
+<a name="39"/>final abstract class FuncTools()
+<a name="40"/>
+<a name="41"/>   public static head(l)
+<a name="42"/>   return l[1]
+<a name="43"/>   end
+<a name="44"/>
+<a name="45"/>   public static tail(l)
+<a name="46"/>   return l[2:0]
+<a name="47"/>   end
+<a name="48"/>
+<a name="49"/>   public static mapf(f,l)
+<a name="50"/>   local i,acc
+<a name="51"/>   acc := []
+<a name="52"/>   every i:= !l do {
+<a name="53"/>      if type(i) ~== "list" then put(acc,f(i)) else {
+<a name="54"/>       put(acc,mapf(f,i))
+<a name="55"/>    }
+<a name="56"/>   }
+<a name="57"/>   return acc
+<a name="58"/>   end
+<a name="59"/>
+<a name="60"/>   public static filter(f,l)
+<a name="61"/>   local i,acc
+<a name="62"/>   acc := []
+<a name="63"/>   every i:= !l do {
+<a name="64"/>      if type(i) ~== "list" then {
+<a name="65"/>         if f(i) then put(acc,i)
+<a name="66"/>      } else put(acc,filter(f,i))
+<a name="67"/>   }
+<a name="68"/>   return acc
+<a name="69"/>   end
+<a name="70"/>
+<a name="71"/>   public static foldl(f,start,l)
+<a name="72"/>   local i
+<a name="73"/>   every i := !l do {
+<a name="74"/>      if type(i) ~== "list" then start := f(start,i) else start := f(start,foldl(f,start,i)) 
+<a name="75"/>   }
+<a name="76"/>   return start
+<a name="77"/>   end
+<a name="78"/>
+<a name="79"/>   public static foldr(f,start,l)
+<a name="80"/>   local i
+<a name="81"/>   every i := back(l) do {
+<a name="82"/>      if type(i) ~== "list" then start := f(start,i) else start := f(start,foldl(f,start,i)) 
+<a name="83"/>   }
+<a name="84"/>   return start
+<a name="85"/>   end
+<a name="86"/>
+<a name="87"/>   public static enumerate(seq)
+<a name="88"/>   local i,t
+<a name="89"/>   t := table()
+<a name="90"/>   every i := 1 to *seq do {
+<a name="91"/>      t[i] := seq[i]
+<a name="92"/>   }
+<a name="93"/>   return t
+<a name="94"/>   end
+<a name="95"/>
+<a name="96"/>   public static sum(l)
+<a name="97"/>   local acc,i
+<a name="98"/>   acc := 0
+<a name="99"/>   every i := !l do {
+<a name="100"/>      if type(i) ~== "list" then acc +:= i else acc +:= sum(i)
+<a name="101"/>   }
+<a name="102"/>   return acc
+<a name="103"/>   end
+<a name="104"/>
+<a name="105"/>   public static min(l)
+<a name="106"/>   local i,m
+<a name="107"/>   every i := !l do {
+<a name="108"/>      if /m then
+<a name="109"/>         if type(i) ~== "list" then m := i else m := min(i)
+<a name="110"/>      else
+<a name="111"/>         if type(i) ~== "list" then m &gt;:= i else m &gt;:= min(i)
+<a name="112"/>   }
+<a name="113"/>   return \m
+<a name="114"/>   end
+<a name="115"/>
+<a name="116"/>   public static max(l)
+<a name="117"/>   local i,m
+<a name="118"/>   every i := !l do {
+<a name="119"/>      if /m then
+<a name="120"/>         if type(i) ~== "list" then m := i else m := max(i)
+<a name="121"/>      else
+<a name="122"/>         if type(i) ~== "list" then m &lt;:= i else m &lt;:= max(i)
+<a name="123"/>   }
+<a name="124"/>   return \m
+<a name="125"/>   end
+<a name="126"/>
+<a name="127"/>   public static product(l)
+<a name="128"/>   local p,i
+<a name="129"/>   p := 1
+<a name="130"/>   every i := !l do {
+<a name="131"/>      if type(i) ~== "list" then p *:= i else p *:= product(i)
+<a name="132"/>   }
+<a name="133"/>   return p
+<a name="134"/>   end
+<a name="135"/>
+<a name="136"/>   public static iota(a,b)
+<a name="137"/>   local acc,i
+<a name="138"/>   /a := 1
+<a name="139"/>   acc := []
+<a name="140"/>   every i := a to b do {
+<a name="141"/>      put(acc,i)
+<a name="142"/>   }
+<a name="143"/>   return acc
+<a name="144"/>   end
+<a name="145"/>
+<a name="146"/>   public static also(flist,x)
+<a name="147"/>   local e
+<a name="148"/>   e := create traverse(flist)
+<a name="149"/>   suspend (|@e)(x)
+<a name="150"/>   end
+<a name="151"/>
+<a name="152"/>   public static lsequental(flist,x)
+<a name="153"/>   local acc,i
+<a name="154"/>   acc := x
+<a name="155"/>   every i := !flist do {
+<a name="156"/>      if type(i) ~== "list" then acc := i(acc) else acc := lsequental(i,acc)
+<a name="157"/>   }
+<a name="158"/>   return acc
+<a name="159"/>   end
+<a name="160"/>
+<a name="161"/>   public static rsequental(flist,x)
+<a name="162"/>   local acc,i
+<a name="163"/>   acc := x
+<a name="164"/>   every i := !back(flist) do {
+<a name="165"/>      if type(i) ~== "list" then acc := i(acc) else acc := rsequental(i,acc)
+<a name="166"/>   }
+<a name="167"/>   return acc
+<a name="168"/>   end
+<a name="169"/>
+<a name="170"/>   public static joinfuncs(flist,x)
+<a name="171"/>   local acc,i
+<a name="172"/>   acc := []
+<a name="173"/>   every i := !flist do {
+<a name="174"/>      if type(i) ~== "list" then put(acc,i(x)) else put(acc,joinfuncs(i,x))
+<a name="175"/>   }
+<a name="176"/>   return acc
+<a name="177"/>   end
+<a name="178"/>
+<a name="179"/>   public static iterf(f,l)
+<a name="180"/>   local e
+<a name="181"/>   e := create traverse(l)
+<a name="182"/>   suspend f(|@e)
+<a name="183"/>   end
+<a name="184"/>
+<a name="185"/>   public static traverse(l)
+<a name="186"/>   local e
+<a name="187"/>   every e := !l do
+<a name="188"/>      if type(e) == "list" then traverse(e) else coact(e)
+<a name="189"/>   end
+<a name="190"/>
+<a name="191"/>   public static rtraverse(l)
+<a name="192"/>   local e
+<a name="193"/>   every e := back(l) do
+<a name="194"/>      if type(e) == "list" then rtraverse(e) else coact(e)
+<a name="195"/>   end
+<a name="196"/>end
+</pre></body></html>

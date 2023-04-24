@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>intstr.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     intstr.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to create string from bits
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     April 2, 1990
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  intstr() -- Creates a string consisting of the raw bits in the low
+<a name="18"/>#  order "size" bytes of integer i.
+<a name="19"/>#
+<a name="20"/>#  This procedure is normally used for processing of binary data
+<a name="21"/>#  to be written to a file.
+<a name="22"/>#
+<a name="23"/>#  Note that if large integers are supported, this procedure still
+<a name="24"/>#  will not work for integers larger than the implementation defined
+<a name="25"/>#  word size due to the shifting in of zero-bits from the left in the
+<a name="26"/>#  right shift operation.
+<a name="27"/>#
+<a name="28"/>
+<a name="29"/>package ipl.intstr
+<a name="30"/>
+<a name="31"/>procedure intstr(i,size)
+<a name="32"/>   local s
+<a name="33"/>   s := ""
+<a name="34"/>   every 1 to size do {
+<a name="35"/>      s := char(iand(i,16rFF)) || s
+<a name="36"/>      i := ishift(i,-8)
+<a name="37"/>      }
+<a name="38"/>   return s
+<a name="39"/>end
+</pre></body></html>

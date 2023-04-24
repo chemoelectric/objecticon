@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ipc.icn</title></head><body><pre>
+<a name="1"/>package ipc
+<a name="2"/>
+<a name="3"/>import lang, io, util
+<a name="4"/>
+<a name="5"/># Succeed if the ipc library is available, or fail and set &amp;why if
+<a name="6"/># it isn't.
+<a name="7"/>#
+<a name="8"/>procedure ipc_available()
+<a name="9"/>   succeed \Ipc.LOADED | error(Ipc.WHY)
+<a name="10"/>end
+<a name="11"/>
+<a name="12"/># This class is just used to check whether the IPC facilities are
+<a name="13"/># supported or not.
+<a name="14"/>#
+<a name="15"/>final abstract class Ipc()
+<a name="16"/>   public static const LOADED, WHY
+<a name="17"/>
+<a name="18"/>   private static init()
+<a name="19"/>      local t
+<a name="20"/>      if t := Files.find_native_lib("objecticonipclib") then {
+<a name="21"/>         if Class.load_library(t) then
+<a name="22"/>            LOADED := t
+<a name="23"/>         else
+<a name="24"/>            WHY := "Failed to load Sys-V IPC library: " || &amp;why
+<a name="25"/>      } else
+<a name="26"/>         WHY := "Sys-V IPC library not found on OI_NATIVE path"
+<a name="27"/>   end
+<a name="28"/>end
+</pre></body></html>

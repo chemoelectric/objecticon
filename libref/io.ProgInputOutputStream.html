@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ProgInputOutputStream</title></head><body>
+<h1>ProgInputOutputStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.ProgStreamBase.html" target="displayFrame">io.ProgStreamBase</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+This stream represents a bi-directional pipe to a command running in
+a forked child process.
+<p/><a href="io-streams.icn.html#1604" target="displayFrame">Source - streams.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html">io.HasBgProc</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.DescStream.html">io.DescStream</a>
+<a href="io.SocketStream.html">io.SocketStream</a>
+<a href="io.ProgStreamBase.html">io.ProgStreamBase</a>
+<a href="io.ProgInputOutputStream.html">io.ProgInputOutputStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#do_wait">do_wait()</a>
+<a href="io.HasBgProc.html#get_exit_info">get_exit_info()</a>
+<a href="io.HasBgProc.html#get_pid">get_pid()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasBgProc</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasBgProc.html#exit_info">exit_info</a>
+<a href="io.HasBgProc.html#pid">pid</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.DescStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.DescStream.html#dflag">dflag()</a>
+<a href="io.DescStream.html#dup2">dup2()</a>
+<a href="io.DescStream.html#dup2_impl">dup2_impl()</a>
+<a href="io.DescStream.html#dup_impl">dup_impl()</a>
+<a href="io.DescStream.html#flag">flag()</a>
+<a href="io.DescStream.html#get_fd">get_fd()</a>
+<a href="io.DescStream.html#get_mode">get_mode()</a>
+<a href="io.DescStream.html#poll">poll()</a>
+<a href="io.DescStream.html#poll_in_test">poll_in_test()</a>
+<a href="io.DescStream.html#poll_out_test">poll_out_test()</a>
+<a href="io.DescStream.html#setup">setup()</a>
+<a href="io.DescStream.html#stat">stat()</a>
+<a href="io.DescStream.html#stat_impl">stat_impl()</a>
+<a href="io.DescStream.html#wstat">wstat()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.DescStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.DescStream.html#fd">fd</a>
+<a href="io.DescStream.html#mode">mode</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.SocketStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.SocketStream.html#accept">accept()</a>
+<a href="io.SocketStream.html#accept_impl">accept_impl()</a>
+<a href="io.SocketStream.html#bind">bind()</a>
+<a href="io.SocketStream.html#connect">connect()</a>
+<a href="io.SocketStream.html#create_for_fd">create_for_fd()</a>
+<a href="io.SocketStream.html#dns_query">dns_query()</a>
+<a href="io.SocketStream.html#dup">dup()</a>
+<a href="io.SocketStream.html#get_local">get_local()</a>
+<a href="io.SocketStream.html#get_peer">get_peer()</a>
+<a href="io.SocketStream.html#getopt">getopt()</a>
+<a href="io.SocketStream.html#improve_why">improve_why()</a>
+<a href="io.SocketStream.html#in">in()</a>
+<a href="io.SocketStream.html#listen">listen()</a>
+<a href="io.SocketStream.html#new_impl">new_impl()</a>
+<a href="io.SocketStream.html#one_way_socketpair">one_way_socketpair()</a>
+<a href="io.SocketStream.html#out">out()</a>
+<a href="io.SocketStream.html#recvfrom">recvfrom()</a>
+<a href="io.SocketStream.html#recvfrom_impl">recvfrom_impl()</a>
+<a href="io.SocketStream.html#sendto">sendto()</a>
+<a href="io.SocketStream.html#setopt">setopt()</a>
+<a href="io.SocketStream.html#shutdown">shutdown()</a>
+<a href="io.SocketStream.html#socketpair">socketpair()</a>
+<a href="io.SocketStream.html#socketpair_impl">socketpair_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.ProgStreamBase</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.ProgStreamBase.html#set_cmd">set_cmd()</a>
+<a href="io.ProgStreamBase.html#succeeded">succeeded()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.ProgStreamBase</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.ProgStreamBase.html#cmd">cmd</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#new">new()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.SocketStream.html#close">close()</a> in <a href="io.SocketStream.html" target="displayFrame">io.SocketStream</a></dd>
+<dd>
+Close the stream.  This waits for the child process to terminate.
+<p/><a href="io-streams.icn.html#1609" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(cmd, args, env, stderr)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.SocketStream.html#new">new()</a> in <a href="io.SocketStream.html" target="displayFrame">io.SocketStream</a></dd>
+<dd>
+Open a new readable and writeable <code><a href="io.Stream.html" target="displayFrame">Stream</a></code> based on the given
+command.  The first three parameters are the same as for the
+method <code><a href="posix.System.html#exec">posix.System.exec</a></code>; <code>stderr</code> optionally gives the
+standard error of the command; by default the command inherits
+this from the parent.  If the stderr param is the string "pipe",
+then stderr is sent to the pipe along with stdout.
+<p/>
+For example :-
+<pre>
+    f := ProgInputOutputStream("myprog", []) | stop(&amp;why)
+    f.write("Some input")
+    s := f.read()  # The response
+    f.close()
+</pre>
+<p/><a href="io-streams.icn.html#1619" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+</body></html>

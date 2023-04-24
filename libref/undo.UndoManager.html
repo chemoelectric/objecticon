@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>UndoManager</title></head><body>
+<h1>UndoManager</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="undo.CompoundEdit.html" target="displayFrame">undo.CompoundEdit</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="undo-package.html" target="listFrame">undo</a></dd>
+</dl><p/>
+UndoManager is a CompoundEdit.  Until it is closed it allows undos and redos
+within its list of edits, moving a pointer into the list appropriately.
+<p/>
+Once closed, it behaves just like a closed CompoundEdit.
+<p/><a href="undo-undomanager.icn.html#11" target="displayFrame">Source - undomanager.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="undo.UndoableEdit.html">undo.UndoableEdit</a>
+<a href="undo.CompoundEdit.html">undo.CompoundEdit</a>
+<a href="undo.UndoManager.html">undo.UndoManager</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from undo.CompoundEdit</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="undo.CompoundEdit.html#close">close()</a>
+<a href="undo.CompoundEdit.html#gen">gen()</a>
+<a href="undo.CompoundEdit.html#get_desc">get_desc()</a>
+<a href="undo.CompoundEdit.html#set_desc">set_desc()</a>
+<a href="undo.CompoundEdit.html#set_liberal">set_liberal()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from undo.CompoundEdit</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="undo.CompoundEdit.html#closed">closed</a>
+<a href="undo.CompoundEdit.html#desc">desc</a>
+<a href="undo.CompoundEdit.html#l">l</a>
+<a href="undo.CompoundEdit.html#liberal_flag">liberal_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_edit">add_edit()</a>
+<a href="#can_redo">can_redo()</a>
+<a href="#can_undo">can_undo()</a>
+<a href="#clear">clear()</a>
+<a href="#get_last">get_last()</a>
+<a href="#get_limit">get_limit()</a>
+<a href="#new">new()</a>
+<a href="#redo">redo()</a>
+<a href="#set_limit">set_limit()</a>
+<a href="#undo">undo()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#index">index</a>
+<a href="#last">last</a>
+<a href="#limit">limit</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_edit"/>
+<h3>add_edit(other)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.CompoundEdit.html#add_edit">add_edit()</a> in <a href="undo.CompoundEdit.html" target="displayFrame">undo.CompoundEdit</a></dd>
+<dd>
+<p/><a href="undo-undomanager.icn.html#60" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="can_redo"/>
+<h3>can_redo()</h3>
+public<p/>
+<dl>
+<dd>
+If this edit is not closed, succeed if there is an
+edit to redo, and return that edit.
+<p/><a href="undo-undomanager.icn.html#90" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="can_undo"/>
+<h3>can_undo()</h3>
+public<p/>
+<dl>
+<dd>
+If this edit is not closed, succeed if there is an
+edit to undo, and return that edit.
+<p/><a href="undo-undomanager.icn.html#81" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="clear"/>
+<h3>clear()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.CompoundEdit.html#clear">clear()</a> in <a href="undo.CompoundEdit.html" target="displayFrame">undo.CompoundEdit</a></dd>
+<dd>
+<p/><a href="undo-undomanager.icn.html#99" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="get_last"/>
+<h3>get_last()</h3>
+public<p/>
+<dl>
+<dd>
+Return the last edit added, undone or redone, or fail if there is no such edit.
+<p/><a href="undo-undomanager.icn.html#45" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="get_limit"/>
+<h3>get_limit()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="undo-undomanager.icn.html#51" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.CompoundEdit.html#new">new()</a> in <a href="undo.CompoundEdit.html" target="displayFrame">undo.CompoundEdit</a></dd>
+<dd>
+<p/><a href="undo-undomanager.icn.html#105" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="redo"/>
+<h3>redo()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.CompoundEdit.html#redo">redo()</a> in <a href="undo.CompoundEdit.html" target="displayFrame">undo.CompoundEdit</a></dd>
+<dd>
+<p/><a href="undo-undomanager.icn.html#23" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="set_limit"/>
+<h3>set_limit(limit)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="undo-undomanager.icn.html#55" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="undo"/>
+<h3>undo()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="undo.CompoundEdit.html#undo">undo()</a> in <a href="undo.CompoundEdit.html" target="displayFrame">undo.CompoundEdit</a></dd>
+<dd>
+<p/><a href="undo-undomanager.icn.html#34" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="index"/>
+<h3>index</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="undo-undomanager.icn.html#20" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="last"/>
+<h3>last</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="undo-undomanager.icn.html#21" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+<a name="limit"/>
+<h3>limit</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="undo-undomanager.icn.html#19" target="displayFrame">Source - undomanager.icn </a>
+</dd>
+</dl><hr>
+</body></html>

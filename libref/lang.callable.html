@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>callable</title></head><body>
+<h1>callable(x, n)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Try to convert <code>x</code> to something which can be invoked.  This follows
+similar logic to that used in converting an expression for
+invocation (see the function general_call in invoke.r).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - the thing to convert
+</dd>
+<dd>
+<code>n</code> - the optional number of args for an operator.  If null, then
+a valid operator name will be returned as a string; if 0 then
+no operator names are recognized; if 1, 2 or 3 then only
+an operator with that number of parameters will be recognized.
+</dd>
+</dl>
+<p/><a href="lang-langprocs.icn.html#859" target="displayFrame">Source - langprocs.icn </a>
+<p/>
+</body></html>

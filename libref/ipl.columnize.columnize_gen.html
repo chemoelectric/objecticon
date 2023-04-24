@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>columnize_gen</title></head><body>
+<h1>columnize_gen(l, screen_width, gutter, rowwise, cvt)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.columnize-package.html" target="listFrame">ipl.columnize</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+A helpful function to take a list of strings and columnize them into
+generated lines using <code><a href="ipl.columnize.columnize.html" target="displayFrame">columnize</a></code>.  Widths are taken to be simple
+string lengths.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - a list of strings
+</dd>
+<dd>
+<code>screen_width</code> - the total width available in characters
+</dd>
+<dd>
+<code>gutter</code> - the desired space between columns, default 2 characters
+</dd>
+<dd>
+<code>rowwise</code> - a flag indicating whether output will be left to right
+(flag set), or top to bottom (flag unset).
+</dd>
+<dd>
+<code>cvt</code> - an optional function to apply to an input string just
+before it is added to the output.  It is given the <code>l</code> and
+an index into <code>l</code>.
+<p/>
+</dd>
+</dl>
+<p/><a href="ipl.columnize-columnize.icn.html#35" target="displayFrame">Source - columnize.icn </a>
+<p/>
+</body></html>

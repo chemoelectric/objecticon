@@ -1,0 +1,1256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Context</title></head><body>
+<h1>Context</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="cairo-package.html" target="listFrame">cairo</a></dd>
+</dl><p/>
+This class wraps a cairo drawing context.
+<p/><a href="cairo-cairo.icn.html#913" target="displayFrame">Source - cairo.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="cairo.Context.html">cairo.Context</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#append_path">append_path()</a>
+<a href="#append_path_impl">append_path_impl()</a>
+<a href="#arc">arc()</a>
+<a href="#arc_negative">arc_negative()</a>
+<a href="#clip">clip()</a>
+<a href="#clip_preserve">clip_preserve()</a>
+<a href="#close">close()</a>
+<a href="#close_path">close_path()</a>
+<a href="#curve_to">curve_to()</a>
+<a href="#device_to_user">device_to_user()</a>
+<a href="#device_to_user_distance">device_to_user_distance()</a>
+<a href="#device_to_user_distance_impl">device_to_user_distance_impl()</a>
+<a href="#device_to_user_impl">device_to_user_impl()</a>
+<a href="#fill">fill()</a>
+<a href="#fill_preserve">fill_preserve()</a>
+<a href="#get_antialias">get_antialias()</a>
+<a href="#get_baseline">get_baseline()</a>
+<a href="#get_clip_extents">get_clip_extents()</a>
+<a href="#get_clip_extents_impl">get_clip_extents_impl()</a>
+<a href="#get_clip_rectangles">get_clip_rectangles()</a>
+<a href="#get_clip_rectangles_impl">get_clip_rectangles_impl()</a>
+<a href="#get_current_point">get_current_point()</a>
+<a href="#get_current_point_impl">get_current_point_impl()</a>
+<a href="#get_dash_offset">get_dash_offset()</a>
+<a href="#get_dashes">get_dashes()</a>
+<a href="#get_fill_extents">get_fill_extents()</a>
+<a href="#get_fill_extents_impl">get_fill_extents_impl()</a>
+<a href="#get_fill_rule">get_fill_rule()</a>
+<a href="#get_flat_path">get_flat_path()</a>
+<a href="#get_flat_path_impl">get_flat_path_impl()</a>
+<a href="#get_group_target">get_group_target()</a>
+<a href="#get_group_target_impl">get_group_target_impl()</a>
+<a href="#get_line_cap">get_line_cap()</a>
+<a href="#get_line_join">get_line_join()</a>
+<a href="#get_line_width">get_line_width()</a>
+<a href="#get_matrix">get_matrix()</a>
+<a href="#get_matrix_impl">get_matrix_impl()</a>
+<a href="#get_miter_limit">get_miter_limit()</a>
+<a href="#get_operator">get_operator()</a>
+<a href="#get_path">get_path()</a>
+<a href="#get_path_extents">get_path_extents()</a>
+<a href="#get_path_extents_impl">get_path_extents_impl()</a>
+<a href="#get_path_impl">get_path_impl()</a>
+<a href="#get_source">get_source()</a>
+<a href="#get_source_impl">get_source_impl()</a>
+<a href="#get_stroke_extents">get_stroke_extents()</a>
+<a href="#get_stroke_extents_impl">get_stroke_extents_impl()</a>
+<a href="#get_target">get_target()</a>
+<a href="#get_target_impl">get_target_impl()</a>
+<a href="#get_tolerance">get_tolerance()</a>
+<a href="#identity_matrix">identity_matrix()</a>
+<a href="#in_clip">in_clip()</a>
+<a href="#in_fill">in_fill()</a>
+<a href="#in_stroke">in_stroke()</a>
+<a href="#init">init()</a>
+<a href="#line_to">line_to()</a>
+<a href="#mask">mask()</a>
+<a href="#mask_surface">mask_surface()</a>
+<a href="#move_to">move_to()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#new_path">new_path()</a>
+<a href="#new_sub_path">new_sub_path()</a>
+<a href="#paint">paint()</a>
+<a href="#paint_with_alpha">paint_with_alpha()</a>
+<a href="#pop_group">pop_group()</a>
+<a href="#pop_group_impl">pop_group_impl()</a>
+<a href="#pop_group_to_source">pop_group_to_source()</a>
+<a href="#push_group">push_group()</a>
+<a href="#rectangle">rectangle()</a>
+<a href="#rel_curve_to">rel_curve_to()</a>
+<a href="#rel_line_to">rel_line_to()</a>
+<a href="#rel_move_to">rel_move_to()</a>
+<a href="#reset_clip">reset_clip()</a>
+<a href="#restore">restore()</a>
+<a href="#rotate">rotate()</a>
+<a href="#save">save()</a>
+<a href="#scale">scale()</a>
+<a href="#set_antialias">set_antialias()</a>
+<a href="#set_dash">set_dash()</a>
+<a href="#set_fg">set_fg()</a>
+<a href="#set_fill_rule">set_fill_rule()</a>
+<a href="#set_font">set_font()</a>
+<a href="#set_line_cap">set_line_cap()</a>
+<a href="#set_line_join">set_line_join()</a>
+<a href="#set_line_width">set_line_width()</a>
+<a href="#set_matrix">set_matrix()</a>
+<a href="#set_matrix_impl">set_matrix_impl()</a>
+<a href="#set_miter_limit">set_miter_limit()</a>
+<a href="#set_operator">set_operator()</a>
+<a href="#set_source">set_source()</a>
+<a href="#set_source_pattern">set_source_pattern()</a>
+<a href="#set_source_rgba">set_source_rgba()</a>
+<a href="#set_tolerance">set_tolerance()</a>
+<a href="#stroke">stroke()</a>
+<a href="#stroke_preserve">stroke_preserve()</a>
+<a href="#text_path">text_path()</a>
+<a href="#text_size">text_size()</a>
+<a href="#text_size_impl">text_size_impl()</a>
+<a href="#translate">translate()</a>
+<a href="#user_to_device">user_to_device()</a>
+<a href="#user_to_device_distance">user_to_device_distance()</a>
+<a href="#user_to_device_distance_impl">user_to_device_distance_impl()</a>
+<a href="#user_to_device_impl">user_to_device_impl()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#LOADED">LOADED</a>
+<a href="#ptr">ptr</a>
+<a href="#WHY">WHY</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="append_path"/>
+<h3>append_path(l)</h3>
+public<p/>
+<dl>
+<dd>
+Append the path onto the current path.  The given list <code>l</code> should
+be a list of <code><a href="cairo.PathElement.html" target="displayFrame">PathElement</a></code> objects.
+<p/><a href="cairo-cairo.icn.html#1182" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="append_path_impl"/>
+<h3>append_path_impl(l)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1436" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="arc"/>
+<h3>arc(xc, yc, r, angle1, angle2)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a circular arc of the given radius <code>r</code> to the current path.
+The arc is centered at <code>(xc, yc)</code>, begins at <code>angle1</code> and
+proceeds in the direction of increasing angles to end at
+<code>angle2</code>.
+<p/><a href="cairo-cairo.icn.html#1028" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="arc_negative"/>
+<h3>arc_negative(xc, yc, r, angle1, angle2)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a circular arc of the given radius <code>r</code> to the current
+path. The arc is centered at <code>(xc, yc)</code>, begins at <code>angle1</code> and
+proceeds in the direction of decreasing angles to end at
+<code>angle2</code>.
+<p/><a href="cairo-cairo.icn.html#1035" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="clip"/>
+<h3>clip()</h3>
+public native<p/>
+<dl>
+<dd>
+Establishes a new clip region by intersecting the current clip
+region with the current path as it would be filled by <code><a href="cairo.Context.html#fill">fill()</a></code>
+and according to the current fill rule (see <code><a href="cairo.Context.html#set_fill_rule">set_fill_rule()</a></code>).
+After <code><a href="cairo.Context.html#clip">clip()</a></code>, the current path will be cleared from the cairo
+context.
+<p/><a href="cairo-cairo.icn.html#1293" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="clip_preserve"/>
+<h3>clip_preserve()</h3>
+public native<p/>
+<dl>
+<dd>
+Like <code><a href="cairo.Context.html#clip">clip()</a></code>, but preserves the path.
+<p/><a href="cairo-cairo.icn.html#1301" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Close this instance, releasing the reference to the underlying
+cairo object.
+<p/><a href="cairo-cairo.icn.html#1110" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="close_path"/>
+<h3>close_path()</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a line segment to the path from the current point to the
+beginning of the current sub-path, (the most recent point passed
+to <code><a href="cairo.Context.html#move_to">move_to()</a></code>), and closes this sub-path. After this call
+the current point will be at the joined endpoint of the sub-path.
+<p/><a href="cairo-cairo.icn.html#1095" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="curve_to"/>
+<h3>curve_to(x1, y1, x2, y2, x3, y3)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a cubic Bézier spline to the path from the current point to
+position <code>(x3, y3)</code> in user-space coordinates, using <code>(x1, y1)</code>
+and <code>(x2, y2)</code> as the control points. After this call the current
+point will be <code>(x3, y3)</code>.
+<p/><a href="cairo-cairo.icn.html#953" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="device_to_user"/>
+<h3>device_to_user(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Transform a coordinate from device space to user space by
+multiplying the given point by the inverse of the current
+transformation matrix (CTM).  A <code><a href="graphics.Point.html" target="displayFrame">Point</a></code> record is returned.
+<p/><a href="cairo-cairo.icn.html#1252" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="device_to_user_distance"/>
+<h3>device_to_user_distance(dx, dy)</h3>
+public<p/>
+<dl>
+<dd>
+Transform a distance vector from device space to user space. This
+function is similar to <code><a href="cairo.Context.html#device_to_user">device_to_user()</a></code> except that the
+translation components of the inverse CTM will be ignored when
+transforming <code>(dx, dy)</code>.  A <code><a href="graphics.Vector.html" target="displayFrame">Vector</a></code> record is returned.
+<p/><a href="cairo-cairo.icn.html#1269" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="device_to_user_distance_impl"/>
+<h3>device_to_user_distance_impl(dx, dy, r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1446" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="device_to_user_impl"/>
+<h3>device_to_user_impl(x, y, r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1444" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="fill"/>
+<h3>fill()</h3>
+public native<p/>
+<dl>
+<dd>
+Fills the current path according to the current fill rule, (each
+sub-path is implicitly closed before being filled). After
+<code><a href="cairo.Context.html#fill">fill()</a></code>, the current path will be cleared from this <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>.
+<p/><a href="cairo-cairo.icn.html#1047" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="fill_preserve"/>
+<h3>fill_preserve()</h3>
+public native<p/>
+<dl>
+<dd>
+Like <code><a href="cairo.Context.html#fill">fill()</a></code>, but preserves the path in the <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>.
+<p/><a href="cairo-cairo.icn.html#1053" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_antialias"/>
+<h3>get_antialias()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the current shape antialiasing mode, as set by <code><a href="cairo.Context.html#set_antialias">set_antialias()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1152" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_baseline"/>
+<h3>get_baseline()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the Pango baseline value for this context, as a real
+number of user space units.
+<p/><a href="cairo-cairo.icn.html#1090" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clip_extents"/>
+<h3>get_clip_extents()</h3>
+public<p/>
+<dl>
+<dd>
+Returns a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> record, which is a bounding box in user
+coordinates covering the area inside the current clip.
+<p/><a href="cairo-cairo.icn.html#1227" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clip_extents_impl"/>
+<h3>get_clip_extents_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1440" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clip_rectangles"/>
+<h3>get_clip_rectangles()</h3>
+public<p/>
+<dl>
+<dd>
+Gets the current clip region as a list of rectangles in user
+coordinates, or fails if the clip region is not so representable.
+<p/><a href="cairo-cairo.icn.html#1309" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clip_rectangles_impl"/>
+<h3>get_clip_rectangles_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1447" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_point"/>
+<h3>get_current_point()</h3>
+public<p/>
+<dl>
+<dd>
+Gets the current point of the current path, as a <code><a href="graphics.Point.html" target="displayFrame">Point</a></code> record,
+or fail if there is no defined current point.
+<p/><a href="cairo-cairo.icn.html#1188" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_point_impl"/>
+<h3>get_current_point_impl(con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1435" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_dash_offset"/>
+<h3>get_dash_offset()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the dash offset, as set by <code><a href="cairo.Context.html#set_dash">set_dash()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1160" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_dashes"/>
+<h3>get_dashes()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the list of dashes, set by <code><a href="cairo.Context.html#set_dash">set_dash()</a></code>, or fail if
+dashing is not set.
+<p/><a href="cairo-cairo.icn.html#1164" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fill_extents"/>
+<h3>get_fill_extents()</h3>
+public<p/>
+<dl>
+<dd>
+Returns a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> record, which is a bounding box in user
+coordinates covering the area that would be affected, (the
+"inked" area), by a <code><a href="cairo.Context.html#fill">fill()</a></code> operation given the current path and
+fill parameters. If the current path is empty, returns an empty
+rectangle. Surface dimensions and clipping are not taken into
+account.
+<p/><a href="cairo-cairo.icn.html#1216" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fill_extents_impl"/>
+<h3>get_fill_extents_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1441" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fill_rule"/>
+<h3>get_fill_rule()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the current fill rule, as set by <code><a href="cairo.Context.html#set_fill_rule">set_fill_rule()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1140" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_flat_path"/>
+<h3>get_flat_path()</h3>
+public<p/>
+<dl>
+<dd>
+Gets a flattened copy of the current path (ie one with curves
+approximated as lines).  A list of <code><a href="cairo.PathElement.html" target="displayFrame">PathElement</a></code> objects is
+returned.
+<p/><a href="cairo-cairo.icn.html#1175" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_flat_path_impl"/>
+<h3>get_flat_path_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1438" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_group_target"/>
+<h3>get_group_target()</h3>
+public<p/>
+<dl>
+<dd>
+Gets the current destination <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code> for this <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>. This is
+either the original target surface as passed to the constructor,
+or the target surface for the current group as started by the
+most recent call to <code><a href="cairo.Context.html#push_group">push_group()</a></code> or
+<code>push_group_with_content()</code>.
+<p/>
+A new <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code> instance is returned in either case, and this
+must be closed by the caller.
+<p/><a href="cairo-cairo.icn.html#1364" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_group_target_impl"/>
+<h3>get_group_target_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1452" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_cap"/>
+<h3>get_line_cap()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the current line cap style, as set by <code><a href="cairo.Context.html#set_line_cap">set_line_cap()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1136" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_join"/>
+<h3>get_line_join()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the current line join style, as set by <code><a href="cairo.Context.html#set_line_join">set_line_join()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1132" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_width"/>
+<h3>get_line_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Returns the current line width value exactly as set by <code><a href="cairo.Context.html#set_line_width">set_line_width()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1128" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_matrix"/>
+<h3>get_matrix()</h3>
+public<p/>
+<dl>
+<dd>
+Return the transformation matrix as a <code><a href="cairo.Matrix.html" target="displayFrame">Matrix</a></code> instance.
+<p/><a href="cairo-cairo.icn.html#1429" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_matrix_impl"/>
+<h3>get_matrix_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1455" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_miter_limit"/>
+<h3>get_miter_limit()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the current miter limit, as set by <code><a href="cairo.Context.html#set_miter_limit">set_miter_limit()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1144" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_operator"/>
+<h3>get_operator()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the current compositing operator, as set by <code><a href="cairo.Context.html#set_operator">set_operator()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1156" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path"/>
+<h3>get_path()</h3>
+public<p/>
+<dl>
+<dd>
+Gets a copy of the current path.  A list of <code><a href="cairo.PathElement.html" target="displayFrame">PathElement</a></code> objects
+is returned.
+<p/><a href="cairo-cairo.icn.html#1169" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path_extents"/>
+<h3>get_path_extents()</h3>
+public<p/>
+<dl>
+<dd>
+Returns a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> record, which is a bounding box in
+user-space coordinates covering the points on the current
+path. If the current path is empty, returns an empty
+rectangle. Stroke parameters, fill rule, surface dimensions and
+clipping are not taken into account.
+<p/><a href="cairo-cairo.icn.html#1234" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path_extents_impl"/>
+<h3>get_path_extents_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1442" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_path_impl"/>
+<h3>get_path_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1437" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_source"/>
+<h3>get_source()</h3>
+public<p/>
+<dl>
+<dd>
+Return the source <code><a href="cairo.Pattern.html" target="displayFrame">Pattern</a></code> used by this <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>; note that a
+new wrapper is returned which must be closed separately from any
+other instance.
+<p/><a href="cairo-cairo.icn.html#1377" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_source_impl"/>
+<h3>get_source_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1451" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_stroke_extents"/>
+<h3>get_stroke_extents()</h3>
+public<p/>
+<dl>
+<dd>
+Returns a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> record, which is a bounding box in user
+coordinates covering the area that would be affected, (the
+"inked" area), by a <code><a href="cairo.Context.html#stroke">stroke()</a></code> operation given the current path
+and stroke parameters. If the current path is empty, returns an
+empty rectangle. Surface dimensions and clipping are not taken
+into account.
+<p/><a href="cairo-cairo.icn.html#1205" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_stroke_extents_impl"/>
+<h3>get_stroke_extents_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1439" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_target"/>
+<h3>get_target()</h3>
+public<p/>
+<dl>
+<dd>
+Return the target <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code>.  Note that this returns a new
+wrapper of the underlying cairo object, and must be closed
+separately from any other instance.
+<p/><a href="cairo-cairo.icn.html#1400" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_target_impl"/>
+<h3>get_target_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1453" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_tolerance"/>
+<h3>get_tolerance()</h3>
+public native<p/>
+<dl>
+<dd>
+Gets the current tolerance value, as set by <code><a href="cairo.Context.html#set_tolerance">set_tolerance()</a></code>.
+<p/><a href="cairo-cairo.icn.html#1148" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="identity_matrix"/>
+<h3>identity_matrix()</h3>
+public<p/>
+<dl>
+<dd>
+Set the transformation matrix to the identity matrix.
+<p/><a href="cairo-cairo.icn.html#1417" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="in_clip"/>
+<h3>in_clip(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Succeeds if and only if the given point is inside the area that
+would be visible through the current clip, i.e. the area that
+would be filled by a <code><a href="cairo.Context.html#paint">paint()</a></code> operation.
+<p/><a href="cairo-cairo.icn.html#1332" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="in_fill"/>
+<h3>in_fill(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Succeeds if and only if the given point is inside the area that
+would be affected by a <code><a href="cairo.Context.html#fill">fill()</a></code> operation given the current path
+and filling parameters. Surface dimensions and clipping are not
+taken into account.
+<p/><a href="cairo-cairo.icn.html#1325" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="in_stroke"/>
+<h3>in_stroke(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Succeeds if and only if the given point is inside the area that
+would be affected by a <code><a href="cairo.Context.html#stroke">stroke()</a></code> operation given the current
+path and stroking parameters. Surface dimensions and clipping are
+not taken into account.
+<p/><a href="cairo-cairo.icn.html#1318" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#920" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="line_to"/>
+<h3>line_to(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a line to the path from the current point to position <code>(x,</code>
+y)<code> in user-space coordinates. After this call the current point</code>
+will be <code>(x, y)</code>.
+<p/><a href="cairo-cairo.icn.html#941" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="mask"/>
+<h3>mask(pattern)</h3>
+public native<p/>
+<dl>
+<dd>
+Paints the current source using the alpha channel of <code><a href="cairo.Pattern.html" target="displayFrame">Pattern</a></code>
+<code>pattern</code> as a mask. (Opaque areas of <code>pattern</code> are painted with
+the source, transparent areas are not painted).
+<p/><a href="cairo-cairo.icn.html#1066" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="mask_surface"/>
+<h3>mask_surface(surface, x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Paints the current source using the alpha channel of <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code>
+<code>surface</code> as a mask. (Opaque areas of <code>surface</code> are painted with
+the source, transparent areas are not painted.)  <code>x</code> and <code>y</code> give
+the point at which to place the origin of <code>surface</code>.
+<p/><a href="cairo-cairo.icn.html#1072" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="move_to"/>
+<h3>move_to(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Begin a new sub-path. After this call the current point will be
+<code>(x, y)</code>.
+<p/><a href="cairo-cairo.icn.html#931" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(v)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance using a <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code> based on <code>v</code>, which may
+be a <code><a href="graphics.Window.html" target="displayFrame">Window</a></code>, a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code>, or an already-created <code><a href="cairo.Surface.html" target="displayFrame">Surface</a></code>
+instance.
+<p/>
+In the case of a <code><a href="graphics.Window.html" target="displayFrame">Window</a></code> (or a <code><a href="cairo.WindowSurface.html" target="displayFrame">WindowSurface</a></code>) being used, the
+instance is initialized in a way which matches the given
+<code><a href="graphics.Window.html" target="displayFrame">Window</a></code>'s context.
+<p/><a href="cairo-cairo.icn.html#1459" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl(sur)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1457" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new_path"/>
+<h3>new_path()</h3>
+public native<p/>
+<dl>
+<dd>
+Clears the current path. After this call there will be no path
+and no current point.
+<p/><a href="cairo-cairo.icn.html#1102" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new_sub_path"/>
+<h3>new_sub_path()</h3>
+public native<p/>
+<dl>
+<dd>
+Begin a new sub-path. Note that the existing path is not
+affected. After this call there will be no current point.
+<p/><a href="cairo-cairo.icn.html#1106" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="paint"/>
+<h3>paint()</h3>
+public native<p/>
+<dl>
+<dd>
+Paints the current source everywhere within the current clip region.
+<p/><a href="cairo-cairo.icn.html#1057" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="paint_with_alpha"/>
+<h3>paint_with_alpha(alpha)</h3>
+public native<p/>
+<dl>
+<dd>
+Paints the current source everywhere within the current clip
+region using a mask of constant alpha value <code>alpha</code>.
+<p/><a href="cairo-cairo.icn.html#1061" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="pop_group"/>
+<h3>pop_group()</h3>
+public<p/>
+<dl>
+<dd>
+Terminates the redirection begun by a call to <code><a href="cairo.Context.html#push_group">push_group()</a></code> and
+returns a new <code><a href="cairo.Pattern.html" target="displayFrame">Pattern</a></code> instance containing the results of all
+drawing operations performed to the group.
+<p/><a href="cairo-cairo.icn.html#1356" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="pop_group_impl"/>
+<h3>pop_group_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1450" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="pop_group_to_source"/>
+<h3>pop_group_to_source()</h3>
+public native<p/>
+<dl>
+<dd>
+Terminates the redirection begun by a call to <code><a href="cairo.Context.html#push_group">push_group()</a></code> and
+installs the resulting pattern as the source pattern in the given
+cairo context.
+<p/><a href="cairo-cairo.icn.html#1350" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="push_group"/>
+<h3>push_group(content)</h3>
+public native<p/>
+<dl>
+<dd>
+Temporarily redirects drawing to an intermediate surface known as
+a group. The redirection lasts until the group is completed by a
+call to <code><a href="cairo.Context.html#pop_group">pop_group()</a></code> or <code><a href="cairo.Context.html#pop_group_to_source">pop_group_to_source()</a></code>. These calls
+provide the result of any drawing to the group as a pattern,
+(either as an explicit object, or set as the source pattern).
+<p/>
+The <code>content</code> parameter is optional, and specifies the group's
+content type, as a string; possible values are "alpha", "color",
+and "color-alpha".  (See <code><a href="cairo.Content.html" target="displayFrame">Content</a></code> for symbolic constants).
+<p/><a href="cairo-cairo.icn.html#1338" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="rectangle"/>
+<h3>rectangle(x, y, width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a closed sub-path rectangle of the given size to the current
+path at position <code>(x, y)</code> in user-space coordinates.
+<p/><a href="cairo-cairo.icn.html#1042" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="rel_curve_to"/>
+<h3>rel_curve_to(dx1, dy1, dx2, dy2, dx3, dy3)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a cubic Bézier spline to the path from the current point to
+a point offset from the current point by <code>(dx3, dy3)</code>, using
+points offset by <code>(dx1, dy1)</code> and <code>(dx2, dy2)</code> as the control
+points. After this call the current point will be offset by
+<code>(dx3, dy3)</code>.
+<p/><a href="cairo-cairo.icn.html#960" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="rel_line_to"/>
+<h3>rel_line_to(dx, dy)</h3>
+public native<p/>
+<dl>
+<dd>
+Adds a line to the path from the current point to a point that is
+offset from the current point by <code>(dx, dy)</code> in user space. After
+this call the current point will be offset by <code>(dx , dy)</code>.
+<p/><a href="cairo-cairo.icn.html#947" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="rel_move_to"/>
+<h3>rel_move_to(dx, dy)</h3>
+public native<p/>
+<dl>
+<dd>
+Begin a new sub-path. After this call the current point will
+offset by <code>(dx, dy)</code>.
+<p/><a href="cairo-cairo.icn.html#936" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_clip"/>
+<h3>reset_clip()</h3>
+public native<p/>
+<dl>
+<dd>
+Reset the current clip region to its original, unrestricted state.
+<p/><a href="cairo-cairo.icn.html#1305" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="restore"/>
+<h3>restore()</h3>
+public native<p/>
+<dl>
+<dd>
+Restores this instance to the state saved by a preceding call to
+<code><a href="cairo.Context.html#save">save()</a></code> and removes that state from the stack of saved states.
+<p/><a href="cairo-cairo.icn.html#1200" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="rotate"/>
+<h3>rotate(r)</h3>
+public native<p/>
+<dl>
+<dd>
+Modifies the current transformation matrix (CTM) by rotating the
+user-space axes by <code>r</code> radians.
+<p/><a href="cairo-cairo.icn.html#1288" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="save"/>
+<h3>save()</h3>
+public native<p/>
+<dl>
+<dd>
+Makes a copy of the current state of this <code><a href="cairo.Context.html" target="displayFrame">Context</a></code> and saves it
+on an internal stack of saved states.  When <code><a href="cairo.Context.html#restore">restore()</a></code> is
+called, the <code><a href="cairo.Context.html" target="displayFrame">Context</a></code> will be restored to the saved state.
+<p/><a href="cairo-cairo.icn.html#1194" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="scale"/>
+<h3>scale(sx, sy)</h3>
+public native<p/>
+<dl>
+<dd>
+Modifies the current transformation matrix (CTM) by scaling the X
+and Y user-space axes by <code>sx</code> and <code>sy</code> respectively.
+<p/><a href="cairo-cairo.icn.html#1283" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_antialias"/>
+<h3>set_antialias(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the antialias setting according to the given string; possible
+values are "best", "default", "fast", "good", "gray", "none", and
+"subpixel". (See <code><a href="cairo.Antialias.html" target="displayFrame">Antialias</a></code> for symbolic constants).
+<p/><a href="cairo-cairo.icn.html#1122" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dash"/>
+<h3>set_dash(offset, dashes[])</h3>
+public native<p/>
+<dl>
+<dd>
+Sets the dash pattern to be used by <code><a href="cairo.Context.html#stroke">stroke()</a></code>.  The <code>offset</code>
+specifies an offset into the pattern at which the stroke begins.
+A dash pattern is specified by <code>dashes</code>, a list of positive
+values.  Each value provides the length of alternate "on" and
+"off" portions of the stroke.
+<p/>
+To clear the dash setting, call <code><a href="cairo.Context.html#set_dash">set_dash()</a></code> with no arguments.
+<p/><a href="cairo-cairo.icn.html#1000" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fg"/>
+<h3>set_fg(col)</h3>
+public<p/>
+<dl>
+<dd>
+Set the source to a solid pattern with the given colour <code>col</code>,
+which is an icon colour string.
+<p/><a href="cairo-cairo.icn.html#1408" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fill_rule"/>
+<h3>set_fill_rule(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the line join according to the given string; possible values
+are "even-odd" or "winding".  (See <code><a href="cairo.FillRule.html" target="displayFrame">FillRule</a></code> for symbolic
+constants).
+<p/><a href="cairo-cairo.icn.html#994" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_font"/>
+<h3>set_font(f)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the font to use for drawing text; the value <code>f</code> is an icon
+font specification string.
+<p/><a href="cairo-cairo.icn.html#1010" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_cap"/>
+<h3>set_line_cap(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the line join according to the given string; possible values
+are "butt", "round", and "square".  (See <code><a href="cairo.LineCap.html" target="displayFrame">LineCap</a></code> for symbolic
+constants).
+<p/><a href="cairo-cairo.icn.html#988" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_join"/>
+<h3>set_line_join(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the line join according to the given string; possible values
+are "bevel", "miter", and "round".  (See <code><a href="cairo.LineJoin.html" target="displayFrame">LineJoin</a></code> for symbolic
+constants).
+<p/><a href="cairo-cairo.icn.html#982" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_width"/>
+<h3>set_line_width(w)</h3>
+public native<p/>
+<dl>
+<dd>
+Sets the current line width within this <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>.
+<p/><a href="cairo-cairo.icn.html#978" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_matrix"/>
+<h3>set_matrix(m)</h3>
+public<p/>
+<dl>
+<dd>
+Set the transformation matrix from the given <code><a href="cairo.Matrix.html" target="displayFrame">Matrix</a></code> instance.
+<p/><a href="cairo-cairo.icn.html#1423" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_matrix_impl"/>
+<h3>set_matrix_impl(xx, yx, xy, yy, x0, y0)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1454" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_miter_limit"/>
+<h3>set_miter_limit(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Sets the current miter limit within this <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>.  If the
+current line join style is set to "miter" (see
+<code><a href="cairo.Context.html#set_line_join">set_line_join()</a></code>), the miter limit is used to determine whether
+the lines should be joined with a bevel instead of a miter.
+<p/><a href="cairo-cairo.icn.html#1015" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_operator"/>
+<h3>set_operator(op)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the drawing operator according to the given string; possible
+values are "atop", "clear", "dest", "dest atop", "dest in", "dest
+out", "dest over", "in", "out", "over", "source", and "xor".
+(See <code><a href="cairo.DrawOp.html" target="displayFrame">DrawOp</a></code> for symbolic constants).
+<p/><a href="cairo-cairo.icn.html#1115" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_source"/>
+<h3>set_source(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the source to use.  <code>v</code> can be a <code><a href="cairo.Pattern.html" target="displayFrame">Pattern</a></code>.  If it is not,
+then <code>v</code> is passed to <code><a href="cairo.Pattern.html#to_pattern">Pattern.to_pattern()</a></code> to create a
+temporary pattern, which is then used as the source.
+<p/><a href="cairo-cairo.icn.html#1385" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_source_pattern"/>
+<h3>set_source_pattern(pat)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1449" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_source_rgba"/>
+<h3>set_source_rgba(r, g, b, a)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1448" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="set_tolerance"/>
+<h3>set_tolerance(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Sets the tolerance used when converting paths into trapezoids.
+The default value is 0.1. A larger value will give better
+performance, a smaller value, better appearance.
+<p/><a href="cairo-cairo.icn.html#1022" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="stroke"/>
+<h3>stroke()</h3>
+public native<p/>
+<dl>
+<dd>
+This function strokes the current path according to the current
+line width, line join, line cap, and dash settings. Afterwards,
+the current path will be cleared from this <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>.
+<p/><a href="cairo-cairo.icn.html#968" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="stroke_preserve"/>
+<h3>stroke_preserve()</h3>
+public native<p/>
+<dl>
+<dd>
+Like <code><a href="cairo.Context.html#stroke">stroke()</a></code>, but preserves the path within the <code><a href="cairo.Context.html" target="displayFrame">Context</a></code>.
+<p/><a href="cairo-cairo.icn.html#974" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="text_path"/>
+<h3>text_path(s)</h3>
+public native<p/>
+<dl>
+<dd>
+Add a path representing the given string <code>s</code>.
+<p/><a href="cairo-cairo.icn.html#1079" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="text_size"/>
+<h3>text_size(s)</h3>
+public<p/>
+<dl>
+<dd>
+Return the logical extent of the given text were it to be
+rendered, as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record, in real user space units.
+<p/><a href="cairo-cairo.icn.html#1083" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="text_size_impl"/>
+<h3>text_size_impl(s, r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1456" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="translate"/>
+<h3>translate(tx, ty)</h3>
+public native<p/>
+<dl>
+<dd>
+Modifies the current transformation matrix (CTM) by translating
+the user-space origin by <code>(tx, ty)</code>.
+<p/><a href="cairo-cairo.icn.html#1278" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="user_to_device"/>
+<h3>user_to_device(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Transform a coordinate from user space to device space by
+multiplying the given point by the current transformation matrix
+(CTM).  A <code><a href="graphics.Point.html" target="displayFrame">Point</a></code> record is returned.
+<p/><a href="cairo-cairo.icn.html#1244" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="user_to_device_distance"/>
+<h3>user_to_device_distance(dx, dy)</h3>
+public<p/>
+<dl>
+<dd>
+Transform a distance vector from user space to device space. This
+function is similar to <code><a href="cairo.Context.html#user_to_device">user_to_device()</a></code> except that the
+translation components of the CTM will be ignored when
+transforming <code>(dx, dy)</code>.  A <code><a href="graphics.Vector.html" target="displayFrame">Vector</a></code> record is returned.
+<p/><a href="cairo-cairo.icn.html#1260" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="user_to_device_distance_impl"/>
+<h3>user_to_device_distance_impl(dx, dy, r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1445" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="user_to_device_impl"/>
+<h3>user_to_device_impl(x, y, r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1443" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="LOADED"/>
+<h3>LOADED</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#918" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="ptr"/>
+<h3>ptr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#916" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="WHY"/>
+<h3>WHY</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#918" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+</body></html>

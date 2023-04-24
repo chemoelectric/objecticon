@@ -1,0 +1,610 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>TreeTableContent</title></head><body>
+<h1>TreeTableContent</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.BaseTreeTableContent.html" target="displayFrame">gui.BaseTreeTableContent</a><br>
+<a href="gui.Tree.html" target="displayFrame">gui.Tree</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+The basic content implementation, which displays simple textual node
+data in the tree column.
+<p/><a href="gui-treetable.icn.html#175" target="displayFrame">Source - treetable.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.HasUseWheel.html">gui.HasUseWheel</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="gui.ScrollArea.html">gui.ScrollArea</a>
+<a href="gui.DrawScrollArea.html">gui.DrawScrollArea</a>
+<a href="gui.LineBasedScrollArea.html">gui.LineBasedScrollArea</a>
+<a href="gui.SelectableScrollArea.html">gui.SelectableScrollArea</a>
+<a href="gui.BaseTree.html">gui.BaseTree</a>
+<a href="gui.Tree.html">gui.Tree</a>
+<a href="gui.BaseTreeTableContent.html">gui.BaseTreeTableContent</a>
+<a href="gui.TreeTableContent.html">gui.TreeTableContent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#set_use_wheel">set_use_wheel()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#wheel_listeners">wheel_listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#add">add()</a>
+<a href="gui.Component.html#add_list">add_list()</a>
+<a href="gui.Component.html#build_point_chain">build_point_chain()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_index">get_index()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip">get_tooltip()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#handle_accel">handle_accel()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#match_accel">match_accel()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove">remove()</a>
+<a href="gui.Component.html#remove_all">remove_all()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_index">remove_index()</a>
+<a href="gui.Component.html#remove_list">remove_list()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reposition">reposition()</a>
+<a href="gui.Component.html#reposition_index">reposition_index()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout">reset_layout()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_geometry">set_geometry()</a>
+<a href="gui.Component.html#set_height">set_height()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_pos">set_pos()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_size">set_size()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_width">set_width()</a>
+<a href="gui.Component.html#set_x">set_x()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y">set_y()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#shift">shift()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#at_bottom">at_bottom()</a>
+<a href="gui.ScrollArea.html#at_top">at_top()</a>
+<a href="gui.ScrollArea.html#center_region_horizontally">center_region_horizontally()</a>
+<a href="gui.ScrollArea.html#center_region_vertically">center_region_vertically()</a>
+<a href="gui.ScrollArea.html#compute_and_invalidate">compute_and_invalidate()</a>
+<a href="gui.ScrollArea.html#display">display()</a>
+<a href="gui.ScrollArea.html#ensure_region_visible">ensure_region_visible()</a>
+<a href="gui.ScrollArea.html#get_area_x">get_area_x()</a>
+<a href="gui.ScrollArea.html#get_area_y">get_area_y()</a>
+<a href="gui.ScrollArea.html#get_default_height">get_default_height()</a>
+<a href="gui.ScrollArea.html#get_default_subject_height">get_default_subject_height()</a>
+<a href="gui.ScrollArea.html#get_default_subject_width">get_default_subject_width()</a>
+<a href="gui.ScrollArea.html#get_default_width">get_default_width()</a>
+<a href="gui.ScrollArea.html#get_subject_height">get_subject_height()</a>
+<a href="gui.ScrollArea.html#get_subject_width">get_subject_width()</a>
+<a href="gui.ScrollArea.html#get_subject_x">get_subject_x()</a>
+<a href="gui.ScrollArea.html#get_subject_y">get_subject_y()</a>
+<a href="gui.ScrollArea.html#goto_bottom">goto_bottom()</a>
+<a href="gui.ScrollArea.html#goto_top">goto_top()</a>
+<a href="gui.ScrollArea.html#handle_wheel_down">handle_wheel_down()</a>
+<a href="gui.ScrollArea.html#handle_wheel_left">handle_wheel_left()</a>
+<a href="gui.ScrollArea.html#handle_wheel_right">handle_wheel_right()</a>
+<a href="gui.ScrollArea.html#handle_wheel_up">handle_wheel_up()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_height">invalidate_subject_height()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_width">invalidate_subject_width()</a>
+<a href="gui.ScrollArea.html#layout">layout()</a>
+<a href="gui.ScrollArea.html#on_default_key">on_default_key()</a>
+<a href="gui.ScrollArea.html#predict_total_height">predict_total_height()</a>
+<a href="gui.ScrollArea.html#predict_total_width">predict_total_width()</a>
+<a href="gui.ScrollArea.html#predict_view_height">predict_view_height()</a>
+<a href="gui.ScrollArea.html#predict_view_width">predict_view_width()</a>
+<a href="gui.ScrollArea.html#refresh">refresh()</a>
+<a href="gui.ScrollArea.html#remove_hsb">remove_hsb()</a>
+<a href="gui.ScrollArea.html#remove_vsb">remove_vsb()</a>
+<a href="gui.ScrollArea.html#set_area_x">set_area_x()</a>
+<a href="gui.ScrollArea.html#set_area_y">set_area_y()</a>
+<a href="gui.ScrollArea.html#set_ideal_size">set_ideal_size()</a>
+<a href="gui.ScrollArea.html#set_internal_fields">set_internal_fields()</a>
+<a href="gui.ScrollArea.html#set_use_default_keys">set_use_default_keys()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#default_key_listener">default_key_listener</a>
+<a href="gui.ScrollArea.html#hsb">hsb</a>
+<a href="gui.ScrollArea.html#SCROLLBAR_SIZE">SCROLLBAR_SIZE</a>
+<a href="gui.ScrollArea.html#subject_height">subject_height</a>
+<a href="gui.ScrollArea.html#subject_width">subject_width</a>
+<a href="gui.ScrollArea.html#view">view</a>
+<a href="gui.ScrollArea.html#vsb">vsb</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.DrawScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.DrawScrollArea.html#create_view">create_view()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.LineBasedScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.LineBasedScrollArea.html#calculate_subject_height">calculate_subject_height()</a>
+<a href="gui.LineBasedScrollArea.html#center_line">center_line()</a>
+<a href="gui.LineBasedScrollArea.html#create_hsb">create_hsb()</a>
+<a href="gui.LineBasedScrollArea.html#create_vsb">create_vsb()</a>
+<a href="gui.LineBasedScrollArea.html#dump">dump()</a>
+<a href="gui.LineBasedScrollArea.html#ensure_line_visible">ensure_line_visible()</a>
+<a href="gui.LineBasedScrollArea.html#get_area_line_rect">get_area_line_rect()</a>
+<a href="gui.LineBasedScrollArea.html#get_cum_line_height">get_cum_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#get_height_for_line">get_height_for_line()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_count">get_line_count()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_height">get_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_info">get_line_info()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_rect">get_line_rect()</a>
+<a href="gui.LineBasedScrollArea.html#get_line_under_pointer">get_line_under_pointer()</a>
+<a href="gui.LineBasedScrollArea.html#get_nearest_line_to_pointer">get_nearest_line_to_pointer()</a>
+<a href="gui.LineBasedScrollArea.html#get_page_movement">get_page_movement()</a>
+<a href="gui.LineBasedScrollArea.html#goto_first">goto_first()</a>
+<a href="gui.LineBasedScrollArea.html#goto_last">goto_last()</a>
+<a href="gui.LineBasedScrollArea.html#goto_pos">goto_pos()</a>
+<a href="gui.LineBasedScrollArea.html#has_lines">has_lines()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line">invalidate_line()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line_count">invalidate_line_count()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_line_height">invalidate_line_height()</a>
+<a href="gui.LineBasedScrollArea.html#invalidate_lines">invalidate_lines()</a>
+<a href="gui.LineBasedScrollArea.html#pointer_to_line">pointer_to_line()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.LineBasedScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.LineBasedScrollArea.html#cum_line_height">cum_line_height</a>
+<a href="gui.LineBasedScrollArea.html#line_count">line_count</a>
+<a href="gui.LineBasedScrollArea.html#line_height">line_height</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.SelectableScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.SelectableScrollArea.html#calc_highlight_part">calc_highlight_part()</a>
+<a href="gui.SelectableScrollArea.html#calculate_line_count">calculate_line_count()</a>
+<a href="gui.SelectableScrollArea.html#can_drag">can_drag()</a>
+<a href="gui.SelectableScrollArea.html#can_drop">can_drop()</a>
+<a href="gui.SelectableScrollArea.html#check_ticker">check_ticker()</a>
+<a href="gui.SelectableScrollArea.html#clear_selections">clear_selections()</a>
+<a href="gui.SelectableScrollArea.html#constrain_cursor">constrain_cursor()</a>
+<a href="gui.SelectableScrollArea.html#constrain_selections">constrain_selections()</a>
+<a href="gui.SelectableScrollArea.html#contents_changed">contents_changed()</a>
+<a href="gui.SelectableScrollArea.html#delete_lines">delete_lines()</a>
+<a href="gui.SelectableScrollArea.html#deselect_line">deselect_line()</a>
+<a href="gui.SelectableScrollArea.html#deselect_object">deselect_object()</a>
+<a href="gui.SelectableScrollArea.html#drag_event">drag_event()</a>
+<a href="gui.SelectableScrollArea.html#drag_reset">drag_reset()</a>
+<a href="gui.SelectableScrollArea.html#draw_line_data">draw_line_data()</a>
+<a href="gui.SelectableScrollArea.html#draw_line_sel_cur">draw_line_sel_cur()</a>
+<a href="gui.SelectableScrollArea.html#end_handle">end_handle()</a>
+<a href="gui.SelectableScrollArea.html#find_line">find_line()</a>
+<a href="gui.SelectableScrollArea.html#focus_changed">focus_changed()</a>
+<a href="gui.SelectableScrollArea.html#get_contents">get_contents()</a>
+<a href="gui.SelectableScrollArea.html#get_cursor">get_cursor()</a>
+<a href="gui.SelectableScrollArea.html#get_dnd_mode">get_dnd_mode()</a>
+<a href="gui.SelectableScrollArea.html#get_gesture_selections">get_gesture_selections()</a>
+<a href="gui.SelectableScrollArea.html#get_highlight">get_highlight()</a>
+<a href="gui.SelectableScrollArea.html#get_highlight_part">get_highlight_part()</a>
+<a href="gui.SelectableScrollArea.html#get_line">get_line()</a>
+<a href="gui.SelectableScrollArea.html#get_selections">get_selections()</a>
+<a href="gui.SelectableScrollArea.html#handle_exit">handle_exit()</a>
+<a href="gui.SelectableScrollArea.html#handle_in_chain">handle_in_chain()</a>
+<a href="gui.SelectableScrollArea.html#handle_interrupted">handle_interrupted()</a>
+<a href="gui.SelectableScrollArea.html#handle_key">handle_key()</a>
+<a href="gui.SelectableScrollArea.html#handle_key_down">handle_key_down()</a>
+<a href="gui.SelectableScrollArea.html#handle_key_end">handle_key_end()</a>
+<a href="gui.SelectableScrollArea.html#handle_key_escape">handle_key_escape()</a>
+<a href="gui.SelectableScrollArea.html#handle_key_home">handle_key_home()</a>
+<a href="gui.SelectableScrollArea.html#handle_key_page_down">handle_key_page_down()</a>
+<a href="gui.SelectableScrollArea.html#handle_key_page_up">handle_key_page_up()</a>
+<a href="gui.SelectableScrollArea.html#handle_key_up">handle_key_up()</a>
+<a href="gui.SelectableScrollArea.html#handle_ldrag">handle_ldrag()</a>
+<a href="gui.SelectableScrollArea.html#handle_lrelease">handle_lrelease()</a>
+<a href="gui.SelectableScrollArea.html#handle_move">handle_move()</a>
+<a href="gui.SelectableScrollArea.html#handle_mpress">handle_mpress()</a>
+<a href="gui.SelectableScrollArea.html#handle_return">handle_return()</a>
+<a href="gui.SelectableScrollArea.html#handle_rpress">handle_rpress()</a>
+<a href="gui.SelectableScrollArea.html#handle_select_all">handle_select_all()</a>
+<a href="gui.SelectableScrollArea.html#insert_lines">insert_lines()</a>
+<a href="gui.SelectableScrollArea.html#is_selected">is_selected()</a>
+<a href="gui.SelectableScrollArea.html#keeps">keeps()</a>
+<a href="gui.SelectableScrollArea.html#move_cursor_on_key">move_cursor_on_key()</a>
+<a href="gui.SelectableScrollArea.html#move_cursor_to_pointer">move_cursor_to_pointer()</a>
+<a href="gui.SelectableScrollArea.html#move_lines">move_lines()</a>
+<a href="gui.SelectableScrollArea.html#object_first_selection">object_first_selection()</a>
+<a href="gui.SelectableScrollArea.html#object_gen_selections">object_gen_selections()</a>
+<a href="gui.SelectableScrollArea.html#object_get_cursor">object_get_cursor()</a>
+<a href="gui.SelectableScrollArea.html#object_get_gesture_selections">object_get_gesture_selections()</a>
+<a href="gui.SelectableScrollArea.html#object_get_highlight">object_get_highlight()</a>
+<a href="gui.SelectableScrollArea.html#object_get_selections">object_get_selections()</a>
+<a href="gui.SelectableScrollArea.html#object_is_selected">object_is_selected()</a>
+<a href="gui.SelectableScrollArea.html#object_set_cursor">object_set_cursor()</a>
+<a href="gui.SelectableScrollArea.html#object_set_selections">object_set_selections()</a>
+<a href="gui.SelectableScrollArea.html#on_vsb">on_vsb()</a>
+<a href="gui.SelectableScrollArea.html#scroll_tick">scroll_tick()</a>
+<a href="gui.SelectableScrollArea.html#select_cursor">select_cursor()</a>
+<a href="gui.SelectableScrollArea.html#select_line">select_line()</a>
+<a href="gui.SelectableScrollArea.html#select_object">select_object()</a>
+<a href="gui.SelectableScrollArea.html#select_range">select_range()</a>
+<a href="gui.SelectableScrollArea.html#set_always_show_focus_cursor">set_always_show_focus_cursor()</a>
+<a href="gui.SelectableScrollArea.html#set_contents">set_contents()</a>
+<a href="gui.SelectableScrollArea.html#set_cursor">set_cursor()</a>
+<a href="gui.SelectableScrollArea.html#set_dnd_mode">set_dnd_mode()</a>
+<a href="gui.SelectableScrollArea.html#set_draggable_cursor">set_draggable_cursor()</a>
+<a href="gui.SelectableScrollArea.html#set_lines">set_lines()</a>
+<a href="gui.SelectableScrollArea.html#set_motion_cursor">set_motion_cursor()</a>
+<a href="gui.SelectableScrollArea.html#set_select_mode">set_select_mode()</a>
+<a href="gui.SelectableScrollArea.html#set_selection_on_key_moves">set_selection_on_key_moves()</a>
+<a href="gui.SelectableScrollArea.html#set_selections">set_selections()</a>
+<a href="gui.SelectableScrollArea.html#set_show_over">set_show_over()</a>
+<a href="gui.SelectableScrollArea.html#set_wrap_on_up_down">set_wrap_on_up_down()</a>
+<a href="gui.SelectableScrollArea.html#start_handle">start_handle()</a>
+<a href="gui.SelectableScrollArea.html#toggle_select_cursor">toggle_select_cursor()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.SelectableScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.SelectableScrollArea.html#always_show_focus_cursor_flag">always_show_focus_cursor_flag</a>
+<a href="gui.SelectableScrollArea.html#BOTTOM">BOTTOM</a>
+<a href="gui.SelectableScrollArea.html#contents">contents</a>
+<a href="gui.SelectableScrollArea.html#cursor">cursor</a>
+<a href="gui.SelectableScrollArea.html#dnd_mode">dnd_mode</a>
+<a href="gui.SelectableScrollArea.html#draggable_cursor_flag">draggable_cursor_flag</a>
+<a href="gui.SelectableScrollArea.html#EDGES_ONLY">EDGES_ONLY</a>
+<a href="gui.SelectableScrollArea.html#going_up">going_up</a>
+<a href="gui.SelectableScrollArea.html#highlight">highlight</a>
+<a href="gui.SelectableScrollArea.html#highlight_part">highlight_part</a>
+<a href="gui.SelectableScrollArea.html#INTER_LINE_WIDTH">INTER_LINE_WIDTH</a>
+<a href="gui.SelectableScrollArea.html#MIDDLE">MIDDLE</a>
+<a href="gui.SelectableScrollArea.html#MIDDLE_AND_EDGES">MIDDLE_AND_EDGES</a>
+<a href="gui.SelectableScrollArea.html#MIDDLE_ONLY">MIDDLE_ONLY</a>
+<a href="gui.SelectableScrollArea.html#motion_cursor_flag">motion_cursor_flag</a>
+<a href="gui.SelectableScrollArea.html#old_cursor">old_cursor</a>
+<a href="gui.SelectableScrollArea.html#old_highlight">old_highlight</a>
+<a href="gui.SelectableScrollArea.html#old_highlight_part">old_highlight_part</a>
+<a href="gui.SelectableScrollArea.html#old_over">old_over</a>
+<a href="gui.SelectableScrollArea.html#old_selections">old_selections</a>
+<a href="gui.SelectableScrollArea.html#on_a_line">on_a_line</a>
+<a href="gui.SelectableScrollArea.html#over">over</a>
+<a href="gui.SelectableScrollArea.html#prev_cursor">prev_cursor</a>
+<a href="gui.SelectableScrollArea.html#scroll_ticker">scroll_ticker</a>
+<a href="gui.SelectableScrollArea.html#scroll_ticker_interval">scroll_ticker_interval</a>
+<a href="gui.SelectableScrollArea.html#select_mode">select_mode</a>
+<a href="gui.SelectableScrollArea.html#selection_on_key_moves_flag">selection_on_key_moves_flag</a>
+<a href="gui.SelectableScrollArea.html#selections">selections</a>
+<a href="gui.SelectableScrollArea.html#show_over_flag">show_over_flag</a>
+<a href="gui.SelectableScrollArea.html#TOP">TOP</a>
+<a href="gui.SelectableScrollArea.html#wrap_on_up_down_flag">wrap_on_up_down_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.BaseTree</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.BaseTree.html#compute_img_wh">compute_img_wh()</a>
+<a href="gui.BaseTree.html#expand">expand()</a>
+<a href="gui.BaseTree.html#finally">finally()</a>
+<a href="gui.BaseTree.html#flatten">flatten()</a>
+<a href="gui.BaseTree.html#flatten2">flatten2()</a>
+<a href="gui.BaseTree.html#get_last_expanded">get_last_expanded()</a>
+<a href="gui.BaseTree.html#get_root_node">get_root_node()</a>
+<a href="gui.BaseTree.html#handle_lpress">handle_lpress()</a>
+<a href="gui.BaseTree.html#init">init()</a>
+<a href="gui.BaseTree.html#initially">initially()</a>
+<a href="gui.BaseTree.html#invalidate_node_images">invalidate_node_images()</a>
+<a href="gui.BaseTree.html#new">new()</a>
+<a href="gui.BaseTree.html#set_default_icon_paint">set_default_icon_paint()</a>
+<a href="gui.BaseTree.html#set_fixed_col_w">set_fixed_col_w()</a>
+<a href="gui.BaseTree.html#set_handle_paint">set_handle_paint()</a>
+<a href="gui.BaseTree.html#set_root_node">set_root_node()</a>
+<a href="gui.BaseTree.html#set_show_root">set_show_root()</a>
+<a href="gui.BaseTree.html#set_show_root_handles">set_show_root_handles()</a>
+<a href="gui.BaseTree.html#tree_structure_changed">tree_structure_changed()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.BaseTree</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.BaseTree.html#COL_PAD">COL_PAD</a>
+<a href="gui.BaseTree.html#col_w">col_w</a>
+<a href="gui.BaseTree.html#default_icon_paint">default_icon_paint</a>
+<a href="gui.BaseTree.html#fixed_col_w">fixed_col_w</a>
+<a href="gui.BaseTree.html#img_h">img_h</a>
+<a href="gui.BaseTree.html#img_w">img_w</a>
+<a href="gui.BaseTree.html#last_expanded">last_expanded</a>
+<a href="gui.BaseTree.html#minus">minus</a>
+<a href="gui.BaseTree.html#plus">plus</a>
+<a href="gui.BaseTree.html#root_node">root_node</a>
+<a href="gui.BaseTree.html#show_root_flag">show_root_flag</a>
+<a href="gui.BaseTree.html#show_root_handles_flag">show_root_handles_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Tree</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Tree.html#draw_node_data">draw_node_data()</a>
+<a href="gui.Tree.html#get_node_data_width">get_node_data_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.BaseTreeTableContent</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.BaseTreeTableContent.html#calculate_line_height">calculate_line_height()</a>
+<a href="gui.BaseTreeTableContent.html#calculate_subject_width">calculate_subject_width()</a>
+<a href="gui.BaseTreeTableContent.html#draw">draw()</a>
+<a href="gui.BaseTreeTableContent.html#draw_line">draw_line()</a>
+<a href="gui.BaseTreeTableContent.html#get_cell">get_cell()</a>
+<a href="gui.BaseTreeTableContent.html#get_column">get_column()</a>
+<a href="gui.BaseTreeTableContent.html#handle_key_left">handle_key_left()</a>
+<a href="gui.BaseTreeTableContent.html#handle_key_right">handle_key_right()</a>
+<a href="gui.BaseTreeTableContent.html#on_hsb">on_hsb()</a>
+<a href="gui.BaseTreeTableContent.html#slice">slice()</a>
+<a href="gui.BaseTreeTableContent.html#synch_header">synch_header()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#calculate_tree_line_height">calculate_tree_line_height()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="calculate_tree_line_height"/>
+<h3>calculate_tree_line_height()</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="gui.BaseTreeTableContent.html#calculate_tree_line_height">calculate_tree_line_height()</a> in <a href="gui.BaseTreeTableContent.html" target="displayFrame">gui.BaseTreeTableContent</a></dd>
+<dd>
+<p/><a href="gui-treetable.icn.html#179" target="displayFrame">Source - treetable.icn </a>
+</dd>
+</dl><hr>
+</body></html>

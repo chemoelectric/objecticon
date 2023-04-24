@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>LinkedListNode</title></head><body>
+<h1>LinkedListNode</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+A node in a <code><a href="datastruct.LinkedList.html" target="displayFrame">LinkedList</a></code>.
+<p/><a href="datastruct-lists.icn.html#381" target="displayFrame">Source - lists.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#gen">gen()</a>
+<a href="#get_next">get_next()</a>
+<a href="#insert_after">insert_after()</a>
+<a href="#list">list()</a>
+<a href="#move">move()</a>
+<a href="#new">new()</a>
+<a href="#set_next">set_next()</a>
+<a href="#unlink_next">unlink_next()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#nxt">nxt</a>
+<a href="#val">val</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="gen"/>
+<h3>gen()</h3>
+public<p/>
+<dl>
+<dd>
+Generate this node and all subsequent nodes.
+<p/><a href="datastruct-lists.icn.html#435" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="get_next"/>
+<h3>get_next()</h3>
+public<p/>
+<dl>
+<dd>
+Return the next node, or fail if there is none.
+<p/><a href="datastruct-lists.icn.html#447" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="insert_after"/>
+<h3>insert_after(x)</h3>
+public<p/>
+<dl>
+<dd>
+Create and insert a new node immediately after this node, with
+value <code>x</code>.  The new node is returned.
+<p/><a href="datastruct-lists.icn.html#390" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="list"/>
+<h3>list()</h3>
+public<p/>
+<dl>
+<dd>
+Return a new <code><a href="datastruct.LinkedList.html" target="displayFrame">LinkedList</a></code>, with this node as its head.
+<p/><a href="datastruct-lists.icn.html#467" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="move"/>
+<h3>move(i)</h3>
+public<p/>
+<dl>
+<dd>
+Move along the list <code>i</code> (&gt;= 0) places.  Returns the node at that
+position, or fail if the end of the list is encountered.
+<p/><a href="datastruct-lists.icn.html#454" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(nxt, val)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#474" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="set_next"/>
+<h3>set_next(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the next node to <code>n</code>, which may be <code>&amp;null</code>.
+<p/><a href="datastruct-lists.icn.html#426" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="unlink_next"/>
+<h3>unlink_next()</h3>
+public<p/>
+<dl>
+<dd>
+Unlink the node immediately after this node.  Fails if there is
+no such node, or returns the unlinked node.  This can be helpful
+whilst iterating over a list and deleting nodes.
+<p/>
+Example :-
+<pre>
+  l := LinkedList(3, 3,10,20,3,3,30,3,40,50,60,70,3)
+  # Delete all the 3's from the list.
+  # Start with those at the front.
+  while l.at(1) = 3 do
+     l.get()
+  # Then iterate over the rest.
+  every n := l.node(1).gen() do {
+     while n.get_next().val = 3 do
+        n.unlink_next()
+  }
+  # Now l is (10,20,30,40,50,60,70)
+</pre>
+<p/><a href="datastruct-lists.icn.html#399" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="nxt"/>
+<h3>nxt</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#385" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="val"/>
+<h3>val</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#387" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+</body></html>

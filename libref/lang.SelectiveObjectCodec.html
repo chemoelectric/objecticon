@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SelectiveObjectCodec</title></head><body>
+<h1>SelectiveObjectCodec</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.ObjectCodec.html" target="displayFrame">lang.ObjectCodec</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+An implementation of <code><a href="lang.SelectiveObjectCodec.html#object_encode">object_encode</a></code> and <code><a href="lang.SelectiveObjectCodec.html#object_decode">object_decode</a></code>.  The
+subclass may override the method <code><a href="lang.SelectiveObjectCodec.html#get_template">get_template()</a></code> to generate
+a list of pairs.  The first element of each pair is an arbitrary
+identifier used to identify the field; the second element is the
+name of the field.
+<p/>
+Example :-
+<pre>
+    # This will save the three fields increment_size, value and 
+    # is_range_flag.
+    private get_template()
+       suspend
+           ["Increment Size", "increment_size"] |
+           ["Value", "value"] |
+           ["Is Range Flag", "is_range_flag"]
+    end
+</pre>
+<p/>
+The programmer may change the name of the field afterwards; for
+example <code>value</code> may be re-named <code>initial_value</code>, and the data would
+still be restored correctly, so long as the <code><a href="lang.SelectiveObjectCodec.html#get_template">get_template()</a></code> method
+was updated appropriately.
+<p/>
+Alternatively, any of the pairs may be a string field name, in which
+the label is the field name itself.  This does not permit the field
+name to change without rendering the encoded string invalid.
+<p/>
+If not implemented by a subclass, a default <code><a href="lang.SelectiveObjectCodec.html#get_template">get_template()</a></code>
+suspends all of the fields in the class.
+<p/><a href="lang-selectiveobjectcodec.icn.html#16" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.SelectiveObjectCodec.html">lang.SelectiveObjectCodec</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_template">get_template()</a>
+<a href="#load_structs">load_structs()</a>
+<a href="#object_decode">object_decode()</a>
+<a href="#object_encode">object_encode()</a>
+<a href="#post_decode">post_decode()</a>
+<a href="#post_encode">post_encode()</a>
+<a href="#pre_decode">pre_decode()</a>
+<a href="#pre_encode">pre_encode()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_template"/>
+<h3>get_template()</h3>
+protected<p/>
+<dl>
+<dd>
+This method may be overridden by a subclass to return the field
+template (see above).  By default, the method generates all of
+the instance fields of self.
+<p/><a href="lang-selectiveobjectcodec.icn.html#159" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+<a name="load_structs"/>
+<h3>load_structs()</h3>
+private<p/>
+<dl>
+<dd>
+Get the conversion info structures for the given class, using
+caching for efficiency.  The result is a record with two items.
+The first element is a list of pairs of field identifiers and
+numbers to read/write.  The second element is a table mapping the
+field ids to field numbers.
+<p/><a href="lang-selectiveobjectcodec.icn.html#119" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+<a name="object_decode"/>
+<h3>object_decode(e)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectCodec.html#object_decode">object_decode()</a> in <a href="lang.ObjectCodec.html" target="displayFrame">lang.ObjectCodec</a></dd>
+<dd>
+<p/><a href="lang-selectiveobjectcodec.icn.html#95" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+<a name="object_encode"/>
+<h3>object_encode(e)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectCodec.html#object_encode">object_encode()</a> in <a href="lang.ObjectCodec.html" target="displayFrame">lang.ObjectCodec</a></dd>
+<dd>
+<p/><a href="lang-selectiveobjectcodec.icn.html#76" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+<a name="post_decode"/>
+<h3>post_decode()</h3>
+protected<p/>
+<dl>
+<dd>
+This empty method may be overridden; it is invoked just after
+the object has been decoded.
+<p/><a href="lang-selectiveobjectcodec.icn.html#69" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+<a name="post_encode"/>
+<h3>post_encode()</h3>
+protected<p/>
+<dl>
+<dd>
+This empty method may be overridden; it is invoked just after
+the object has been encoded.
+<p/><a href="lang-selectiveobjectcodec.icn.html#55" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+<a name="pre_decode"/>
+<h3>pre_decode()</h3>
+protected<p/>
+<dl>
+<dd>
+This empty method may be overridden; it is invoked just before
+the object is decoded.
+<p/><a href="lang-selectiveobjectcodec.icn.html#62" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+<a name="pre_encode"/>
+<h3>pre_encode()</h3>
+protected<p/>
+<dl>
+<dd>
+This empty method may be overridden; it is invoked just before
+the object is encoded.
+<p/><a href="lang-selectiveobjectcodec.icn.html#48" target="displayFrame">Source - selectiveobjectcodec.icn </a>
+</dd>
+</dl><hr>
+</body></html>

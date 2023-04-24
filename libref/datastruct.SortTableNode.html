@@ -1,0 +1,301 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SortTableNode</title></head><body>
+<h1>SortTableNode</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+A node in a <code><a href="datastruct.SortTable.html" target="displayFrame">SortTable</a></code> tree.
+<p/><a href="datastruct-tables.icn.html#540" target="displayFrame">Source - tables.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#back">back()</a>
+<a href="#gen">gen()</a>
+<a href="#get_next">get_next()</a>
+<a href="#get_prev">get_prev()</a>
+<a href="#get_tree">get_tree()</a>
+<a href="#is_linked">is_linked()</a>
+<a href="#keyval">keyval()</a>
+<a href="#move">move()</a>
+<a href="#move_unlink">move_unlink()</a>
+<a href="#need_linked">need_linked()</a>
+<a href="#new">new()</a>
+<a href="#rank">rank()</a>
+<a href="#real">real()</a>
+<a href="#unlink">unlink()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#is_red_flag">is_red_flag</a>
+<a href="#key">key</a>
+<a href="#l">l</a>
+<a href="#N">N</a>
+<a href="#p">p</a>
+<a href="#r">r</a>
+<a href="#val">val</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="back"/>
+<h3>back()</h3>
+public<p/>
+<dl>
+<dd>
+Generate this node and all prior nodes in the sort order in the
+enclosing tree.
+<p/>
+See also <code><a href="datastruct.SortTableNode.html#gen">gen()</a></code> for a tree modification limitation (the same
+applies to this method).
+<p/><a href="datastruct-tables.icn.html#651" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen()</h3>
+public<p/>
+<dl>
+<dd>
+Generate this node and all subsequent nodes in the sort order in
+the enclosing tree.
+<p/>
+Changes to the tree structure are permitted during iteration,
+with the exception that the last node generated may not be
+removed from the tree ("unlinked") before the next result is
+generated; if it is then a runtime error is immediately raised.
+<p/>
+In order to iterate over the tree and remove selected nodes, a
+loop using <code><a href="datastruct.SortTableNode.html#move_unlink">move_unlink</a></code> may be used instead.
+<p/><a href="datastruct-tables.icn.html#629" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="get_next"/>
+<h3>get_next()</h3>
+public<p/>
+<dl>
+<dd>
+Return the next node by sorted order within the enclosing tree,
+or fail if there is none.
+<p/><a href="datastruct-tables.icn.html#551" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="get_prev"/>
+<h3>get_prev()</h3>
+public<p/>
+<dl>
+<dd>
+Return the previous node by sorted order within the enclosing
+tree, or fail if there is none.
+<p/><a href="datastruct-tables.icn.html#571" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="get_tree"/>
+<h3>get_tree()</h3>
+public<p/>
+<dl>
+<dd>
+Return the <code><a href="datastruct.SortTable.html" target="displayFrame">SortTable</a></code> associated with this node, which
+must be "linked".
+<p/>
+This method works by moving up the tree to the root node, whose
+"parent" is a special object which contains a link to the
+enclosing tree.
+<p/>
+If this tree of nodes was orphaned because the parent tree
+performed a <code>clear()</code>, then this method fails.
+<p/><a href="datastruct-tables.icn.html#668" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="is_linked"/>
+<h3>is_linked()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff this node is "linked" (meaning it hasn't been
+deleted from its tree).
+<p/><a href="datastruct-tables.icn.html#621" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="keyval"/>
+<h3>keyval()</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#747" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="move"/>
+<h3>move(i)</h3>
+public<p/>
+<dl>
+<dd>
+Move along the ordered sequence of nodes <code>i</code> places; positive
+means increasing key order, negative means decreasing.  Returns
+the node at that position, or fail if either end of the sequence
+is encountered.
+<p/><a href="datastruct-tables.icn.html#591" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="move_unlink"/>
+<h3>move_unlink(i)</h3>
+public<p/>
+<dl>
+<dd>
+This method combines a <code><a href="datastruct.SortTableNode.html#move">move</a></code> and an <code><a href="datastruct.SortTableNode.html#unlink">unlink</a></code>.  First, <code><a href="datastruct.SortTableNode.html#move">move(i)</a></code>
+is performed, and the result is noted.  Then the <code><a href="datastruct.SortTableNode.html#unlink">unlink</a></code> is
+peformed.  The result of the <code><a href="datastruct.SortTableNode.html#move">move</a></code> is returned; if the <code><a href="datastruct.SortTableNode.html#move">move</a></code>
+failed, then this method fails, but the <code><a href="datastruct.SortTableNode.html#unlink">unlink</a></code> is carried out
+regardless.
+<p/>
+This gives a convenient way to iterate over the tree and delete
+selected nodes.
+<p/>
+Example :-
+<pre>
+   # Delete all entries with even-numbered keys.
+   n := t.node(1)
+   while
+      n := if n.key % 2 = 0 then
+         n.move_unlink(1)
+      else
+         n.get_next()
+</pre>
+<p/><a href="datastruct-tables.icn.html#709" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="need_linked"/>
+<h3>need_linked()</h3>
+public<p/>
+<dl>
+<dd>
+Check if this node is "linked" (hasn't been unlinked), signalling
+a runtime error otherwise.
+<p/><a href="datastruct-tables.icn.html#612" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(k, v, p)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#755" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="rank"/>
+<h3>rank()</h3>
+public<p/>
+<dl>
+<dd>
+Return the rank of this node, ie its index in the sorted order of
+nodes in the enclosing tree, with 1 being the rank of the
+"smallest" key.
+<p/><a href="datastruct-tables.icn.html#737" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="real"/>
+<h3>real()</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#751" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="unlink"/>
+<h3>unlink()</h3>
+public<p/>
+<dl>
+<dd>
+Remove this node from its tree.
+<p/>
+After a node has been unlinked it cannot be used for further
+operations, and any attempt to do so will cause a runtime error.
+(See also <code><a href="datastruct.SortTableNode.html#is_linked">is_linked</a></code>).
+<p/>
+Example :-
+<pre>
+  t := SortTable(,, "Cat", 12, "Mouse", 2, "Gerbil", 1)
+  n := t.node(2)     # SortTableNode(key="Gerbil";val=1)
+  n.unlink()
+  # t is now SortTable("Cat"-&gt;12;"Mouse"-&gt;2)
+  n.gen()            # runtime error
+</pre>
+<p/><a href="datastruct-tables.icn.html#687" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="is_red_flag"/>
+<h3>is_red_flag</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#549" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="key"/>
+<h3>key</h3>
+public const<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#544" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="l"/>
+<h3>l</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#549" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="N"/>
+<h3>N</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#549" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="p"/>
+<h3>p</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#549" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="r"/>
+<h3>r</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#549" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+<a name="val"/>
+<h3>val</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-tables.icn.html#546" target="displayFrame">Source - tables.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gpxop.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     gpxop.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for graphics operations
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     May 26, 1999
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	This file contains some graphics procedures.
+<a name="18"/>#
+<a name="19"/>#	LeftString(x, y, s)	  draws a string left-aligned at (x, y).
+<a name="20"/>#
+<a name="21"/>#	CenterString(x, y, s)	  draws a string centered at (x, y).
+<a name="22"/>#
+<a name="23"/>#	RightString(x, y, s)	  draws a string right-aligned at (x, y).
+<a name="24"/>#
+<a name="25"/>#	ClearOutline(x, y, w, h)  draws a rectangle, erasing its interior.
+<a name="26"/>#
+<a name="27"/>#	Translate(dx, dy, w, h)	  moves the window origin and optionally
+<a name="28"/>#				  sets the clipping region.
+<a name="29"/>#
+<a name="30"/>#	Zoom(x1, y1, w1, h1, x2, y2, w2, h2)
+<a name="31"/>#				  copies and distorts a rectangle.
+<a name="32"/>#
+<a name="33"/>#	Capture(p, x, y, w, h)	  converts a window area to an image string.
+<a name="34"/>#
+<a name="35"/>#	Sweep()			  lets the user select a rectangular area.
+<a name="36"/>#
+<a name="37"/>############################################################################
+<a name="38"/>#
+<a name="39"/>#  LeftString(x, y, s), CenterString(x, y, s), and RightString(x, y, s)
+<a name="40"/>#  draw a string centered vertically about y and left-justified,
+<a name="41"/>#  centered, or right-justified about x.
+<a name="42"/>#
+<a name="43"/>#  ClearOutline(x, y, w, h) draws a rectangle in the foreground color
+<a name="44"/>#  and fills it with the background color.
+<a name="45"/>#
+<a name="46"/>#  Translate(dx, dy, w, h) adjusts a window's dx and dy attributes by
+<a name="47"/>#  the values given.  Note that the resulting attribute values are the
+<a name="48"/>#  sums of the existing values with the parameters, so that successive
+<a name="49"/>#  translations accumulate.  If w and h are supplied, the clipping
+<a name="50"/>#  region is set to a rectangle of size (w, h) at the new origin.
+<a name="51"/>#
+<a name="52"/>#  Zoom(x1, y1, w1, h1, x2, y2, w2, h2) is a distorting variation of
+<a name="53"/>#  CopyArea that can be used to shrink or enlarge a rectangular area.
+<a name="54"/>#  Zero, one, or two window arguments can be supplied.  Rectangle 1 is
+<a name="55"/>#  copied to fill rectangle 2 using simple pixel sampling and replication.
+<a name="56"/>#  The rectangles can overlap.  The usual defaults apply for both rectangles.
+<a name="57"/>#
+<a name="58"/>#  Sweep() lets the user select a rectangular area using the mouse.
+<a name="59"/>#  Called when a mouse button is pressed, Sweep handles all subsequent
+<a name="60"/>#  events until a mouse button is released.  As the mouse moves, a
+<a name="61"/>#  reverse-mode outline rectangle indicates the selected area.  The
+<a name="62"/>#  pixels underneath the rectangle outline are considered part of this
+<a name="63"/>#  rectangle, implying a minimum width/height of 1, and the rectangle
+<a name="64"/>#  is clipped to the window  boundary.  Sweep returns a Rectangle instance
+<a name="65"/>#  giving the rectangle bounds in canonical form (w and h always positive).
+<a name="66"/>#
+<a name="67"/>#  Capture(palette, x, y, w, h) converts a window region into an
+<a name="68"/>#  image string using the specified palette, and returns the string.
+<a name="69"/>#
+<a name="70"/>#  These procedures all accept an optional initial window argument.
+<a name="71"/>#
+<a name="72"/>############################################################################
+<a name="73"/>#
+<a name="74"/>#  Links: gpxlib
+<a name="75"/>#
+<a name="76"/>############################################################################
+<a name="77"/>#
+<a name="78"/>#  Requires:  Version 9 graphics
+<a name="79"/>#
+<a name="80"/>############################################################################
+<a name="81"/>
+<a name="82"/>package ipl.graphics
+<a name="83"/>
+<a name="84"/>import graphics(Mouse,Window,Rectangle), io(RamStream), util(use)
+<a name="85"/>
+<a name="86"/>#   LeftString(x, y, s) -- draw string left-justified at (x,y).
+<a name="87"/>
+<a name="88"/># draw left-justified string
+<a name="89"/>procedure LeftString(win, x, y, s)		
+<a name="90"/>   y +:= (win.get_font_ascent() - win.get_font_descent()) / 2 + 1
+<a name="91"/>   return win.draw_string(x, y, s)
+<a name="92"/>end
+<a name="93"/>
+<a name="94"/>
+<a name="95"/>#   CenterString(x, y, s) -- draw string centered about (x,y).
+<a name="96"/>
+<a name="97"/># draw centered string
+<a name="98"/>procedure CenterString(win, x, y, s)		
+<a name="99"/>   x -:= win.text_width( s) / 2
+<a name="100"/>   y +:= (win.get_font_ascent() - win.get_font_descent()) / 2 + 1
+<a name="101"/>   return win.draw_string(x, y, s)
+<a name="102"/>end
+<a name="103"/>
+<a name="104"/>
+<a name="105"/>#   RightString(x, y, s) -- draw string right-justified at (x,y).
+<a name="106"/>
+<a name="107"/># draw right-justified string
+<a name="108"/>procedure RightString(win, x, y, s)		
+<a name="109"/>   x -:= win.text_width( s)
+<a name="110"/>   y +:= (win.get_font_ascent() - win.get_font_descent()) / 2 + 1
+<a name="111"/>   return win.draw_string(x, y, s)
+<a name="112"/>end
+<a name="113"/>
+<a name="114"/>
+<a name="115"/>#   ClearOutline(x, y, w, h) -- draw rectangle and fill background.
+<a name="116"/>
+<a name="117"/># draw and clear rectangle
+<a name="118"/>procedure ClearOutline(win, x, y, w, h)		
+<a name="119"/>   return win.erase_area(x, y, w, h).draw_rectangle(x, y, w, h)
+<a name="120"/>end
+<a name="121"/>
+<a name="122"/>
+<a name="123"/>#   Translate(dx, dy, w, h) -- add translation and possibly clipping.
+<a name="124"/>
+<a name="125"/># add translation
+<a name="126"/>procedure Translate(win, dx, dy, w, h)		
+<a name="127"/>   win.set_dx(win.get_dx()+dx).set_dy(win.get_dy()+dy)
+<a name="128"/>   win.clip( 0, 0, \w, \h)
+<a name="129"/>   return win
+<a name="130"/>end
+<a name="131"/>
+<a name="132"/>
+<a name="133"/>#  Sweep() -- sweep out area with mouse, return bounds
+<a name="134"/>
+<a name="135"/># sweep area with mouse
+<a name="136"/>procedure Sweep(win)				
+<a name="137"/>   local p, e, x, y, tmp, x1, y1, x2, y2, r, sz, off
+<a name="138"/>
+<a name="139"/>   sz := win.get_size()
+<a name="140"/>   off := win.get_offset()
+<a name="141"/>   p := win.query_pointer()
+<a name="142"/>
+<a name="143"/>   x := p.x                                      # set initial rect bounds
+<a name="144"/>   x &lt;:= -off.dx
+<a name="145"/>   x &gt;:= sz.width - off.dx - 1
+<a name="146"/>   y := p.y
+<a name="147"/>   y &lt;:= -off.dy
+<a name="148"/>   y &gt;:= sz.height - off.dy - 1
+<a name="149"/>
+<a name="150"/>   r := Rectangle(x, y, 1, 1)
+<a name="151"/>   tmp := (Window().set_size!sz).set_offset!off
+<a name="152"/>   win.copy_to(,,,, tmp)
+<a name="153"/>
+<a name="154"/>   win := win.clone()
+<a name="155"/>   win.set_draw_op("source").set_pattern().set_mask().clip()
+<a name="156"/>   win.draw_rectangle!r                          # draw initial bounding rect
+<a name="157"/>
+<a name="158"/>   repeat {
+<a name="159"/>      e := WEvent(win)
+<a name="160"/>      if member(Mouse.RELEASE, e[1]) then
+<a name="161"/>         break
+<a name="162"/>      if e[1] === Mouse.DRAG then {
+<a name="163"/>         win.hold()
+<a name="164"/>         tmp.copy_to(r.x, r.y, r.width, r.height, win, r.x, r.y)      # erase old bounds
+<a name="165"/>         # calc new width &amp; height
+<a name="166"/>         x1 := x; x2 := e[2]
+<a name="167"/>         y1 := y; y2 := e[3]
+<a name="168"/>         if x1 &gt; x2 then x1 :=: x2
+<a name="169"/>         if y1 &gt; y2 then y1 :=: y2
+<a name="170"/>         r := win.viewable(x1, y1, x2 - x1 + 1, y2 - y1 + 1)
+<a name="171"/>         win.draw_rectangle!r       # draw new bounds
+<a name="172"/>         win.restore()   
+<a name="173"/>         }
+<a name="174"/>      }
+<a name="175"/>   tmp.copy_to(r.x, r.y, r.width, r.height, win, r.x, r.y)      # erase bounding rectangle
+<a name="176"/>
+<a name="177"/>   tmp.close()
+<a name="178"/>   win.close()
+<a name="179"/>   return r                                   # return bounds
+<a name="180"/>end
+<a name="181"/>
+<a name="182"/>
+<a name="183"/>#  Zoom(win1, x1, y1, w1, h1, win2, x2, y2, w2, h2) -- copy and distort.
+<a name="184"/>
+<a name="185"/># zoom image
+<a name="186"/>procedure Zoom(win1, x1, y1, w1, h1, win2, x2, y2, w2, h2)
+<a name="187"/>   local r, x, y, scr
+<a name="188"/>
+<a name="189"/>   r := win1.canonical(x1, y1, w1, h1)
+<a name="190"/>   x1 := r.x; y1 := r.y; w1 := r.width; h1 := r.height
+<a name="191"/>
+<a name="192"/>   r := win2.canonical(x2, y2, w2, h2)
+<a name="193"/>   x2 := r.x; y2 := r.y; w2 := r.width; h2 := r.height
+<a name="194"/>
+<a name="195"/>   if (w1 | w2 | h1 | h2) = 0 then
+<a name="196"/>      return win1
+<a name="197"/>
+<a name="198"/>   scr := ScratchCanvas(win2, w2, h1, Zoom) | fail
+<a name="199"/>   scr.set_draw_op("source").
+<a name="200"/>      erase_area()
+<a name="201"/>
+<a name="202"/>   win2 := win2.clone().set_draw_op("source")
+<a name="203"/>   every x := 0 to w2 - 1 do
+<a name="204"/>      win1.copy_to(x1 + w1 * ((x + 0.5) / w2), y1, 1, h1, scr, x, 0)
+<a name="205"/>   every y := 0 to h2 - 1 do
+<a name="206"/>      scr.copy_to(0, h1 * ((y + 0.5) / h2), w2, 1, win2, x2, y2 + y)
+<a name="207"/>   win2.close()
+<a name="208"/>   return win1
+<a name="209"/>end
+<a name="210"/>
+<a name="211"/>
+<a name="212"/>#  Capture(win, pal, x, y, w, h) -- capture screen region as image string
+<a name="213"/>
+<a name="214"/># capture image as string
+<a name="215"/>procedure Capture(win, pal, x, y, w, h)		
+<a name="216"/>   local c, k, s, cmap, px, r
+<a name="217"/>
+<a name="218"/>   /pal := "c1"
+<a name="219"/>
+<a name="220"/>   r := win.viewable(x, y, w, h) | fail
+<a name="221"/>
+<a name="222"/>   Window.palette_chars(pal) | runerr(205, pal)
+<a name="223"/>
+<a name="224"/>   cmap := table()
+<a name="225"/>
+<a name="226"/>   # accumulate the image in chunks and then concatenate
+<a name="227"/>   # (much faster than concatenating single chars on a very long string)
+<a name="228"/>   return use {
+<a name="229"/>      s := RamStream(),
+<a name="230"/>      {
+<a name="231"/>         s.out(r.width || "," || pal || ",")
+<a name="232"/>         use {
+<a name="233"/>            px := win.get_pixels!r,
+<a name="234"/>            every k := px.gen().pixel do {
+<a name="235"/>               c := \cmap[k] | (cmap[k] := Window.palette_key(pal, k))
+<a name="236"/>               s.out(c)
+<a name="237"/>            }
+<a name="238"/>         }
+<a name="239"/>         s.str()
+<a name="240"/>      }
+<a name="241"/>   }
+<a name="242"/>end
+</pre></body></html>

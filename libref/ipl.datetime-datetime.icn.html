@@ -1,0 +1,290 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>datetime.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     datetime.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for date and time operations
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander and Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     November 6, 1998
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	calendat(j)
+<a name="18"/>#		returns a record with the month, day, and year corresponding
+<a name="19"/>#		to the Julian Date Number j.
+<a name="20"/>#
+<a name="21"/>#	date()	natural date in English.
+<a name="22"/>#
+<a name="23"/>#	full13th(year1, year2)
+<a name="24"/>#		generates records giving the days on which a full moon occurs
+<a name="25"/>#		on Friday the 13th in the range from year1 though year2.
+<a name="26"/>#
+<a name="27"/>#	julian(m, d, y)
+<a name="28"/>#		returns the Julian Day Number for the specified
+<a name="29"/>#		month, day, and year.
+<a name="30"/>#
+<a name="31"/>#	pom(n, phase)
+<a name="32"/>#		returns record with the Julian Day number of fractional
+<a name="33"/>#		part of the day for which the nth such phase since
+<a name="34"/>#		January, 1900.  Phases are encoded as:
+<a name="35"/>#
+<a name="36"/>#			0 - new moon
+<a name="37"/>#			1 - first quarter
+<a name="38"/>#			2 - full moon
+<a name="39"/>#			3 - last quarter#
+<a name="40"/>#
+<a name="41"/>#		GMT is assumed.
+<a name="42"/>#
+<a name="43"/>#	saytime()
+<a name="44"/>#		computes the time in natural English.  If an argument is
+<a name="45"/>#		supplied it is used as a test value to check the operation
+<a name="46"/>#		 the program.
+<a name="47"/>#
+<a name="48"/>#	walltime()
+<a name="49"/>#		produces the number of seconds since midnight.  Beware
+<a name="50"/>#		wrap-around when used in programs that span midnight.
+<a name="51"/>#
+<a name="52"/>############################################################################
+<a name="53"/>#
+<a name="54"/>#  See also:  datefns.icn
+<a name="55"/>#
+<a name="56"/>############################################################################
+<a name="57"/>#
+<a name="58"/>#  Acknowledgement:  Some of these procedures are based on an algorithm
+<a name="59"/>#  given in "Numerical Recipes; The Art of Scientific Computing";
+<a name="60"/>#  William H. Press, Brian P. Flannery, Saul A. Teukolsky, and William
+<a name="61"/>#  T. Vetterling;#  Cambridge University Press, 1986.
+<a name="62"/>#
+<a name="63"/>############################################################################
+<a name="64"/>
+<a name="65"/>package ipl.datetime
+<a name="66"/>
+<a name="67"/>import
+<a name="68"/>   util(Math)
+<a name="69"/>
+<a name="70"/>record date1(month, day, year)
+<a name="71"/>record date2(month, year, fraction)
+<a name="72"/>record jdate(number, fraction)
+<a name="73"/>
+<a name="74"/># Julian date
+<a name="75"/>procedure calendat(julian)			
+<a name="76"/>   local ja, jalpha, jb, jc, jd, je, gregorian
+<a name="77"/>   local month, day, year
+<a name="78"/>
+<a name="79"/>   gregorian := 2299161
+<a name="80"/>
+<a name="81"/>   if julian &gt;= gregorian then {
+<a name="82"/>      jalpha := integer(((julian - 1867216) - 0.25) / 36524.25)
+<a name="83"/>      ja := julian + 1 + jalpha - integer(0.25 * jalpha)
+<a name="84"/>      }
+<a name="85"/>   else ja := julian
+<a name="86"/>
+<a name="87"/>   jb := ja + 1524
+<a name="88"/>   jc := integer(6680.0 + ((jb - 2439870) - 122.1) / 365.25)
+<a name="89"/>   jd := 365 * jc + integer(0.25 * jc)
+<a name="90"/>   je := integer((jb - jd) / 30.6001)
+<a name="91"/>   day := jb - jd - integer(30.6001 * je)
+<a name="92"/>   month := je - 1
+<a name="93"/>   if month &gt; 12 then month -:= 12
+<a name="94"/>   year := jc - 4715
+<a name="95"/>   if month &gt; 2 then year -:= 1
+<a name="96"/>   if year &lt;= 0 then year -:= 1
+<a name="97"/>
+<a name="98"/>   return date1(month, day, year)
+<a name="99"/>
+<a name="100"/>end
+<a name="101"/>
+<a name="102"/># date in natural English
+<a name="103"/>procedure date()			
+<a name="104"/>
+<a name="105"/>   &amp;dateline ? {
+<a name="106"/>      tab(find(", ") + 2)
+<a name="107"/>      return tab(find("  "))
+<a name="108"/>      }
+<a name="109"/>
+<a name="110"/>end
+<a name="111"/>
+<a name="112"/># full moons on Friday 13ths
+<a name="113"/>procedure full13th(year1, year2)	
+<a name="114"/>   local time_zone, jd, jday, fraction, jul
+<a name="115"/>   local year, month,  n, icon, day_of_week, c
+<a name="116"/>
+<a name="117"/>   time_zone :=  -5.0 / 24.0
+<a name="118"/>
+<a name="119"/>   every year := year1 to year2 do {
+<a name="120"/>      every month := 1 to 12 do {
+<a name="121"/>         jday := julian(month, 13, year)
+<a name="122"/>         day_of_week := (jday + 1) % 7
+<a name="123"/>         if day_of_week = 5 then {
+<a name="124"/>            n := integer(12.37 * (year - 1900 + integer((month - 0.5) / 12.0)))
+<a name="125"/>            icon := 0
+<a name="126"/>            repeat {
+<a name="127"/>               jul := pom(n,2)
+<a name="128"/>               jd := jul.number
+<a name="129"/>               fraction := 24.0 * (jul.fraction + time_zone)
+<a name="130"/>               if (fraction &lt; 0.0) then {
+<a name="131"/>                  jd  -:= 1
+<a name="132"/>                  fraction  +:= 24.0
+<a name="133"/>                  }
+<a name="134"/>               if fraction &gt; 12.0 then {
+<a name="135"/>                  jd +:= 1
+<a name="136"/>                  fraction -:= 12.0
+<a name="137"/>                  }
+<a name="138"/>               else fraction  +:= 12.0
+<a name="139"/>               if jd = jday then {
+<a name="140"/>                  suspend date2(month, year, fraction)
+<a name="141"/>                  break
+<a name="142"/>                  }
+<a name="143"/>               else {
+<a name="144"/>                  c := if jday &gt;= jd then 1 else -1
+<a name="145"/>                  if c = -icon then break
+<a name="146"/>                  icon := c
+<a name="147"/>                  n +:= c
+<a name="148"/>                  }
+<a name="149"/>               }
+<a name="150"/>            }
+<a name="151"/>         }
+<a name="152"/>      }
+<a name="153"/>
+<a name="154"/>end
+<a name="155"/>
+<a name="156"/># Julian date
+<a name="157"/>procedure julian(month, day, year)	
+<a name="158"/>   local jul, gregorian, ja, julian_year, julian_month
+<a name="159"/>
+<a name="160"/>   gregorian := (15 + 31 * (10 + 12 * 1582))
+<a name="161"/>
+<a name="162"/>   if year = 0 then fail
+<a name="163"/>   if year &lt; 0 then year +:= 1
+<a name="164"/>   if month &gt; 2 then  {
+<a name="165"/>      julian_year := year
+<a name="166"/>      julian_month := month + 1
+<a name="167"/>      } else {
+<a name="168"/>      julian_year := year - 1
+<a name="169"/>      julian_month := month + 13
+<a name="170"/>      }
+<a name="171"/>   jul := (integer(365.25 * julian_year) + integer(30.6001 * julian_month) +
+<a name="172"/>      day + 1720995)
+<a name="173"/>   if day + 31 * (month + 12 * year) &gt;= gregorian then  {
+<a name="174"/>      ja := integer(0.01 * julian_year)
+<a name="175"/>      jul +:= 2 - ja + integer(0.25 * ja)
+<a name="176"/>      }
+<a name="177"/>
+<a name="178"/>   return jul
+<a name="179"/>
+<a name="180"/>end
+<a name="181"/>
+<a name="182"/># phase of moon
+<a name="183"/>procedure pom(n, nph)			
+<a name="184"/>   local i, jd, fraction, radians
+<a name="185"/>   local am, as, c, t, t2, extra
+<a name="186"/>
+<a name="187"/>   radians := Math.PI / 180
+<a name="188"/>
+<a name="189"/>   c := n + nph / 4.0
+<a name="190"/>   t := c / 1236.85
+<a name="191"/>   t2 := t * t
+<a name="192"/>   as := 359.2242 + 29.105356 * c
+<a name="193"/>   am := 306.0253 + 385.816918 * c + 0.010730 * t2
+<a name="194"/>   jd := 2415020 + 28 * n + 7 * nph
+<a name="195"/>   extra := 0.75933 + 1.53058868 * c + ((1.178e-4) - (1.55e-7) * t) * t2
+<a name="196"/>
+<a name="197"/>   if nph = (0 | 2) then
+<a name="198"/>      extra +:=  (0.1734 - 3.93e-4 * t) * Math.sin(radians * as) - 0.4068 *
+<a name="199"/>          Math.sin(radians * am)
+<a name="200"/>   else if nph = (1 | 3) then
+<a name="201"/>      extra +:= (0.1721 - 4.0e-4 * t) * Math.sin(radians * as) - 0.6280 *
+<a name="202"/>        Math.sin(radians * am)
+<a name="203"/>   else fail
+<a name="204"/>
+<a name="205"/>   if extra &gt;= 0 then i := integer(extra)
+<a name="206"/>   else i := integer(extra - 1.0)
+<a name="207"/>   jd  +:=  i
+<a name="208"/>   fraction := extra - i
+<a name="209"/>
+<a name="210"/>   return jdate(integer(jd), fraction)
+<a name="211"/>
+<a name="212"/>end
+<a name="213"/>
+<a name="214"/># time in natural English
+<a name="215"/>procedure saytime(time)			
+<a name="216"/>   local hour,min,mod,near,numbers,out,sec
+<a name="217"/>   #
+<a name="218"/>   # Extract the hours, minutes, and seconds from the time.
+<a name="219"/>   #
+<a name="220"/>   /time := &amp;clock
+<a name="221"/>   time ? {
+<a name="222"/>      hour := integer(tab(find(":") | 0)) | fail
+<a name="223"/>      move(1)
+<a name="224"/>      min := tab(find(":") | 0)
+<a name="225"/>      move(1)
+<a name="226"/>      sec := tab(0)
+<a name="227"/>      }
+<a name="228"/>   min := integer(min) | 0
+<a name="229"/>   sec := integer(sec) | 0
+<a name="230"/>   #
+<a name="231"/>   # Now start the processing in earnest.
+<a name="232"/>   #
+<a name="233"/>   near := ["just gone","just after","nearly","almost"]
+<a name="234"/>   if sec &gt; 29 then min +:= 1    # round up minutes
+<a name="235"/>   mod := min % 5                # where we are in 5 minute bracket
+<a name="236"/>   out := near[mod] || " " | ""  # start building the result
+<a name="237"/>   if min &gt; 32 then hour +:= 1   # we are TO the hour
+<a name="238"/>   min +:= 2             # shift minutes to straddle the 5-minute point
+<a name="239"/>   #
+<a name="240"/>   # Now special-case the result for Noon and Midnight hours.
+<a name="241"/>   #
+<a name="242"/>   if hour % 12 = 0 &amp; min % 60 &lt;= 4 then {
+<a name="243"/>      return if hour = 12 then out || "noon"
+<a name="244"/>				    else out || "midnight"
+<a name="245"/>      }
+<a name="246"/>   min -:= min % 5               # find the nearest 5 mins
+<a name="247"/>   if hour &gt; 12 then hour -:= 12 # get rid of 25-hour clock
+<a name="248"/>   else if hour = 0 then hour := 12 # .. and allow for midnight
+<a name="249"/>   #
+<a name="250"/>   # Determine the phrase to use for each 5-minute segment.
+<a name="251"/>   #
+<a name="252"/>   case min of {
+<a name="253"/>       0: {}                      # add "o'clock" later
+<a name="254"/>      60: min=0                   # ditto
+<a name="255"/>       5: out ||:= "five past"
+<a name="256"/>      10: out ||:= "ten past"
+<a name="257"/>      15: out ||:= "a quarter past"
+<a name="258"/>      20: out ||:= "twenty past"
+<a name="259"/>      25: out ||:= "twenty-five past"
+<a name="260"/>      30: out ||:= "half past"
+<a name="261"/>      35: out ||:= "twenty five to"
+<a name="262"/>      40: out ||:= "twenty to"
+<a name="263"/>      45: out ||:= "a quarter to"
+<a name="264"/>      50: out ||:= "ten to"
+<a name="265"/>      55: out ||:= "five to"
+<a name="266"/>      }
+<a name="267"/>   numbers := ["one","two","three","four","five","six",
+<a name="268"/>		     "seven","eight","nine","ten","eleven","twelve"]
+<a name="269"/>   out ||:= (if *out = 0 then "" else " ") || numbers[hour]
+<a name="270"/>				 # add the hour number
+<a name="271"/>   if min = 0 then out ||:= " o'clock" # .. and o'clock if exact
+<a name="272"/>   return out                    # return the final result
+<a name="273"/>end
+<a name="274"/> 
+<a name="275"/># time since midnight
+<a name="276"/>procedure walltime()			
+<a name="277"/>   local seconds
+<a name="278"/>
+<a name="279"/>   &amp;clock ? {
+<a name="280"/>      seconds := tab(upto(':')) * 3600		# seconds in a hour
+<a name="281"/>      move(1)
+<a name="282"/>      seconds +:= tab(upto(':')) * 60		# seconds in a minute
+<a name="283"/>      move(1)
+<a name="284"/>      return seconds + tab(0)
+<a name="285"/>      }
+<a name="286"/>
+<a name="287"/>end
+</pre></body></html>

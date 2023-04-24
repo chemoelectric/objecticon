@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>convert.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     convert.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for various conversions
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     March 19, 1998
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#  
+<a name="17"/>#	exbase10(i, j)	converts base-10 integer i to base j.
+<a name="18"/>#  
+<a name="19"/>#	inbase10(s, i)	convert base-i integer s to base 10.
+<a name="20"/>#  
+<a name="21"/>#	radcon(s, i, j)	convert base-i integer s to base j.
+<a name="22"/>#
+<a name="23"/>#  There are several other procedures related to conversion that are
+<a name="24"/>#  not yet part of this module.
+<a name="25"/>#  
+<a name="26"/>############################################################################
+<a name="27"/>
+<a name="28"/>package ipl.convert
+<a name="29"/>
+<a name="30"/>
+<a name="31"/># convert base 10 to arbitrary base
+<a name="32"/>procedure exbase10(i, j)	
+<a name="33"/>   local s, d, sign
+<a name="34"/>   static digits
+<a name="35"/>
+<a name="36"/>   initial digits := &amp;digits || &amp;lcase || &amp;ucase
+<a name="37"/>
+<a name="38"/>   unless 2 &lt;= j &lt;= *digits then runerr("Base out of range", j)
+<a name="39"/>
+<a name="40"/>   if i = 0 then return 0
+<a name="41"/>
+<a name="42"/>   if i &lt; 0 then {
+<a name="43"/>      sign := "-"
+<a name="44"/>      i := -i
+<a name="45"/>      }
+<a name="46"/>   else sign := ""
+<a name="47"/>   s := ""
+<a name="48"/>   while i &gt; 0 do {
+<a name="49"/>      d := i % j
+<a name="50"/>      if d &gt; 9 then d := digits[d + 1]
+<a name="51"/>      s := d || s
+<a name="52"/>      i /:= j
+<a name="53"/>      }
+<a name="54"/>
+<a name="55"/>   return sign || s
+<a name="56"/>
+<a name="57"/>end
+<a name="58"/>
+<a name="59"/># convert arbitrary base to base 10
+<a name="60"/>procedure inbase10(s, i)	
+<a name="61"/>
+<a name="62"/>   if i &gt; 36 then runerr("*** base too large for inbase10()", i)
+<a name="63"/>
+<a name="64"/>   if s[1] == "-" then return "-" || integer(i || "r" || s[2:0])
+<a name="65"/>   else return integer(i || "r" || s)
+<a name="66"/>
+<a name="67"/>end
+<a name="68"/>
+<a name="69"/># convert between bases
+<a name="70"/>procedure radcon(s, i, j)	
+<a name="71"/>
+<a name="72"/>   return exbase10(inbase10(s,i),j)
+<a name="73"/>
+<a name="74"/>end
+</pre></body></html>

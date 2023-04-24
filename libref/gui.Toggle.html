@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Toggle</title></head><body>
+<h1>Toggle</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.Button.html">gui.Button</a><br>
+<a href="gui.CheckBoxMenuItem.html">gui.CheckBoxMenuItem</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This is a class for representing objects which can have an
+on-off state, in particular checkboxes, toggle buttons,
+and menu checkboxes.
+<p/><a href="gui-toggle.icn.html#13" target="displayFrame">Source - toggle.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_status">get_status()</a>
+<a href="#is_checked">is_checked()</a>
+<a href="#is_unchecked">is_unchecked()</a>
+<a href="#set_is_checked">set_is_checked()</a>
+<a href="#set_parent_check_box_group">set_parent_check_box_group()</a>
+<a href="#synch_cbg">synch_cbg()</a>
+<a href="#toggle_action">toggle_action()</a>
+<a href="#toggle_is_checked">toggle_is_checked()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#is_checked_flag">is_checked_flag</a>
+<a href="#parent_check_box_group">parent_check_box_group</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_status"/>
+<h3>get_status()</h3>
+public<p/>
+<dl>
+<dd>
+Return the status of the object; <code>&amp;yes</code> if the object is checked,
+<code>&amp;null</code> otherwise.
+<p/><a href="gui-toggle.icn.html#48" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="is_checked"/>
+<h3>is_checked()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if the object is checked.
+<p/><a href="gui-toggle.icn.html#34" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="is_unchecked"/>
+<h3>is_unchecked()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if the object is not checked.
+<p/><a href="gui-toggle.icn.html#41" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="set_is_checked"/>
+<h3>set_is_checked(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the checked status according to the given flag.
+<p/><a href="gui-toggle.icn.html#63" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="set_parent_check_box_group"/>
+<h3>set_parent_check_box_group(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the parent <code><a href="gui.CheckBoxGroup.html" target="displayFrame">CheckBoxGroup</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - The parent <code><a href="gui.CheckBoxGroup.html" target="displayFrame">CheckBoxGroup</a></code>.
+</dd>
+</dl>
+<p/><a href="gui-toggle.icn.html#23" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="synch_cbg"/>
+<h3>synch_cbg()</h3>
+private<p/>
+<dl>
+<dd>
+Ensure any parent CBG is consistent with our checked status.
+<p/><a href="gui-toggle.icn.html#86" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="toggle_action"/>
+<h3>toggle_action(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-toggle.icn.html#72" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="toggle_is_checked"/>
+<h3>toggle_is_checked()</h3>
+public<p/>
+<dl>
+<dd>
+Toggle the status of the object.
+<p/><a href="gui-toggle.icn.html#56" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="is_checked_flag"/>
+<h3>is_checked_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-toggle.icn.html#21" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+<a name="parent_check_box_group"/>
+<h3>parent_check_box_group</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-toggle.icn.html#20" target="displayFrame">Source - toggle.icn </a>
+</dd>
+</dl><hr>
+</body></html>

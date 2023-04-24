@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>printf</title></head><body>
+<h1>printf(format, args[])</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.printf-package.html" target="listFrame">ipl.printf</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Outputs a C-style <code><a href="ipl.printf.printf.html" target="displayFrame">printf</a></code> format to stdout.
+<p/>
+The specifier format is
+<pre>
+    %[index$]&lt;flags&gt;&lt;width&gt;.&lt;precision&gt;&lt;char&gt;
+</pre>
+&lt;flags&gt; can be :-
+<ul>
+<li>
+0 - pad fields with zeroes instead of spaces; this may
+not give sensible results with some numerical formats,
+eg signed numbers or left adjusted numbers.
+</li>
+<li>
+' - for formats d, r, e, use commas to separate thousands
+</li>
+<li>
+- - left adjust fields instead of right adjust
+</li>
+<li>
+S - for formats r, e, replace trailing fractional zeroes
+with spaces
+</li>
+<li>
+Z - for formats r, e, means drop trailing fractional
+zeroes altogether
+</li>
+<li>
++ - for numeric formats, add a leading + to positive
+numbers
+<p/>
+</li>
+</ul>
+The optional "index$" specifier indicates the argument index to which
+this specifier applies, rather than the next argument in sequence.
+<p/>
+The optional width specifies the field width.  It may be "*", in
+which case an argument is consumed to give the width, or
+"*&lt;index&gt;$", indicating which argument to use.
+<p/>
+The optional precision (which may also be a "*") means :-
+<ul>
+<li>
+for string formats (s, i, t) the maximum string length;
+</li>
+<li>
+for integer formats (d, x, X, o, b), the minimum number of
+digits; leading zeroes are added if needed.
+</li>
+<li>
+for real formats (r, e), the number of digits in the
+fractional part.
+<p/>
+</li>
+</ul>
+The formats are :-
+<ul>
+<li>
+%d  decimal number
+</li>
+<li>
+%s  string or ucs
+</li>
+<li>
+%x  hex lower case
+</li>
+<li>
+%X  hex upper case
+</li>
+<li>
+%o  octal
+</li>
+<li>
+%b  binary
+</li>
+<li>
+%i  image() result
+</li>
+<li>
+%t  to_string() result
+</li>
+<li>
+%r  real decimal
+</li>
+<li>
+%e  real in exponential format
+</li>
+<li>
+%E  real in exponential format, with a capital E in
+the result
+</li>
+<li>
+%w  the value of &amp;why
+</li>
+<li>
+%n  the empty string (useful for inserting spaces for
+table alignment)
+</li>
+</ul>
+<p/><a href="ipl.printf-printf.icn.html#72" target="displayFrame">Source - printf.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>document.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: document.icn 6670 2017-08-29 21:51:47Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>#
+<a name="12"/># The base class for a document, being either an XML or HTML document.
+<a name="13"/>#
+<a name="14"/>abstract class Document(Node)
+<a name="15"/>   public get_root_element()
+<a name="16"/>      local n
+<a name="17"/>      every n := !children do
+<a name="18"/>         if not(text(n)) &amp; is(n, Element) then
+<a name="19"/>            return n
+<a name="20"/>   end
+<a name="21"/>end
+</pre></body></html>

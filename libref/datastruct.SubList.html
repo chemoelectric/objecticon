@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SubList</title></head><body>
+<h1>SubList</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="datastruct.List.html" target="displayFrame">datastruct.List</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="datastruct-package.html" target="listFrame">datastruct</a></dd>
+</dl><p/>
+This class provides a view of a sublist of another <code><a href="datastruct.List.html" target="displayFrame">List</a></code>.  No data is
+stored directly in this list.
+<p/>
+The indices specified in the constructor use Icon list slice
+semantics, and may be zero or negative.  The indices remain
+constant, and the actual range into the underlying list is
+calculated dynamically.  Should this become out-of-range, then the
+sub-list's size is zero, and insert and delete operations fail.
+<p/>
+Example :-
+<pre>
+  ll := LinkedList(1,2,3,4,5)
+  # A view of the elements 3:0 of ll (3, 4, 5)
+  s := SubList(ll, 3, 0)
+  # After this s is (3, 4, 5, 99); note how the length is now 4.
+  s.put(99)
+</pre>
+<p/><a href="datastruct-lists.icn.html#1389" target="displayFrame">Source - lists.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectEquals.html">lang.ObjectEquals</a>
+<a href="lang.ObjectHash.html">lang.ObjectHash</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="datastruct.List.html">datastruct.List</a>
+<a href="datastruct.SubList.html">datastruct.SubList</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from datastruct.List</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.List.html#clear">clear()</a>
+<a href="datastruct.List.html#empty">empty()</a>
+<a href="datastruct.List.html#get">get()</a>
+<a href="datastruct.List.html#init">init()</a>
+<a href="datastruct.List.html#keyof">keyof()</a>
+<a href="datastruct.List.html#list">list()</a>
+<a href="datastruct.List.html#object_equals">object_equals()</a>
+<a href="datastruct.List.html#object_hash">object_hash()</a>
+<a href="datastruct.List.html#object_output">object_output()</a>
+<a href="datastruct.List.html#pull">pull()</a>
+<a href="datastruct.List.html#push">push()</a>
+<a href="datastruct.List.html#put">put()</a>
+<a href="datastruct.List.html#random">random()</a>
+<a href="datastruct.List.html#slice">slice()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from datastruct.List</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="datastruct.List.html#DELETE">DELETE</a>
+<a href="datastruct.List.html#EMPTY_LIST">EMPTY_LIST</a>
+<a href="datastruct.List.html#INSERT">INSERT</a>
+<a href="datastruct.List.html#MODIFY">MODIFY</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#at">at()</a>
+<a href="#back">back()</a>
+<a href="#cvslice">cvslice()</a>
+<a href="#delete">delete()</a>
+<a href="#gen">gen()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#insert">insert()</a>
+<a href="#new">new()</a>
+<a href="#size">size()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#hi">hi</a>
+<a href="#lo">lo</a>
+<a href="#other">other</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="at"/>
+<h3>at(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#at">at()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1425" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="back"/>
+<h3>back(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#back">back()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1449" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="cvslice"/>
+<h3>cvslice()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1458" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="delete"/>
+<h3>delete(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#delete">delete()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1418" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="gen"/>
+<h3>gen(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#gen">gen()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1440" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.HasMode.html#get_mode">get_mode()</a> in <a href="util.HasMode.html" target="displayFrame">util.HasMode</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1462" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="insert"/>
+<h3>insert(i, x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#insert">insert()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1411" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(other, lo, hi)</h3>
+public<p/>
+<dl>
+<dd>
+Create a new instance using <code>other</code> as the underlying list, and
+<code>lo</code> and <code>hi</code> as the slice to view.
+<p/><a href="datastruct-lists.icn.html#1466" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="size"/>
+<h3>size()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="datastruct.List.html#size">size()</a> in <a href="datastruct.List.html" target="displayFrame">datastruct.List</a></dd>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1432" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="hi"/>
+<h3>hi</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1409" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="lo"/>
+<h3>lo</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1409" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+<a name="other"/>
+<h3>other</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="datastruct-lists.icn.html#1409" target="displayFrame">Source - lists.icn </a>
+</dd>
+</dl><hr>
+</body></html>

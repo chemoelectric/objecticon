@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SVG</title></head><body>
+<h1>SVG</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="cairo-package.html" target="listFrame">cairo</a></dd>
+</dl><p/>
+<p/><a href="cairo-cairo.icn.html#1486" target="displayFrame">Source - cairo.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="cairo.SVG.html">cairo.SVG</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#close">close()</a>
+<a href="#get_desc">get_desc()</a>
+<a href="#get_height">get_height()</a>
+<a href="#get_metadata">get_metadata()</a>
+<a href="#get_size">get_size()</a>
+<a href="#get_title">get_title()</a>
+<a href="#get_width">get_width()</a>
+<a href="#get_x">get_x()</a>
+<a href="#get_y">get_y()</a>
+<a href="#has_sub">has_sub()</a>
+<a href="#init">init()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#render">render()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#ptr">ptr</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1518" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_desc"/>
+<h3>get_desc()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1511" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_height"/>
+<h3>get_height(id)</h3>
+public native<p/>
+<dl>
+<dd>
+Get the height of the document
+<p/><a href="cairo-cairo.icn.html#1497" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_metadata"/>
+<h3>get_metadata()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1512" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_size"/>
+<h3>get_size(id)</h3>
+public<p/>
+<dl>
+<dd>
+Get the size, as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record.
+<p/><a href="cairo-cairo.icn.html#1501" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_title"/>
+<h3>get_title()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1510" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_width"/>
+<h3>get_width(id)</h3>
+public native<p/>
+<dl>
+<dd>
+Get the width of the document
+<p/><a href="cairo-cairo.icn.html#1493" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_x"/>
+<h3>get_x(id)</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1508" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="get_y"/>
+<h3>get_y(id)</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1509" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="has_sub"/>
+<h3>has_sub()</h3>
+public native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1507" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1489" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(data)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1522" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl()</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1520" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<a name="render"/>
+<h3>render(context, id)</h3>
+public native<p/>
+<dl>
+<dd>
+Render to a cairo context.
+<p/><a href="cairo-cairo.icn.html#1514" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="ptr"/>
+<h3>ptr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="cairo-cairo.icn.html#1487" target="displayFrame">Source - cairo.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,434 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>format.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: format.icn 9045 2021-04-15 11:03:00Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package util
+<a name="10"/>
+<a name="11"/>import lang, ipl.scan(max_many)
+<a name="12"/>
+<a name="13"/>final abstract class Format()
+<a name="14"/>   public static const
+<a name="15"/>      SIG_DIGITS,
+<a name="16"/>      DECIMAL_POINT,
+<a name="17"/>      THOUSANDS_SEPARATOR
+<a name="18"/>
+<a name="19"/>   private static init()
+<a name="20"/>      # Max number of significant digits output by numeric_to_string
+<a name="21"/>      SIG_DIGITS := 14
+<a name="22"/>      DECIMAL_POINT := env_string("OI_FORMAT_DECIMAL_POINT") | "."
+<a name="23"/>      THOUSANDS_SEPARATOR := env_string("OI_FORMAT_THOUSANDS_SEPARATOR") | ","
+<a name="24"/>   end
+<a name="25"/>
+<a name="26"/>   #
+<a name="27"/>   # Convert a string to an integer.  Unlike the idiomatic
+<a name="28"/>   # `integer("16r" || s)` technique, this does not create a temporary
+<a name="29"/>   # string.  It is therefore suitable for use in loops which build up
+<a name="30"/>   # a lengthy concatenated string result.
+<a name="31"/>   #
+<a name="32"/>   # :Parameters :
+<a name="33"/>   # :  `s` - The input string
+<a name="34"/>   # :  `base` - The desired base of the result, default 16
+<a name="35"/>   # 
+<a name="36"/>   public static string_to_int(s, base)
+<a name="37"/>      local r, c, d, neg
+<a name="38"/>      static dig
+<a name="39"/>      initial {
+<a name="40"/>         # The default value makes error checking a little faster.
+<a name="41"/>         dig := table(99)
+<a name="42"/>         every c := !"0123456789abcdefABCDEF" do
+<a name="43"/>            dig[c] := integer("16r" || c)
+<a name="44"/>      }
+<a name="45"/>      s := need_string(s)
+<a name="46"/>      base := need_integer(\base, 2, 16) | 16
+<a name="47"/>      if *s = 0 then
+<a name="48"/>         fail
+<a name="49"/>      if s[1] == "-" then {
+<a name="50"/>         s := s[2:0]
+<a name="51"/>         neg := &amp;yes
+<a name="52"/>      }
+<a name="53"/>      r := 0
+<a name="54"/>      every c := !s do {
+<a name="55"/>         d := (base &gt; dig[c]) | fail
+<a name="56"/>         r := r * base + d
+<a name="57"/>      }
+<a name="58"/>      return if /neg then r else -r
+<a name="59"/>   end
+<a name="60"/>      
+<a name="61"/>   #
+<a name="62"/>   # Convert an integer to a string.
+<a name="63"/>   #
+<a name="64"/>   # :Parameters :
+<a name="65"/>   # :  `base` - The desired base of the result, default 16
+<a name="66"/>   # :  `p` - The minimum width of the result, padding with zeroes
+<a name="67"/>   #               if necessary.
+<a name="68"/>   #
+<a name="69"/>   public static int_to_string(subject, base, p)
+<a name="70"/>      local s, n, digs, neg
+<a name="71"/>      s := ""
+<a name="72"/>      base := need_integer(\base, 2, 16) | 16
+<a name="73"/>      p := need_integer(\p, 0) | 1
+<a name="74"/>      n := need_integer(subject)
+<a name="75"/>      if n &lt; 0 then {
+<a name="76"/>         n := -n
+<a name="77"/>         neg := &amp;yes
+<a name="78"/>      }
+<a name="79"/>      digs := "0123456789ABCDEF"[1:base + 1]
+<a name="80"/>      while n &gt; 0 do {
+<a name="81"/>         s := digs[n % base + 1] || s
+<a name="82"/>         n /:= base
+<a name="83"/>      }
+<a name="84"/>
+<a name="85"/>      if p &gt; *s then
+<a name="86"/>         s := repl("0", p - *s) || s
+<a name="87"/>
+<a name="88"/>      if \neg then
+<a name="89"/>         s := "-" || s
+<a name="90"/>
+<a name="91"/>      return s
+<a name="92"/>   end
+<a name="93"/>
+<a name="94"/>   #
+<a name="95"/>   # Convert a numeric to a string.
+<a name="96"/>   #
+<a name="97"/>   # :Parameters :
+<a name="98"/>   # :  `p` - The number of decimal places to produce (default 4).
+<a name="99"/>   # :  `f` -  A cset of flags.  If c contains 'e' then the output is
+<a name="100"/>   #           in scientific notation.  'E' is the same, but uses a
+<a name="101"/>   #           a capital "E" in the result. If c contains ',' then commas
+<a name="102"/>   #           are introduced into the non-fractional part of the number;
+<a name="103"/>   #           if c contains '+' then a leading + is added to positive
+<a name="104"/>   #           numbers.  If c contains 's' then trailing fractional
+<a name="105"/>   #           zeroes are replaced with spaces, whilst 'z' means drop
+<a name="106"/>   #           such zeroes altogether.  If c contains 'v' then any
+<a name="107"/>   #           significant digits beyond `SIG_DIGITS` are output
+<a name="108"/>   #           verbatim; otherwise these are replaced by zeroes, since
+<a name="109"/>   #           they are usually meaningless.
+<a name="110"/>   #
+<a name="111"/>   public static numeric_to_string(subject, p, f)
+<a name="112"/>      local neg, s, t, lim, d, zs, dig, i, n, ec
+<a name="113"/>
+<a name="114"/>      f := need_cset(\f) | ''
+<a name="115"/>      n := need_numeric(subject)
+<a name="116"/>      p := need_integer(\p, 0) | 4
+<a name="117"/>
+<a name="118"/>      if n &lt; 0 then {
+<a name="119"/>         n := -n
+<a name="120"/>         neg := &amp;yes
+<a name="121"/>      }
+<a name="122"/>      any(f, ec &lt;- "e"|"E")
+<a name="123"/>      if /ec &amp; type(n) == "integer" then 
+<a name="124"/>         s := string(n) || repl("0", p)
+<a name="125"/>      else {
+<a name="126"/>         t := norm(n)
+<a name="127"/>         lim := if \ec then p else p + t[2]
+<a name="128"/>         if lim &gt;= -1 then {
+<a name="129"/>            s := ""
+<a name="130"/>            d := t[1]
+<a name="131"/>            if lim &gt; SIG_DIGITS &amp; not any(f, "v") then {
+<a name="132"/>               zs := repl("0", lim - SIG_DIGITS)
+<a name="133"/>               lim := SIG_DIGITS
+<a name="134"/>            }
+<a name="135"/>            every 0 to lim do {
+<a name="136"/>               s ||:= dig := integer(d)
+<a name="137"/>               d := (d - dig) * 10.0
+<a name="138"/>            }
+<a name="139"/>            if integer(d) &gt;= 5 then {
+<a name="140"/>               (every i := *s to 1 by -1 do
+<a name="141"/>                if s[i] := 10 &gt; s[i] + 1 then break
+<a name="142"/>                else s[i] := 0
+<a name="143"/>                ) | {          # need to add 1 to left of s
+<a name="144"/>                   s := "1" || s
+<a name="145"/>                   if \ec then {
+<a name="146"/>                      s[-1] := ""
+<a name="147"/>                      t[2] +:= 1
+<a name="148"/>                   }
+<a name="149"/>                }
+<a name="150"/>            }
+<a name="151"/>            s ||:= \zs
+<a name="152"/>            s := repl("0", 0 &lt; p + 1 - *s) || s
+<a name="153"/>         } 
+<a name="154"/>         else s := repl("0", p + 1)
+<a name="155"/>      }
+<a name="156"/>
+<a name="157"/>      if any(f, ",") then
+<a name="158"/>         every s[*s - p - 3 to 1 by -3] ||:= THOUSANDS_SEPARATOR
+<a name="159"/>
+<a name="160"/>      if p &gt; 0 then {
+<a name="161"/>         s[-p - 1] ||:= DECIMAL_POINT
+<a name="162"/>         if any(f, "s"| "z") then {
+<a name="163"/>            "0" ~== s[i := *s to *s - p + 1 by -1]         
+<a name="164"/>            s[i + 1 : 0] := if any(f, "s") then
+<a name="165"/>               repl(" ", *s - i)
+<a name="166"/>            else ""
+<a name="167"/>         }
+<a name="168"/>      }
+<a name="169"/>      if \neg then
+<a name="170"/>         s := "-" || s
+<a name="171"/>      else if any(f, "+") then 
+<a name="172"/>         s := "+" || s
+<a name="173"/>
+<a name="174"/>      return if \ec then
+<a name="175"/>         s || ec || (if t[2] &lt; 0 then "-" else "+") || abs(t[2])
+<a name="176"/>      else s   
+<a name="177"/>   end
+<a name="178"/>
+<a name="179"/>   private static norm(n)
+<a name="180"/>      local m, e, ve, s
+<a name="181"/>      static pwr
+<a name="182"/>      initial pwr := [1e1, 1e2, 1e4, 1e8, 1e16, 1e32]
+<a name="183"/>
+<a name="184"/>      # Do integers separately so that we don't have any problems with
+<a name="185"/>      # large integers outside of the range of reals.
+<a name="186"/>      #
+<a name="187"/>      if type(n) == "integer" then {
+<a name="188"/>         s := string(n)
+<a name="189"/>         e := *s - 1
+<a name="190"/>         s[1] ||:= "."
+<a name="191"/>         return [real(s), e]
+<a name="192"/>      }
+<a name="193"/>
+<a name="194"/>      if n = 0.0 then
+<a name="195"/>         return [0.0, 0]
+<a name="196"/>
+<a name="197"/>      m := if n &lt; 1.0 then 1.0 / n else n
+<a name="198"/>      e := 0
+<a name="199"/>
+<a name="200"/>      unless pwr[1 + (ve := 1 to *pwr)] &gt; m then {
+<a name="201"/>         while m /:= (m &gt;= pwr[ve]) do
+<a name="202"/>            e +:= 2 ^ (ve - 1)
+<a name="203"/>         ve -:= 1
+<a name="204"/>      }
+<a name="205"/>
+<a name="206"/>      # invariant : 1 &lt;= m &lt; pwr[1 + ve] &amp; m * 10 ^ e = m0 
+<a name="207"/>      while m &gt;= 10.0 do {
+<a name="208"/>         if m /:= (m &gt;= pwr[ve]) then
+<a name="209"/>            e +:= 2 ^ (ve - 1)
+<a name="210"/>         ve -:= 1
+<a name="211"/>      }
+<a name="212"/>
+<a name="213"/>      if n &lt; 1.0 then {
+<a name="214"/>         e := -e
+<a name="215"/>         if m := 10.0 / (1.0 ~= m) then 
+<a name="216"/>            e -:= 1
+<a name="217"/>      }
+<a name="218"/>      return [m, e]
+<a name="219"/>   end
+<a name="220"/>
+<a name="221"/>   private static unescape_char()
+<a name="222"/>      local ch
+<a name="223"/>      return case string(ch := esc1()) of {
+<a name="224"/>         "n": "\n"
+<a name="225"/>         "l": "\l"
+<a name="226"/>         "b": "\b"
+<a name="227"/>         "d": "\d"
+<a name="228"/>         "e": "\e"
+<a name="229"/>         "r": "\r"
+<a name="230"/>         "t": "\t"
+<a name="231"/>         "v": "\v"
+<a name="232"/>         "f": "\f"
+<a name="233"/>         default:  ch
+<a name="234"/>      }
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   private static hex_dig(n)
+<a name="238"/>      local i
+<a name="239"/>      i := string_to_int(tab(max_many('0-9a-fA-F', n))) | 
+<a name="240"/>         return error("Missing hex digits after escape")
+<a name="241"/>      return (16r10FFFF &gt;= i) | error("Code point out of range")
+<a name="242"/>   end
+<a name="243"/>
+<a name="244"/>   private static oct_dig()
+<a name="245"/>      local i
+<a name="246"/>      # Assume we're at a digit, so the following must succeed.
+<a name="247"/>      i := string_to_int(tab(max_many('0-7', 3)), 8)
+<a name="248"/>      return (255 &gt;= i) | error("Octal escape out of range")
+<a name="249"/>   end
+<a name="250"/>
+<a name="251"/>   private static unescape_ctl()
+<a name="252"/>      return iand(ord(esc1()), 8r37)
+<a name="253"/>   end
+<a name="254"/>
+<a name="255"/>   private static esc1()
+<a name="256"/>      return move(1) | error("Incomplete escape")
+<a name="257"/>   end
+<a name="258"/>
+<a name="259"/>   #
+<a name="260"/>   # Remove escape sequences from `s`.
+<a name="261"/>   #
+<a name="262"/>   public static unescape(s)
+<a name="263"/>      local res
+<a name="264"/>      s := need_text(s)
+<a name="265"/>      s ? {
+<a name="266"/>         res := ""
+<a name="267"/>         while res ||:= string(tab(upto('\\'))) do {
+<a name="268"/>            move(1)
+<a name="269"/>            res ||:= (if any('0-7') then
+<a name="270"/>                    char(oct_dig())
+<a name="271"/>                 else if ="x" then
+<a name="272"/>                    char(hex_dig(2))
+<a name="273"/>                 else if ="N" then
+<a name="274"/>                    "\N"
+<a name="275"/>                 else if ="u" then
+<a name="276"/>                    Text.utf8_seq(hex_dig(4))
+<a name="277"/>                 else if ="U" then
+<a name="278"/>                    Text.utf8_seq(hex_dig(6))
+<a name="279"/>                 else if ="^" then
+<a name="280"/>                    char(unescape_ctl())
+<a name="281"/>                 else 
+<a name="282"/>                    string(unescape_char())) | fail
+<a name="283"/>         }
+<a name="284"/>         # Shortcut for common case
+<a name="285"/>         if pos(1) then return s
+<a name="286"/>         res ||:= string(tab(0))
+<a name="287"/>         return if type(s) == "ucs" then ucs(res) | error("Invalid UTF-8 escape sequence") else res
+<a name="288"/>      }
+<a name="289"/>   end
+<a name="290"/>
+<a name="291"/>   #
+<a name="292"/>   # Remove escape sequences from `s`, but return the corresponding cset rather than
+<a name="293"/>   # a string.
+<a name="294"/>   #
+<a name="295"/>   public static cset_unescape(s)
+<a name="296"/>      local l, state, c, prev, esc_flag
+<a name="297"/>      s := need_text(s)
+<a name="298"/>      state := 0
+<a name="299"/>      l := []
+<a name="300"/>      s ? until pos(0) do {
+<a name="301"/>         if ="\\" then {
+<a name="302"/>            esc_flag := &amp;yes
+<a name="303"/>            c := (if any('0-7') then
+<a name="304"/>                     oct_dig()
+<a name="305"/>                  else if ="x" then
+<a name="306"/>                     hex_dig(2)
+<a name="307"/>                  else if ="u" then
+<a name="308"/>                     hex_dig(4)
+<a name="309"/>                  else if ="U" then
+<a name="310"/>                     hex_dig(6)
+<a name="311"/>                  else if ="^" then
+<a name="312"/>                     unescape_ctl()
+<a name="313"/>                  else 
+<a name="314"/>                     ord(unescape_char())) | fail
+<a name="315"/>         } else {
+<a name="316"/>            esc_flag := &amp;no
+<a name="317"/>            c := ord(move(1))
+<a name="318"/>         }
+<a name="319"/>
+<a name="320"/>         case state of {
+<a name="321"/>            0: {
+<a name="322"/>               prev := c
+<a name="323"/>               state := 1
+<a name="324"/>            }
+<a name="325"/>            1 : {
+<a name="326"/>               if /esc_flag &amp; (c = 45) then
+<a name="327"/>                  state := 2
+<a name="328"/>               else {
+<a name="329"/>                  put(l, prev)
+<a name="330"/>                  put(l, prev)
+<a name="331"/>                  prev := c
+<a name="332"/>               }                     
+<a name="333"/>            }
+<a name="334"/>            2 : {
+<a name="335"/>               put(l, prev)
+<a name="336"/>               put(l, c)
+<a name="337"/>               state := 0
+<a name="338"/>            }
+<a name="339"/>         }
+<a name="340"/>      }
+<a name="341"/>      if state = 1 then {
+<a name="342"/>         put(l, prev)
+<a name="343"/>         put(l, prev)
+<a name="344"/>      }
+<a name="345"/>      else if state = 2 then
+<a name="346"/>         return error("Incomplete cset range");
+<a name="347"/>      return Text.create_cset(l)
+<a name="348"/>   end
+<a name="349"/>
+<a name="350"/>   # Convert a string into shell format by escaping certain special
+<a name="351"/>   # shell characters.
+<a name="352"/>   #
+<a name="353"/>   public static shell_escape(s)
+<a name="354"/>      local t, ch
+<a name="355"/>      s := need_text(s)
+<a name="356"/>      if *s = 0 then
+<a name="357"/>         return s || "$''"
+<a name="358"/>      t := ""
+<a name="359"/>      s ? {
+<a name="360"/>         while t ||:= string(tab(upto('\0-\x1f\x7f|\\*;?@+&amp;#()&lt;&gt;~[]{}!$`\'\" '))) do {
+<a name="361"/>            t ||:= case ch := string(move(1)) of {
+<a name="362"/>               "\x07": "$'\\a'"
+<a name="363"/>               "\b" : "$'\\b'"
+<a name="364"/>               "\e" : "$'\\e'"
+<a name="365"/>               "\f" : "$'\\f'"
+<a name="366"/>               "\n" : "$'\\n'"
+<a name="367"/>               "\r" : "$'\\r'"
+<a name="368"/>               "\t" : "$'\\t'"
+<a name="369"/>               "\v" : "$'\\v'"
+<a name="370"/>               !'\0-\x1f\x7f' : "$'\\x" || int_to_string(ord(ch),,2) || "'"
+<a name="371"/>               default : "\\" || ch
+<a name="372"/>            }
+<a name="373"/>         }
+<a name="374"/>         return t || tab(0)
+<a name="375"/>      }
+<a name="376"/>   end
+<a name="377"/>
+<a name="378"/>   #
+<a name="379"/>   # Convert the subject integer into words, eg 231 to "Two Hundred and Thirty-One"
+<a name="380"/>   #
+<a name="381"/>   public static int_to_words(subject)
+<a name="382"/>      local n, s, i, m
+<a name="383"/>      static small, tens, pwr10, pwr10num
+<a name="384"/>
+<a name="385"/>      initial {
+<a name="386"/>         small := ["One", "Two", "Three", "Four", "Five", "Six",
+<a name="387"/>                   "Seven", "Eight", "Nine", "Ten", "Eleven", 
+<a name="388"/>                   "Twelve", "Thirteen", "Fourteen", "Fifteen",
+<a name="389"/>                   "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+<a name="390"/>
+<a name="391"/>         tens := ["Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty",
+<a name="392"/>                  "Seventy", "Eighty", "Ninety"]
+<a name="393"/>
+<a name="394"/>         pwr10 := ["Million", "Thousand", "Hundred"]
+<a name="395"/>
+<a name="396"/>         pwr10num := [1000000, 1000, 100]
+<a name="397"/>      }
+<a name="398"/>
+<a name="399"/>      n := need_integer(subject)
+<a name="400"/>
+<a name="401"/>      s := ""
+<a name="402"/>
+<a name="403"/>      every i := 1 to *pwr10num do
+<a name="404"/>         if (m := n / pwr10num[i]) &gt; 0 then {
+<a name="405"/>            if *s &gt; 0 then
+<a name="406"/>               s ||:= " "
+<a name="407"/>
+<a name="408"/>            s ||:= int_to_words(m) || " " || pwr10[i]
+<a name="409"/>
+<a name="410"/>            n %:= pwr10num[i]
+<a name="411"/>         }
+<a name="412"/>
+<a name="413"/>      if n = 0 then {
+<a name="414"/>         if *s = 0 then
+<a name="415"/>            s := "Zero"
+<a name="416"/>      } else {
+<a name="417"/>         if *s &gt; 0 then
+<a name="418"/>            s ||:= " and "
+<a name="419"/>
+<a name="420"/>         if n &lt; 20 then
+<a name="421"/>            s ||:= small[n]
+<a name="422"/>         else {
+<a name="423"/>            s ||:= tens[n / 10]
+<a name="424"/>            if n % 10 &gt; 0 then
+<a name="425"/>               s ||:= "-" || small[n % 10]
+<a name="426"/>         }
+<a name="427"/>      }
+<a name="428"/>
+<a name="429"/>      return s
+<a name="430"/>   end
+<a name="431"/>end
+</pre></body></html>

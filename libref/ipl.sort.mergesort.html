@@ -1,0 +1,32 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>mergesort</title></head><body>
+<h1>mergesort(l, cmp, pos1, pos2)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.sort-package.html" target="listFrame">ipl.sort</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+A merge sort implementation.  Unlike <code><a href="ipl.sort.qsort.html" target="displayFrame">qsort</a></code>, this returns a sorted
+copy, leaving the original unchanged.  If pos1 and pos2 are given,
+then only the sublist l[pos1:pos2] is sorted, and that sublist is
+returned.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - the list to sort
+</dd>
+<dd>
+<code>cmp</code> - a comparator function, default <code><a href="lang.Internal.html#compare">Internal.compare</a></code>
+</dd>
+<dd>
+<code>pos1</code> - the first slice index, default 1
+</dd>
+<dd>
+<code>pos2</code> - the second slice index, default 0
+</dd>
+</dl>
+<p/><a href="ipl.sort-sort.icn.html#489" target="displayFrame">Source - sort.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,296 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>md5.icn</title></head><body><pre>
+<a name="1"/>package util
+<a name="2"/>
+<a name="3"/>import lang
+<a name="4"/>
+<a name="5"/>#
+<a name="6"/># $Id: md5.icn 8996 2021-03-24 07:27:53Z rparlett $
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>$define S11 7
+<a name="10"/>$define S12 12
+<a name="11"/>$define S13 17
+<a name="12"/>$define S14 22
+<a name="13"/>$define S21 5
+<a name="14"/>$define S22 9
+<a name="15"/>$define S23 14
+<a name="16"/>$define S24 20
+<a name="17"/>$define S31 4
+<a name="18"/>$define S32 11
+<a name="19"/>$define S33 16
+<a name="20"/>$define S34 23
+<a name="21"/>$define S41 6
+<a name="22"/>$define S42 10
+<a name="23"/>$define S43 15
+<a name="24"/>$define S44 21
+<a name="25"/>
+<a name="26"/>$define BIT32 16rffffffff
+<a name="27"/>
+<a name="28"/>#
+<a name="29"/># An MD5 message digest implementation.  Example use :
+<a name="30"/># ~
+<a name="31"/>#   m := MD5()
+<a name="32"/>#   m.update("here is some input")
+<a name="33"/>#   m.update("here is some more")
+<a name="34"/>#   s := m.finally()
+<a name="35"/># ~
+<a name="36"/># This will leave s containing a 16 char string, being the
+<a name="37"/># digest.   
+<a name="38"/>#
+<a name="39"/>class MD5()
+<a name="40"/>   private 
+<a name="41"/>      a,
+<a name="42"/>      b,
+<a name="43"/>      c,
+<a name="44"/>      d,
+<a name="45"/>      bit_count,
+<a name="46"/>      buffer
+<a name="47"/>
+<a name="48"/>   private F(x, y, z)
+<a name="49"/>      return ior(iand(x, y), iand(icom(x), z));
+<a name="50"/>   end
+<a name="51"/>
+<a name="52"/>   private G(x, y, z)
+<a name="53"/>      return ior(iand(x, z), iand(y, icom(z)))
+<a name="54"/>   end
+<a name="55"/>
+<a name="56"/>   private H(x, y, z)
+<a name="57"/>      return ixor(x, y, z)
+<a name="58"/>   end
+<a name="59"/>
+<a name="60"/>   private I(x, y, z)
+<a name="61"/>      return ixor(y, ior(x, icom(z)))
+<a name="62"/>   end
+<a name="63"/>
+<a name="64"/>   private rotate_left(x, n)
+<a name="65"/>      return ior(ishift(x, n), ishift(iand(x, BIT32), -(32 - n)))
+<a name="66"/>   end
+<a name="67"/>
+<a name="68"/>   private FF(a, b, c, d, x, s, ac)
+<a name="69"/>      a +:= F(b, c, d) + x + ac
+<a name="70"/>      a := rotate_left(a, s) + b
+<a name="71"/>      return iand(a, BIT32)
+<a name="72"/>   end
+<a name="73"/>
+<a name="74"/>   private GG(a, b, c, d, x, s, ac)
+<a name="75"/>      a +:= G(b, c, d) + x + ac
+<a name="76"/>      a := rotate_left(a, s) + b
+<a name="77"/>      return iand(a, BIT32)
+<a name="78"/>   end
+<a name="79"/>
+<a name="80"/>   private HH(a, b, c, d, x, s, ac)
+<a name="81"/>      a +:= H(b, c, d) + x + ac
+<a name="82"/>      a := rotate_left(a, s) + b
+<a name="83"/>      return iand(a, BIT32)
+<a name="84"/>   end
+<a name="85"/>
+<a name="86"/>   private II(a, b, c, d, x, s, ac)
+<a name="87"/>      a +:= I(b, c, d) + x + ac
+<a name="88"/>      a := rotate_left(a, s) + b
+<a name="89"/>      return iand(a, BIT32)
+<a name="90"/>   end
+<a name="91"/>
+<a name="92"/>   private complete()
+<a name="93"/>      local bits, pad_len, padding
+<a name="94"/>
+<a name="95"/>      bits := encode(iand(bit_count, BIT32)) ||
+<a name="96"/>         encode(iand(ishift(bit_count, -32), BIT32))
+<a name="97"/>
+<a name="98"/>      if *buffer &lt; 56 then
+<a name="99"/>         pad_len := 56 - *buffer
+<a name="100"/>      else
+<a name="101"/>         pad_len := 120 - *buffer
+<a name="102"/>      padding := char(16r80) || repl(char(0), pad_len - 1)
+<a name="103"/>      
+<a name="104"/>      update(padding)
+<a name="105"/>      update(bits)
+<a name="106"/>   end
+<a name="107"/>
+<a name="108"/>   #
+<a name="109"/>   # Add some input data to the computation
+<a name="110"/>   # :Parameters :
+<a name="111"/>   # :  `input` - a string
+<a name="112"/>   #
+<a name="113"/>   public update(input)
+<a name="114"/>      local block
+<a name="115"/>
+<a name="116"/>      input := need_string(input)
+<a name="117"/>
+<a name="118"/>      # Update number of bits
+<a name="119"/>      bit_count +:= 8 * (*input)
+<a name="120"/>
+<a name="121"/>      buffer ||:= input
+<a name="122"/>      buffer ? {
+<a name="123"/>         while block := move(64) do
+<a name="124"/>            transform(block)
+<a name="125"/>         buffer := tab(0)
+<a name="126"/>      }
+<a name="127"/>      link
+<a name="128"/>   end
+<a name="129"/>
+<a name="130"/>   #
+<a name="131"/>   # Call finally and then convert the result to a 32 character string
+<a name="132"/>   # of lower case hex digits.
+<a name="133"/>   #
+<a name="134"/>   public final_str()
+<a name="135"/>      local s
+<a name="136"/>      s := ""
+<a name="137"/>      every s ||:= Format.int_to_string(ord(finally()), 16, 2)
+<a name="138"/>      return Text.lower(s)
+<a name="139"/>   end
+<a name="140"/>
+<a name="141"/>   #
+<a name="142"/>   # Complete and return the computation of the digest as
+<a name="143"/>   # a string of 16 characters.
+<a name="144"/>   #
+<a name="145"/>   public finally()
+<a name="146"/>      local s
+<a name="147"/>      complete()
+<a name="148"/>      s := encode(a) || encode(b) || encode(c) || encode(d)
+<a name="149"/>      reset()
+<a name="150"/>      return s
+<a name="151"/>   end
+<a name="152"/>
+<a name="153"/>   #
+<a name="154"/>   # Complete and return the final values of a, b, c and d that the
+<a name="155"/>   # algorithm produced.  Each is an unsigned 32-bit integer.
+<a name="156"/>   #
+<a name="157"/>   public final_raw()
+<a name="158"/>      local l
+<a name="159"/>      complete()
+<a name="160"/>      l := [a, b, c, d]
+<a name="161"/>      reset()
+<a name="162"/>      return l
+<a name="163"/>   end
+<a name="164"/>
+<a name="165"/>   private transform(block)
+<a name="166"/>      local x, a, b, c, d
+<a name="167"/>
+<a name="168"/>      x := decode(block)
+<a name="169"/>
+<a name="170"/>      a := self.a
+<a name="171"/>      b := self.b
+<a name="172"/>      c := self.c
+<a name="173"/>      d := self.d
+<a name="174"/>
+<a name="175"/>      a := FF (a, b, c, d, x[ 1], S11, 16rd76aa478)
+<a name="176"/>      d := FF (d, a, b, c, x[ 2], S12, 16re8c7b756)
+<a name="177"/>      c := FF (c, d, a, b, x[ 3], S13, 16r242070db)
+<a name="178"/>      b := FF (b, c, d, a, x[ 4], S14, 16rc1bdceee)
+<a name="179"/>      a := FF (a, b, c, d, x[ 5], S11, 16rf57c0faf)
+<a name="180"/>      d := FF (d, a, b, c, x[ 6], S12, 16r4787c62a)
+<a name="181"/>      c := FF (c, d, a, b, x[ 7], S13, 16ra8304613)
+<a name="182"/>      b := FF (b, c, d, a, x[ 8], S14, 16rfd469501)
+<a name="183"/>      a := FF (a, b, c, d, x[ 9], S11, 16r698098d8)
+<a name="184"/>      d := FF (d, a, b, c, x[10], S12, 16r8b44f7af)
+<a name="185"/>      c := FF (c, d, a, b, x[11], S13, 16rffff5bb1)
+<a name="186"/>      b := FF (b, c, d, a, x[12], S14, 16r895cd7be)
+<a name="187"/>      a := FF (a, b, c, d, x[13], S11, 16r6b901122)
+<a name="188"/>      d := FF (d, a, b, c, x[14], S12, 16rfd987193)
+<a name="189"/>      c := FF (c, d, a, b, x[15], S13, 16ra679438e)
+<a name="190"/>      b := FF (b, c, d, a, x[16], S14, 16r49b40821)
+<a name="191"/>
+<a name="192"/>      a := GG (a, b, c, d, x[ 2], S21, 16rf61e2562)
+<a name="193"/>      d := GG (d, a, b, c, x[ 7], S22, 16rc040b340)
+<a name="194"/>      c := GG (c, d, a, b, x[12], S23, 16r265e5a51)
+<a name="195"/>      b := GG (b, c, d, a, x[ 1], S24, 16re9b6c7aa)
+<a name="196"/>      a := GG (a, b, c, d, x[ 6], S21, 16rd62f105d)
+<a name="197"/>      d := GG (d, a, b, c, x[11], S22,  16r2441453)
+<a name="198"/>      c := GG (c, d, a, b, x[16], S23, 16rd8a1e681)
+<a name="199"/>      b := GG (b, c, d, a, x[ 5], S24, 16re7d3fbc8)
+<a name="200"/>      a := GG (a, b, c, d, x[10], S21, 16r21e1cde6)
+<a name="201"/>      d := GG (d, a, b, c, x[15], S22, 16rc33707d6)
+<a name="202"/>      c := GG (c, d, a, b, x[ 4], S23, 16rf4d50d87)
+<a name="203"/>      b := GG (b, c, d, a, x[ 9], S24, 16r455a14ed)
+<a name="204"/>      a := GG (a, b, c, d, x[14], S21, 16ra9e3e905)
+<a name="205"/>      d := GG (d, a, b, c, x[ 3], S22, 16rfcefa3f8)
+<a name="206"/>      c := GG (c, d, a, b, x[ 8], S23, 16r676f02d9)
+<a name="207"/>      b := GG (b, c, d, a, x[13], S24, 16r8d2a4c8a)
+<a name="208"/>
+<a name="209"/>      a := HH (a, b, c, d, x[ 6], S31, 16rfffa3942)
+<a name="210"/>      d := HH (d, a, b, c, x[ 9], S32, 16r8771f681)
+<a name="211"/>      c := HH (c, d, a, b, x[12], S33, 16r6d9d6122)
+<a name="212"/>      b := HH (b, c, d, a, x[15], S34, 16rfde5380c)
+<a name="213"/>      a := HH (a, b, c, d, x[ 2], S31, 16ra4beea44)
+<a name="214"/>      d := HH (d, a, b, c, x[ 5], S32, 16r4bdecfa9)
+<a name="215"/>      c := HH (c, d, a, b, x[ 8], S33, 16rf6bb4b60)
+<a name="216"/>      b := HH (b, c, d, a, x[11], S34, 16rbebfbc70)
+<a name="217"/>      a := HH (a, b, c, d, x[14], S31, 16r289b7ec6)
+<a name="218"/>      d := HH (d, a, b, c, x[ 1], S32, 16reaa127fa)
+<a name="219"/>      c := HH (c, d, a, b, x[ 4], S33, 16rd4ef3085)
+<a name="220"/>      b := HH (b, c, d, a, x[ 7], S34,  16r4881d05)
+<a name="221"/>      a := HH (a, b, c, d, x[10], S31, 16rd9d4d039)
+<a name="222"/>      d := HH (d, a, b, c, x[13], S32, 16re6db99e5)
+<a name="223"/>      c := HH (c, d, a, b, x[16], S33, 16r1fa27cf8)
+<a name="224"/>      b := HH (b, c, d, a, x[ 3], S34, 16rc4ac5665)
+<a name="225"/>
+<a name="226"/>      a := II (a, b, c, d, x[ 1], S41, 16rf4292244)
+<a name="227"/>      d := II (d, a, b, c, x[ 8], S42, 16r432aff97)
+<a name="228"/>      c := II (c, d, a, b, x[15], S43, 16rab9423a7)
+<a name="229"/>      b := II (b, c, d, a, x[ 6], S44, 16rfc93a039)
+<a name="230"/>      a := II (a, b, c, d, x[13], S41, 16r655b59c3)
+<a name="231"/>      d := II (d, a, b, c, x[ 4], S42, 16r8f0ccc92)
+<a name="232"/>      c := II (c, d, a, b, x[11], S43, 16rffeff47d)
+<a name="233"/>      b := II (b, c, d, a, x[ 2], S44, 16r85845dd1)
+<a name="234"/>      a := II (a, b, c, d, x[ 9], S41, 16r6fa87e4f)
+<a name="235"/>      d := II (d, a, b, c, x[16], S42, 16rfe2ce6e0)
+<a name="236"/>      c := II (c, d, a, b, x[ 7], S43, 16ra3014314)
+<a name="237"/>      b := II (b, c, d, a, x[14], S44, 16r4e0811a1)
+<a name="238"/>      a := II (a, b, c, d, x[ 5], S41, 16rf7537e82)
+<a name="239"/>      d := II (d, a, b, c, x[12], S42, 16rbd3af235)
+<a name="240"/>      c := II (c, d, a, b, x[ 3], S43, 16r2ad7d2bb)
+<a name="241"/>      b := II (b, c, d, a, x[10], S44, 16reb86d391)
+<a name="242"/>
+<a name="243"/>      self.a := iand(self.a + a, BIT32)
+<a name="244"/>      self.b := iand(self.b + b, BIT32)
+<a name="245"/>      self.c := iand(self.c + c, BIT32)
+<a name="246"/>      self.d := iand(self.d + d, BIT32)
+<a name="247"/>   end
+<a name="248"/>
+<a name="249"/>   #
+<a name="250"/>   # Transform a 32 bit number to 4 corresponding bytes
+<a name="251"/>   #
+<a name="252"/>   private encode(n)
+<a name="253"/>      return char(iand(n, 16rff)) ||
+<a name="254"/>         char(iand(ishift(n, -8), 16rff)) ||
+<a name="255"/>         char(iand(ishift(n, -16), 16rff)) ||
+<a name="256"/>         char(iand(ishift(n, -24), 16rff))
+<a name="257"/>   end
+<a name="258"/>
+<a name="259"/>   #
+<a name="260"/>   # Transform 64 char string into 16 x 32 bit words
+<a name="261"/>   #
+<a name="262"/>   private decode(block)
+<a name="263"/>      local l, s
+<a name="264"/>      l := []
+<a name="265"/>      block ? {
+<a name="266"/>         repeat {
+<a name="267"/>            s := move(4) | break
+<a name="268"/>            put(l, ord(s[1]) + ishift(ord(s[2]), 8) +
+<a name="269"/>                ishift(ord(s[3]), 16) + ishift(ord(s[4]), 24))
+<a name="270"/>         }
+<a name="271"/>      }
+<a name="272"/>      return l
+<a name="273"/>   end
+<a name="274"/>
+<a name="275"/>   #
+<a name="276"/>   # Reset this object, so it may be used for another
+<a name="277"/>   # computation.  Called by `finally()`.
+<a name="278"/>   #
+<a name="279"/>   public reset()
+<a name="280"/>      bit_count := 0
+<a name="281"/>      a := 16r67452301
+<a name="282"/>      b := 16refcdab89
+<a name="283"/>      c := 16r98badcfe
+<a name="284"/>      d := 16r10325476
+<a name="285"/>      buffer := ""
+<a name="286"/>      link
+<a name="287"/>   end
+<a name="288"/>
+<a name="289"/>   public new()
+<a name="290"/>      reset()
+<a name="291"/>      return
+<a name="292"/>   end
+<a name="293"/>end
+</pre></body></html>

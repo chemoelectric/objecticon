@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>pascal.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     pascal.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to write Pascal triangles
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     August 3, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure writes numeric triangles as "carpets".
+<a name="18"/>#
+<a name="19"/>#  The argument determines the number of rows written, default 16.
+<a name="20"/>#
+<a name="21"/>############################################################################
+<a name="22"/>#
+<a name="23"/>#  Requires:  large integers
+<a name="24"/>#
+<a name="25"/>############################################################################
+<a name="26"/>#
+<a name="27"/>#  Links:  math
+<a name="28"/>#
+<a name="29"/>############################################################################
+<a name="30"/>
+<a name="31"/>package ipl.pascal
+<a name="32"/>
+<a name="33"/>import
+<a name="34"/>   io(write, writes),
+<a name="35"/>   ipl.math(binocoef)
+<a name="36"/>
+<a name="37"/>#  The Pascal Triangle
+<a name="38"/>
+<a name="39"/># Pascal triangle
+<a name="40"/>procedure pascal(n)		
+<a name="41"/>   local i, j
+<a name="42"/>
+<a name="43"/>   /n := 16
+<a name="44"/>
+<a name="45"/>   write("width=", n, " height=", n)	# carpet header
+<a name="46"/>
+<a name="47"/>   every i := 0 to n - 1 do {
+<a name="48"/>      every j := 0 to n - 1 do
+<a name="49"/>         writes(binocoef(i, j) | 0, " ")
+<a name="50"/>      write()
+<a name="51"/>      }
+<a name="52"/>
+<a name="53"/>end
+</pre></body></html>

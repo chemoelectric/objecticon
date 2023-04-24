@@ -445,7 +445,7 @@ $ cd /tmp</code></pre>
 <ul>
 <li>A one-character string, with the hex ascii code of the single character specified as <code>x&lt;digits&gt;</code>; eg <code>x11</code> <code>x3</code>, etc.</li>
 <li>A one-character ucs string, specified as <code>u&lt;digits&gt;</code>; eg <code>u20ac</code>, or</li>
-<li>A character name corresponding to one of the constants in the <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Key.html"><code>graphics.Key</code></a> class; eg <code>F1</code>, <code>PGUP</code>, etc.</li>
+<li>A character name corresponding to one of the constants in the <a href="libref/index.html?graphics.Key.html"><code>graphics.Key</code></a> class; eg <code>F1</code>, <code>PGUP</code>, etc.</li>
 </ul>
 <p>To decide which of the above to use, try running the <code>grabtest</code> example program, and typing the key. The event code is shown in the window, and will either be a string, a ucs string, or a key code.</p>
 <p><code>BITS</code> and <code>MASK</code> both take the same format, and specify which modifier key or keys is to be held down (or not) for this key binding. Exactly those keys in <code>BITS</code> among those in <code>MASK</code> must be down. The format is a string consisting of the following characters :-</p>

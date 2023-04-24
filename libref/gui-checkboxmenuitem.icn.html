@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>checkboxmenuitem.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: checkboxmenuitem.icn 7415 2019-01-25 16:51:58Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import util
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This class encapsulates a check box in a menu.
+<a name="15"/>#
+<a name="16"/># Several `CheckBoxMenuItem`s may be added to a `CheckBoxGroup`
+<a name="17"/># structure to give "radio buttons" within menus.
+<a name="18"/>#
+<a name="19"/>class CheckBoxMenuItem(Toggle,TextMenuItem)
+<a name="20"/>   public 
+<a name="21"/>      curr_paint,                                            
+<a name="22"/>      unchecked_paint, 
+<a name="23"/>      checked_paint
+<a name="24"/>
+<a name="25"/>   #
+<a name="26"/>   # Set the up and down images to x and y respectively.  The
+<a name="27"/>   # default is boxes, unless the component is added to a
+<a name="28"/>   # `CheckBoxGroup` in which case the default is diamonds.
+<a name="29"/>   #
+<a name="30"/>   public set_box_paint(x, y)
+<a name="31"/>      self.unchecked_paint := x
+<a name="32"/>      self.checked_paint := y
+<a name="33"/>      synch_left_image()
+<a name="34"/>      link
+<a name="35"/>   end
+<a name="36"/>
+<a name="37"/>   public override initially()
+<a name="38"/>      #
+<a name="39"/>      # Set the icons if necessary
+<a name="40"/>      #
+<a name="41"/>      if /self.unchecked_paint then {
+<a name="42"/>         if /self.parent_check_box_group then
+<a name="43"/>            self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
+<a name="44"/>         else
+<a name="45"/>            self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
+<a name="46"/>      }
+<a name="47"/>      synch_left_image()
+<a name="48"/>      TextMenuItem.initially()
+<a name="49"/>   end
+<a name="50"/>
+<a name="51"/>   #
+<a name="52"/>   # Set the checked status according to the given flag.
+<a name="53"/>   #
+<a name="54"/>   public override set_is_checked(s)
+<a name="55"/>      need_flag(s)
+<a name="56"/>      if s ~=== self.is_checked_flag then {
+<a name="57"/>         Toggle.set_is_checked(s)
+<a name="58"/>         synch_left_image()
+<a name="59"/>      }
+<a name="60"/>      link
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   public override draw_label(cw, lw, mw, rw)
+<a name="64"/>      synch_left_image()
+<a name="65"/>      TextMenuItem.draw_label(cw, lw, mw, rw)
+<a name="66"/>   end
+<a name="67"/>
+<a name="68"/>   #
+<a name="69"/>   # Set the left image to the correct up/down icon.
+<a name="70"/>   #
+<a name="71"/>   public synch_left_image()
+<a name="72"/>      local i
+<a name="73"/>      i := if \self.is_checked_flag then
+<a name="74"/>         self.checked_paint
+<a name="75"/>      else 
+<a name="76"/>         self.unchecked_paint
+<a name="77"/>      if i ~=== curr_paint then
+<a name="78"/>         set_paint_left(curr_paint := i)
+<a name="79"/>   end
+<a name="80"/>
+<a name="81"/>   public override selected(e)
+<a name="82"/>      toggle_action(e)
+<a name="83"/>      TextMenuItem.selected(e)
+<a name="84"/>   end
+<a name="85"/>end
+<a name="86"/>
+<a name="87"/>
+</pre></body></html>

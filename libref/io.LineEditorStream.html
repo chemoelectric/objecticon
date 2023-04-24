@@ -1,0 +1,623 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>LineEditorStream</title></head><body>
+<h1>LineEditorStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.LineBasedInputStream.html" target="displayFrame">io.LineBasedInputStream</a><br>
+<a href="io.HasTask.html" target="displayFrame">io.HasTask</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+<p/><a href="io-lineeditor.icn.html#7" target="displayFrame">Source - lineeditor.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html">io.HasTask</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.LineBasedInputStream.html">io.LineBasedInputStream</a>
+<a href="io.LineEditorStream.html">io.LineEditorStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#choose_poll">choose_poll()</a>
+<a href="io.HasTask.html#set_task">set_task()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.HasTask</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.HasTask.html#task">task</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasClose</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html#close">close()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#out">out()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.LineBasedInputStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.LineBasedInputStream.html#in">in()</a>
+<a href="io.LineBasedInputStream.html#read_line">read_line()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.LineBasedInputStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.LineBasedInputStream.html#line">line</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#assign_contents">assign_contents()</a>
+<a href="#dbg">dbg()</a>
+<a href="#do_complete">do_complete()</a>
+<a href="#get_console_size">get_console_size()</a>
+<a href="#get_console_width">get_console_width()</a>
+<a href="#get_history">get_history()</a>
+<a href="#get_history_item">get_history_item()</a>
+<a href="#get_history_start_no">get_history_start_no()</a>
+<a href="#get_insertion">get_insertion()</a>
+<a href="#get_mod_hist">get_mod_hist()</a>
+<a href="#get_mode">get_mode()</a>
+<a href="#got">got()</a>
+<a href="#goto_hist">goto_hist()</a>
+<a href="#hist_search">hist_search()</a>
+<a href="#insert_string">insert_string()</a>
+<a href="#limit_history">limit_history()</a>
+<a href="#move_hist">move_hist()</a>
+<a href="#new">new()</a>
+<a href="#opt_write">opt_write()</a>
+<a href="#parse_terminfo">parse_terminfo()</a>
+<a href="#read1">read1()</a>
+<a href="#read_line_impl">read_line_impl()</a>
+<a href="#read_line_impl2">read_line_impl2()</a>
+<a href="#read_terminfo">read_terminfo()</a>
+<a href="#read_terminfo_escape">read_terminfo_escape()</a>
+<a href="#reset_term">reset_term()</a>
+<a href="#run_stty">run_stty()</a>
+<a href="#set_complete_function">set_complete_function()</a>
+<a href="#set_history">set_history()</a>
+<a href="#set_history_limit">set_history_limit()</a>
+<a href="#set_prompt">set_prompt()</a>
+<a href="#show">show()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#buff">buff</a>
+<a href="#buff_flag">buff_flag</a>
+<a href="#complete_function">complete_function</a>
+<a href="#ctrl_d_flag">ctrl_d_flag</a>
+<a href="#dim">dim</a>
+<a href="#history">history</a>
+<a href="#history_limit">history_limit</a>
+<a href="#history_start_no">history_start_no</a>
+<a href="#hmod">hmod</a>
+<a href="#hpos">hpos</a>
+<a href="#isatty">isatty</a>
+<a href="#line_no">line_no</a>
+<a href="#nlines">nlines</a>
+<a href="#pos">pos</a>
+<a href="#prompt">prompt</a>
+<a href="#subj">subj</a>
+<a href="#ti">ti</a>
+<a href="#tty">tty</a>
+<a href="#undo_manager">undo_manager</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="assign_contents"/>
+<h3>assign_contents(x, pos, coalesce)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#305" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="dbg"/>
+<h3>dbg(a[])</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#123" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="do_complete"/>
+<h3>do_complete()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#332" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_console_size"/>
+<h3>get_console_size()</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#131" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_console_width"/>
+<h3>get_console_width()</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#146" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_history"/>
+<h3>get_history()</h3>
+public<p/>
+<dl>
+<dd>
+Return the history list.
+<p/><a href="io-lineeditor.icn.html#63" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_history_item"/>
+<h3>get_history_item(n)</h3>
+public<p/>
+<dl>
+<dd>
+Return the given history number line.
+<p/><a href="io-lineeditor.icn.html#69" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_history_start_no"/>
+<h3>get_history_start_no()</h3>
+public<p/>
+<dl>
+<dd>
+Get the history number of the first entry in the history.
+<p/><a href="io-lineeditor.icn.html#75" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_insertion"/>
+<h3>get_insertion(l)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#320" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mod_hist"/>
+<h3>get_mod_hist(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#101" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="get_mode"/>
+<h3>get_mode()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.LineBasedInputStream.html#get_mode">get_mode()</a> in <a href="io.LineBasedInputStream.html" target="displayFrame">io.LineBasedInputStream</a></dd>
+<dd>
+<p/><a href="io-lineeditor.icn.html#81" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="got"/>
+<h3>got()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#278" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="goto_hist"/>
+<h3>goto_hist(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#85" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="hist_search"/>
+<h3>hist_search(dir)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#109" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="insert_string"/>
+<h3>insert_string(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#294" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="limit_history"/>
+<h3>limit_history()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#271" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="move_hist"/>
+<h3>move_hist(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#105" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(notty, f)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.LineBasedInputStream.html#new">new()</a> in <a href="io.LineBasedInputStream.html" target="displayFrame">io.LineBasedInputStream</a></dd>
+<dd>
+Create a LineEditorStream.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>notty</code> - a flag, implicitly set on non-Unix platforms.  If set,
+then the line editing facilities are disabled
+<p/>
+</dd>
+<dd>
+<code>f</code>    - a <code><a href="io.Stream.html" target="displayFrame">Stream</a></code> to read from if line editing is disabled.
+If omitted, FileStream.stdin is used.
+<p/>
+</dd>
+</dl>
+Examples :-
+<pre>
+   # On Unix use line editing, on other platforms use stdin
+   s := LineEditorStream()
+
+   # Don't use line editing; read from the default stdin.
+   s := LineEditorStream(&amp;yes)
+
+   # Don't use line editing; read from the given stream.
+   s := LineEditorStream(&amp;yes, 
+                         TaskStream(FileStream.stdin, task))
+</pre>
+<p/><a href="io-lineeditor.icn.html#531" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="opt_write"/>
+<h3>opt_write(key, def)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#252" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_terminfo"/>
+<h3>parse_terminfo(f)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#184" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="read1"/>
+<h3>read1()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#260" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="read_line_impl"/>
+<h3>read_line_impl()</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="io.LineBasedInputStream.html#read_line_impl">read_line_impl()</a> in <a href="io.LineBasedInputStream.html" target="displayFrame">io.LineBasedInputStream</a></dd>
+<dd>
+<p/><a href="io-lineeditor.icn.html#227" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="read_line_impl2"/>
+<h3>read_line_impl2()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#358" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="read_terminfo"/>
+<h3>read_terminfo(name)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#220" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="read_terminfo_escape"/>
+<h3>read_terminfo_escape()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#159" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_term"/>
+<h3>reset_term()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#286" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="run_stty"/>
+<h3>run_stty(params[])</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#150" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="set_complete_function"/>
+<h3>set_complete_function(f)</h3>
+public<p/>
+<dl>
+<dd>
+Set a function to generate completions when the tab key is
+pressed.  The function is given subject and cursor position, and
+should return a list of <code><a href="gui.CompleteElement.html" target="displayFrame">gui.CompleteElement</a></code> instances.
+<p/><a href="io-lineeditor.icn.html#47" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="set_history"/>
+<h3>set_history(l)</h3>
+public<p/>
+<dl>
+<dd>
+Set the history list.
+<p/><a href="io-lineeditor.icn.html#38" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="set_history_limit"/>
+<h3>set_history_limit(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the limit in lines for the command history.
+<p/><a href="io-lineeditor.icn.html#30" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="set_prompt"/>
+<h3>set_prompt(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the prompt to display.
+<p/><a href="io-lineeditor.icn.html#56" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="show"/>
+<h3>show()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#501" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="buff"/>
+<h3>buff</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#28" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="buff_flag"/>
+<h3>buff_flag</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#27" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="complete_function"/>
+<h3>complete_function</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#12" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="ctrl_d_flag"/>
+<h3>ctrl_d_flag</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#22" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="dim"/>
+<h3>dim</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#25" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="history"/>
+<h3>history</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#14" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="history_limit"/>
+<h3>history_limit</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#13" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="history_start_no"/>
+<h3>history_start_no</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#15" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="hmod"/>
+<h3>hmod</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#17" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="hpos"/>
+<h3>hpos</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#16" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="isatty"/>
+<h3>isatty</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#24" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="line_no"/>
+<h3>line_no</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#20" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="nlines"/>
+<h3>nlines</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#21" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="pos"/>
+<h3>pos</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#10" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="prompt"/>
+<h3>prompt</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#18" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="subj"/>
+<h3>subj</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#9" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="ti"/>
+<h3>ti</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#26" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="tty"/>
+<h3>tty</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#23" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+<a name="undo_manager"/>
+<h3>undo_manager</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="io-lineeditor.icn.html#19" target="displayFrame">Source - lineeditor.icn </a>
+</dd>
+</dl><hr>
+</body></html>

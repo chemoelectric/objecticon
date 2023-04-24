@@ -1,0 +1,411 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>patxform.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     patxform.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures to transform patterns in row form
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     February 1, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	pscramble(rows, dir)
+<a name="18"/>#	pshift(rows, shift, dir)
+<a name="19"/>#	pborder(rows, l, r, t, b, c)
+<a name="20"/>#	pcrop(rows, l, r, t, b)
+<a name="21"/>#	phalve(rows, dir, choice)
+<a name="22"/>#	pdouble(rows, dir)
+<a name="23"/>#	pflip(rows, dir)
+<a name="24"/>#	pinvert(rows)
+<a name="25"/>#	pminim(rows)
+<a name="26"/>#	protate(rows, dir)
+<a name="27"/>#	ptrim(rows, c)
+<a name="28"/>#	pcenter(rows, w, h)
+<a name="29"/>#
+<a name="30"/>############################################################################
+<a name="31"/>#
+<a name="32"/>#  Requires:  Version 9 graphics
+<a name="33"/>#
+<a name="34"/>############################################################################
+<a name="35"/>#
+<a name="36"/>#  Links:  patutils, random, strings
+<a name="37"/>#
+<a name="38"/>############################################################################
+<a name="39"/>
+<a name="40"/>package ipl.patxform
+<a name="41"/>
+<a name="42"/>import
+<a name="43"/>   ipl.random(shuffle),
+<a name="44"/>   ipl.strings(collate, decollate, rotate)
+<a name="45"/>
+<a name="46"/>#
+<a name="47"/>#  Scrambles a pattern by shuffling it.  If dir is "h", the columns of each row
+<a name="48"/>#  are scrambled; if "v", the the rows are scrambled.  If "b", bits are
+<a name="49"/>#  scrambled throughout the pattern.
+<a name="50"/>
+<a name="51"/># scramble pattern
+<a name="52"/>procedure pscramble(rows, dir)		
+<a name="53"/>   local i, all
+<a name="54"/>
+<a name="55"/>   case dir of {
+<a name="56"/>      "h":  {
+<a name="57"/>          every i := 1 to *rows do
+<a name="58"/>             rows[i] := shuffle(rows[i])
+<a name="59"/>          }
+<a name="60"/>      "v":  rows := shuffle(rows)
+<a name="61"/>      "b" | &amp;null:  {
+<a name="62"/>         all := ""
+<a name="63"/>         every all ||:= !rows
+<a name="64"/>         all := shuffle(all)
+<a name="65"/>         every i := 1 to *rows do {
+<a name="66"/>            rows[i] := left(all, *rows[1])
+<a name="67"/>            all[1 +: *rows[1]] := ""
+<a name="68"/>            }
+<a name="69"/>         }
+<a name="70"/>      default:   runerr("*** illegal specification in scramble()",dir)
+<a name="71"/>      }
+<a name="72"/>
+<a name="73"/>   return rows
+<a name="74"/>
+<a name="75"/>end 
+<a name="76"/>      
+<a name="77"/>
+<a name="78"/>#
+<a name="79"/>#  Create bit-shifted copy of a pattern.  If dir is "h", then the
+<a name="80"/>#  shift is horizontal; if "v", vertical. The default is horizontal.
+<a name="81"/>#  Positive shift is to the right for horizontal shifts, downward for vertical
+<a name="82"/>#  shifts.  The default shift is 0 and the default direction is horizontal.
+<a name="83"/>
+<a name="84"/># bit shift pattern
+<a name="85"/>procedure pshift(rows, shift, dir)	
+<a name="86"/>   local i
+<a name="87"/>
+<a name="88"/>   /shift := 0
+<a name="89"/>
+<a name="90"/>   case dir of {
+<a name="91"/>      "h" | &amp;null: {			# horizontal shift
+<a name="92"/>         every i := 1 to *rows do
+<a name="93"/>            rows[i] := rotate(rows[i], -shift)
+<a name="94"/>         }
+<a name="95"/>      "v": {				# vertical shift
+<a name="96"/>         if shift &gt; 0 then
+<a name="97"/>            every 1 to shift do
+<a name="98"/>               push(rows, pull(rows))
+<a name="99"/>         else if shift &lt; 0 then
+<a name="100"/>            every 1 to -shift do
+<a name="101"/>               put(rows, pop(rows))
+<a name="102"/>         }
+<a name="103"/>      default:  runerr("*** illegal specification in pshift()",dir)
+<a name="104"/>      }
+<a name="105"/>
+<a name="106"/>   return rows
+<a name="107"/>
+<a name="108"/>end
+<a name="109"/>
+<a name="110"/>#
+<a name="111"/>#  Place a border around a pattern.  l, r, t, and b specify the number of bits
+<a name="112"/>#  to add at the left, right, top, and bottom, respectively.  c specifies
+<a name="113"/>#  the color of the border, "0" for white, "1" for black.
+<a name="114"/>
+<a name="115"/># place border around pattern
+<a name="116"/>procedure pborder(rows, l, r, t, b, c)	
+<a name="117"/>   local i, row, left, right
+<a name="118"/>
+<a name="119"/>   /l := 1
+<a name="120"/>   /r := 1
+<a name="121"/>   /t := 1
+<a name="122"/>   /b := 1
+<a name="123"/>   /c := "0"
+<a name="124"/>
+<a name="125"/>   if l = r = t = b = 0 then return rows
+<a name="126"/>
+<a name="127"/>   row := repl(c, *rows[1] + l + r)
+<a name="128"/>   left := repl(c, l)
+<a name="129"/>   right := repl(c, r)
+<a name="130"/>
+<a name="131"/>   every i := 1 to *rows do
+<a name="132"/>       rows[i] := left || rows[i] || right
+<a name="133"/>
+<a name="134"/>   every 1 to t do
+<a name="135"/>      push(rows, row)
+<a name="136"/>
+<a name="137"/>   every 1 to b do
+<a name="138"/>      put(rows, row)
+<a name="139"/>
+<a name="140"/>   return rows
+<a name="141"/>
+<a name="142"/>end
+<a name="143"/>
+<a name="144"/>#
+<a name="145"/>#  Crop a pattern.  l, r, t, and b specify the number of bits
+<a name="146"/>#  to crop at the left, right, top, and bottom, respectively.
+<a name="147"/>
+<a name="148"/># crop pattern
+<a name="149"/>procedure pcrop(rows, l, r, t, b)	
+<a name="150"/>   local i
+<a name="151"/>
+<a name="152"/>   /l := 0
+<a name="153"/>   /r := 0
+<a name="154"/>   /t := 0
+<a name="155"/>   /b := 0
+<a name="156"/>
+<a name="157"/>   if l = r = t = b = 0 then return rows
+<a name="158"/>
+<a name="159"/>   if ((*rows[1] - l - r) | (*rows - t - b)) &lt; 2 then fail
+<a name="160"/>
+<a name="161"/>   every 1 to t do
+<a name="162"/>      get(rows)
+<a name="163"/>
+<a name="164"/>   every 1 to b do
+<a name="165"/>      pull(rows)
+<a name="166"/>
+<a name="167"/>   every i := 1 to *rows do
+<a name="168"/>       rows[i] := rows[i][l + 1 : -r]
+<a name="169"/>
+<a name="170"/>   return rows
+<a name="171"/>
+<a name="172"/>end
+<a name="173"/>
+<a name="174"/>#  Creates a tile in every other pixel is discarded.  dir determines the
+<a name="175"/>#  direction is which the halving is done.  If dir is "b" or null, it's
+<a name="176"/>#  done both vertically and horizontally.  If dir is "v", it's only done
+<a name="177"/>#  vertically, while if dir is "v", it's done only vertically.
+<a name="178"/>#  If choice is "o" or null, odd-numbered rows or columns are kept;
+<a name="179"/>#  if "e", the even-numbered ones.
+<a name="180"/>
+<a name="181"/># halve pattern by bits
+<a name="182"/>procedure phalve(rows, dir, choice)	
+<a name="183"/>   local newrows, i
+<a name="184"/>
+<a name="185"/>   choice := if choice === ("o" | &amp;null) then 1 else 0
+<a name="186"/>   newrows := []
+<a name="187"/>
+<a name="188"/>   case dir of {
+<a name="189"/>      "v": {
+<a name="190"/>         every i := choice to *rows by 2 do
+<a name="191"/>            put(newrows, rows[i])
+<a name="192"/>         }
+<a name="193"/>      "h":  every put(newrows, decollate(!rows, choice))
+<a name="194"/>      "b" | &amp;null: return phalve(phalve(rows, "v", choice), "h", choice)
+<a name="195"/>      }
+<a name="196"/>
+<a name="197"/>   return newrows
+<a name="198"/>
+<a name="199"/>end
+<a name="200"/>         
+<a name="201"/>#
+<a name="202"/>#  Creates a tile in which each pixel doubled.  dir determines the
+<a name="203"/>#  direction in which the doubling is done.  If dir is "b" or null, it's
+<a name="204"/>#  done both horizontally and vertically.  If dir is "v", it's only done
+<a name="205"/>#  vertically, while if dir is "h", it's done only horizontally.
+<a name="206"/>
+<a name="207"/># double pattern
+<a name="208"/>procedure pdouble(rows, dir)		
+<a name="209"/>   local row, newrows
+<a name="210"/>
+<a name="211"/>   newrows := []
+<a name="212"/>
+<a name="213"/>   case dir of {
+<a name="214"/>      "v":  {
+<a name="215"/>         every row := !rows do
+<a name="216"/>            every put(newrows, row | row)
+<a name="217"/>         }
+<a name="218"/>      "h":  {
+<a name="219"/>         every row := !rows do
+<a name="220"/>            put(newrows, collate(row, row))
+<a name="221"/>         }
+<a name="222"/>      "b" | &amp;null: return pdouble(pdouble(rows, "v"), "h")
+<a name="223"/>      }
+<a name="224"/>
+<a name="225"/>   return newrows
+<a name="226"/>
+<a name="227"/>end
+<a name="228"/>
+<a name="229"/>#
+<a name="230"/>#  Flip pattern.  The possible values of dir are "h" (horizontal flip),
+<a name="231"/>#  "v" (vertical flip), "l" (left diagonal), and "r" (right diagonal).
+<a name="232"/>#  (The left diagonal extends from the upper left corner to the bottom
+<a name="233"/>#  right corner; the right diagonal from the upper right to the lower
+<a name="234"/>#  left.
+<a name="235"/>
+<a name="236"/># flip pattern
+<a name="237"/>procedure pflip(rows, dir)		
+<a name="238"/>   local newrows, x, y, i
+<a name="239"/>
+<a name="240"/>   case dir of {
+<a name="241"/>      "l": {
+<a name="242"/>         newrows := list(*rows[1], repl("0", *rows))
+<a name="243"/>         every y := 1 to *rows do
+<a name="244"/>            every x := 1 to *rows[1] do
+<a name="245"/>               if rows[y, x] == "1" then
+<a name="246"/>                  newrows[-x, -y] := "1"
+<a name="247"/>         }
+<a name="248"/>      "r": {
+<a name="249"/>         newrows := list(*rows[1], repl("0", *rows))
+<a name="250"/>         every y := 1 to *rows do
+<a name="251"/>            every x := 1 to *rows[1] do
+<a name="252"/>               if rows[y, x] == "1" then
+<a name="253"/>                  newrows[x, y] := "1"
+<a name="254"/>         }
+<a name="255"/>      "h":  {
+<a name="256"/>         newrows := copy(rows)
+<a name="257"/>         every i := 1 to *rows do
+<a name="258"/>            newrows[i] := reverse(newrows[i])
+<a name="259"/>         }
+<a name="260"/>      "v":  {
+<a name="261"/>         newrows := copy(rows)
+<a name="262"/>         every i := 1 to *rows / 2 do
+<a name="263"/>           newrows[i] :=: newrows[-i]
+<a name="264"/>         }
+<a name="265"/>      default:  runerr("*** illegal flip specification in pflip()",dir)
+<a name="266"/>      }
+<a name="267"/>
+<a name="268"/>   return newrows
+<a name="269"/>      
+<a name="270"/>end
+<a name="271"/>
+<a name="272"/>#
+<a name="273"/>#  Invert white and black bits in pattern specification
+<a name="274"/>
+<a name="275"/># invert B&amp;W pattern
+<a name="276"/>procedure pinvert(rows)			
+<a name="277"/>   local i
+<a name="278"/>
+<a name="279"/>   every i := 1 to *rows do
+<a name="280"/>      rows[i] := map(rows[i], "10", "01")
+<a name="281"/>
+<a name="282"/>   return rows
+<a name="283"/>
+<a name="284"/>end
+<a name="285"/>
+<a name="286"/>#
+<a name="287"/>#  Reduce pattern to its smallest equivalent form (with at least 4 columns).
+<a name="288"/>#  Limited to square patterns for portability -- other possibilities exist
+<a name="289"/>#  for operating on and/or producing patterns that are not square.
+<a name="290"/>
+<a name="291"/>
+<a name="292"/># minimize pattern
+<a name="293"/>procedure pminim(rows)			
+<a name="294"/>   local halfw, halfh, i
+<a name="295"/>
+<a name="296"/>#  if (*rows ~= *rows[1]) | (*rows % 2 ~= 0) then return rows
+<a name="297"/>
+<a name="298"/>   repeat {
+<a name="299"/>  
+<a name="300"/>      if *rows[1] &lt; 4 then break
+<a name="301"/>
+<a name="302"/>      halfw := *rows[1] / 2
+<a name="303"/>      halfh := *rows / 2
+<a name="304"/>   
+<a name="305"/>      every i := 1 to halfh do			# check rows in top and bottom
+<a name="306"/>         if (rows[i] ~== rows[i + halfh]) |
+<a name="307"/>            (rows[i][1+:halfw] ~== rows[i][0-:halfw]) then break break
+<a name="308"/>   
+<a name="309"/>      every 1 to halfh do			# reducible; remove rows
+<a name="310"/>         pop(rows)
+<a name="311"/>   
+<a name="312"/>      every i := 1 to halfh do			# truncate rows
+<a name="313"/>         rows[i] := rows[i][1+:halfw]
+<a name="314"/>   
+<a name="315"/>      }
+<a name="316"/>
+<a name="317"/>   return rows
+<a name="318"/>
+<a name="319"/>end
+<a name="320"/>
+<a name="321"/>#  Create rotated copy of a pattern.  If dir is "cw" or "90", rotation is 90
+<a name="322"/>#  degrees clockwise; if "ccw" or "-90", 90 degrees counter-clockwise.
+<a name="323"/>#  If dir is "180", rotation is 180 degrees.  The default is "cw".
+<a name="324"/>
+<a name="325"/># rotate pattern
+<a name="326"/>procedure protate(rows, dir)		
+<a name="327"/>   local newrows, i, row, pix
+<a name="328"/>
+<a name="329"/>   /dir := "cw"
+<a name="330"/>
+<a name="331"/>   case string(dir) of {
+<a name="332"/>      "ccw" | "-90":  {			# counter-clockwise
+<a name="333"/>         newrows := list(*rows[1], "")
+<a name="334"/>         every row := !rows do  {
+<a name="335"/>            i := 0
+<a name="336"/>            every pix := !row do
+<a name="337"/>               newrows[i -:= 1] ||:= pix
+<a name="338"/>            }
+<a name="339"/>        }
+<a name="340"/>      "cw" | "90" | &amp;null:  {			# clockwise
+<a name="341"/>         newrows := list(*rows[1], "")
+<a name="342"/>         every row := !rows do {
+<a name="343"/>            i := 0
+<a name="344"/>            every pix := !row do
+<a name="345"/>               newrows[i +:= 1] := pix || newrows[i]
+<a name="346"/>            }
+<a name="347"/>         }
+<a name="348"/>      "180": {
+<a name="349"/>         newrows := []
+<a name="350"/>         every push(newrows, reverse(!rows))
+<a name="351"/>         }
+<a name="352"/>      default:  runerr("*** illegal rotation specification in protate()",dir)
+<a name="353"/>   }
+<a name="354"/>
+<a name="355"/>   return newrows
+<a name="356"/>
+<a name="357"/>end
+<a name="358"/>
+<a name="359"/>#
+<a name="360"/>#  Trim border from pattern;  c gives color; default "1"
+<a name="361"/>
+<a name="362"/># trim pattern
+<a name="363"/>procedure ptrim(rows, c)		
+<a name="364"/>   
+<a name="365"/>   /c := '1'
+<a name="366"/>   c := cset(c)
+<a name="367"/>
+<a name="368"/>   while (*rows &gt; 2) &amp; not(upto(c, rows[1])) do
+<a name="369"/>      get(rows)
+<a name="370"/>
+<a name="371"/>   while (*rows &gt; 2) &amp; not(upto(c, rows[-1])) do
+<a name="372"/>      pull(rows)
+<a name="373"/>
+<a name="374"/>   rows := protate(rows, "cw")
+<a name="375"/>
+<a name="376"/>   while (*rows &gt; 2) &amp; not(upto(c, rows[1])) do
+<a name="377"/>      get(rows)
+<a name="378"/>
+<a name="379"/>   while (*rows &gt; 2) &amp; not(upto(c, rows[-1])) do
+<a name="380"/>      pull(rows)
+<a name="381"/> 
+<a name="382"/>   return protate(rows, "ccw")
+<a name="383"/>
+<a name="384"/>end
+<a name="385"/>
+<a name="386"/>#
+<a name="387"/>#  Centers non-white portion of pattern
+<a name="388"/>
+<a name="389"/># center pattern
+<a name="390"/>procedure pcenter(rows, w, h)		
+<a name="391"/>   local rw, rh, vert, horz, t, l
+<a name="392"/>
+<a name="393"/>   rows := ptrim(rows)
+<a name="394"/>
+<a name="395"/>   rw := *rows[1]
+<a name="396"/>   rh := *rows
+<a name="397"/>
+<a name="398"/>   if (rh = h) &amp; (rw = w) then return rows
+<a name="399"/>   if (rh &gt; h) | (rw &gt; w) then fail
+<a name="400"/>
+<a name="401"/>   horz := w - rw
+<a name="402"/>   vert := h - rh
+<a name="403"/>   l := horz / 2
+<a name="404"/>   t := vert / 2
+<a name="405"/>
+<a name="406"/>   return pborder(rows, l, horz - l, t, vert - t)
+<a name="407"/>
+<a name="408"/>end
+</pre></body></html>

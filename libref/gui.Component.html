@@ -1,0 +1,2404 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Component</title></head><body>
+<h1>Component</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Rect.html" target="displayFrame">gui.Rect</a><br>
+<a href="gui.XYAlign.html" target="displayFrame">gui.XYAlign</a><br>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.ListTabSet.html">gui.ListTabSet</a><br>
+<a href="gui.TableHeader.html">gui.TableHeader</a><br>
+<a href="gui.Slider.html">gui.Slider</a><br>
+<a href="gui.SliderArea.html">gui.SliderArea</a><br>
+<a href="gui.SliderDragComponent.html">gui.SliderDragComponent</a><br>
+<a href="gui.ScrollBar.html">gui.ScrollBar</a><br>
+<a href="gui.ScrollArea.html">gui.ScrollArea</a><br>
+<a href="gui.Accelerator.html">gui.Accelerator</a><br>
+<a href="gui.Spin.html">gui.Spin</a><br>
+<a href="gui.DropDown.html">gui.DropDown</a><br>
+<a href="gui.Sizer.html">gui.Sizer</a><br>
+<a href="ipl.timegui.Calendar.html">ipl.timegui.Calendar</a><br>
+<a href="gui.PopupEditor.html">gui.PopupEditor</a><br>
+<a href="ipl.filegui.FileTrail.html">ipl.filegui.FileTrail</a><br>
+<a href="gui.FrameBar.html">gui.FrameBar</a><br>
+<a href="gui.MenuButton.html">gui.MenuButton</a><br>
+<a href="gui.Button.html">gui.Button</a><br>
+<a href="gui.Panel.html">gui.Panel</a><br>
+<a href="ipl.browser.TextFlow.html">ipl.browser.TextFlow</a><br>
+<a href="ipl.browser.TblContent.html">ipl.browser.TblContent</a><br>
+<a href="ipl.browser.FormBrowse.html">ipl.browser.FormBrowse</a><br>
+<a href="ipl.browser.FormDateTimeField.html">ipl.browser.FormDateTimeField</a><br>
+<a href="ipl.browser.FormMonthYearField.html">ipl.browser.FormMonthYearField</a><br>
+<a href="ipl.browser.FormDateTimeLocalField.html">ipl.browser.FormDateTimeLocalField</a><br>
+<a href="gui.ProgressBar.html">gui.ProgressBar</a><br>
+<a href="gui.WindowControl.html">gui.WindowControl</a><br>
+<a href="gui.TextField.html">gui.TextField</a><br>
+<a href="gui.PopupMenu.html">gui.PopupMenu</a><br>
+<a href="gui.Line.html">gui.Line</a><br>
+<a href="gui.Image.html">gui.Image</a><br>
+<a href="gui.MenuBar.html">gui.MenuBar</a><br>
+<a href="gui.Circulate.html">gui.Circulate</a><br>
+<a href="gui.BarArea.html">gui.BarArea</a><br>
+<a href="gui.Frame.html">gui.Frame</a><br>
+<a href="gui.OverlaySet.html">gui.OverlaySet</a><br>
+<a href="gui.OverlayItem.html">gui.OverlayItem</a><br>
+<a href="gui.Table.html">gui.Table</a><br>
+<a href="gui.Split.html">gui.Split</a><br>
+<a href="gui.DrawScrollAreaView.html">gui.DrawScrollAreaView</a><br>
+<a href="ipl.colorgui.ColorField.html">ipl.colorgui.ColorField</a><br>
+<a href="ipl.colorgui.ColorRectangle.html">ipl.colorgui.ColorRectangle</a><br>
+<a href="gui.Dialog.html">gui.Dialog</a><br>
+<a href="gui.ComponentScrollAreaView.html">gui.ComponentScrollAreaView</a><br>
+<a href="gui.TabItem.html">gui.TabItem</a><br>
+<a href="gui.EmptyWAttribAncestor.html">gui.EmptyWAttribAncestor</a><br>
+<a href="gui.SubMenuProxyComponent.html">gui.SubMenuProxyComponent</a><br>
+<a href="gui.Label.html">gui.Label</a><br>
+<a href="gui.Border.html">gui.Border</a><br>
+<a href="gui.TabSet.html">gui.TabSet</a><br>
+<a href="gui.BorderWhilstEntered.html">gui.BorderWhilstEntered</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This is the parent class of all the GUI components.  All of
+its methods and variables therefore apply to its sub-classes.
+<p/><a href="gui-component.icn.html#17" target="displayFrame">Source - component.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#accepts_focus">accepts_focus()</a>
+<a href="#add">add()</a>
+<a href="#add_list">add_list()</a>
+<a href="#build_point_chain">build_point_chain()</a>
+<a href="#can_drag">can_drag()</a>
+<a href="#can_drop">can_drop()</a>
+<a href="#clear_constraints">clear_constraints()</a>
+<a href="#clear_wattribs">clear_wattribs()</a>
+<a href="#component_tabsort">component_tabsort()</a>
+<a href="#component_zsort">component_zsort()</a>
+<a href="#compute_absolutes">compute_absolutes()</a>
+<a href="#compute_tab_order">compute_tab_order()</a>
+<a href="#compute_z_order">compute_z_order()</a>
+<a href="#copy_wattrib">copy_wattrib()</a>
+<a href="#create_tooltip_component">create_tooltip_component()</a>
+<a href="#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="#display">display()</a>
+<a href="#display_child">display_child()</a>
+<a href="#display_children">display_children()</a>
+<a href="#do_layout">do_layout()</a>
+<a href="#drag_event">drag_event()</a>
+<a href="#drag_reset">drag_reset()</a>
+<a href="#end_drag">end_drag()</a>
+<a href="#finally">finally()</a>
+<a href="#find_accel">find_accel()</a>
+<a href="#find_focus">find_focus()</a>
+<a href="#focus_changed">focus_changed()</a>
+<a href="#gen_focusable">gen_focusable()</a>
+<a href="#gen_parents">gen_parents()</a>
+<a href="#get_accel">get_accel()</a>
+<a href="#get_bottom_z">get_bottom_z()</a>
+<a href="#get_cbwin">get_cbwin()</a>
+<a href="#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="#get_children">get_children()</a>
+<a href="#get_clip_rect">get_clip_rect()</a>
+<a href="#get_constraint">get_constraint()</a>
+<a href="#get_default_height">get_default_height()</a>
+<a href="#get_default_width">get_default_width()</a>
+<a href="#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="#get_index">get_index()</a>
+<a href="#get_parent">get_parent()</a>
+<a href="#get_parent_dialog">get_parent_dialog()</a>
+<a href="#get_parent_win">get_parent_win()</a>
+<a href="#get_pointer">get_pointer()</a>
+<a href="#get_preferred_focus">get_preferred_focus()</a>
+<a href="#get_preferred_height">get_preferred_height()</a>
+<a href="#get_preferred_width">get_preferred_width()</a>
+<a href="#get_tooltip">get_tooltip()</a>
+<a href="#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="#get_top_z">get_top_z()</a>
+<a href="#get_wattrib">get_wattrib()</a>
+<a href="#got_focus">got_focus()</a>
+<a href="#grab_focus">grab_focus()</a>
+<a href="#handle_accel">handle_accel()</a>
+<a href="#has_focus">has_focus()</a>
+<a href="#hidden_change">hidden_change()</a>
+<a href="#in_region">in_region()</a>
+<a href="#initially">initially()</a>
+<a href="#invalidate">invalidate()</a>
+<a href="#invoke_display">invoke_display()</a>
+<a href="#is_held">is_held()</a>
+<a href="#is_hidden">is_hidden()</a>
+<a href="#is_initialized">is_initialized()</a>
+<a href="#is_live">is_live()</a>
+<a href="#is_shaded">is_shaded()</a>
+<a href="#is_unhidden">is_unhidden()</a>
+<a href="#is_unshaded">is_unshaded()</a>
+<a href="#keeps">keeps()</a>
+<a href="#layout">layout()</a>
+<a href="#lost_focus">lost_focus()</a>
+<a href="#match_accel">match_accel()</a>
+<a href="#move_all">move_all()</a>
+<a href="#new">new()</a>
+<a href="#parse_pos">parse_pos()</a>
+<a href="#perform_drop">perform_drop()</a>
+<a href="#remove">remove()</a>
+<a href="#remove_all">remove_all()</a>
+<a href="#remove_constraint">remove_constraint()</a>
+<a href="#remove_index">remove_index()</a>
+<a href="#remove_list">remove_list()</a>
+<a href="#remove_wattrib">remove_wattrib()</a>
+<a href="#reposition">reposition()</a>
+<a href="#reposition_index">reposition_index()</a>
+<a href="#reset">reset()</a>
+<a href="#reset_all_layouts">reset_all_layouts()</a>
+<a href="#reset_layout">reset_layout()</a>
+<a href="#reset_layout_chain">reset_layout_chain()</a>
+<a href="#resize">resize()</a>
+<a href="#set_accel">set_accel()</a>
+<a href="#set_accepts_focus">set_accepts_focus()</a>
+<a href="#set_align">set_align()</a>
+<a href="#set_all_wattribs">set_all_wattribs()</a>
+<a href="#set_allow_drag">set_allow_drag()</a>
+<a href="#set_allow_drop">set_allow_drop()</a>
+<a href="#set_bg">set_bg()</a>
+<a href="#set_border">set_border()</a>
+<a href="#set_constraint">set_constraint()</a>
+<a href="#set_draw_op">set_draw_op()</a>
+<a href="#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="#set_fg">set_fg()</a>
+<a href="#set_font">set_font()</a>
+<a href="#set_geometry">set_geometry()</a>
+<a href="#set_height">set_height()</a>
+<a href="#set_is_hidden">set_is_hidden()</a>
+<a href="#set_is_shaded">set_is_shaded()</a>
+<a href="#set_layout">set_layout()</a>
+<a href="#set_leading">set_leading()</a>
+<a href="#set_line_end">set_line_end()</a>
+<a href="#set_line_join">set_line_join()</a>
+<a href="#set_line_width">set_line_width()</a>
+<a href="#set_mask">set_mask()</a>
+<a href="#set_parent">set_parent()</a>
+<a href="#set_parent_dialog">set_parent_dialog()</a>
+<a href="#set_pattern">set_pattern()</a>
+<a href="#set_pointer">set_pointer()</a>
+<a href="#set_pos">set_pos()</a>
+<a href="#set_preferred_focus">set_preferred_focus()</a>
+<a href="#set_show_layout">set_show_layout()</a>
+<a href="#set_size">set_size()</a>
+<a href="#set_tab_ord">set_tab_ord()</a>
+<a href="#set_tooltip">set_tooltip()</a>
+<a href="#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="#set_wattrib">set_wattrib()</a>
+<a href="#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="#set_width">set_width()</a>
+<a href="#set_x">set_x()</a>
+<a href="#set_x_align">set_x_align()</a>
+<a href="#set_y">set_y()</a>
+<a href="#set_y_align">set_y_align()</a>
+<a href="#set_z">set_z()</a>
+<a href="#shaded_change">shaded_change()</a>
+<a href="#shift">shift()</a>
+<a href="#should_draw_focus">should_draw_focus()</a>
+<a href="#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="#traverse_postorder">traverse_postorder()</a>
+<a href="#traverse_preorder">traverse_preorder()</a>
+<a href="#traverse_tab_order">traverse_tab_order()</a>
+<a href="#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#accel">accel</a>
+<a href="#accepts_focus_flag">accepts_focus_flag</a>
+<a href="#allow_drag_flag">allow_drag_flag</a>
+<a href="#allow_drop_flag">allow_drop_flag</a>
+<a href="#border">border</a>
+<a href="#cbwin">cbwin</a>
+<a href="#children">children</a>
+<a href="#constraints">constraints</a>
+<a href="#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="#effective_wattribs">effective_wattribs</a>
+<a href="#h_spec">h_spec</a>
+<a href="#is_hidden_flag">is_hidden_flag</a>
+<a href="#is_shaded_flag">is_shaded_flag</a>
+<a href="#layout_delegate">layout_delegate</a>
+<a href="#parent">parent</a>
+<a href="#parent_dialog">parent_dialog</a>
+<a href="#pointer">pointer</a>
+<a href="#preferred_focus">preferred_focus</a>
+<a href="#show_layout_flag">show_layout_flag</a>
+<a href="#tab_children">tab_children</a>
+<a href="#tab_ord">tab_ord</a>
+<a href="#tooltip">tooltip</a>
+<a href="#tooltip_end_delay">tooltip_end_delay</a>
+<a href="#tooltip_start_delay">tooltip_start_delay</a>
+<a href="#w_spec">w_spec</a>
+<a href="#wattrib_ancestor">wattrib_ancestor</a>
+<a href="#wattribs">wattribs</a>
+<a href="#x_spec">x_spec</a>
+<a href="#y_spec">y_spec</a>
+<a href="#z">z</a>
+<a href="#z_children">z_children</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="accepts_focus"/>
+<h3>accepts_focus()</h3>
+public<p/>
+<dl>
+<dd>
+Determines whether the component accepts the tab focus
+<p/><a href="gui-component.icn.html#375" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="add"/>
+<h3>add(c, i)</h3>
+public<p/>
+<dl>
+<dd>
+Add the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> to the list of children.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.Component.html" target="displayFrame">Component</a></code> to add.
+</dd>
+<dd>
+<code>i</code> - The index to add at; if omitted then the new component
+is appended to the end.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1204" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="add_list"/>
+<h3>add_list(l, i)</h3>
+public<p/>
+<dl>
+<dd>
+Add all the <code><a href="gui.Component.html" target="displayFrame">Component</a></code>s contained in list <code>l</code> at index <code>i</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - The list to add
+</dd>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1330" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="build_point_chain"/>
+<h3>build_point_chain(l, e)</h3>
+public<p/>
+<dl>
+<dd>
+Given a <code><a href="gui.WinEvent.html" target="displayFrame">WinEvent</a></code> <code>e</code>, recursively add to list <code>l</code> so that it
+contains a list of the components containing the point, with the
+deepest in the component hierarchy being at the front of the
+list.
+<p/><a href="gui-component.icn.html#1058" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="can_drag"/>
+<h3>can_drag(e)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked on a drag gesture; if the component wishes to start a
+drag and drop session, it should succeed and return the drag
+content, otherwise it should fail.  The drag content is
+subsequently stored in the <code>content</code> of the current <code><a href="gui.Drag.html" target="displayFrame">Drag</a></code>
+object.
+<p/>
+NB - this method will only be invoked if the allow_drag flag is
+non-null (see <code><a href="gui.Component.html#set_allow_drag">set_allow_drag()</a></code>).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - the event, an instance of WindowEvent
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1380" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="can_drop"/>
+<h3>can_drop(drag, e)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked on the "drag holder", ie after the drag_event() method
+has succeeded for a particular event.  The method indicates
+whether the current location is suitable for a drop.  The mouse
+cursor is updated accordingly.  The component remains the "drag
+holder" regardless of whether this method succeeds or fails.  On
+success, the data returned is put into the content field of a
+Drag object, which is passed to <code><a href="gui.Component.html#perform_drop">perform_drop()</a></code> on a drop event.
+<p/>
+It may also be invoked independently of any particular event, for
+example if the state potentially changes via a ticker.  In this
+case the passed event is null.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>drag</code> - the current Drag object.
+</dd>
+<dd>
+<code>e</code> - the drag event; may be <code>&amp;null</code>.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1426" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_constraints"/>
+<h3>clear_constraints()</h3>
+public<p/>
+<dl>
+<dd>
+Clear all constraints
+<p/><a href="gui-component.icn.html#539" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_wattribs"/>
+<h3>clear_wattribs()</h3>
+public<p/>
+<dl>
+<dd>
+Clear all wattribs
+<p/><a href="gui-component.icn.html#486" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="component_tabsort"/>
+<h3>component_tabsort(c)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#1200" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="component_zsort"/>
+<h3>component_zsort(c)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#1196" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_absolutes"/>
+<h3>compute_absolutes()</h3>
+public<p/>
+<dl>
+<dd>
+Compute the absolute positions and sizes from the
+specifications given by <code><a href="gui.Component.html#set_pos">set_pos()</a></code> and <code><a href="gui.Component.html#set_size">set_size()</a></code>.
+<p/><a href="gui-component.icn.html#1022" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_tab_order"/>
+<h3>compute_tab_order()</h3>
+public<p/>
+<dl>
+<dd>
+Compute the tab order list.
+<p/><a href="gui-component.icn.html#1189" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="compute_z_order"/>
+<h3>compute_z_order()</h3>
+public<p/>
+<dl>
+<dd>
+Compute the z_children list.
+<p/><a href="gui-component.icn.html#1182" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_wattrib"/>
+<h3>copy_wattrib(attr, other)</h3>
+public<p/>
+<dl>
+<dd>
+Copy an attrib from another component to this one.  If the
+attribute is absent in the other component it is deleted from
+this one.
+<p/><a href="gui-component.icn.html#502" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="create_tooltip_component"/>
+<h3>create_tooltip_component(tip)</h3>
+public<p/>
+<dl>
+<dd>
+Create a tooltip Component.  By default delegates this to the <code><a href="gui.Style.html" target="displayFrame">Style</a></code> object,
+to create a standard <code><a href="gui.Label.html" target="displayFrame">Label</a></code>.  The content is then set from the tip, which
+can be a string or a <code><a href="gui.Paint.html" target="displayFrame">Paint</a></code> instance.
+<p/><a href="gui-component.icn.html#189" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="define_dnd_pointers"/>
+<h3>define_dnd_pointers(drag)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked after <code><a href="gui.Component.html#can_drag">can_drag</a></code> succeeds, at the beginning of an
+operation.  Two pointers, "dnd positive" and "dnd negative"
+should be defined to indicate to the user whether the current
+operation has a potential drop or not.  By default, this method
+just uses two pre-defined pointers.
+<p/><a href="gui-component.icn.html#1396" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="display"/>
+<h3>display()</h3>
+public<p/>
+<dl>
+<dd>
+This draws, or re-draws, the component and all its children in the dialog
+window.
+<p/><a href="gui-component.icn.html#429" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="display_child"/>
+<h3>display_child(c)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#444" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="display_children"/>
+<h3>display_children()</h3>
+public<p/>
+<dl>
+<dd>
+Useful function to display the children.
+<p/><a href="gui-component.icn.html#437" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="do_layout"/>
+<h3>do_layout()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke layout() and return self.
+<p/><a href="gui-component.icn.html#1159" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="drag_event"/>
+<h3>drag_event(drag, e)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked during a drag.  The component may update itself to
+indicate a potential drop location.  If it succeeds, then this
+component becomes the "drag holder".  It is the only component
+for which drag_event() is called in the future.  Should the
+method fail, then the component ceases to be the "drag holder"
+and other components are tried again.
+<p/>
+NB - this method will only be invoked if the allow_drop flag is
+non-null (see <code><a href="gui.Component.html#set_allow_drop">set_allow_drop()</a></code>).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>drag</code> - the current Drag object.
+</dd>
+<dd>
+<code>e</code> - the drag event
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1408" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="drag_reset"/>
+<h3>drag_reset(e)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked at the end of drag and drop (on the drag holder) to clear any drag state
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - the last event
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1475" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="end_drag"/>
+<h3>end_drag(drag, drop, e)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked on the component that started the drag, after a successful drop
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>drag</code> - the current Drag object representing the drag
+</dd>
+<dd>
+<code>drop</code> - the current Drag object representing the drop.
+</dd>
+<dd>
+<code>e</code> - the drop event
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1465" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public<p/>
+<dl>
+<dd>
+This method may be extended.  It is invoked just before the
+window is closed.
+<p/><a href="gui-component.icn.html#897" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="find_accel"/>
+<h3>find_accel(e)</h3>
+public<p/>
+<dl>
+<dd>
+Search for a component with the matching accelerator key within
+components rooted at this component.
+<p/><a href="gui-component.icn.html#1100" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="find_focus"/>
+<h3>find_focus(e)</h3>
+public<p/>
+<dl>
+<dd>
+Return the preferred focus, if it accepts focus.
+<p/><a href="gui-component.icn.html#1090" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="focus_changed"/>
+<h3>focus_changed(e)</h3>
+public<p/>
+<dl>
+<dd>
+This is invoked when the focus is got/lost, or may need to be
+redrawn; by default it just calls invalidate.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - the event causing the change of focus, if any
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#655" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_focusable"/>
+<h3>gen_focusable(e)</h3>
+public<p/>
+<dl>
+<dd>
+Generate the focusable children of this tree of components, in tab focus order.
+<p/><a href="gui-component.icn.html#1121" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_parents"/>
+<h3>gen_parents()</h3>
+public<p/>
+<dl>
+<dd>
+Generate the chain of components starting with this component and
+going up through the parents.
+<p/><a href="gui-component.icn.html#837" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_accel"/>
+<h3>get_accel()</h3>
+public<p/>
+<dl>
+<dd>
+Get the accelerator key, if any.
+<p/><a href="gui-component.icn.html#815" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_bottom_z"/>
+<h3>get_bottom_z()</h3>
+public<p/>
+<dl>
+<dd>
+Return a z that would ensure a component were on bottom in the
+z order.
+<p/><a href="gui-component.icn.html#570" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_cbwin"/>
+<h3>get_cbwin()</h3>
+public<p/>
+<dl>
+<dd>
+Get the cloned buffer window, as seen by a child component.
+<p/><a href="gui-component.icn.html#244" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_cbwin_clip"/>
+<h3>get_cbwin_clip()</h3>
+public<p/>
+<dl>
+<dd>
+Return the clip rectangle of <code><a href="gui.Component.html#cbwin">cbwin</a></code> as a <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>.  Fails if there
+is no clip.
+<p/><a href="gui-component.icn.html#236" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_children"/>
+<h3>get_children()</h3>
+public<p/>
+<dl>
+<dd>
+Get the list of <code><a href="gui.Component.html" target="displayFrame">Component</a></code>s in this <code>Container</code>.
+<dl>
+<dt>
+Returns :
+</dt>
+<dd>
+The list of <code><a href="gui.Component.html" target="displayFrame">Component</a></code>s
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1371" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clip_rect"/>
+<h3>get_clip_rect()</h3>
+public<p/>
+<dl>
+<dd>
+Get the clipping rectangle of this component, ie the rectangle actually
+visible (ignoring other overlapping components).  Fails if the component is
+not visible at all.
+<p/><a href="gui-component.icn.html#1166" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_constraint"/>
+<h3>get_constraint(key)</h3>
+public<p/>
+<dl>
+<dd>
+Get a layout constraint, or fail if it's not present.
+<p/><a href="gui-component.icn.html#532" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_height"/>
+<h3>get_default_height()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#961" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_width"/>
+<h3>get_default_width()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#958" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_effective_wattribs"/>
+<h3>get_effective_wattribs()</h3>
+public<p/>
+<dl>
+<dd>
+Get the wattribs in effect in the component's cbwin window.  Fails if the
+component is not initialized.
+<p/><a href="gui-component.icn.html#251" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_index"/>
+<h3>get_index(c)</h3>
+public<p/>
+<dl>
+<dd>
+Get the index of the given child component
+<p/><a href="gui-component.icn.html#1226" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parent"/>
+<h3>get_parent()</h3>
+public<p/>
+<dl>
+<dd>
+Get the component's parent component, or fail if there is none.
+<p/><a href="gui-component.icn.html#822" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parent_dialog"/>
+<h3>get_parent_dialog()</h3>
+public<p/>
+<dl>
+<dd>
+Returns the dialog holding the component, or fail if unset
+<p/><a href="gui-component.icn.html#879" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parent_win"/>
+<h3>get_parent_win()</h3>
+public<p/>
+<dl>
+<dd>
+Return the Icon window of the dialog in which the component resides.
+<p/><a href="gui-component.icn.html#623" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_pointer"/>
+<h3>get_pointer()</h3>
+public<p/>
+<dl>
+<dd>
+Return the pointer string, if any.
+<p/><a href="gui-component.icn.html#215" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_focus"/>
+<h3>get_preferred_focus()</h3>
+public<p/>
+<dl>
+<dd>
+Return the preferred focus.
+<p/><a href="gui-component.icn.html#368" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_height"/>
+<h3>get_preferred_height(pw)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#940" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_preferred_width"/>
+<h3>get_preferred_width()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#936" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_tooltip"/>
+<h3>get_tooltip()</h3>
+public<p/>
+<dl>
+<dd>
+Return the tooltip, if any.
+<p/><a href="gui-component.icn.html#151" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_tooltip_end_delay"/>
+<h3>get_tooltip_end_delay()</h3>
+public<p/>
+<dl>
+<dd>
+Get the tooltip end delay.
+<p/><a href="gui-component.icn.html#182" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_tooltip_start_delay"/>
+<h3>get_tooltip_start_delay()</h3>
+public<p/>
+<dl>
+<dd>
+Get the tooltip start delay.
+<p/><a href="gui-component.icn.html#166" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_top_z"/>
+<h3>get_top_z()</h3>
+public<p/>
+<dl>
+<dd>
+Return a z that would ensure a component were on top in the
+z order.
+<p/><a href="gui-component.icn.html#562" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="get_wattrib"/>
+<h3>get_wattrib(attr)</h3>
+public<p/>
+<dl>
+<dd>
+Return the window attrib with the given name in the icon attribs
+list, or fail if none is present.
+<p/><a href="gui-component.icn.html#478" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="got_focus"/>
+<h3>got_focus(e)</h3>
+public<p/>
+<dl>
+<dd>
+Method called when the component gets the keyboard focus; may be extended.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - the event causing the change of focus, if any
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#613" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="grab_focus"/>
+<h3>grab_focus(e)</h3>
+public<p/>
+<dl>
+<dd>
+Grab the focus for this component's preferred focus.  Fails if
+the focus is not given to the component, returns <code>self</code>
+otherwise.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - the causing event, if any.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#391" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_accel"/>
+<h3>handle_accel(e)</h3>
+public<p/>
+<dl>
+<dd>
+Handle the component's keyboard accelerator key.  By
+default, this requests the keyboard focus (if the
+component is configured to accept it).
+<p/><a href="gui-component.icn.html#382" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="has_focus"/>
+<h3>has_focus()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if this component has the dialog's focus.
+<p/><a href="gui-component.icn.html#630" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="hidden_change"/>
+<h3>hidden_change()</h3>
+public<p/>
+<dl>
+<dd>
+Called to re-compute the effective_is_hidden_flags under this tree.
+<p/><a href="gui-component.icn.html#305" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="in_region"/>
+<h3>in_region(e)</h3>
+public<p/>
+<dl>
+<dd>
+Is the given Point (normally the current event) within this
+component?  <code>e</code> may be null, in which case we just test whether
+this component is in the point chain.
+<p/><a href="gui-component.icn.html#589" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public<p/>
+<dl>
+<dd>
+Complete the final setup before display by initializing the parent
+dialog reference and creating the cloned windows.
+<p/><a href="gui-component.icn.html#849" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="invalidate"/>
+<h3>invalidate(r)</h3>
+public<p/>
+<dl>
+<dd>
+Invalidate the <code><a href="gui.Component.html" target="displayFrame">Component</a></code>'s rectangle on the screen, optionally
+intersected with <code>r</code>.
+<p/><a href="gui-component.icn.html#1148" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="invoke_display"/>
+<h3>invoke_display(rx, ry, rw, rh)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#449" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_held"/>
+<h3>is_held(e)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if this component is held with the given button press.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - The mouse press event code - Mouse.LEFT_PRESS, Mouse.RIGHT_PRESS or Mouse.MIDDLE_PRESS
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#604" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_hidden"/>
+<h3>is_hidden()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if the component is hidden; for example if it is
+within a tabbed pane not presently visible.
+<p/><a href="gui-component.icn.html#267" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_initialized"/>
+<h3>is_initialized()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the component has been initialized with <code><a href="gui.Component.html#initially">initially()</a></code>, but
+not yet cleaned up with <code><a href="gui.Component.html#finally">finally()</a></code>.
+<p/><a href="gui-component.icn.html#1301" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_live"/>
+<h3>is_live()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the component has been initialized AND has a position and
+size on the screen, ie has been laid out by its parent.
+<p/><a href="gui-component.icn.html#1363" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_shaded"/>
+<h3>is_shaded()</h3>
+public<p/>
+<dl>
+<dd>
+Succeeds if the component is shaded; fails otherwise.  A
+shaded component, such as a button, may be displayed
+differently, and will not generate events.
+<p/><a href="gui-component.icn.html#318" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_unhidden"/>
+<h3>is_unhidden()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if the component is not hidden.
+<p/><a href="gui-component.icn.html#275" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_unshaded"/>
+<h3>is_unshaded()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if the component is not shaded.
+<p/><a href="gui-component.icn.html#327" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="keeps"/>
+<h3>keeps(e)</h3>
+public<p/>
+<dl>
+<dd>
+This method can be overridden to succeed if the component should keep
+an event rather than allow it to be used by the parent dialog to move
+the focus between c
+<p/><a href="gui-component.icn.html#259" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="layout"/>
+<h3>layout()</h3>
+public<p/>
+<dl>
+<dd>
+Given that this component's size and position has already been
+calculated, this method lays out all of its children.
+<p/><a href="gui-component.icn.html#973" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="lost_focus"/>
+<h3>lost_focus(e)</h3>
+public<p/>
+<dl>
+<dd>
+Method called when the component loses the keyboard focus; may be extended.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>e</code> - the event causing the change of focus, if any
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#645" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="match_accel"/>
+<h3>match_accel(e)</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if the given (key) event matches this component's accelerator.
+<p/><a href="gui-component.icn.html#1132" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="move_all"/>
+<h3>move_all(other, i)</h3>
+public<p/>
+<dl>
+<dd>
+Move all the children of <code>other</code>, to this <code><a href="gui.Component.html" target="displayFrame">Component</a></code>, adding
+them at index <code>i</code>.  <code>other</code> will be left empty.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>other</code> - The source <code><a href="gui.Component.html" target="displayFrame">Component</a></code>.
+</dd>
+<dd>
+<code>i</code> - The index to add at; if omitted then the new components
+are appended to the end.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1349" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Rect.html#new">new()</a> in <a href="gui.Rect.html" target="displayFrame">gui.Rect</a></dd>
+<dd>
+<p/><a href="gui-component.icn.html#1588" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_pos"/>
+<h3>parse_pos(total, s)</h3>
+public static<p/>
+<dl>
+<dd>
+Parse a position specification into an absolute value.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>total</code> - The total value
+</dd>
+<dd>
+<code>s</code> - The size specifier 
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#911" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="perform_drop"/>
+<h3>perform_drop(drag, drop, e)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked on a drop.  The component's can_drop() method has
+previously succeeded during the drag.  However, the component can
+still reject the drop if it so wishes.
+<p/>
+If the component accepts the drop, it should handle it and succeed;
+otherwise it should fail.
+<p/>
+NB - this method will only be invoked if the allow_drop flag is
+non-null (see <code><a href="gui.Component.html#set_allow_drop">set_allow_drop()</a></code>).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>drag</code> - the current Drag object representing the drag
+</dd>
+<dd>
+<code>drop</code> - the current Drag object representing the drop.
+</dd>
+<dd>
+<code>e</code> - the drop event
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1446" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="remove"/>
+<h3>remove(c)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> from the list of children.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.Component.html" target="displayFrame">Component</a></code> to remove.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If c is not a child of this instance.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1233" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_all"/>
+<h3>remove_all()</h3>
+public<p/>
+<dl>
+<dd>
+Remove all the children.
+<p/><a href="gui-component.icn.html#1264" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_constraint"/>
+<h3>remove_constraint(key)</h3>
+public<p/>
+<dl>
+<dd>
+Remove a layout constraint
+<p/><a href="gui-component.icn.html#524" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_index"/>
+<h3>remove_index(i)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> at the given index from the list of children.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1244" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_list"/>
+<h3>remove_list(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the children in the range <code>i:j</code>, returning the
+removed children in a list.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The start slice index, default 1
+</dd>
+<dd>
+<code>j</code> - The end slice index, default 0
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If the range is invalid.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1309" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_wattrib"/>
+<h3>remove_wattrib(attr)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the given window attribute.
+<p/><a href="gui-component.icn.html#470" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition"/>
+<h3>reposition(c, j)</h3>
+public<p/>
+<dl>
+<dd>
+Move the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> to the given index position.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.Component.html" target="displayFrame">Component</a></code> to move.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If c is not a child of this instance, 
+or j is out of range.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1271" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition_index"/>
+<h3>reposition_index(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Move the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> at position <code>i</code> to <code>j</code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The old position.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If either index is out of range.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#1284" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="reset"/>
+<h3>reset()</h3>
+public<p/>
+<dl>
+<dd>
+This method disposes of the component's cloned windows and
+re-creates them afresh using the current value of the window attribs.
+<p/>
+This method may be used to put any changed icon window attributes,
+set with set_wattrib above, into effect.
+<p/><a href="gui-component.icn.html#547" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_all_layouts"/>
+<h3>reset_all_layouts()</h3>
+public<p/>
+<dl>
+<dd>
+Recursively call <code><a href="gui.Component.html#reset_layout">reset_layout()</a></code> on this component and all of
+its descendants.
+<p/><a href="gui-component.icn.html#995" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_layout"/>
+<h3>reset_layout()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke the <code><a href="gui.Component.html#reset">reset()</a></code> method of the layout delegate (if any).
+<p/><a href="gui-component.icn.html#1005" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_layout_chain"/>
+<h3>reset_layout_chain()</h3>
+public<p/>
+<dl>
+<dd>
+Invoke <code><a href="gui.Component.html#reset_layout">reset_layout()</a></code> on this component and all of its
+ancestors.
+<p/><a href="gui-component.icn.html#1013" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="resize"/>
+<h3>resize()</h3>
+public<p/>
+<dl>
+<dd>
+Size this component using compute_absolutes, and then layout all
+its children.
+<p/><a href="gui-component.icn.html#948" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_accel"/>
+<h3>set_accel(k)</h3>
+public<p/>
+<dl>
+<dd>
+Set the accelerator key, which will be used with the Alt
+key to provide keyboard accelerators.
+<p/><a href="gui-component.icn.html#806" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_accepts_focus"/>
+<h3>set_accepts_focus(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the flag indicating that the component accepts tab focus.
+<p/><a href="gui-component.icn.html#421" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_align"/>
+<h3>set_align(x_align, y_align)</h3>
+public<p/>
+<dl>
+<dd>
+Set the alignment of the component.  Options for <code>x_align</code> are
+<code><a href="gui.Align.html#L">Align.L</a></code>, <code><a href="gui.Align.html#C">Align.C</a></code> and <code><a href="gui.Align.html#R">Align.R</a></code>, for left, centre, and right
+alignment.  Options for <code>y_align</code> are <code><a href="gui.Align.html#T">Align.T</a></code>, <code><a href="gui.Align.html#C">Align.C</a></code> and
+<code><a href="gui.Align.html#B">Align.B</a></code>, for top centre and bottom alignment.  The default
+alignment is <code><a href="gui.Align.html#L">Align.L</a></code>, <code><a href="gui.Align.html#T">Align.T</a></code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x_align</code> - The x alignment
+</dd>
+<dd>
+<code>y_align</code> - The y alignment
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#748" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_all_wattribs"/>
+<h3>set_all_wattribs(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set all of the wattribs to the given table.
+<p/><a href="gui-component.icn.html#494" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_allow_drag"/>
+<h3>set_allow_drag(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure whether the component allows drags, if it is so capable.
+<p/><a href="gui-component.icn.html#1483" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_allow_drop"/>
+<h3>set_allow_drop(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure whether the component allows drops, if it is so capable.
+<p/><a href="gui-component.icn.html#1491" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_bg"/>
+<h3>set_bg(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#BG">WAttrib.BG</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1518" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_border"/>
+<h3>set_border(b)</h3>
+public<p/>
+<dl>
+<dd>
+Set the border to use.
+<p/><a href="gui-component.icn.html#222" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_constraint"/>
+<h3>set_constraint(key, val)</h3>
+public<p/>
+<dl>
+<dd>
+Set a layout constraint
+<p/><a href="gui-component.icn.html#516" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_draw_op"/>
+<h3>set_draw_op(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#DRAW_OP">WAttrib.DRAW_OP</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1532" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_draw_own_shading"/>
+<h3>set_draw_own_shading(s)</h3>
+public<p/>
+<dl>
+<dd>
+Flag to indicate that the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> will take care of drawing
+its own shaded representation.  By default off, meaning this
+class will shade the component.
+<p/><a href="gui-component.icn.html#347" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fg"/>
+<h3>set_fg(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#FG">WAttrib.FG</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1525" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_font"/>
+<h3>set_font(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#FONT">WAttrib.FONT</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1539" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_geometry"/>
+<h3>set_geometry(x_spec, y_spec, w_spec, h_spec)</h3>
+public<p/>
+<dl>
+<dd>
+Set the position and size of the component.
+<dl>
+<dt>
+See also :
+</dt>
+<dd>
+set_pos
+</dd>
+<dd>
+set_size
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#784" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_height"/>
+<h3>set_height(h_spec)</h3>
+public<p/>
+<dl>
+<dd>
+Set the height specification
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>h_spec</code> - The height specification.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#738" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_is_hidden"/>
+<h3>set_is_hidden(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the hidden status of the component.
+<p/><a href="gui-component.icn.html#289" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_is_shaded"/>
+<h3>set_is_shaded(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the shaded status of the component.
+<p/><a href="gui-component.icn.html#410" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_layout"/>
+<h3>set_layout(l)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.Layout.html" target="displayFrame">Layout</a></code> to use to <code>l</code>, which may be <code>&amp;null</code>.
+<p/><a href="gui-component.icn.html#964" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_leading"/>
+<h3>set_leading(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#LEADING">WAttrib.LEADING</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1546" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_end"/>
+<h3>set_line_end(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#LINE_END">WAttrib.LINE_END</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1560" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_join"/>
+<h3>set_line_join(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#LINE_JOIN">WAttrib.LINE_JOIN</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1567" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_width"/>
+<h3>set_line_width(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#LINE_WIDTH">WAttrib.LINE_WIDTH</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1553" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_mask"/>
+<h3>set_mask(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#MASK">WAttrib.MASK</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1581" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_parent"/>
+<h3>set_parent(c)</h3>
+public<p/>
+<dl>
+<dd>
+Set the component's parent component.
+<p/><a href="gui-component.icn.html#829" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_parent_dialog"/>
+<h3>set_parent_dialog(c)</h3>
+public<p/>
+<dl>
+<dd>
+Sets the owning Dialog of the component.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The parent dialog.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#886" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pattern"/>
+<h3>set_pattern(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code><a href="gui.WAttrib.html#PATTERN">WAttrib.PATTERN</a></code> attribute; see <code><a href="gui.Component.html#set_wattrib">set_wattrib()</a></code>.
+<p/><a href="gui-component.icn.html#1574" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pointer"/>
+<h3>set_pointer(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the pointer.  When the mouse moves over the component,
+the pointer cursor will automatically be set to this value.
+<p/><a href="gui-component.icn.html#206" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pos"/>
+<h3>set_pos(x_spec, y_spec)</h3>
+public<p/>
+<dl>
+<dd>
+Set the x and y position of the component.  Each coordinate
+can be either an absolute pixel position, or can be given in
+the form of a percentage plus or minus an offset.  For
+example :-
+<pre>
+  c.set_pos(100, "25%")
+  c.set_pos("50%-20", "25%+100")
+</pre>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x_spec</code> - The x specification.
+</dd>
+<dd>
+<code>y_spec</code> - The y specification.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#666" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_preferred_focus"/>
+<h3>set_preferred_focus(c)</h3>
+public<p/>
+<dl>
+<dd>
+Set the preferred focus, which is the component to which focus is
+given when a mouse click occurs in this component.  By default,
+this is set to the component itself.
+<p/><a href="gui-component.icn.html#358" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_show_layout"/>
+<h3>set_show_layout(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set whether the component will show the layout grid, if any.
+<p/><a href="gui-component.icn.html#1510" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_size"/>
+<h3>set_size(w_spec, h_spec)</h3>
+public<p/>
+<dl>
+<dd>
+Set the size of the component.  The parameters are in the
+same format as for <code><a href="gui.Component.html#set_pos">set_pos()</a></code>
+above.  Some components will
+set sensible default sizes, but for others the size must be
+set explicitly.
+<p/><a href="gui-component.icn.html#715" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_tab_ord"/>
+<h3>set_tab_ord(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the tab priority, which affects the tab focus ordering of the parent.
+<p/><a href="gui-component.icn.html#798" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_tooltip"/>
+<h3>set_tooltip(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the tooltip.  This object is passed to <code><a href="gui.Component.html#create_tooltip_component">create_tooltip_component</a></code> when a
+tooltip is to be created.
+<p/><a href="gui-component.icn.html#142" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_tooltip_end_delay"/>
+<h3>set_tooltip_end_delay(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the delay in ms before the tooltip disappears after it has been
+shown; &amp;null means infinite.
+<p/><a href="gui-component.icn.html#173" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_tooltip_start_delay"/>
+<h3>set_tooltip_start_delay(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the delay in ms before the tooltip appears.
+<p/><a href="gui-component.icn.html#158" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_wattrib"/>
+<h3>set_wattrib(attr, val)</h3>
+public<p/>
+<dl>
+<dd>
+Add the given window attribute and value to those used in
+this component's cloned buffer window.
+<p/><a href="gui-component.icn.html#460" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_wattrib_ancestor"/>
+<h3>set_wattrib_ancestor(c)</h3>
+public<p/>
+<dl>
+<dd>
+Set a <code><a href="gui.Component.html" target="displayFrame">Component</a></code> to inherit attribs from, rather than the
+parent.  A special value, <code><a href="gui.Gui.html#EMPTY_WATTRIB_ANCESTOR">Gui.EMPTY_WATTRIB_ANCESTOR</a></code> may be
+used, which indicates that an empty table of attributes should be
+inherited.
+<p/><a href="gui-component.icn.html#1499" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_width"/>
+<h3>set_width(w_spec)</h3>
+public<p/>
+<dl>
+<dd>
+Set the width specification
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>w_spec</code> - The width specification.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#728" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_x"/>
+<h3>set_x(x_spec)</h3>
+public<p/>
+<dl>
+<dd>
+Set the x specification
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x_spec</code> - The x specification.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#685" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_x_align"/>
+<h3>set_x_align(x_align)</h3>
+public<p/>
+<dl>
+<dd>
+Set the x alignment
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x_align</code> - The x alignment
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#764" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_y"/>
+<h3>set_y(y_spec)</h3>
+public<p/>
+<dl>
+<dd>
+Set the y specification
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>y_spec</code> - The y specification.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#695" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_y_align"/>
+<h3>set_y_align(y_align)</h3>
+public<p/>
+<dl>
+<dd>
+Set the y alignment
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>y_align</code> - The y alignment
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#774" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="set_z"/>
+<h3>set_z(z)</h3>
+public<p/>
+<dl>
+<dd>
+Set the z value.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>z</code> - The z value.
+</dd>
+</dl>
+<p/><a href="gui-component.icn.html#705" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="shaded_change"/>
+<h3>shaded_change()</h3>
+public<p/>
+<dl>
+<dd>
+Called to re-compute the effective_is_shaded_flags under this tree.
+<p/><a href="gui-component.icn.html#334" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="shift"/>
+<h3>shift(dx, dy)</h3>
+public<p/>
+<dl>
+<dd>
+Recursively shift the <code><a href="gui.Point.html#x">x</a></code> and <code><a href="gui.Point.html#y">y</a></code> location variables of this
+component and its descendants by the given amounts.
+<p/><a href="gui-component.icn.html#985" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="should_draw_focus"/>
+<h3>should_draw_focus()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if this component should draw itself with the focus shown
+(eg a red border or cursor).
+<p/><a href="gui-component.icn.html#637" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="toggle_is_hidden"/>
+<h3>toggle_is_hidden()</h3>
+public<p/>
+<dl>
+<dd>
+Swap the hidden status of the component.
+<p/><a href="gui-component.icn.html#282" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="toggle_is_shaded"/>
+<h3>toggle_is_shaded()</h3>
+public<p/>
+<dl>
+<dd>
+Swap the shaded status of the component.
+<p/><a href="gui-component.icn.html#403" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_postorder"/>
+<h3>traverse_postorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the components, including subcomponents, with a
+post-order traversal.
+<p/><a href="gui-component.icn.html#1072" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_preorder"/>
+<h3>traverse_preorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the components, including subcomponents, with a
+pre-order traversal.
+<p/><a href="gui-component.icn.html#1081" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_tab_order"/>
+<h3>traverse_tab_order()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse the components under this tree in the order in which
+tab focus should iterate over them.
+<p/><a href="gui-component.icn.html#1139" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="whose_point"/>
+<h3>whose_point(ex, ey)</h3>
+public<p/>
+<dl>
+<dd>
+Which component does the point lie in, searching in z-order?
+<p/><a href="gui-component.icn.html#578" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="accel"/>
+<h3>accel</h3>
+public<p/>
+<dl>
+<dd>
+Mnemonic key for keyboard accelerators.
+<p/><a href="gui-component.icn.html#104" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="accepts_focus_flag"/>
+<h3>accepts_focus_flag</h3>
+public<p/>
+<dl>
+<dd>
+Flag indicating whether the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> accepts keyboard focus
+by way of the tab key being pressed;  <code>&amp;null</code> means it doesn't.
+<p/><a href="gui-component.icn.html#78" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="allow_drag_flag"/>
+<h3>allow_drag_flag</h3>
+public<p/>
+<dl>
+<dd>
+Flags to turn on drag and drop
+<p/><a href="gui-component.icn.html#112" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="allow_drop_flag"/>
+<h3>allow_drop_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#116" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="border"/>
+<h3>border</h3>
+public<p/>
+<dl>
+<dd>
+Border instance
+<p/><a href="gui-component.icn.html#137" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="cbwin"/>
+<h3>cbwin</h3>
+public<p/>
+<dl>
+<dd>
+A cloned window created by combining a buffer window with
+the <code><a href="gui.Component.html" target="displayFrame">Component</a></code>'s attributes.  The component draws itself
+into this window.
+<p/><a href="gui-component.icn.html#73" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="children"/>
+<h3>children</h3>
+public<p/>
+<dl>
+<dd>
+List of child components
+<p/><a href="gui-component.icn.html#92" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="constraints"/>
+<h3>constraints</h3>
+public<p/>
+<dl>
+<dd>
+Layout constraints
+<p/>
+<p/><a href="gui-component.icn.html#125" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_own_shading_flag"/>
+<h3>draw_own_shading_flag</h3>
+public<p/>
+<dl>
+<dd>
+Flag to indicate that the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> will take care of drawing
+its own shaded representation.  By default off, meaning this
+class will shade the component.
+<p/><a href="gui-component.icn.html#62" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="effective_is_hidden_flag"/>
+<h3>effective_is_hidden_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#72" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="effective_is_shaded_flag"/>
+<h3>effective_is_shaded_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#61" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="effective_wattribs"/>
+<h3>effective_wattribs</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#56" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="h_spec"/>
+<h3>h_spec</h3>
+public<p/>
+<dl>
+<dd>
+height specifier as specified in set_size(),
+<p/><a href="gui-component.icn.html#35" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_hidden_flag"/>
+<h3>is_hidden_flag</h3>
+public<p/>
+<dl>
+<dd>
+Flags indicating whether the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> currently is hidden;
+<code>&amp;null</code> means it isn't.
+<p/><a href="gui-component.icn.html#68" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="is_shaded_flag"/>
+<h3>is_shaded_flag</h3>
+public<p/>
+<dl>
+<dd>
+Flags indicating whether the <code><a href="gui.Component.html" target="displayFrame">Component</a></code> currently is shaded;
+<code>&amp;null</code> means it isn't.
+<p/><a href="gui-component.icn.html#57" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="layout_delegate"/>
+<h3>layout_delegate</h3>
+public<p/>
+<dl>
+<dd>
+Layout manager
+<p/><a href="gui-component.icn.html#121" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="parent"/>
+<h3>parent</h3>
+public<p/>
+<dl>
+<dd>
+Reference to enclosing <code><a href="gui.Component.html" target="displayFrame">Component</a></code> object.
+<p/><a href="gui-component.icn.html#88" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="parent_dialog"/>
+<h3>parent_dialog</h3>
+public<p/>
+<dl>
+<dd>
+The <code><a href="gui.Dialog.html" target="displayFrame">Dialog</a></code> class instance of which this <code><a href="gui.Component.html" target="displayFrame">Component</a></code> is a part.
+<p/><a href="gui-component.icn.html#48" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="pointer"/>
+<h3>pointer</h3>
+public<p/>
+<dl>
+<dd>
+Mouse pointer.
+<p/><a href="gui-component.icn.html#117" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="preferred_focus"/>
+<h3>preferred_focus</h3>
+public<p/>
+<dl>
+<dd>
+The child which we want to give the focus to.
+<p/><a href="gui-component.icn.html#108" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="show_layout_flag"/>
+<h3>show_layout_flag</h3>
+public<p/>
+<dl>
+<dd>
+Show layout grid - for layout debugging
+<p/><a href="gui-component.icn.html#129" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="tab_children"/>
+<h3>tab_children</h3>
+public<p/>
+<dl>
+<dd>
+The same children, but sorted in tab order.
+<p/><a href="gui-component.icn.html#100" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="tab_ord"/>
+<h3>tab_ord</h3>
+public<p/>
+<dl>
+<dd>
+This can be set to alter the tab-focus ordering of the parent
+container.
+<p/><a href="gui-component.icn.html#43" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="tooltip"/>
+<h3>tooltip</h3>
+public<p/>
+<dl>
+<dd>
+Tooltip config
+<p/><a href="gui-component.icn.html#82" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="tooltip_end_delay"/>
+<h3>tooltip_end_delay</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#87" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="tooltip_start_delay"/>
+<h3>tooltip_start_delay</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-component.icn.html#86" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="w_spec"/>
+<h3>w_spec</h3>
+public<p/>
+<dl>
+<dd>
+width specifier as specified in set_size(), eg "100%"              <br>
+<p/><a href="gui-component.icn.html#31" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="wattrib_ancestor"/>
+<h3>wattrib_ancestor</h3>
+public<p/>
+<dl>
+<dd>
+A component to inherit wattribs from rather than the parent.
+<p/><a href="gui-component.icn.html#133" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="wattribs"/>
+<h3>wattribs</h3>
+public<p/>
+<dl>
+<dd>
+A map of the Icon window graphics attributes, eg "bg"-&gt;"blue",
+"resize"-&gt;"on" etc.
+<p/><a href="gui-component.icn.html#52" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="x_spec"/>
+<h3>x_spec</h3>
+public<p/>
+<dl>
+<dd>
+x position as specified by <code><a href="gui.Component.html#set_pos">set_pos()</a></code>, eg "50%"
+<p/>
+<p/><a href="gui-component.icn.html#23" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="y_spec"/>
+<h3>y_spec</h3>
+public<p/>
+<dl>
+<dd>
+y position as specified by set_pos().
+<p/><a href="gui-component.icn.html#27" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="z"/>
+<h3>z</h3>
+public<p/>
+<dl>
+<dd>
+An integer used to sort the parent's z_children list.
+<p/><a href="gui-component.icn.html#39" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+<a name="z_children"/>
+<h3>z_children</h3>
+public<p/>
+<dl>
+<dd>
+The same children, but sorted in z order.
+<p/><a href="gui-component.icn.html#96" target="displayFrame">Source - component.icn </a>
+</dd>
+</dl><hr>
+</body></html>

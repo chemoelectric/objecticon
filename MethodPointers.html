@@ -106,7 +106,7 @@ end
 26
 105
 110</code></pre>
-<p>This technique is used in the <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional-package.html"><code>ipl.functional</code></a> package to provide various high-order procedures commonly found in functional programming languages.</p>
+<p>This technique is used in the <a href="libref/index.html?ipl.functional-package.html"><code>ipl.functional</code></a> package to provide various high-order procedures commonly found in functional programming languages.</p>
 <p><a href="Lambda.html">This page</a> describes how, together with co-expressions, method pointers can be used to provide simple lambda-style anonymous functions.</p>
 <h2 id="efficiency">Efficiency</h2>
 <p>In order to keep garbage collection operations to a minimum, <code>methp</code> objects are not created unless absolutely necessary. For example, although the expression <code>obj.f(100)</code> could be implemented by creating a <code>methp</code> for <code>obj.f</code>, and then applying that to the parameter <code>100</code>, it is more efficient to gather both of these steps into a single operation that avoids the creation of the intermediate <code>methp</code>. This is implemented in the interpreter with two special virtual machine instructions (<code>invokef</code> and <code>applyf</code>).</p>

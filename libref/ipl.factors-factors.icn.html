@@ -1,0 +1,395 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>factors.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     factors.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures related to factors and prime numbers
+<a name="6"/>#
+<a name="7"/>#	Authors:  Ralph E. Griswold and Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     June 11, 2001
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This file contains procedures related to factorization and prime
+<a name="18"/>#  numbers.
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>#
+<a name="22"/>#  Notes:  Some of these procedures are not fast enough for extensive work.
+<a name="23"/>#  Factoring is believed to be a hard problem. prime_factors() should only be
+<a name="24"/>#  used for small numbers.
+<a name="25"/>#
+<a name="26"/>############################################################################
+<a name="27"/>#
+<a name="28"/>#  Requires: Large-integer arithmetic; prime.lst for primel() and primorial().
+<a name="29"/>#
+<a name="30"/>############################################################################
+<a name="31"/>
+<a name="32"/>package ipl.factors
+<a name="33"/>
+<a name="34"/>import
+<a name="35"/>   ipl.io(dopen),
+<a name="36"/>   ipl.numbers(round, exp_modulo),
+<a name="37"/>   ipl.pdco(List,Product,String,Sum,UniqueEq),
+<a name="38"/>   util(need_integer, use_seq)
+<a name="39"/>
+<a name="40"/># generate the divisors of positive integer n
+<a name="41"/>procedure divisors(n)			
+<a name="42"/>   local d, dlist
+<a name="43"/>
+<a name="44"/>   n := need_integer(n, 1)
+<a name="45"/>
+<a name="46"/>   dlist := []
+<a name="47"/>   every d := seq() do {
+<a name="48"/>      if d * d &gt;= n then
+<a name="49"/>         break
+<a name="50"/>      if n % d = 0 then {
+<a name="51"/>         push(dlist, d)
+<a name="52"/>         suspend d
+<a name="53"/>         }
+<a name="54"/>      }
+<a name="55"/>   if d * d = n then
+<a name="56"/>      suspend d
+<a name="57"/>   suspend n / !dlist
+<a name="58"/>
+<a name="59"/>end
+<a name="60"/>
+<a name="61"/># return list of divisors of n
+<a name="62"/>procedure divisorl(n)
+<a name="63"/>   return List{ divisors(n) }
+<a name="64"/>end
+<a name="65"/>
+<a name="66"/># Succeed if positive integer n is a perfect number.
+<a name="67"/>procedure perfect(n)
+<a name="68"/>   n := need_integer(n, 1)
+<a name="69"/>   succeed Sum{ divisors(n) } = 2*n
+<a name="70"/>end
+<a name="71"/>
+<a name="72"/># Calculate Euler's totient function for positive integer `n`.
+<a name="73"/>procedure totient(n)
+<a name="74"/>   local f
+<a name="75"/>   n := need_integer(n, 1)
+<a name="76"/>   every f := prime_factors(n) do
+<a name="77"/>      n := (n * (f.p - 1)) / f.p
+<a name="78"/>   return n
+<a name="79"/>end
+<a name="80"/>
+<a name="81"/># return n! (n factorial)
+<a name="82"/>procedure factorial(n)			
+<a name="83"/>   n := need_integer(n, 0)
+<a name="84"/>
+<a name="85"/>   return Product{ 1 to n }
+<a name="86"/>end
+<a name="87"/>
+<a name="88"/># Result record for several factoring procedures.
+<a name="89"/>record prime_factor(p, e)
+<a name="90"/>
+<a name="91"/># Generate the prime factors of positive integer i.  A sequence of
+<a name="92"/># `prime_factor` records is generated, each giving a prime and an
+<a name="93"/># exponent.  For example, `prime_factors` applied to
+<a name="94"/># ~
+<a name="95"/>#     5913648 = (2^4) * (3^7) * (13^2)
+<a name="96"/># ~
+<a name="97"/># generates :-
+<a name="98"/># ~
+<a name="99"/>#    prime_factor(p=2;e=4)
+<a name="100"/>#    prime_factor(p=3;e=7)
+<a name="101"/>#    prime_factor(p=13;e=2)
+<a name="102"/># ~
+<a name="103"/>#
+<a name="104"/>procedure prime_factors(i)
+<a name="105"/>   local p, e
+<a name="106"/>
+<a name="107"/>   i := need_integer(i, 1)
+<a name="108"/>   if i = 1 then fail
+<a name="109"/>
+<a name="110"/>   every p := primes() do {
+<a name="111"/>      if p * p &gt; i then
+<a name="112"/>         return prime_factor(i, 1)
+<a name="113"/>      e := 0
+<a name="114"/>      while i % p = 0 do {
+<a name="115"/>         e +:= 1
+<a name="116"/>         i /:= p
+<a name="117"/>      }
+<a name="118"/>      if e &gt; 0 then
+<a name="119"/>         suspend prime_factor(p, e)
+<a name="120"/>
+<a name="121"/>      if i = 1 then fail
+<a name="122"/>      }
+<a name="123"/>end
+<a name="124"/>
+<a name="125"/># This is just like `prime_factors`, but also generates intermediate
+<a name="126"/># prime numbers that aren't factors (with zero exponents).
+<a name="127"/>#
+<a name="128"/>procedure prime_factors0(i)
+<a name="129"/>   local p, e
+<a name="130"/>
+<a name="131"/>   i := need_integer(i, 1)
+<a name="132"/>   if i = 1 then fail
+<a name="133"/>
+<a name="134"/>   every p := primes() do {
+<a name="135"/>      e := 0
+<a name="136"/>      while i % p = 0 do {
+<a name="137"/>         e +:= 1
+<a name="138"/>         i /:= p
+<a name="139"/>      }
+<a name="140"/>      suspend prime_factor(p, e)
+<a name="141"/>
+<a name="142"/>      if i = 1 then fail
+<a name="143"/>      }
+<a name="144"/>end
+<a name="145"/>
+<a name="146"/># Generate the prime factors of integer.  For example,
+<a name="147"/># `prime_factors1` applied to
+<a name="148"/># ~
+<a name="149"/>#    1188 = (2^2) * (3^3) * 11
+<a name="150"/># ~
+<a name="151"/># generates
+<a name="152"/># ~
+<a name="153"/>#    2, 2, 3, 3, 3 and 11
+<a name="154"/># ~
+<a name="155"/>#
+<a name="156"/>procedure prime_factors1(i)		
+<a name="157"/>   local f
+<a name="158"/>   every f := prime_factors(i) do
+<a name="159"/>      suspend |f.p \ f.e
+<a name="160"/>end
+<a name="161"/>
+<a name="162"/># generalized factorial; n x (n - i) x (n - 2i) x ...
+<a name="163"/>procedure gfactorial(n, i)		
+<a name="164"/>   local j
+<a name="165"/>
+<a name="166"/>   n := need_integer(n, 0)
+<a name="167"/>   i := need_integer(\i, 1) | 1
+<a name="168"/>   if n = 0 then return 1
+<a name="169"/>
+<a name="170"/>   j := n
+<a name="171"/>
+<a name="172"/>   while n &gt; i do {
+<a name="173"/>      n -:= i
+<a name="174"/>      j *:= n
+<a name="175"/>      } 
+<a name="176"/>
+<a name="177"/>   return j
+<a name="178"/>
+<a name="179"/>end
+<a name="180"/>
+<a name="181"/># succeeds and returns root if i is k^j.  i and j must be positive integers.
+<a name="182"/>procedure ispower(i, j)			
+<a name="183"/>   local k, n
+<a name="184"/>
+<a name="185"/>   i := need_integer(i, 1)
+<a name="186"/>   j := need_integer(j, 1)
+<a name="187"/>
+<a name="188"/>   k := (n := round(i ^ (1.0 / j))) ^ j
+<a name="189"/>   if k = i then return n else fail
+<a name="190"/>
+<a name="191"/>end
+<a name="192"/>
+<a name="193"/>#  NOTE:  The following method for testing primality, called Baby Division,
+<a name="194"/>#  is about the worst possible.  It is inappropriate for all but small
+<a name="195"/>#  numbers.
+<a name="196"/>#
+<a name="197"/>#  see also : `probably_prime()`.
+<a name="198"/>procedure isprime(n)			
+<a name="199"/>   local p
+<a name="200"/>
+<a name="201"/>   n := need_integer(n)
+<a name="202"/>   if n &lt;= 1 then fail		# 1 is not a prime
+<a name="203"/>   every p := primes() do {
+<a name="204"/>      if p * p &gt; n then return
+<a name="205"/>      if n % p = 0 then fail
+<a name="206"/>      }
+<a name="207"/>end
+<a name="208"/>
+<a name="209"/># Helper procedure; given a number n return the next integer to test
+<a name="210"/># for primality.
+<a name="211"/>package procedure primeskip(n)
+<a name="212"/>   static step
+<a name="213"/>
+<a name="214"/>   initial {
+<a name="215"/>      step := [1,6,5,4,3,2,1,4,3,2,1,2,1,4,3,2,1,2,1,4,3,2,1,6,5,4,3,2,1,2]
+<a name="216"/>      }
+<a name="217"/>
+<a name="218"/>   return n + step[n % 30 + 1]		# step past multiples of 2, 3, 5
+<a name="219"/>
+<a name="220"/>end
+<a name="221"/>
+<a name="222"/># generate the prime numbers beyond n (default 1).
+<a name="223"/>procedure primes(n)			
+<a name="224"/>   local d
+<a name="225"/>   static div
+<a name="226"/>
+<a name="227"/>   initial {
+<a name="228"/>      div := [7]			# list of known primes
+<a name="229"/>      }
+<a name="230"/>
+<a name="231"/>   n := need_integer(\n) | 1
+<a name="232"/>   if n &lt; 7 then			# handle small primes specially
+<a name="233"/>      suspend n &lt;:= (2 | 3 | 5 | 7)
+<a name="234"/>
+<a name="235"/>   repeat {
+<a name="236"/>      n := primeskip(n)
+<a name="237"/>
+<a name="238"/>      every (d := !div) | put(div, d := primes(d)) do {  # get test divisors
+<a name="239"/>         if n % d = 0 then		# if composite, try a larger candidate
+<a name="240"/>            break
+<a name="241"/>         if d * d &gt; n then {		# if not divisible up to sqrt, is prime
+<a name="242"/>            suspend n
+<a name="243"/>            break
+<a name="244"/>            }
+<a name="245"/>         }
+<a name="246"/>      }
+<a name="247"/>
+<a name="248"/>end
+<a name="249"/>
+<a name="250"/># this is like `primes()`, but primes are calculated using `probably_prime()` below,
+<a name="251"/># so it is much faster for large `n`, over about `10^9`.
+<a name="252"/>#
+<a name="253"/>procedure probable_primes(n, c)			
+<a name="254"/>   n := need_integer(\n) | 1
+<a name="255"/>   if n &lt; 7 then			# handle small primes specially
+<a name="256"/>      suspend n &lt;:= (2 | 3 | 5 | 7)
+<a name="257"/>
+<a name="258"/>   repeat {
+<a name="259"/>      n := primeskip(n)
+<a name="260"/>      if probably_prime(n, c) then
+<a name="261"/>         suspend n
+<a name="262"/>   }
+<a name="263"/>
+<a name="264"/>end
+<a name="265"/>
+<a name="266"/># Probabilistic prime testing.  Succeeds if `n` is "probably" prime.
+<a name="267"/># Adapted from Knuth vol. 2, 2nd ed. sec 4.5.4.
+<a name="268"/>#
+<a name="269"/># `c` is the confidence level (default 50).  The algorithm will give a
+<a name="270"/># false positive (ie say a number is prime when it isn't) with
+<a name="271"/># probability about `(1/4)^c` (for c=50 this is about 10^-30).
+<a name="272"/>#
+<a name="273"/>procedure probably_prime(n, c)
+<a name="274"/>   local j, q, k, r, y
+<a name="275"/>
+<a name="276"/>   n := need_integer(n)
+<a name="277"/>   c := need_integer(\c, 0) | 50
+<a name="278"/>
+<a name="279"/>   if n &lt;= 1 then fail		# 1 is not a prime
+<a name="280"/>   if n &lt; 4 then
+<a name="281"/>      return
+<a name="282"/>
+<a name="283"/>   q := n - 1
+<a name="284"/>   k := 0
+<a name="285"/>   while q % 2 = 0 do {
+<a name="286"/>      q /:= 2
+<a name="287"/>      k +:= 1
+<a name="288"/>   }
+<a name="289"/>   if k = 0 then    # n is even
+<a name="290"/>      fail
+<a name="291"/>
+<a name="292"/>   # Now n = 1 + q * (2^k), k &gt; 0
+<a name="293"/>
+<a name="294"/>   every 1 to c do {
+<a name="295"/>      # Generate random r,  1 &lt; r &lt; n
+<a name="296"/>      r := 1 + ?(n - 2)
+<a name="297"/>      y := exp_modulo(r, q, n)
+<a name="298"/>      every j := seq() do {
+<a name="299"/>         if (j = 1 &amp; y = 1) | (y = n - 1) then
+<a name="300"/>            break
+<a name="301"/>         if (j &gt; 1 &amp; y = 1) | (j = k) then
+<a name="302"/>            fail
+<a name="303"/>         y := (y ^ 2) % n
+<a name="304"/>      }
+<a name="305"/>   }
+<a name="306"/>   return
+<a name="307"/>end
+<a name="308"/>
+<a name="309"/># Generates the primes from a precompiled list, "primes.lst", in the
+<a name="310"/># directory indicated by the environment variable `DPATH` (see
+<a name="311"/># `dopen`).  If the sequence won't be generated to exhaustion, enclose
+<a name="312"/># the call in `util.clean` to ensure the underlying file is closed; eg
+<a name="313"/># ~
+<a name="314"/>#   clean{ every write(primel() \ 20) }
+<a name="315"/># ~
+<a name="316"/>procedure primel()			
+<a name="317"/>   local pfile
+<a name="318"/>
+<a name="319"/>   suspend use_seq {
+<a name="320"/>      pfile := dopen("primes.lst") | runerr("Cannot open primes.lst"),
+<a name="321"/>      integer(pfile.gen())
+<a name="322"/>   }
+<a name="323"/>end
+<a name="324"/>
+<a name="325"/># product of primes p, where j &lt;= p &lt;= i; j defaults to 1.
+<a name="326"/>procedure primorial(i, j)		
+<a name="327"/>   local m, k
+<a name="328"/>
+<a name="329"/>   i := need_integer(i)
+<a name="330"/>   j := need_integer(\j) | 1
+<a name="331"/>
+<a name="332"/>   m := 1
+<a name="333"/>
+<a name="334"/>   every k := (j &lt;= primes()) do {
+<a name="335"/>      if k &lt;= i then m *:= k
+<a name="336"/>      else return m
+<a name="337"/>      }
+<a name="338"/>
+<a name="339"/>end
+<a name="340"/>
+<a name="341"/>package procedure factorstr(f)
+<a name="342"/>   return if f.e = 1 then f.p else f.p || "^" || f.e
+<a name="343"/>end
+<a name="344"/>
+<a name="345"/># return factors in string form
+<a name="346"/>procedure sfactors(i)
+<a name="347"/>   return String{ factorstr(prime_factors(i)), " " }
+<a name="348"/>end
+<a name="349"/>
+<a name="350"/># succeeds if n is square-free
+<a name="351"/>procedure squarefree(n)			
+<a name="352"/>   (prime_factors(n).e &gt; 1) | return
+<a name="353"/>end
+<a name="354"/>
+<a name="355"/>package procedure factorizations1(e)
+<a name="356"/>   local f, i, x, j
+<a name="357"/>   f := @e | return []
+<a name="358"/>   every x := factorizations1(e) do {
+<a name="359"/>      # x is a factorization of the "tail" after removing factor f.
+<a name="360"/>      # If it is say [a,b,c] then the factors of the whole are
+<a name="361"/>      # [f*a,b,c], [a,f*b,c], [a,b,f*c] and [f,a,b,c].
+<a name="362"/>      # The variable j just avoids needless duplicates.
+<a name="363"/>      j := &amp;null
+<a name="364"/>      every i := 1 to *x do {
+<a name="365"/>         if j ~===:= x[i] then
+<a name="366"/>            suspend sort(x[1:i]  ||| [f * j] ||| x[i+1:0])
+<a name="367"/>      }
+<a name="368"/>      suspend [f] ||| x
+<a name="369"/>   }
+<a name="370"/>end
+<a name="371"/>
+<a name="372"/># Generate a sequence of lists giving all the possible factorizations
+<a name="373"/># of positive integer `n`.  For example, if `n` is 24, then :-
+<a name="374"/># ~
+<a name="375"/>#   [24], [2,12], [4,6], [2,2,6]
+<a name="376"/>#   [3,8], [2,3,4] and [2,2,2,3]
+<a name="377"/># ~
+<a name="378"/># is generated.
+<a name="379"/>#
+<a name="380"/># Notes :-
+<a name="381"/>#
+<a name="382"/># * `1` is never included in any result.
+<a name="383"/># * the factors in each list are in ascending order,
+<a name="384"/># * the results are in no special order, although the first result always
+<a name="385"/>#   has one element and the last all the prime factors.
+<a name="386"/># * no list is repeated,
+<a name="387"/># * each list is a distinct list instance,
+<a name="388"/># * `factorizations(1)` returns the empty list.
+<a name="389"/>#
+<a name="390"/>procedure factorizations(n)
+<a name="391"/>   suspend UniqueEq{ factorizations1{ prime_factors1(n) } }
+<a name="392"/>end
+</pre></body></html>

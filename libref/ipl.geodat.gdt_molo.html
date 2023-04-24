@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gdt_molo</title></head><body>
+<h1>gdt_molo(proj, inv, dx, dy, dz, ain, fin, aout, fout)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.geodat-package.html" target="listFrame">ipl.geodat</a></dd>
+<dt>Type :</dt><dd>record</dd>
+</dl><p/>
+################ Standard Molodensky Datum Transformation ##################
+See NIMA TR 8350.2
+<p/>
+<b></b><b></b><b></b><b></b><b></b><b></b> WARNING <b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b>
+NIMA TR 8350.2 contains Molodensky parameters to convert
+from an arbitrary datum to WGS84.  To convert from datum A to datum B,
+I call molodensky(Ax-Bx,Ay-By,Az-Bz,Aa,Af,Ba,Bf) where Ax,Ay,Az are the
+shift to convert A to WGS84; Bx,By,Bz are the shift to convert B to WGS84;
+Aa,Af,Ba,Bf are the ellipsoid parameters.
+</b><b></b><b></b><b></b><b></b><b></b><b> WARNING </b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>
+<p/>
+TODO:
+1) Add special conversion for North and South pole
+2) Add Multiple Regression Equations
+3) Add special WGS72 to WGS84 conversion
+<p/><a href="ipl.geodat-geodat.icn.html#377" target="displayFrame">Source - geodat.icn </a>
+<p/>
+</body></html>

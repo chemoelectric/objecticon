@@ -1,0 +1,390 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>favouritedirsdialog.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   io, ipl.filegui, xdg, lang, util, ipl.pdco()
+<a name="5"/>
+<a name="6"/>package class FavouriteDirectoriesTableContent(TableContent)
+<a name="7"/>   public override perform_drop(drag, drop)
+<a name="8"/>      local l
+<a name="9"/>      # Calculate insertion index
+<a name="10"/>      l := self.get_highlight() | fail
+<a name="11"/>      if get_highlight_part() === BOTTOM then
+<a name="12"/>         l +:= 1
+<a name="13"/>      move_lines(get_gesture_selections(), l)
+<a name="14"/>   end
+<a name="15"/>end
+<a name="16"/>
+<a name="17"/>package class FavouriteDirectoriesTable(Table)
+<a name="18"/>   public override create_table_content()
+<a name="19"/>      return FavouriteDirectoriesTableContent()
+<a name="20"/>   end
+<a name="21"/>end
+<a name="22"/>
+<a name="23"/>class FavouriteDirectoriesDialog(Dialog)
+<a name="24"/>   private
+<a name="25"/>      application_field,
+<a name="26"/>      directory_field,
+<a name="27"/>      okay_button,
+<a name="28"/>      cancel_button,
+<a name="29"/>      add_button,
+<a name="30"/>      delete_button,
+<a name="31"/>      apply_button,
+<a name="32"/>      entry_table,
+<a name="33"/>      etc,
+<a name="34"/>      directory_column,
+<a name="35"/>      application_check_box,
+<a name="36"/>      application_column,
+<a name="37"/>      edit_panel,
+<a name="38"/>      message_label,
+<a name="39"/>      down_button,
+<a name="40"/>      up_button
+<a name="41"/>   public
+<a name="42"/>      okay
+<a name="43"/>   public static const
+<a name="44"/>      EDIT_ME,
+<a name="45"/>      PROG
+<a name="46"/>
+<a name="47"/>   private static init()
+<a name="48"/>      EDIT_ME := u"Edit me"
+<a name="49"/>      PROG := ucs(Files.get_program_name()) | u"Unknown"
+<a name="50"/>   end
+<a name="51"/>
+<a name="52"/>   public static get_favourites_file()
+<a name="53"/>      return FilePath(BaseDir.ensure_data_home()).child("oifavouritedirs").str()
+<a name="54"/>   end
+<a name="55"/>
+<a name="56"/>   public static get_pair_list()
+<a name="57"/>      return decode_from_file(get_favourites_file()) | 
+<a name="58"/>         ipl.pdco.List{[&amp;null, ucs(Files.get_home() | Files.get_temp() | Files.get_roots())]}
+<a name="59"/>   end
+<a name="60"/>
+<a name="61"/>   public static gen_directories()
+<a name="62"/>      local e
+<a name="63"/>      every e := !get_pair_list() do {
+<a name="64"/>         if /e[1] | (e[1] == PROG) then
+<a name="65"/>            suspend EDIT_ME ~== e[2]
+<a name="66"/>      }
+<a name="67"/>   end
+<a name="68"/>
+<a name="69"/>   #
+<a name="70"/>   # Generate the directories, plus some other useful ones, in a sensible order.
+<a name="71"/>   #
+<a name="72"/>   public static gen_directories_plus()
+<a name="73"/>      suspend Files.getcwd() | gen_directories() | Files.get_home() | Files.get_temp() | Files.get_roots()
+<a name="74"/>   end
+<a name="75"/>
+<a name="76"/>   public msg(s)
+<a name="77"/>      message_label.set(s)
+<a name="78"/>   end
+<a name="79"/>
+<a name="80"/>   private static application_col(data)
+<a name="81"/>      return \data | "All"
+<a name="82"/>   end
+<a name="83"/>
+<a name="84"/>   public override component_setup()
+<a name="85"/>      entry_table.set_contents(get_pair_list())
+<a name="86"/>      update_grey()
+<a name="87"/>   end
+<a name="88"/>
+<a name="89"/>   private on_table_selection()
+<a name="90"/>      local e
+<a name="91"/>      if *etc.get_selections() = 1 then {
+<a name="92"/>         e := etc.object_first_selection()
+<a name="93"/>         application_field.set_contents(e[1])
+<a name="94"/>         directory_field.set_contents(e[2])
+<a name="95"/>         application_check_box.set_is_checked(Yes{/e[1]})
+<a name="96"/>      }
+<a name="97"/>      update_grey()
+<a name="98"/>      msg()
+<a name="99"/>   end
+<a name="100"/>
+<a name="101"/>   private update_grey()
+<a name="102"/>      local i
+<a name="103"/>      if *etc.get_selections() = 1 then {
+<a name="104"/>         apply_button.set_is_shaded(&amp;no)
+<a name="105"/>         i := etc.get_selections()[1]
+<a name="106"/>         up_button.set_is_shaded(No{ i &gt; 1})
+<a name="107"/>         down_button.set_is_shaded(No{ i &lt; *etc.contents })
+<a name="108"/>         edit_panel.set_is_shaded(&amp;no)
+<a name="109"/>         application_field.set_is_shaded(application_check_box.get_status())
+<a name="110"/>      } else {
+<a name="111"/>         apply_button.set_is_shaded(&amp;yes)
+<a name="112"/>         up_button.set_is_shaded(&amp;yes)
+<a name="113"/>         down_button.set_is_shaded(&amp;yes)
+<a name="114"/>         edit_panel.set_is_shaded(&amp;yes)
+<a name="115"/>      }
+<a name="116"/>      delete_button.set_is_shaded(Yes{ *etc.get_selections() = 0 })
+<a name="117"/>   end
+<a name="118"/>
+<a name="119"/>   private on_cancel_button(ev)
+<a name="120"/>      okay := &amp;no
+<a name="121"/>      dispose()
+<a name="122"/>   end
+<a name="123"/>
+<a name="124"/>   private on_okay_button(ev)
+<a name="125"/>      if encode_to_file(get_favourites_file(), etc.contents) then {
+<a name="126"/>         okay := &amp;yes
+<a name="127"/>         dispose()
+<a name="128"/>      } else
+<a name="129"/>         msg(&amp;why)
+<a name="130"/>   end
+<a name="131"/>
+<a name="132"/>   private on_add_button(ev)
+<a name="133"/>      etc.
+<a name="134"/>         insert_lines([ [PROG, EDIT_ME] ], *etc.contents + 1).
+<a name="135"/>         set_selections([*etc.contents]).
+<a name="136"/>         ensure_line_visible(*etc.contents)
+<a name="137"/>      parent_dialog.set_focus(directory_field)
+<a name="138"/>      on_table_selection()
+<a name="139"/>      directory_field.handle_select_all()
+<a name="140"/>      msg()
+<a name="141"/>   end
+<a name="142"/>
+<a name="143"/>   private on_delete_button(ev)
+<a name="144"/>      etc.delete_lines(etc.get_selections()) 
+<a name="145"/>      update_grey()
+<a name="146"/>      msg()
+<a name="147"/>   end
+<a name="148"/>
+<a name="149"/>   private on_apply_button()
+<a name="150"/>      etc.set_lines([[if application_check_box.is_checked() then &amp;null else application_field.get_contents(), 
+<a name="151"/>                      FilePath(directory_field.get_contents()).canonical().ucs()]], 
+<a name="152"/>                    etc.get_selections()[1])
+<a name="153"/>      etc.clear_selections()
+<a name="154"/>      update_grey()
+<a name="155"/>      msg()
+<a name="156"/>   end
+<a name="157"/>
+<a name="158"/>   private on_application_check_box(ev)
+<a name="159"/>      if application_check_box.is_unchecked() &amp; *application_field.get_contents() = 0 then
+<a name="160"/>         application_field.set_contents(PROG)
+<a name="161"/>      update_grey()
+<a name="162"/>      msg()
+<a name="163"/>   end
+<a name="164"/>
+<a name="165"/>   private on_directory_field(ev)
+<a name="166"/>      directory_field.was_applied(ev) | on_apply_button()
+<a name="167"/>   end
+<a name="168"/>
+<a name="169"/>   private on_down_button(ev)
+<a name="170"/>      local l
+<a name="171"/>      l := etc.get_selections()
+<a name="172"/>      etc.move_lines(l, l[1] + 2)
+<a name="173"/>      update_grey()
+<a name="174"/>      msg()
+<a name="175"/>   end
+<a name="176"/>
+<a name="177"/>   private on_up_button(ev)
+<a name="178"/>      local l
+<a name="179"/>      l := etc.get_selections()
+<a name="180"/>      etc.move_lines(l, l[1] - 1)
+<a name="181"/>      update_grey()
+<a name="182"/>      msg()
+<a name="183"/>   end
+<a name="184"/>
+<a name="185"/>   public override new()
+<a name="186"/>      Dialog.new()
+<a name="187"/>      setup()
+<a name="188"/>      etc := entry_table.table_content
+<a name="189"/>      etc.
+<a name="190"/>         set_allow_drag(&amp;yes).
+<a name="191"/>         set_allow_drop(&amp;yes).
+<a name="192"/>         set_select_mode("many").
+<a name="193"/>         set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
+<a name="194"/>         connect(on_table_selection, Event.SELECTION_CHANGED)
+<a name="195"/>      directory_column.
+<a name="196"/>         set_item_paint(AbbreviatedTextItemPaint()).
+<a name="197"/>         set_item_border(EmptyBorder().
+<a name="198"/>                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+<a name="199"/>                            set_x_align(Align.L))
+<a name="200"/>      application_column.
+<a name="201"/>         set_item_paint(MapItemPaint(AbbreviatedTextItemPaint(), application_col)).
+<a name="202"/>         set_item_border(EmptyBorder().
+<a name="203"/>                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+<a name="204"/>                            set_x_align(Align.L))
+<a name="205"/>      directory_field.
+<a name="206"/>         set_directories_only(&amp;yes)
+<a name="207"/>      return
+<a name="208"/>   end
+<a name="209"/>
+<a name="210"/>   private setup()
+<a name="211"/>      local label_2, paint_2, panel_2, layout_7, paint_7, layout_4, paint_11, paint_4, label_1, paint_1, paint_9, layout_6, paint_13, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_12, paint_5, layout_2
+<a name="212"/>      self.set_label("Favourite directories")
+<a name="213"/>      self.set_resize(&amp;yes)
+<a name="214"/>      paint_1 := TextPaint("Application")
+<a name="215"/>      application_column := ItemPaintTableColumn().
+<a name="216"/>         set_paint(paint_1).
+<a name="217"/>         set_column_align(Align.L).
+<a name="218"/>         set_column_width(scale(90))
+<a name="219"/>      paint_2 := TextPaint("Directory")
+<a name="220"/>      directory_column := ItemPaintTableColumn().
+<a name="221"/>         set_paint(paint_2).
+<a name="222"/>         set_column_align(Align.L)
+<a name="223"/>      entry_table := FavouriteDirectoriesTable().
+<a name="224"/>         set_size(scale(501), scale(314)).
+<a name="225"/>         clear_constraints().
+<a name="226"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="227"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="228"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="229"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="230"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="231"/>         set_select_mode(Select.NONE).
+<a name="232"/>         set_contents([]).
+<a name="233"/>         add_column(application_column).
+<a name="234"/>         add_column(directory_column)
+<a name="235"/>      self.add(entry_table)
+<a name="236"/>      paint_3 := TextPaint("Application")
+<a name="237"/>      label_1 := Label().
+<a name="238"/>         clear_constraints().
+<a name="239"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="240"/>         set_paint(paint_3)
+<a name="241"/>      application_field := TextField().
+<a name="242"/>         set_size(scale(203)).
+<a name="243"/>         clear_constraints().
+<a name="244"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="245"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="246"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="247"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="248"/>         connect(self.on_apply_button, Event.ACTION).
+<a name="249"/>         set_contents(u"")
+<a name="250"/>      paint_10 := TextPaint("Use in all applications")
+<a name="251"/>      application_check_box := CheckBox().
+<a name="252"/>         clear_constraints().
+<a name="253"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="254"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="255"/>         set_constraint(Grid.X_TAB, 1).
+<a name="256"/>         connect(self.on_application_check_box, Event.ACTION).
+<a name="257"/>         set_toggles(&amp;yes).
+<a name="258"/>         set_paint(paint_10)
+<a name="259"/>      paint_4 := TextPaint("Directory")
+<a name="260"/>      label_2 := Label().
+<a name="261"/>         clear_constraints().
+<a name="262"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="263"/>         set_paint(paint_4)
+<a name="264"/>      directory_field := FileSuggestField().
+<a name="265"/>         set_size(scale(205)).
+<a name="266"/>         clear_constraints().
+<a name="267"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="268"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="269"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="270"/>         connect(self.on_directory_field, Event.ACTION).
+<a name="271"/>         set_contents(u"")
+<a name="272"/>      layout_7 := GridLayout().
+<a name="273"/>         set_doi(scale(0)).
+<a name="274"/>         set_extra("cells")
+<a name="275"/>      edit_panel := Panel().
+<a name="276"/>         clear_constraints().
+<a name="277"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="278"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="279"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="280"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="281"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="282"/>         set_layout(layout_7).
+<a name="283"/>         add(label_1).
+<a name="284"/>         add(application_field).
+<a name="285"/>         add(application_check_box).
+<a name="286"/>         add(label_2).
+<a name="287"/>         add(directory_field)
+<a name="288"/>      paint_7 := TextPaint("Add")
+<a name="289"/>      add_button := TextButton().
+<a name="290"/>         clear_constraints().
+<a name="291"/>         connect(self.on_add_button, Event.ACTION).
+<a name="292"/>         set_toggles(&amp;no).
+<a name="293"/>         set_paint(paint_7)
+<a name="294"/>      paint_8 := TextPaint("Delete")
+<a name="295"/>      delete_button := TextButton().
+<a name="296"/>         clear_constraints().
+<a name="297"/>         connect(self.on_delete_button, Event.ACTION).
+<a name="298"/>         set_toggles(&amp;no).
+<a name="299"/>         set_paint(paint_8)
+<a name="300"/>      paint_9 := TextPaint("Apply")
+<a name="301"/>      apply_button := TextButton().
+<a name="302"/>         clear_constraints().
+<a name="303"/>         connect(self.on_apply_button, Event.ACTION).
+<a name="304"/>         set_toggles(&amp;no).
+<a name="305"/>         set_paint(paint_9)
+<a name="306"/>      paint_12 := TextPaint("Up")
+<a name="307"/>      up_button := TextButton().
+<a name="308"/>         clear_constraints().
+<a name="309"/>         connect(self.on_up_button, Event.ACTION).
+<a name="310"/>         set_toggles(&amp;no).
+<a name="311"/>         set_paint(paint_12)
+<a name="312"/>      paint_13 := TextPaint("Down")
+<a name="313"/>      down_button := TextButton().
+<a name="314"/>         clear_constraints().
+<a name="315"/>         connect(self.on_down_button, Event.ACTION).
+<a name="316"/>         set_toggles(&amp;no).
+<a name="317"/>         set_paint(paint_13)
+<a name="318"/>      layout_6 := GridLayout().
+<a name="319"/>         set_doi(scale(0)).
+<a name="320"/>         set_extra("cells")
+<a name="321"/>      panel_3 := Panel().
+<a name="322"/>         clear_constraints().
+<a name="323"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="324"/>         set_layout(layout_6).
+<a name="325"/>         add(add_button).
+<a name="326"/>         add(delete_button).
+<a name="327"/>         add(apply_button).
+<a name="328"/>         add(up_button).
+<a name="329"/>         add(down_button)
+<a name="330"/>      layout_4 := GridLayout().
+<a name="331"/>         set_extra("cells")
+<a name="332"/>      border_content_1 := Component().
+<a name="333"/>         clear_constraints().
+<a name="334"/>         set_layout(layout_4).
+<a name="335"/>         add(edit_panel).
+<a name="336"/>         add(panel_3)
+<a name="337"/>      border_1 := Border().
+<a name="338"/>         clear_constraints().
+<a name="339"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="340"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="341"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="342"/>         set_constraint(Grid.Y_WEIGHT, 0.0).
+<a name="343"/>         set_content(border_content_1)
+<a name="344"/>      self.add(border_1)
+<a name="345"/>      paint_5 := TextPaint("Okay")
+<a name="346"/>      okay_button := TextButton().
+<a name="347"/>         set_align(Align.L, Align.B).
+<a name="348"/>         clear_constraints().
+<a name="349"/>         connect(self.on_okay_button, Event.ACTION).
+<a name="350"/>         set_toggles(&amp;no).
+<a name="351"/>         set_paint(paint_5)
+<a name="352"/>      paint_6 := TextPaint("Cancel")
+<a name="353"/>      cancel_button := TextButton().
+<a name="354"/>         set_align(Align.L, Align.B).
+<a name="355"/>         clear_constraints().
+<a name="356"/>         connect(self.on_cancel_button, Event.ACTION).
+<a name="357"/>         set_toggles(&amp;no).
+<a name="358"/>         set_paint(paint_6)
+<a name="359"/>      paint_11 := TextPaint("")
+<a name="360"/>      message_label := MessageLabel().
+<a name="361"/>         set_size(scale(130)).
+<a name="362"/>         set_align(Align.L, Align.B).
+<a name="363"/>         clear_constraints().
+<a name="364"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="365"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="366"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="367"/>         set_paint(paint_11)
+<a name="368"/>      layout_2 := GridLayout().
+<a name="369"/>         set_doi(scale(0)).
+<a name="370"/>         set_extra("cells")
+<a name="371"/>      panel_2 := Panel().
+<a name="372"/>         clear_constraints().
+<a name="373"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="374"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="375"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="376"/>         set_layout(layout_2).
+<a name="377"/>         add(okay_button).
+<a name="378"/>         add(cancel_button).
+<a name="379"/>         add(message_label)
+<a name="380"/>      self.add(panel_2)
+<a name="381"/>      layout_5 := GridLayout().
+<a name="382"/>         set_extra("cells")
+<a name="383"/>      self.set_layout(layout_5)
+<a name="384"/>   end
+<a name="385"/>end
+<a name="386"/>
+<a name="387"/>### Ivib-v2 layout: layouts/$.layout
+</pre></body></html>

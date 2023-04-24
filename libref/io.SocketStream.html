@@ -1,0 +1,506 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SocketStream</title></head><body>
+<h1>SocketStream</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="io.DescStream.html" target="displayFrame">io.DescStream</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="io.ProgStreamBase.html">io.ProgStreamBase</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+</dl><p/>
+This class represents a stream based on a socket.
+<p/><a href="io-streams.icn.html#1079" target="displayFrame">Source - streams.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="util.HasMode.html">util.HasMode</a>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="io.Stream.html">io.Stream</a>
+<a href="io.DescStream.html">io.DescStream</a>
+<a href="io.SocketStream.html">io.SocketStream</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.HasMode</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasMode.html#can">can()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#copy_to">copy_to()</a>
+<a href="io.Stream.html#gen">gen()</a>
+<a href="io.Stream.html#init">init()</a>
+<a href="io.Stream.html#read">read()</a>
+<a href="io.Stream.html#read_all">read_all()</a>
+<a href="io.Stream.html#read_exactly">read_exactly()</a>
+<a href="io.Stream.html#read_line">read_line()</a>
+<a href="io.Stream.html#reads">reads()</a>
+<a href="io.Stream.html#seek">seek()</a>
+<a href="io.Stream.html#tell">tell()</a>
+<a href="io.Stream.html#truncate">truncate()</a>
+<a href="io.Stream.html#write">write()</a>
+<a href="io.Stream.html#write1">write1()</a>
+<a href="io.Stream.html#writes">writes()</a>
+<a href="io.Stream.html#writes1">writes1()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.Stream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.Stream.html#ALL">ALL</a>
+<a href="io.Stream.html#READ">READ</a>
+<a href="io.Stream.html#READ_WRITE">READ_WRITE</a>
+<a href="io.Stream.html#SEEK">SEEK</a>
+<a href="io.Stream.html#TRUNCATE">TRUNCATE</a>
+<a href="io.Stream.html#WRITE">WRITE</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from io.DescStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.DescStream.html#dflag">dflag()</a>
+<a href="io.DescStream.html#dup2">dup2()</a>
+<a href="io.DescStream.html#dup2_impl">dup2_impl()</a>
+<a href="io.DescStream.html#dup_impl">dup_impl()</a>
+<a href="io.DescStream.html#flag">flag()</a>
+<a href="io.DescStream.html#get_fd">get_fd()</a>
+<a href="io.DescStream.html#get_mode">get_mode()</a>
+<a href="io.DescStream.html#poll">poll()</a>
+<a href="io.DescStream.html#poll_in_test">poll_in_test()</a>
+<a href="io.DescStream.html#poll_out_test">poll_out_test()</a>
+<a href="io.DescStream.html#setup">setup()</a>
+<a href="io.DescStream.html#stat">stat()</a>
+<a href="io.DescStream.html#stat_impl">stat_impl()</a>
+<a href="io.DescStream.html#wstat">wstat()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from io.DescStream</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="io.DescStream.html#fd">fd</a>
+<a href="io.DescStream.html#mode">mode</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#accept">accept()</a>
+<a href="#accept_impl">accept_impl()</a>
+<a href="#bind">bind()</a>
+<a href="#close">close()</a>
+<a href="#connect">connect()</a>
+<a href="#create_for_fd">create_for_fd()</a>
+<a href="#dns_query">dns_query()</a>
+<a href="#dup">dup()</a>
+<a href="#get_local">get_local()</a>
+<a href="#get_peer">get_peer()</a>
+<a href="#getopt">getopt()</a>
+<a href="#improve_why">improve_why()</a>
+<a href="#in">in()</a>
+<a href="#listen">listen()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#one_way_socketpair">one_way_socketpair()</a>
+<a href="#out">out()</a>
+<a href="#recvfrom">recvfrom()</a>
+<a href="#recvfrom_impl">recvfrom_impl()</a>
+<a href="#sendto">sendto()</a>
+<a href="#setopt">setopt()</a>
+<a href="#shutdown">shutdown()</a>
+<a href="#socketpair">socketpair()</a>
+<a href="#socketpair_impl">socketpair_impl()</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="accept"/>
+<h3>accept()</h3>
+public<p/>
+<dl>
+<dd>
+Accept a new connection, returning a new <code><a href="io.SocketStream.html" target="displayFrame">SocketStream</a></code>.
+<p/><a href="io-streams.icn.html#1174" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="accept_impl"/>
+<h3>accept_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1264" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="bind"/>
+<h3>bind(addr)</h3>
+public native<p/>
+<dl>
+<dd>
+Bind a socket to the given address, which is in the same form as
+for <code><a href="io.SocketStream.html#connect">connect</a></code>.
+<p/><a href="io-streams.icn.html#1150" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1268" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="connect"/>
+<h3>connect(addr)</h3>
+public native<p/>
+<dl>
+<dd>
+Connect a socket to the given address.  The address is a string
+in the form "unix:&lt;filename&gt;" for an <code>AF_UNIX</code> address,
+"inet:&lt;host&gt;:&lt;port&gt;" for an <code>AF_INET</code> address, or
+"inet6:&lt;host&gt;:&lt;port&gt;" for an <code>AF_INET6</code> address.  The "wildcard"
+host can be specified by using the host string "*".
+<p/><a href="io-streams.icn.html#1141" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="create_for_fd"/>
+<h3>create_for_fd(fd, mode)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1083" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="dns_query"/>
+<h3>dns_query(host, ver)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return a list of IP numerical addresses for the given host.
+<p/>
+The second parameter, <code>ver</code>, an integer, specifies the IP
+versions which the result list can contain.  Possible values
+are :-
+<p/>
+<ul>
+<li>
+4 - return only v4 addresses
+</li>
+<li>
+6 - return only v6 addresses
+</li>
+<li>
+46 - return either v4 or v6 addresses, with v4 coming first
+</li>
+<li>
+64 - return either v4 or v6 addresses, with v6 coming first
+</li>
+<li>
+0 - return either v4 or v6 addresses, in the order returned by
+the underlying system call.
+<p/>
+</li>
+</ul>
+If <code>ver</code> is omitted, the value given by the environment variable
+<code>OI_IP_VERSION</code> is used; if that is unset then <code>4</code> is used.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>host</code> - the host name (a string)
+</dd>
+<dd>
+<code>ver</code> - the IP version(s) to try
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#1242" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="dup"/>
+<h3>dup()</h3>
+public<p/>
+<dl>
+<dd>
+Return a new instance which has a duplicated file descriptor
+(using the dup() system call), and the same mode as this
+instance.
+<p/><a href="io-streams.icn.html#1087" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="get_local"/>
+<h3>get_local()</h3>
+public native<p/>
+<dl>
+<dd>
+Returns the local address of the socket, in the same format
+as returned by <code><a href="io.SocketStream.html#get_peer">get_peer()</a></code>.
+<p/><a href="io-streams.icn.html#1168" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="get_peer"/>
+<h3>get_peer()</h3>
+public native<p/>
+<dl>
+<dd>
+Returns a string giving the address and port of the peer
+connected to the socket, in the format used by the
+<code><a href="io.SocketStream.html#connect">connect</a></code> method.
+<p/><a href="io-streams.icn.html#1161" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="getopt"/>
+<h3>getopt(opt)</h3>
+public native<p/>
+<dl>
+<dd>
+Get values using the underlying getopt call; see <code><a href="io.SocketStream.html#setopt">setopt</a></code> above.
+<code>ERROR</code> will return <code>&amp;null</code> if no error is set, or an error string
+in the same format as <code>&amp;why</code>.
+<p/><a href="io-streams.icn.html#1231" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="improve_why"/>
+<h3>improve_why(v)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="io.DescStream.html#improve_why">improve_why()</a> in <a href="io.DescStream.html" target="displayFrame">io.DescStream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1238" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="in"/>
+<h3>in(n)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#in">in()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1139" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="listen"/>
+<h3>listen(backlog)</h3>
+public native<p/>
+<dl>
+<dd>
+Listen for connections with the given backlog.
+<p/><a href="io-streams.icn.html#1156" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(domain, typ)</h3>
+public<p/>
+<dl>
+<dd>
+Create a socket with the given domain and type.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>domain</code> - from <code><a href="io.ProtocolFormat.html" target="displayFrame">ProtocolFormat</a></code>.  The default is
+<code><a href="io.ProtocolFormat.html#INET">ProtocolFormat.INET</a></code> 
+</dd>
+<dd>
+<code>typ</code> - the type from <code><a href="io.SocketType.html" target="displayFrame">SocketType</a></code>.  The default is
+<code><a href="io.SocketType.html#STREAM">SocketType.STREAM</a></code>.
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#1096" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl(domain, typ)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1272" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="one_way_socketpair"/>
+<h3>one_way_socketpair(typ)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a pair of sockets of the given type, but communication is limited to
+one direction.  The first socket is the reader, and the second the writer.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>typ</code> - the type from <code><a href="io.SocketType.html" target="displayFrame">SocketType</a></code>.  The default is
+<code><a href="io.SocketType.html#STREAM">SocketType.STREAM</a></code>.
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#1122" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="out"/>
+<h3>out(s)</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="io.Stream.html#out">out()</a> in <a href="io.Stream.html" target="displayFrame">io.Stream</a></dd>
+<dd>
+<p/><a href="io-streams.icn.html#1266" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="recvfrom"/>
+<h3>recvfrom(n, flags)</h3>
+public<p/>
+<dl>
+<dd>
+Receive a message of up to length <code>n</code>. The result on success is
+a <code><a href="io.Received.html" target="displayFrame">Received</a></code> object encapsulating data and source address, which
+will be in the format used by the <code><a href="io.SocketStream.html#connect">connect</a></code> method.  Unlike
+<code><a href="io.SocketStream.html#in">in()</a></code>, the data returned may be the empty string (and never
+<code>&amp;null</code>).
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>n</code> - the limit of the message length
+</dd>
+<dd>
+<code>flags</code> - optional selection of flags from <code><a href="io.MessageOpt.html" target="displayFrame">MessageOpt</a></code>
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#1200" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="recvfrom_impl"/>
+<h3>recvfrom_impl(n, flags)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1215" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="sendto"/>
+<h3>sendto(s, dest, flags)</h3>
+public native<p/>
+<dl>
+<dd>
+Send the given string <code>s</code> (which may be empty) to the address
+<code>dest</code>, which should be in the format used by the <code><a href="io.SocketStream.html#connect">connect</a></code>
+method.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>s</code> - the message to send (a string)
+</dd>
+<dd>
+<code>dest</code> - the destination
+</dd>
+<dd>
+<code>flags</code> - optional selection of flags from <code><a href="io.MessageOpt.html" target="displayFrame">MessageOpt</a></code>
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#1188" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="setopt"/>
+<h3>setopt(opt, arg)</h3>
+public native<p/>
+<dl>
+<dd>
+Set values using the underlying setsockopt call.  The options
+listed in the following table are recognized :-
+<p/>
+<a href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_10_16">https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_10_16</a>
+<p/>
+Symbolic options can be found in the <code><a href="io.SocketOpt.html" target="displayFrame">SocketOpt</a></code> class.
+<p/>
+Flag values should have a <code>&amp;yes</code> or <code>&amp;no</code> argument.  <code>LINGER</code>
+accepts <code>&amp;null</code> meaning "off", or an integer value meaning on
+with that seconds value.  The timeout values are in milliseconds.
+<p/><a href="io-streams.icn.html#1217" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="shutdown"/>
+<h3>shutdown(how)</h3>
+public native<p/>
+<dl>
+<dd>
+Perform a shutdown on the socket.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>how</code> - one of the constants in <code><a href="io.Shut.html" target="displayFrame">Shut</a></code>
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#1181" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="socketpair"/>
+<h3>socketpair(typ)</h3>
+public static<p/>
+<dl>
+<dd>
+Create a pair of sockets of the given type
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>typ</code> - the type from <code><a href="io.SocketType.html" target="displayFrame">SocketType</a></code>.  The default is
+<code><a href="io.SocketType.html#STREAM">SocketType.STREAM</a></code>.
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#1109" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+<a name="socketpair_impl"/>
+<h3>socketpair_impl(typ)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="io-streams.icn.html#1270" target="displayFrame">Source - streams.icn </a>
+</dd>
+</dl><hr>
+</body></html>

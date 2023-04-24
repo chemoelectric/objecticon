@@ -1,0 +1,20 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>replacec</title></head><body>
+<h1>replacec(s, c, t)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.strings-package.html" target="listFrame">ipl.strings</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Replace each occurence in string <code>s</code> of a character in cset <code>c</code> by
+the string <code>t</code> (which may be of any length).  For example :-
+<pre>
+    replacec("The sum is $2000.00", &amp;digits, "*")
+    gives "The sum is $****.**"
+</pre>
+<p/>
+If <code>t</code> is the empty string, then this is equivalent to <code><a href="ipl.strings.deletec.html" target="displayFrame">deletec</a></code>.
+<p/>
+The result type is the type of <code>s</code>.
+<p/><a href="ipl.strings-strings.icn.html#438" target="displayFrame">Source - strings.icn </a>
+<p/>
+</body></html>

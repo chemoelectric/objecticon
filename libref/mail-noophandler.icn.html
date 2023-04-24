@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>noophandler.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: noophandler.icn 8996 2021-03-24 07:27:53Z rparlett $
+<a name="3"/>#
+<a name="4"/>
+<a name="5"/>package mail
+<a name="6"/>
+<a name="7"/>import lang
+<a name="8"/>
+<a name="9"/>#
+<a name="10"/># Handles the 8bit, 7bit and binary encoding types, by doing nothing.
+<a name="11"/>#
+<a name="12"/>class NoOpEncodingHandler(EncodingHandler)
+<a name="13"/>   public override can_handle(enc)
+<a name="14"/>      succeed Text.lower(enc) == ("7bit" | "8bit" | "binary")
+<a name="15"/>   end
+<a name="16"/>
+<a name="17"/>   public override decode_data(m, data)
+<a name="18"/>      return data
+<a name="19"/>   end
+<a name="20"/>
+<a name="21"/>   public override encode_data(m, data) 
+<a name="22"/>      return data
+<a name="23"/>  end
+<a name="24"/>end
+<a name="25"/>
+<a name="26"/>#
+<a name="27"/># The pass-through type handler.
+<a name="28"/>#
+<a name="29"/>class NoOpTypeHandler(TypeHandler)
+<a name="30"/>   public override can_handle(ct)
+<a name="31"/>      succeed (Text.lower(ct.get_type()) == "application") &amp; 
+<a name="32"/>         (Text.lower(ct.get_subtype()) == "octet-stream")
+<a name="33"/>   end
+<a name="34"/>   
+<a name="35"/>   public override convert_to_object(m, data)
+<a name="36"/>      return data
+<a name="37"/>   end
+<a name="38"/>
+<a name="39"/>   public override convert_from_object(m, obj)
+<a name="40"/>      return obj
+<a name="41"/>   end
+<a name="42"/>end
+</pre></body></html>

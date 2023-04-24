@@ -1,0 +1,1442 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>XmlParser</title></head><body>
+<h1>XmlParser</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="xml-package.html" target="listFrame">xml</a></dd>
+</dl><p/>
+An XML Parser
+<p/><a href="xml-xmlparser.icn.html#62" target="displayFrame">Source - xmlparser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="xml.XmlParser.html">xml.XmlParser</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#check_is_char_data">check_is_char_data()</a>
+<a href="#cleanup_source_refs">cleanup_source_refs()</a>
+<a href="#convert_element">convert_element()</a>
+<a href="#convert_name">convert_name()</a>
+<a href="#do_namespace_processing">do_namespace_processing()</a>
+<a href="#do_namespace_processing_element">do_namespace_processing_element()</a>
+<a href="#dtd_any">dtd_any()</a>
+<a href="#dtd_looking_at_space_then">dtd_looking_at_space_then()</a>
+<a href="#dtd_looking_at_space_then_cset">dtd_looking_at_space_then_cset()</a>
+<a href="#dtd_many">dtd_many()</a>
+<a href="#dtd_many0">dtd_many0()</a>
+<a href="#dtd_match">dtd_match()</a>
+<a href="#dtd_opt_spaces">dtd_opt_spaces()</a>
+<a href="#dtd_parse_name">dtd_parse_name()</a>
+<a href="#dtd_parse_nmtoken">dtd_parse_nmtoken()</a>
+<a href="#dtd_spaces">dtd_spaces()</a>
+<a href="#dtd_tabmat">dtd_tabmat()</a>
+<a href="#end_divert">end_divert()</a>
+<a href="#get_resolver">get_resolver()</a>
+<a href="#init">init()</a>
+<a href="#invalid">invalid()</a>
+<a href="#looking_at_space_then">looking_at_space_then()</a>
+<a href="#looking_at_space_then_cset">looking_at_space_then_cset()</a>
+<a href="#lookup_entity_ref">lookup_entity_ref()</a>
+<a href="#lookup_pe_reference">lookup_pe_reference()</a>
+<a href="#make_declarations_map">make_declarations_map()</a>
+<a href="#new">new()</a>
+<a href="#normalize_attvalue">normalize_attvalue()</a>
+<a href="#normalize_attvalue1">normalize_attvalue1()</a>
+<a href="#normalize_eol">normalize_eol()</a>
+<a href="#opt_spaces">opt_spaces()</a>
+<a href="#parse">parse()</a>
+<a href="#parse_and_maybe_add_comment">parse_and_maybe_add_comment()</a>
+<a href="#parse_att_type">parse_att_type()</a>
+<a href="#parse_attlist_decl">parse_attlist_decl()</a>
+<a href="#parse_attribute">parse_attribute()</a>
+<a href="#parse_attvalue">parse_attvalue()</a>
+<a href="#parse_cdsect">parse_cdsect()</a>
+<a href="#parse_char_ref">parse_char_ref()</a>
+<a href="#parse_children">parse_children()</a>
+<a href="#parse_choiceseq">parse_choiceseq()</a>
+<a href="#parse_comment">parse_comment()</a>
+<a href="#parse_conditional_sect">parse_conditional_sect()</a>
+<a href="#parse_content">parse_content()</a>
+<a href="#parse_content_spec">parse_content_spec()</a>
+<a href="#parse_cp">parse_cp()</a>
+<a href="#parse_default_decl">parse_default_decl()</a>
+<a href="#parse_doctype_decl">parse_doctype_decl()</a>
+<a href="#parse_element">parse_element()</a>
+<a href="#parse_element_decl">parse_element_decl()</a>
+<a href="#parse_enc_name">parse_enc_name()</a>
+<a href="#parse_encoding_decl">parse_encoding_decl()</a>
+<a href="#parse_entity_decl">parse_entity_decl()</a>
+<a href="#parse_entity_def">parse_entity_def()</a>
+<a href="#parse_entity_ref">parse_entity_ref()</a>
+<a href="#parse_entity_value">parse_entity_value()</a>
+<a href="#parse_enumeration">parse_enumeration()</a>
+<a href="#parse_eq">parse_eq()</a>
+<a href="#parse_etag">parse_etag()</a>
+<a href="#parse_ext_subset">parse_ext_subset()</a>
+<a href="#parse_ext_subset_decl">parse_ext_subset_decl()</a>
+<a href="#parse_external_id">parse_external_id()</a>
+<a href="#parse_external_parsed_entity">parse_external_parsed_entity()</a>
+<a href="#parse_ignore_sect_contents">parse_ignore_sect_contents()</a>
+<a href="#parse_markup_decls">parse_markup_decls()</a>
+<a href="#parse_misc_star">parse_misc_star()</a>
+<a href="#parse_mixed">parse_mixed()</a>
+<a href="#parse_name">parse_name()</a>
+<a href="#parse_names">parse_names()</a>
+<a href="#parse_ndata_decl">parse_ndata_decl()</a>
+<a href="#parse_nmtoken">parse_nmtoken()</a>
+<a href="#parse_nmtokens">parse_nmtokens()</a>
+<a href="#parse_notation_decl">parse_notation_decl()</a>
+<a href="#parse_notation_type">parse_notation_type()</a>
+<a href="#parse_pe_def">parse_pe_def()</a>
+<a href="#parse_pe_reference">parse_pe_reference()</a>
+<a href="#parse_pi">parse_pi()</a>
+<a href="#parse_pi_target">parse_pi_target()</a>
+<a href="#parse_prolog">parse_prolog()</a>
+<a href="#parse_pubid_literal">parse_pubid_literal()</a>
+<a href="#parse_reference">parse_reference()</a>
+<a href="#parse_sdecl">parse_sdecl()</a>
+<a href="#parse_system_literal">parse_system_literal()</a>
+<a href="#parse_text_decl">parse_text_decl()</a>
+<a href="#parse_version_info">parse_version_info()</a>
+<a href="#parse_version_num">parse_version_num()</a>
+<a href="#parse_xml_decl">parse_xml_decl()</a>
+<a href="#resolve">resolve()</a>
+<a href="#resolve_entity">resolve_entity()</a>
+<a href="#set_do_namespaces">set_do_namespaces()</a>
+<a href="#set_preserve_comments">set_preserve_comments()</a>
+<a href="#set_preserve_insignificant_whitespace">set_preserve_insignificant_whitespace()</a>
+<a href="#set_resolver">set_resolver()</a>
+<a href="#set_validate">set_validate()</a>
+<a href="#spaces">spaces()</a>
+<a href="#start_divert">start_divert()</a>
+<a href="#try_dtd_insert">try_dtd_insert()</a>
+<a href="#valid_name">valid_name()</a>
+<a href="#valid_names">valid_names()</a>
+<a href="#valid_nmtoken">valid_nmtoken()</a>
+<a href="#valid_nmtokens">valid_nmtokens()</a>
+<a href="#validate_attribute_definitions">validate_attribute_definitions()</a>
+<a href="#validate_attribute_value">validate_attribute_value()</a>
+<a href="#validate_attributes">validate_attributes()</a>
+<a href="#validate_children">validate_children()</a>
+<a href="#validate_docname">validate_docname()</a>
+<a href="#validate_idrefs">validate_idrefs()</a>
+<a href="#validate_ndata_decls">validate_ndata_decls()</a>
+<a href="#warn">warn()</a>
+<a href="#where">where()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#CHAR">CHAR</a>
+<a href="#current_base">current_base</a>
+<a href="#current_divert_id">current_divert_id</a>
+<a href="#divert_stack">divert_stack</a>
+<a href="#do_namespaces_flag">do_namespaces_flag</a>
+<a href="#doc">doc</a>
+<a href="#dtd_insert_shown_error">dtd_insert_shown_error</a>
+<a href="#FATAL_ERROR_EVENT">FATAL_ERROR_EVENT</a>
+<a href="#id_attribute_refs">id_attribute_refs</a>
+<a href="#in_ext_subset">in_ext_subset</a>
+<a href="#INVALID_CHAR">INVALID_CHAR</a>
+<a href="#NAME_CHAR">NAME_CHAR</a>
+<a href="#NAME_START">NAME_START</a>
+<a href="#preserve_comments_flag">preserve_comments_flag</a>
+<a href="#preserve_insignificant_whitespace_flag">preserve_insignificant_whitespace_flag</a>
+<a href="#PUBID_CHAR">PUBID_CHAR</a>
+<a href="#resolver">resolver</a>
+<a href="#SPACE">SPACE</a>
+<a href="#utf8_flag">utf8_flag</a>
+<a href="#validate_flag">validate_flag</a>
+<a href="#VALIDITY_ERROR_EVENT">VALIDITY_ERROR_EVENT</a>
+<a href="#WARNING_EVENT">WARNING_EVENT</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="check_is_char_data"/>
+<h3>check_is_char_data(s, msg)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#1093" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="cleanup_source_refs"/>
+<h3>cleanup_source_refs()</h3>
+private<p/>
+<dl>
+<dd>
+Remove any unwanted references to the source string from
+self and doc.
+<p/><a href="xml-xmlparser.icn.html#202" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_element"/>
+<h3>convert_element(resolve_table, el)</h3>
+private<p/>
+<dl>
+<dd>
+Convert a single element.  This completes the global name field and
+sets up the global attributes.
+<p/><a href="xml-xmlparser.icn.html#2224" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_name"/>
+<h3>convert_name(resolve_table, name)</h3>
+private<p/>
+<dl>
+<dd>
+Given a name "eg SOAP-ENV:Envelope", return the global name, using the 
+given resolve table for the conversion.  The returned value is a
+GlobalName instance.
+<p/><a href="xml-xmlparser.icn.html#2245" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_namespace_processing"/>
+<h3>do_namespace_processing()</h3>
+private<p/>
+<dl>
+<dd>
+This method post-processes the parsed tree to fill in the 
+global names in the XmlElement structures.
+<p/><a href="xml-xmlparser.icn.html#2161" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_namespace_processing_element"/>
+<h3>do_namespace_processing_element(resolve_table, el)</h3>
+private<p/>
+<dl>
+<dd>
+Do namespace processing for a single element.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>resolve_table</code> - a table of mappings from namespace prefixes
+to URI's to use for the conversion.
+</dd>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>el</code> - the element to process
+</dd>
+</dl>
+<p/><a href="xml-xmlparser.icn.html#2177" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_any"/>
+<h3>dtd_any(c)</h3>
+private<p/>
+<dl>
+<dd>
+Equivalent to any(), but checks for pe expansions
+<p/><a href="xml-xmlparser.icn.html#2089" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_looking_at_space_then"/>
+<h3>dtd_looking_at_space_then(s)</h3>
+private<p/>
+<dl>
+<dd>
+DTD version of above
+<p/><a href="xml-xmlparser.icn.html#2020" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_looking_at_space_then_cset"/>
+<h3>dtd_looking_at_space_then_cset(c)</h3>
+private<p/>
+<dl>
+<dd>
+DTD version of above
+<p/><a href="xml-xmlparser.icn.html#2046" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_many"/>
+<h3>dtd_many(c)</h3>
+private<p/>
+<dl>
+<dd>
+Equivalent to many(), but checks for pe expansions
+<p/><a href="xml-xmlparser.icn.html#2102" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_many0"/>
+<h3>dtd_many0(c)</h3>
+private<p/>
+<dl>
+<dd>
+Equivalent to many0(), but checks for pe expansions
+<p/><a href="xml-xmlparser.icn.html#2118" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_match"/>
+<h3>dtd_match(s)</h3>
+private<p/>
+<dl>
+<dd>
+Equivalent to match(), but checks for pe expansions
+<p/><a href="xml-xmlparser.icn.html#2059" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_opt_spaces"/>
+<h3>dtd_opt_spaces()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#1788" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_parse_name"/>
+<h3>dtd_parse_name()</h3>
+private<p/>
+<dl>
+<dd>
+Same as parse_name, but within a DTD
+<p/><a href="xml-xmlparser.icn.html#304" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_parse_nmtoken"/>
+<h3>dtd_parse_nmtoken()</h3>
+private<p/>
+<dl>
+<dd>
+Same as parse_nmtoken, but within a DTD
+<p/><a href="xml-xmlparser.icn.html#350" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_spaces"/>
+<h3>dtd_spaces()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#291" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_tabmat"/>
+<h3>dtd_tabmat(s)</h3>
+private<p/>
+<dl>
+<dd>
+Equivalent to =s, but checks for pe expansions
+<p/><a href="xml-xmlparser.icn.html#2074" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="end_divert"/>
+<h3>end_divert()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#1971" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_resolver"/>
+<h3>get_resolver()</h3>
+public<p/>
+<dl>
+<dd>
+Get the resolver being used
+<p/><a href="xml-xmlparser.icn.html#102" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#2304" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="invalid"/>
+<h3>invalid(s, loc)</h3>
+private<p/>
+<dl>
+<dd>
+A validity error
+<p/><a href="xml-xmlparser.icn.html#1994" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="looking_at_space_then"/>
+<h3>looking_at_space_then(s)</h3>
+private<p/>
+<dl>
+<dd>
+Utility: succeed if we are looking at S s, fail otherwise.
+Does not change &amp;pos.
+<p/><a href="xml-xmlparser.icn.html#2006" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="looking_at_space_then_cset"/>
+<h3>looking_at_space_then_cset(c)</h3>
+private<p/>
+<dl>
+<dd>
+As above, but looks for chars in the set.
+<p/><a href="xml-xmlparser.icn.html#2033" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="lookup_entity_ref"/>
+<h3>lookup_entity_ref(s)</h3>
+private<p/>
+<dl>
+<dd>
+Lookup a general entity in the table, returning its value.
+<p/><a href="xml-xmlparser.icn.html#1558" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="lookup_pe_reference"/>
+<h3>lookup_pe_reference(s)</h3>
+private<p/>
+<dl>
+<dd>
+Lookup a pe in the table, returning its value.
+<p/><a href="xml-xmlparser.icn.html#1548" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="make_declarations_map"/>
+<h3>make_declarations_map(el)</h3>
+private<p/>
+<dl>
+<dd>
+<p/>
+Make a map of namespace id's to uri's from the attributes in the
+given element.  <br>
+<p/><a href="xml-xmlparser.icn.html#2271" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.Connectable.html#new">new()</a> in <a href="util.Connectable.html" target="displayFrame">util.Connectable</a></dd>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#2339" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="normalize_attvalue"/>
+<h3>normalize_attvalue(s, attdef)</h3>
+private<p/>
+<dl>
+<dd>
+see s3.3.3 - attribute value normalization.
+attlist is the attributelist for this element, or &amp;null if unknown.
+att is the name of the attribute.
+<p/><a href="xml-xmlparser.icn.html#438" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="normalize_attvalue1"/>
+<h3>normalize_attvalue1(s, circle)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#478" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="normalize_eol"/>
+<h3>normalize_eol(s)</h3>
+private<p/>
+<dl>
+<dd>
+Normalize end-of-line characters.
+\r\n combinations are replaced with \n
+\rx combinations are replaced with \nx where x is any character other than \n
+<p/><a href="xml-xmlparser.icn.html#523" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="opt_spaces"/>
+<h3>opt_spaces()</h3>
+private<p/>
+<dl>
+<dd>
+S?
+<p/><a href="xml-xmlparser.icn.html#1778" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s, base)</h3>
+public<p/>
+<dl>
+<dd>
+Parse the string <code>s</code> returning an <code><a href="xml.XmlDocument.html" target="displayFrame">XmlDocument</a></code> object.  <code>base</code> is an
+optional string parameter giving the URL of the source of <code>s</code>.  Providing
+it can help resolve relative paths within the document.
+<p/>
+[1] document ::= prolog element Misc*
+<p/><a href="xml-xmlparser.icn.html#147" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_and_maybe_add_comment"/>
+<h3>parse_and_maybe_add_comment(parent)</h3>
+private<p/>
+<dl>
+<dd>
+Parse and add a comment to the parent node, but only if the
+preserve_comments_flag is set.
+<p/><a href="xml-xmlparser.icn.html#738" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_att_type"/>
+<h3>parse_att_type(attribute_def)</h3>
+private<p/>
+<dl>
+<dd>
+[54] AttType ::= StringType | TokenizedType | EnumeratedType 
+[55] StringType ::= 'CDATA'
+[56] TokenizedType ::= 'ID' | 'IDREF'| 'IDREFS' | 'ENTITY' | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
+[57] EnumeratedType ::= NotationType | Enumeration 
+<p/><a href="xml-xmlparser.icn.html#1307" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_attlist_decl"/>
+<h3>parse_attlist_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[52] AttlistDecl ::= '&lt;!ATTLIST' S Name AttDef* S? '&gt;'
+[53] AttDef ::= S Name S AttType S DefaultDecl
+<p/>
+Assume "&lt;!ATTLIST" already matched.
+<p/><a href="xml-xmlparser.icn.html#1255" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_attribute"/>
+<h3>parse_attribute(el, attlist)</h3>
+private<p/>
+<dl>
+<dd>
+[41] Attribute ::= Name Eq AttValue
+<p/><a href="xml-xmlparser.icn.html#990" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_attvalue"/>
+<h3>parse_attvalue()</h3>
+private<p/>
+<dl>
+<dd>
+[10] AttValue ::= '"' ([^&lt;&amp;"] | Reference)* '"' |  "'" ([^&lt;&amp;'] | Reference)* "'"
+<p/><a href="xml-xmlparser.icn.html#417" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_cdsect"/>
+<h3>parse_cdsect()</h3>
+private<p/>
+<dl>
+<dd>
+[18] CDSect ::= CDStart CData CDEnd
+[19] CDStart ::= '&lt;![CDATA['
+[20] CData ::= (Char* - (Char* ']]&gt;' Char*)) 
+[21] CDEnd ::= ']]&gt;'
+<p/>
+Assume "&lt;![CDATA[" already matched.
+<p/><a href="xml-xmlparser.icn.html#624" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_char_ref"/>
+<h3>parse_char_ref(expand)</h3>
+private<p/>
+<dl>
+<dd>
+[66] CharRef ::= '&amp;#' [0-9]+ ';' | '&amp;#x' [0-9a-fA-F]+ ';'
+[2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+<p/><a href="xml-xmlparser.icn.html#1484" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_children"/>
+<h3>parse_children()</h3>
+private<p/>
+<dl>
+<dd>
+[47] children ::= (choice | seq) ('?' | '*' | '+')?
+<p/><a href="xml-xmlparser.icn.html#1150" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_choiceseq"/>
+<h3>parse_choiceseq()</h3>
+private<p/>
+<dl>
+<dd>
+[49] choice ::= '(' S? cp ( S? '|' S? cp )+ S? ')'
+[50] seq ::= '(' S? cp ( S? ',' S? cp )* S? ')'
+<p/><a href="xml-xmlparser.icn.html#1180" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_comment"/>
+<h3>parse_comment()</h3>
+private<p/>
+<dl>
+<dd>
+[15] Comment ::= '&lt;!--' ((Char - '-') | ('-' (Char - '-')))* '--&gt;'
+<p/>
+Assume "&lt;!--" already matched.
+<p/><a href="xml-xmlparser.icn.html#572" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_conditional_sect"/>
+<h3>parse_conditional_sect()</h3>
+private<p/>
+<dl>
+<dd>
+[61] conditionalSect ::= includeSect | ignoreSect 
+[62] includeSect ::= '&lt;![' S? 'INCLUDE' S? '[' extSubsetDecl ']]&gt;' 
+[63] ignoreSect ::= '&lt;![' S? 'IGNORE' S? '[' ignoreSectContents* ']]&gt;'
+<p/>
+Assume "&lt;![" already matched.
+<p/><a href="xml-xmlparser.icn.html#1442" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content"/>
+<h3>parse_content(parent, circle)</h3>
+private<p/>
+<dl>
+<dd>
+[43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
+[14] CharData ::= [^&lt;&amp;]* - ([^&lt;&amp;]* ']]&gt;' [^&lt;&amp;]*)
+<p/><a href="xml-xmlparser.icn.html#1023" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_content_spec"/>
+<h3>parse_content_spec()</h3>
+private<p/>
+<dl>
+<dd>
+[46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children 
+<p/><a href="xml-xmlparser.icn.html#1124" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_cp"/>
+<h3>parse_cp()</h3>
+private<p/>
+<dl>
+<dd>
+[48] cp ::= (Name | choice | seq) ('?' | '*' | '+')?
+<p/><a href="xml-xmlparser.icn.html#1162" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_default_decl"/>
+<h3>parse_default_decl(attribute_def)</h3>
+private<p/>
+<dl>
+<dd>
+[60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
+<p/><a href="xml-xmlparser.icn.html#1378" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_doctype_decl"/>
+<h3>parse_doctype_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[28] doctypedecl ::= '&lt;!DOCTYPE' S Name (S ExternalID)? S? ('[' (markupdecl | DeclSep)* ']' S?)? '&gt;'
+<p/>
+Assume "&lt;!DOCTYPE" already matched.
+<p/><a href="xml-xmlparser.icn.html#753" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_element"/>
+<h3>parse_element(parent_el)</h3>
+private<p/>
+<dl>
+<dd>
+[39] element ::= EmptyElemTag | STag content ETag
+[40] STag ::= '&lt;' Name (S Attribute)* S? '&gt;'
+[44] EmptyElemTag ::= '&lt;' Name (S Attribute)* S? '/&gt;'
+<p/><a href="xml-xmlparser.icn.html#925" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_element_decl"/>
+<h3>parse_element_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[45] elementdecl ::=  '&lt;!ELEMENT' S Name S contentspec S? '&gt;'
+<p/>
+Assume "&lt;!ELEMENT" already matched
+<p/><a href="xml-xmlparser.icn.html#1100" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_enc_name"/>
+<h3>parse_enc_name()</h3>
+private<p/>
+<dl>
+<dd>
+[81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
+<p/><a href="xml-xmlparser.icn.html#1734" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_encoding_decl"/>
+<h3>parse_encoding_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" ) 
+<p/><a href="xml-xmlparser.icn.html#1715" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_entity_decl"/>
+<h3>parse_entity_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[70] EntityDecl ::= GEDecl | PEDecl
+[71] GEDecl ::= '&lt;!ENTITY' S Name S EntityDef S? '&gt;'
+[72] PEDecl ::= '&lt;!ENTITY' S '%' S Name S PEDef S? '&gt;'
+<p/>
+Assume "&lt;!ENTITY" already matched.
+<p/><a href="xml-xmlparser.icn.html#1581" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_entity_def"/>
+<h3>parse_entity_def()</h3>
+private<p/>
+<dl>
+<dd>
+[73] EntityDef ::= EntityValue | (ExternalID NDataDecl?)
+return a string or an ExternalID
+<p/><a href="xml-xmlparser.icn.html#1620" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_entity_ref"/>
+<h3>parse_entity_ref()</h3>
+private<p/>
+<dl>
+<dd>
+[68] EntityRef ::= '&amp;' Name ';'
+<p/><a href="xml-xmlparser.icn.html#1526" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_entity_value"/>
+<h3>parse_entity_value()</h3>
+private<p/>
+<dl>
+<dd>
+[9] EntityValue ::= '"' ([^%&amp;"] | PEReference | Reference)* '"' |  "'" ([^%&amp;'] | PEReference | Reference)* "'"
+<p/><a href="xml-xmlparser.icn.html#388" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_enumeration"/>
+<h3>parse_enumeration()</h3>
+private<p/>
+<dl>
+<dd>
+[59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
+<p/><a href="xml-xmlparser.icn.html#1355" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_eq"/>
+<h3>parse_eq()</h3>
+private<p/>
+<dl>
+<dd>
+[25] Eq ::= S? '=' S?
+<p/><a href="xml-xmlparser.icn.html#700" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_etag"/>
+<h3>parse_etag(el)</h3>
+private<p/>
+<dl>
+<dd>
+[42] ETag ::= '&lt;/' Name S? '&gt;'
+<p/><a href="xml-xmlparser.icn.html#1010" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_ext_subset"/>
+<h3>parse_ext_subset()</h3>
+private<p/>
+<dl>
+<dd>
+[30] extSubset ::= TextDecl? extSubsetDecl
+<p/><a href="xml-xmlparser.icn.html#843" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_ext_subset_decl"/>
+<h3>parse_ext_subset_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[31] extSubsetDecl ::= ( markupdecl | conditionalSect | DeclSep)*
+<p/><a href="xml-xmlparser.icn.html#852" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_external_id"/>
+<h3>parse_external_id()</h3>
+private<p/>
+<dl>
+<dd>
+[75] ExternalID ::= 'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral S SystemLiteral 
+<p/><a href="xml-xmlparser.icn.html#1656" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_external_parsed_entity"/>
+<h3>parse_external_parsed_entity(parent, circle)</h3>
+private<p/>
+<dl>
+<dd>
+[78] extParsedEnt ::= TextDecl? content
+<p/><a href="xml-xmlparser.icn.html#1706" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_ignore_sect_contents"/>
+<h3>parse_ignore_sect_contents()</h3>
+private<p/>
+<dl>
+<dd>
+[64] ignoreSectContents ::= Ignore ('&lt;![' ignoreSectContents ']]&gt;' Ignore)*
+[65] Ignore ::= Char* - (Char* ('&lt;![' | ']]&gt;') Char*) 
+<p/><a href="xml-xmlparser.icn.html#1467" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_markup_decls"/>
+<h3>parse_markup_decls()</h3>
+private<p/>
+<dl>
+<dd>
+Parse (markupdecl | DeclSep) *
+<p/>
+[28a] DeclSep ::= PEReference | S
+[29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment 
+<p/><a href="xml-xmlparser.icn.html#791" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_misc_star"/>
+<h3>parse_misc_star()</h3>
+private<p/>
+<dl>
+<dd>
+Misc*
+[27] Misc ::= Comment | PI | S
+<p/><a href="xml-xmlparser.icn.html#720" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_mixed"/>
+<h3>parse_mixed()</h3>
+private<p/>
+<dl>
+<dd>
+[51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' 
+Converts to a string with spaces removed.
+<p/><a href="xml-xmlparser.icn.html#1210" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_name"/>
+<h3>parse_name(quiet)</h3>
+private<p/>
+<dl>
+<dd>
+[5] Name ::= (Letter | '_' | ':') (NameChar)*
+<p/><a href="xml-xmlparser.icn.html#296" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_names"/>
+<h3>parse_names()</h3>
+private<p/>
+<dl>
+<dd>
+[6] Names ::= Name (S Name)*
+<p/><a href="xml-xmlparser.icn.html#312" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_ndata_decl"/>
+<h3>parse_ndata_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[76] NDataDecl ::= S 'NDATA' S Name
+<p/><a href="xml-xmlparser.icn.html#1676" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_nmtoken"/>
+<h3>parse_nmtoken()</h3>
+private<p/>
+<dl>
+<dd>
+[7] Nmtoken ::= (NameChar)+
+<p/><a href="xml-xmlparser.icn.html#342" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_nmtokens"/>
+<h3>parse_nmtokens()</h3>
+private<p/>
+<dl>
+<dd>
+[8] Nmtokens ::=  Nmtoken (S Nmtoken)*
+<p/><a href="xml-xmlparser.icn.html#358" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_notation_decl"/>
+<h3>parse_notation_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[82] NotationDecl ::= '&lt;!NOTATION' S Name S (ExternalID | PublicID) S? '&gt;'
+[83] PublicID ::= 'PUBLIC' S PubidLiteral 
+<p/>
+Assume "&lt;!NOTATION" already matched.
+<p/><a href="xml-xmlparser.icn.html#1745" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_notation_type"/>
+<h3>parse_notation_type()</h3>
+private<p/>
+<dl>
+<dd>
+[58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' 
+<p/><a href="xml-xmlparser.icn.html#1330" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_pe_def"/>
+<h3>parse_pe_def()</h3>
+private<p/>
+<dl>
+<dd>
+[74] PEDef ::= EntityValue | ExternalID
+return a string or an ExternalID
+<p/><a href="xml-xmlparser.icn.html#1639" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_pe_reference"/>
+<h3>parse_pe_reference()</h3>
+private<p/>
+<dl>
+<dd>
+[69] PEReference ::= '%' Name ';'
+<p/><a href="xml-xmlparser.icn.html#1537" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_pi"/>
+<h3>parse_pi()</h3>
+private<p/>
+<dl>
+<dd>
+[16] PI ::= '&lt;?' PITarget (S (Char* - (Char* '?&gt;' Char*)))? '?&gt;'
+<p/>
+Assume "&lt;?" already matched.
+<p/><a href="xml-xmlparser.icn.html#595" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_pi_target"/>
+<h3>parse_pi_target()</h3>
+private<p/>
+<dl>
+<dd>
+[17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
+<p/><a href="xml-xmlparser.icn.html#613" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_prolog"/>
+<h3>parse_prolog()</h3>
+private<p/>
+<dl>
+<dd>
+[22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
+<p/><a href="xml-xmlparser.icn.html#641" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_pubid_literal"/>
+<h3>parse_pubid_literal()</h3>
+private<p/>
+<dl>
+<dd>
+[12] PubidLiteral ::= '"' PubidChar* '"' | "'" (PubidChar - "'")* "'"
+<p/><a href="xml-xmlparser.icn.html#554" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_reference"/>
+<h3>parse_reference()</h3>
+private<p/>
+<dl>
+<dd>
+[67] Reference ::= EntityRef | CharRef
+<p/><a href="xml-xmlparser.icn.html#1514" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_sdecl"/>
+<h3>parse_sdecl()</h3>
+private<p/>
+<dl>
+<dd>
+[32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) 
+<p/><a href="xml-xmlparser.icn.html#903" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_system_literal"/>
+<h3>parse_system_literal()</h3>
+private<p/>
+<dl>
+<dd>
+[11] SystemLiteral ::= ('"' [^"]* '"') | ("'" [^']* "'") 
+<p/><a href="xml-xmlparser.icn.html#542" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_text_decl"/>
+<h3>parse_text_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[77] TextDecl ::= '&lt;?xml' VersionInfo? EncodingDecl S? '?&gt;'
+<p/>
+Assume "&lt;?xml" already matched.
+<p/><a href="xml-xmlparser.icn.html#1688" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_version_info"/>
+<h3>parse_version_info()</h3>
+private<p/>
+<dl>
+<dd>
+[24] VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
+<p/><a href="xml-xmlparser.icn.html#681" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_version_num"/>
+<h3>parse_version_num()</h3>
+private<p/>
+<dl>
+<dd>
+[26] VersionNum ::= ([a-zA-Z0-9_.:] | '-')+
+<p/><a href="xml-xmlparser.icn.html#710" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_xml_decl"/>
+<h3>parse_xml_decl()</h3>
+private<p/>
+<dl>
+<dd>
+[23] XMLDecl ::= '&lt;?xml' VersionInfo EncodingDecl? SDDecl? S? '?&gt;'
+<p/>
+Assume "&lt;?xml" already matched
+<p/><a href="xml-xmlparser.icn.html#658" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="resolve"/>
+<h3>resolve(base, external_id)</h3>
+private<p/>
+<dl>
+<dd>
+Resolve the given external_id, using the current resolver
+<p/><a href="xml-xmlparser.icn.html#2149" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="resolve_entity"/>
+<h3>resolve_entity(o)</h3>
+private<p/>
+<dl>
+<dd>
+Convenience method to take a value from one of the entity tables and return it
+as a string, resolving it externally if necessary.
+<p/><a href="xml-xmlparser.icn.html#1568" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_do_namespaces"/>
+<h3>set_do_namespaces(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure whether the parser does namespace post-processing (the
+default is yes).
+<p/><a href="xml-xmlparser.icn.html#109" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_preserve_comments"/>
+<h3>set_preserve_comments(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure whether the parser preserves comments (the default is yes).
+<p/><a href="xml-xmlparser.icn.html#126" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_preserve_insignificant_whitespace"/>
+<h3>set_preserve_insignificant_whitespace(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure whether the parser always keeps insignificant whitespace
+in the output document.  Generally only useful for testing purposes;
+XML canonical form needs this flag to be set because it is a byte
+for byte output which needs to include insignificate whitespace.
+<p/>
+The default is off.
+<p/><a href="xml-xmlparser.icn.html#134" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resolver"/>
+<h3>set_resolver(r)</h3>
+public<p/>
+<dl>
+<dd>
+Set the resolver
+<p/><a href="xml-xmlparser.icn.html#94" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_validate"/>
+<h3>set_validate(s)</h3>
+public<p/>
+<dl>
+<dd>
+Configure whether the parser validates (the default is yes).
+<p/><a href="xml-xmlparser.icn.html#118" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="spaces"/>
+<h3>spaces()</h3>
+private<p/>
+<dl>
+<dd>
+[3] S ::= (#x20 | #x9 | #xD | #xA)+
+<p/><a href="xml-xmlparser.icn.html#283" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="start_divert"/>
+<h3>start_divert(base, id)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#1965" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="try_dtd_insert"/>
+<h3>try_dtd_insert(i)</h3>
+private<p/>
+<dl>
+<dd>
+If the current char is %, try and insert a pe value.  If successful, return
+otherwise fail.  &amp;pos is always set to i on exit.
+<p/><a href="xml-xmlparser.icn.html#2125" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="valid_name"/>
+<h3>valid_name(s)</h3>
+private<p/>
+<dl>
+<dd>
+Succeed iff a string is a valid Name.
+<p/><a href="xml-xmlparser.icn.html#328" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="valid_names"/>
+<h3>valid_names(s)</h3>
+private<p/>
+<dl>
+<dd>
+Succeed iff a string is a valid Names.
+<p/><a href="xml-xmlparser.icn.html#335" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="valid_nmtoken"/>
+<h3>valid_nmtoken(s)</h3>
+private<p/>
+<dl>
+<dd>
+Succeed iff a string is a valid Nmtoken.
+<p/><a href="xml-xmlparser.icn.html#374" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="valid_nmtokens"/>
+<h3>valid_nmtokens(s)</h3>
+private<p/>
+<dl>
+<dd>
+Succeed iff a string is a valid Nmtokens.
+<p/><a href="xml-xmlparser.icn.html#381" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_attribute_definitions"/>
+<h3>validate_attribute_definitions()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#223" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_attribute_value"/>
+<h3>validate_attribute_value(element_name, attdef, name, val)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#1897" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_attributes"/>
+<h3>validate_attributes(el)</h3>
+private<p/>
+<dl>
+<dd>
+Validate the attributes of an element
+<p/><a href="xml-xmlparser.icn.html#1844" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_children"/>
+<h3>validate_children(el)</h3>
+private<p/>
+<dl>
+<dd>
+Validate the given element child content; this may fail on error or just emit a warning
+<p/><a href="xml-xmlparser.icn.html#1795" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_docname"/>
+<h3>validate_docname()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#269" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_idrefs"/>
+<h3>validate_idrefs()</h3>
+private<p/>
+<dl>
+<dd>
+Validate idrefs
+<p/><a href="xml-xmlparser.icn.html#258" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_ndata_decls"/>
+<h3>validate_ndata_decls()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#212" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="warn"/>
+<h3>warn(s, loc)</h3>
+private<p/>
+<dl>
+<dd>
+A warning
+<p/><a href="xml-xmlparser.icn.html#1985" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="where"/>
+<h3>where()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#1978" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="CHAR"/>
+<h3>CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#68" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="current_base"/>
+<h3>current_base</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#81" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="current_divert_id"/>
+<h3>current_divert_id</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#79" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="divert_stack"/>
+<h3>divert_stack</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#80" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_namespaces_flag"/>
+<h3>do_namespaces_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#88" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="doc"/>
+<h3>doc</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#78" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="dtd_insert_shown_error"/>
+<h3>dtd_insert_shown_error</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#84" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="FATAL_ERROR_EVENT"/>
+<h3>FATAL_ERROR_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#75" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="id_attribute_refs"/>
+<h3>id_attribute_refs</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#83" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="in_ext_subset"/>
+<h3>in_ext_subset</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#82" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="INVALID_CHAR"/>
+<h3>INVALID_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#69" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="NAME_CHAR"/>
+<h3>NAME_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#71" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="NAME_START"/>
+<h3>NAME_START</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#70" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="preserve_comments_flag"/>
+<h3>preserve_comments_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#90" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="preserve_insignificant_whitespace_flag"/>
+<h3>preserve_insignificant_whitespace_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#89" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="PUBID_CHAR"/>
+<h3>PUBID_CHAR</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#72" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="resolver"/>
+<h3>resolver</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#87" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="SPACE"/>
+<h3>SPACE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#67" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="utf8_flag"/>
+<h3>utf8_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#92" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="validate_flag"/>
+<h3>validate_flag</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#91" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="VALIDITY_ERROR_EVENT"/>
+<h3>VALIDITY_ERROR_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#74" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+<a name="WARNING_EVENT"/>
+<h3>WARNING_EVENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="xml-xmlparser.icn.html#73" target="displayFrame">Source - xmlparser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

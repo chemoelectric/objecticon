@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Wildcard</title></head><body>
+<h1>Wildcard</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="ipl.wildcard-package.html" target="listFrame">ipl.wildcard</a></dd>
+</dl><p/>
+This is a kit of procedures to deal with UNIX-like filename wild-card
+patterns containing *, ?, and [...].  The meanings are as of the
+pattern characters are the same as in the UNIX shells csh and sh.
+<p/>
+These procedures are interesting partly because of the "recursive
+suspension" technique used to simulate conjunction of an arbitrary
+number of computed expressions.
+<p/>
+<p/>
+Create a wildcard pattern using the constructor :-
+<p/>
+p := Wildcard(pattern)
+<p/>
+The public methods are:
+<p/>
+match(s,i1,i2) : i3,i4,...,iN
+find(s,i1,i2) : i3,i4,...,iN
+<p/>
+match() produces the sequence of positions in "s" past a
+substring starting at "i1" that matches the pattern, but fails if there
+is no such position.  Similar to match(), but is capable of
+generating multiple positions.
+<p/>
+find() produces the sequence of positions in "s" where
+substrings begin that match the pattern, but fails if there is no such
+position.  Similar to find().
+<p/>
+Default values of s, i1, and i2 are the same as for Icon's built-in
+string scanning procedures such as match().
+<p/><a href="ipl.wildcard-wildcard.icn.html#22" target="displayFrame">Source - wildcard.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#find">find()</a>
+<a href="#match">match()</a>
+<a href="#match_all">match_all()</a>
+<a href="#new">new()</a>
+<a href="#wild_match1">wild_match1()</a>
+<a href="#wild_skip">wild_skip()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#plist">plist</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="find"/>
+<h3>find(s, i1, i2)</h3>
+public<p/>
+<dl>
+<dd>
+Produce the sequence of positions in s where strings begin that match
+the pattern, but fails if there is no such position.  Similar
+to find().
+<p/><a href="ipl.wildcard-wildcard.icn.html#82" target="displayFrame">Source - wildcard.icn </a>
+</dd>
+</dl><hr>
+<a name="match"/>
+<h3>match(s, i1, i2)</h3>
+public<p/>
+<dl>
+<dd>
+Produce the sequence of positions in s past a string starting at i1
+that matches the pattern, but fails if there is no such
+position.  Similar to match(), but is capable of generating multiple
+positions.
+<p/><a href="ipl.wildcard-wildcard.icn.html#56" target="displayFrame">Source - wildcard.icn </a>
+</dd>
+</dl><hr>
+<a name="match_all"/>
+<h3>match_all(s, i1, i2)</h3>
+public<p/>
+<dl>
+<dd>
+Like <code><a href="ipl.wildcard.Wildcard.html#match">match()</a></code> above, but only succeed if the entire string
+<code>s[i1:i2]</code> matches the pattern.
+<p/><a href="ipl.wildcard-wildcard.icn.html#70" target="displayFrame">Source - wildcard.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(s)</h3>
+public<p/>
+<dl>
+<dd>
+Produce Wildcard representing pattern string s.
+<p/><a href="ipl.wildcard-wildcard.icn.html#98" target="displayFrame">Source - wildcard.icn </a>
+</dd>
+</dl><hr>
+<a name="wild_match1"/>
+<h3>wild_match1(l, v)</h3>
+private<p/>
+<dl>
+<dd>
+Used privately by match() to simulate a computed conjunction
+expression via recursive suspension.
+<p/><a href="ipl.wildcard-wildcard.icn.html#180" target="displayFrame">Source - wildcard.icn </a>
+</dd>
+</dl><hr>
+<a name="wild_skip"/>
+<h3>wild_skip(l)</h3>
+private<p/>
+<dl>
+<dd>
+Used privately -- match a sequence of strings in s past which a match
+of the first pattern element in l is likely to succeed.	This
+procedure is used for heuristic performance improvement by
+match() for the "*" pattern element by matching only strings
+where the next element is likely to succeed, and by find() to
+attempt matches only at likely positions.
+<p/><a href="ipl.wildcard-wildcard.icn.html#158" target="displayFrame">Source - wildcard.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="plist"/>
+<h3>plist</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.wildcard-wildcard.icn.html#54" target="displayFrame">Source - wildcard.icn </a>
+</dd>
+</dl><hr>
+</body></html>

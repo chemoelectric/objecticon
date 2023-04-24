@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>rstars.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     rstars.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to generate traces of regular stars
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     March 27, 1993
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure generates traces of regular stars.
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  Links:  gobject
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>
+<a name="25"/>package ipl.rstars
+<a name="26"/>
+<a name="27"/>import
+<a name="28"/>   ipl.gobject(Point),
+<a name="29"/>   util(Math)
+<a name="30"/>
+<a name="31"/>global size
+<a name="32"/>
+<a name="33"/>#
+<a name="34"/>#  Generate points on regular star with n vertices, jumping j vertices,
+<a name="35"/>#  centered at x and y, with scaled radius, with an initial offset angle,
+<a name="36"/>#  and with a specified frame size.
+<a name="37"/>
+<a name="38"/># regular star
+<a name="39"/>procedure rstar(x, y, n, j, scale, offset, size)	
+<a name="40"/>   local i, jangle, angle
+<a name="41"/>
+<a name="42"/>   /x := 100				# defaults
+<a name="43"/>   /y := 100 
+<a name="44"/>   /n := 5
+<a name="45"/>   /j := 3
+<a name="46"/>   /scale := 0.45
+<a name="47"/>   /offset := 0.5
+<a name="48"/>   /size := 200
+<a name="49"/>
+<a name="50"/>   jangle := j * 2 * Math.PI / n
+<a name="51"/>
+<a name="52"/>   scale *:= size
+<a name="53"/>   offset *:= Math.PI
+<a name="54"/>
+<a name="55"/>   every i := 0 to n do {
+<a name="56"/>      angle := jangle * i + offset
+<a name="57"/>      suspend Point(
+<a name="58"/>          x + scale * Math.cos(angle),
+<a name="59"/>          y + scale * Math.sin(angle)
+<a name="60"/>         )
+<a name="61"/>      }
+<a name="62"/>
+<a name="63"/>end
+</pre></body></html>

@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gsuggest.icn</title></head><body><pre>
+<a name="1"/>package ipl.gsuggest
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   gui(Align, WithCloneItemPaint, TextItemPaint, ItemPaintPTableColumn, PTable,
+<a name="5"/>       PTableColumn, SuggestField),
+<a name="6"/>   http(HttpClient, HttpRequest),
+<a name="7"/>   io(StringStream),
+<a name="8"/>   util(need_string),
+<a name="9"/>   json(JSONParser),
+<a name="10"/>   net(URL),
+<a name="11"/>   xml(HtmlParser)
+<a name="12"/>
+<a name="13"/>abstract class GSuggestField(SuggestField)
+<a name="14"/>   protected hc, domain
+<a name="15"/>
+<a name="16"/>   protected override close_request()
+<a name="17"/>      hc.close()
+<a name="18"/>   end
+<a name="19"/>
+<a name="20"/>   protected override abort_request()
+<a name="21"/>      req.interrupt()
+<a name="22"/>      hc.abort()
+<a name="23"/>   end
+<a name="24"/>
+<a name="25"/>   public set_domain(s)
+<a name="26"/>      domain := need_string(s)
+<a name="27"/>      link
+<a name="28"/>   end
+<a name="29"/>
+<a name="30"/>   public override handle_tab(ev)
+<a name="31"/>      # We can't do foreground requests on tab, so just trigger a background request.
+<a name="32"/>      on_change(ev)
+<a name="33"/>   end
+<a name="34"/>
+<a name="35"/>   public override new()
+<a name="36"/>      SuggestField.new()
+<a name="37"/>      set_contents(u"")
+<a name="38"/>      domain := "www.google.com"
+<a name="39"/>      hc := HttpClient().
+<a name="40"/>         set_task(req).
+<a name="41"/>         set_user_agent("AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.57")
+<a name="42"/>      return
+<a name="43"/>   end
+<a name="44"/>end
+<a name="45"/>
+<a name="46"/>class GoogleSuggestField(GSuggestField)
+<a name="47"/>   private lang
+<a name="48"/>
+<a name="49"/>   # Set the language, by default "en"
+<a name="50"/>   public set_lang(s)
+<a name="51"/>      lang := need_string(s)
+<a name="52"/>      link
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   private textify(n)
+<a name="56"/>      local e, s
+<a name="57"/>      s := u""
+<a name="58"/>      every e := !n.children do
+<a name="59"/>         s ||:= text(e) | textify(e)
+<a name="60"/>      return s
+<a name="61"/>   end
+<a name="62"/>
+<a name="63"/>   protected override do_request()
+<a name="64"/>      local hr, data, jp, v, s, u, hp, t, d, l
+<a name="65"/>      if *contents = 0 then
+<a name="66"/>         return []
+<a name="67"/>      data := StringStream()
+<a name="68"/>      u := URL("http://" || domain || "/complete/search").
+<a name="69"/>         set_cgi_parameters(table(, 
+<a name="70"/>                                  "q", contents, 
+<a name="71"/>                                  "hl", lang,
+<a name="72"/>                                  "client", "hp"))
+<a name="73"/>      hr := HttpRequest().
+<a name="74"/>         set_url(u).
+<a name="75"/>         set_output_stream(data).
+<a name="76"/>         set_header("Accept-Charset", "utf-8")
+<a name="77"/>      hc.retrieve(hr) | fail
+<a name="78"/>      s := ucs(data.str()) | fail
+<a name="79"/>      s ?:= (tab(upto('[')) &amp; tab(-1))
+<a name="80"/>      jp := JSONParser()
+<a name="81"/>      v := jp.parse(s) | fail
+<a name="82"/>      hp := HtmlParser()
+<a name="83"/>      l := []
+<a name="84"/>      every t := (!v[2])[1] do {
+<a name="85"/>         d := hp.parse("&lt;html&gt;" || t || "&lt;/html&gt;")
+<a name="86"/>         put(l, textify(d))
+<a name="87"/>      }
+<a name="88"/>      return l
+<a name="89"/>   end
+<a name="90"/>
+<a name="91"/>   public override new()
+<a name="92"/>      GSuggestField.new()
+<a name="93"/>      set_lang("en")
+<a name="94"/>      set_select_using_enter(&amp;no)
+<a name="95"/>      return
+<a name="96"/>   end
+<a name="97"/>end
+<a name="98"/>
+<a name="99"/>class SymbolItemPaint(WithCloneItemPaint)
+<a name="100"/>   protected override make_clone(W)
+<a name="101"/>      return W.clone().set_fg("blue")
+<a name="102"/>   end
+<a name="103"/>
+<a name="104"/>   public override new()
+<a name="105"/>      WithCloneItemPaint.new(TextItemPaint())
+<a name="106"/>      return
+<a name="107"/>   end
+<a name="108"/>end
+<a name="109"/>
+<a name="110"/>class TickerSuggestField(GSuggestField)
+<a name="111"/>   public override create_popup()
+<a name="112"/>      return PTable().
+<a name="113"/>         add_column(ItemPaintPTableColumn().set_item_paint(SymbolItemPaint())).
+<a name="114"/>         add_column(PTableColumn()).
+<a name="115"/>         add_column(PTableColumn().set_weight(1).set_align(Align.R))
+<a name="116"/>   end
+<a name="117"/>
+<a name="118"/>   public override convert_element(o)
+<a name="119"/>      return o[1]
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   protected override do_request()
+<a name="123"/>      local hr, data, jp, v, s, u, e, l
+<a name="124"/>      if *contents = 0 then
+<a name="125"/>         return []
+<a name="126"/>      data := StringStream()
+<a name="127"/>      u := URL("http://" || domain || "/finance/match").
+<a name="128"/>         set_cgi_parameters(table(, "q", contents))
+<a name="129"/>      hr := HttpRequest().
+<a name="130"/>         set_url(u).
+<a name="131"/>         set_output_stream(data).
+<a name="132"/>         set_header("Accept-Charset", "utf-8")
+<a name="133"/>      hc.retrieve(hr) | fail
+<a name="134"/>      s := ucs(data.str()) | fail
+<a name="135"/>      jp := JSONParser()
+<a name="136"/>      v := jp.parse(s) | fail
+<a name="137"/>      l := []
+<a name="138"/>      every e := !\v[u"matches"] do
+<a name="139"/>         put(l, [(u"" ~== e[u"t"]), e[u"n"], e[u"e"]])
+<a name="140"/>      return l
+<a name="141"/>   end
+<a name="142"/>end
+</pre></body></html>

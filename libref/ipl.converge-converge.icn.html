@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>converge.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     converge.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to produce continued-fraction convergents
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     June 7, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#  This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  This procedure produces continued-fraction convergents from a list
+<a name="18"/>#  of partial quotients.
+<a name="19"/>#
+<a name="20"/>############################################################################
+<a name="21"/>#
+<a name="22"/>#  Links:  rational
+<a name="23"/>#
+<a name="24"/>############################################################################
+<a name="25"/>
+<a name="26"/>package ipl.converge
+<a name="27"/>
+<a name="28"/>import
+<a name="29"/>   numbers
+<a name="30"/>
+<a name="31"/># continued-fraction convergents
+<a name="32"/>procedure converge(seq)		
+<a name="33"/>   local prev_p, prev_q, p, q, t
+<a name="34"/>
+<a name="35"/>   seq := copy(seq)
+<a name="36"/>
+<a name="37"/>   prev_p := [0, 1]
+<a name="38"/>   prev_q := [1, 0]
+<a name="39"/>
+<a name="40"/>   while t := get(seq) do {
+<a name="41"/>      p := t * prev_p[2] + prev_p[1]
+<a name="42"/>      q := t * prev_q[2] + prev_q[1]
+<a name="43"/>      suspend Rat(p, q)
+<a name="44"/>      prev_p[1] := prev_p[2]
+<a name="45"/>      prev_p[2] := p
+<a name="46"/>      prev_q[1] := prev_q[2]
+<a name="47"/>      prev_q[2] := q
+<a name="48"/>      }
+<a name="49"/>
+<a name="50"/>end
+</pre></body></html>

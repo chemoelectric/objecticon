@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>memoize</title></head><body>
+<h1>memoize(f, t)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.functional-package.html" target="listFrame">ipl.functional</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This procedure returns a function which memoizes the passed
+function.  Subsequent arguments to and results from this function
+are cached in a <code><a href="datastruct.Table.html" target="displayFrame">datastruct.Table</a></code> so that the underlying function
+is only called for parameters that haven't been seen before.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>f</code> - the function to memoize
+</dd>
+<dd>
+<code>t</code> - the <code>Table</code> to use to cache results; by default an
+<code><a href="datastruct.EqTable.html" target="displayFrame">EqTable</a></code>.  Note that the keys of this table will
+always be distinct lists, so using, for example,
+a <code><a href="datastruct.BuiltinTable.html" target="displayFrame">BuiltinTable</a></code> makes no sense.
+</dd>
+</dl>
+<p/><a href="ipl.functional-highorder.icn.html#268" target="displayFrame">Source - highorder.icn </a>
+<p/>
+</body></html>

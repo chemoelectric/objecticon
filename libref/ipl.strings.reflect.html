@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>reflect</title></head><body>
+<h1>reflect(s1, i, s2)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.strings-package.html" target="listFrame">ipl.strings</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Returns <code>s1</code> concatenated with <code>s2</code> and the reversal of <code>s1</code> to
+produce a palindroid; the values of <code>i</code> determine "end conditions"
+for the reversal:
+<ul>
+<li>
+0       pattern palindrome; the default
+</li>
+<li>
+1       pattern palindrome with center duplicated
+</li>
+<li>
+2       true palindrome with center not duplicated
+</li>
+<li>
+3       true palindrome with center duplicated
+<p/>
+</li>
+</ul>
+<code>s2</code> defaults to the empty string, in which case the result is a
+full palindrome.
+<p/><a href="ipl.strings-strings.icn.html#370" target="displayFrame">Source - strings.icn </a>
+<p/>
+</body></html>

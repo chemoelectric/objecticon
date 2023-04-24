@@ -1,0 +1,1056 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MonitorCode</title></head><body>
+<h1>MonitorCode</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="lang-package.html" target="listFrame">lang</a></dd>
+</dl><p/>
+<p/><a href="lang-evmonconsts.icn.html#411" target="displayFrame">Source - evmonconsts.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_desc">get_desc()</a>
+<a href="#get_sym">get_sym()</a>
+<a href="#init">init()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#Assign">Assign</a>
+<a href="#BlkDeAlc">BlkDeAlc</a>
+<a href="#Break">Break</a>
+<a href="#Classref">Classref</a>
+<a href="#Classsub">Classsub</a>
+<a href="#CnvCDbl">CnvCDbl</a>
+<a href="#CnvCInt">CnvCInt</a>
+<a href="#CnvCset">CnvCset</a>
+<a href="#CnvCStr">CnvCStr</a>
+<a href="#CnvECInt">CnvECInt</a>
+<a href="#CnvEInt">CnvEInt</a>
+<a href="#CnvInt">CnvInt</a>
+<a href="#CnvReal">CnvReal</a>
+<a href="#CnvStr">CnvStr</a>
+<a href="#CnvStrOrUcs">CnvStrOrUcs</a>
+<a href="#CnvUcs">CnvUcs</a>
+<a href="#Coact">Coact</a>
+<a href="#Cobang">Cobang</a>
+<a href="#Cocreate">Cocreate</a>
+<a href="#Coexpr">Coexpr</a>
+<a href="#Cofail">Cofail</a>
+<a href="#Collect">Collect</a>
+<a href="#Coret">Coret</a>
+<a href="#Cset">Cset</a>
+<a href="#EndCollect">EndCollect</a>
+<a href="#Error">Error</a>
+<a href="#Exit">Exit</a>
+<a href="#File">File</a>
+<a href="#Lbang">Lbang</a>
+<a href="#Lclear">Lclear</a>
+<a href="#Lcreate">Lcreate</a>
+<a href="#Ldelete">Ldelete</a>
+<a href="#Lelem">Lelem</a>
+<a href="#Lget">Lget</a>
+<a href="#Limit">Limit</a>
+<a href="#Line">Line</a>
+<a href="#Linsert">Linsert</a>
+<a href="#List">List</a>
+<a href="#Lpop">Lpop</a>
+<a href="#Lpull">Lpull</a>
+<a href="#Lpush">Lpush</a>
+<a href="#Lput">Lput</a>
+<a href="#Lrand">Lrand</a>
+<a href="#Lref">Lref</a>
+<a href="#Lrgint">Lrgint</a>
+<a href="#Lsub">Lsub</a>
+<a href="#Methp">Methp</a>
+<a href="#Object">Object</a>
+<a href="#Objectcreate">Objectcreate</a>
+<a href="#Objectref">Objectref</a>
+<a href="#Objectsub">Objectsub</a>
+<a href="#Pcall">Pcall</a>
+<a href="#Pfail">Pfail</a>
+<a href="#Presum">Presum</a>
+<a href="#Pret">Pret</a>
+<a href="#Prog">Prog</a>
+<a href="#Psusp">Psusp</a>
+<a href="#Rbang">Rbang</a>
+<a href="#Rcreate">Rcreate</a>
+<a href="#Real">Real</a>
+<a href="#Record">Record</a>
+<a href="#Refresh">Refresh</a>
+<a href="#Rrand">Rrand</a>
+<a href="#Rref">Rref</a>
+<a href="#Rsub">Rsub</a>
+<a href="#Sbang">Sbang</a>
+<a href="#Scan">Scan</a>
+<a href="#Sclear">Sclear</a>
+<a href="#Screate">Screate</a>
+<a href="#Sdelete">Sdelete</a>
+<a href="#Selem">Selem</a>
+<a href="#Set">Set</a>
+<a href="#Sinsert">Sinsert</a>
+<a href="#Slots">Slots</a>
+<a href="#Smember">Smember</a>
+<a href="#Srand">Srand</a>
+<a href="#Ssasgn">Ssasgn</a>
+<a href="#StrDeAlc">StrDeAlc</a>
+<a href="#String">String</a>
+<a href="#Sval">Sval</a>
+<a href="#Table">Table</a>
+<a href="#Tbang">Tbang</a>
+<a href="#Tclear">Tclear</a>
+<a href="#Tcreate">Tcreate</a>
+<a href="#Tdelete">Tdelete</a>
+<a href="#Telem">Telem</a>
+<a href="#Tenure">Tenure</a>
+<a href="#Timer">Timer</a>
+<a href="#Tinsert">Tinsert</a>
+<a href="#Tkey">Tkey</a>
+<a href="#Tmember">Tmember</a>
+<a href="#Trand">Trand</a>
+<a href="#Tref">Tref</a>
+<a href="#Tsub">Tsub</a>
+<a href="#Tval">Tval</a>
+<a href="#Tvsubs">Tvsubs</a>
+<a href="#Tvtbl">Tvtbl</a>
+<a href="#Ucs">Ucs</a>
+<a href="#Weakref">Weakref</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_desc"/>
+<h3>get_desc(k)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="lang-evmonconsts.icn.html#818" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="get_sym"/>
+<h3>get_sym(k)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="lang-evmonconsts.icn.html#714" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="lang-evmonconsts.icn.html#612" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="Assign"/>
+<h3>Assign</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Assign
+<p/><a href="lang-evmonconsts.icn.html#571" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="BlkDeAlc"/>
+<h3>BlkDeAlc</h3>
+public static const<p/>
+<dl>
+<dd>
+E_BlkDeAlc
+<p/><a href="lang-evmonconsts.icn.html#455" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Break"/>
+<h3>Break</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Break
+<p/><a href="lang-evmonconsts.icn.html#605" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Classref"/>
+<h3>Classref</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Classref
+<p/><a href="lang-evmonconsts.icn.html#559" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Classsub"/>
+<h3>Classsub</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Classsub
+<p/><a href="lang-evmonconsts.icn.html#561" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvCDbl"/>
+<h3>CnvCDbl</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvCDbl
+<p/><a href="lang-evmonconsts.icn.html#465" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvCInt"/>
+<h3>CnvCInt</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvCInt
+<p/><a href="lang-evmonconsts.icn.html#467" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvCset"/>
+<h3>CnvCset</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvCset
+<p/><a href="lang-evmonconsts.icn.html#469" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvCStr"/>
+<h3>CnvCStr</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvCStr
+<p/><a href="lang-evmonconsts.icn.html#485" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvECInt"/>
+<h3>CnvECInt</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvECInt
+<p/><a href="lang-evmonconsts.icn.html#475" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvEInt"/>
+<h3>CnvEInt</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvEInt
+<p/><a href="lang-evmonconsts.icn.html#477" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvInt"/>
+<h3>CnvInt</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvInt
+<p/><a href="lang-evmonconsts.icn.html#479" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvReal"/>
+<h3>CnvReal</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvReal
+<p/><a href="lang-evmonconsts.icn.html#481" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvStr"/>
+<h3>CnvStr</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvStr
+<p/><a href="lang-evmonconsts.icn.html#483" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvStrOrUcs"/>
+<h3>CnvStrOrUcs</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvStrOrUcs
+<p/><a href="lang-evmonconsts.icn.html#473" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="CnvUcs"/>
+<h3>CnvUcs</h3>
+public static const<p/>
+<dl>
+<dd>
+E_CnvUcs
+<p/><a href="lang-evmonconsts.icn.html#471" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Coact"/>
+<h3>Coact</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Coact
+<p/><a href="lang-evmonconsts.icn.html#575" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Cobang"/>
+<h3>Cobang</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Cobang
+<p/><a href="lang-evmonconsts.icn.html#583" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Cocreate"/>
+<h3>Cocreate</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Cocreate
+<p/><a href="lang-evmonconsts.icn.html#581" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Coexpr"/>
+<h3>Coexpr</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Coexpr
+<p/><a href="lang-evmonconsts.icn.html#445" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Cofail"/>
+<h3>Cofail</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Cofail
+<p/><a href="lang-evmonconsts.icn.html#579" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Collect"/>
+<h3>Collect</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Collect
+<p/><a href="lang-evmonconsts.icn.html#595" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Coret"/>
+<h3>Coret</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Coret
+<p/><a href="lang-evmonconsts.icn.html#577" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Cset"/>
+<h3>Cset</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Cset
+<p/><a href="lang-evmonconsts.icn.html#417" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="EndCollect"/>
+<h3>EndCollect</h3>
+public static const<p/>
+<dl>
+<dd>
+E_EndCollect
+<p/><a href="lang-evmonconsts.icn.html#597" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Error"/>
+<h3>Error</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Error
+<p/><a href="lang-evmonconsts.icn.html#601" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Exit"/>
+<h3>Exit</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Exit
+<p/><a href="lang-evmonconsts.icn.html#603" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="File"/>
+<h3>File</h3>
+public static const<p/>
+<dl>
+<dd>
+E_File
+<p/><a href="lang-evmonconsts.icn.html#609" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lbang"/>
+<h3>Lbang</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lbang
+<p/><a href="lang-evmonconsts.icn.html#487" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lclear"/>
+<h3>Lclear</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lclear
+<p/><a href="lang-evmonconsts.icn.html#565" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lcreate"/>
+<h3>Lcreate</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lcreate
+<p/><a href="lang-evmonconsts.icn.html#489" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Ldelete"/>
+<h3>Ldelete</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Ldelete
+<p/><a href="lang-evmonconsts.icn.html#507" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lelem"/>
+<h3>Lelem</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lelem
+<p/><a href="lang-evmonconsts.icn.html#431" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lget"/>
+<h3>Lget</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lget
+<p/><a href="lang-evmonconsts.icn.html#491" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Limit"/>
+<h3>Limit</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Limit
+<p/><a href="lang-evmonconsts.icn.html#461" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Line"/>
+<h3>Line</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Line
+<p/><a href="lang-evmonconsts.icn.html#607" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Linsert"/>
+<h3>Linsert</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Linsert
+<p/><a href="lang-evmonconsts.icn.html#509" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="List"/>
+<h3>List</h3>
+public static const<p/>
+<dl>
+<dd>
+E_List
+<p/><a href="lang-evmonconsts.icn.html#429" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lpop"/>
+<h3>Lpop</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lpop
+<p/><a href="lang-evmonconsts.icn.html#493" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lpull"/>
+<h3>Lpull</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lpull
+<p/><a href="lang-evmonconsts.icn.html#495" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lpush"/>
+<h3>Lpush</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lpush
+<p/><a href="lang-evmonconsts.icn.html#497" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lput"/>
+<h3>Lput</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lput
+<p/><a href="lang-evmonconsts.icn.html#499" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lrand"/>
+<h3>Lrand</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lrand
+<p/><a href="lang-evmonconsts.icn.html#501" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lref"/>
+<h3>Lref</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lref
+<p/><a href="lang-evmonconsts.icn.html#503" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lrgint"/>
+<h3>Lrgint</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lrgint
+<p/><a href="lang-evmonconsts.icn.html#413" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Lsub"/>
+<h3>Lsub</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Lsub
+<p/><a href="lang-evmonconsts.icn.html#505" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Methp"/>
+<h3>Methp</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Methp
+<p/><a href="lang-evmonconsts.icn.html#423" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Object"/>
+<h3>Object</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Object
+<p/><a href="lang-evmonconsts.icn.html#421" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Objectcreate"/>
+<h3>Objectcreate</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Objectcreate
+<p/><a href="lang-evmonconsts.icn.html#563" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Objectref"/>
+<h3>Objectref</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Objectref
+<p/><a href="lang-evmonconsts.icn.html#555" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Objectsub"/>
+<h3>Objectsub</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Objectsub
+<p/><a href="lang-evmonconsts.icn.html#557" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Pcall"/>
+<h3>Pcall</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Pcall
+<p/><a href="lang-evmonconsts.icn.html#585" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Pfail"/>
+<h3>Pfail</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Pfail
+<p/><a href="lang-evmonconsts.icn.html#587" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Presum"/>
+<h3>Presum</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Presum
+<p/><a href="lang-evmonconsts.icn.html#593" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Pret"/>
+<h3>Pret</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Pret
+<p/><a href="lang-evmonconsts.icn.html#589" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Prog"/>
+<h3>Prog</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Prog
+<p/><a href="lang-evmonconsts.icn.html#453" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Psusp"/>
+<h3>Psusp</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Psusp
+<p/><a href="lang-evmonconsts.icn.html#591" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rbang"/>
+<h3>Rbang</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Rbang
+<p/><a href="lang-evmonconsts.icn.html#511" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rcreate"/>
+<h3>Rcreate</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Rcreate
+<p/><a href="lang-evmonconsts.icn.html#513" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Real"/>
+<h3>Real</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Real
+<p/><a href="lang-evmonconsts.icn.html#415" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Record"/>
+<h3>Record</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Record
+<p/><a href="lang-evmonconsts.icn.html#419" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Refresh"/>
+<h3>Refresh</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Refresh
+<p/><a href="lang-evmonconsts.icn.html#447" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rrand"/>
+<h3>Rrand</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Rrand
+<p/><a href="lang-evmonconsts.icn.html#515" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rref"/>
+<h3>Rref</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Rref
+<p/><a href="lang-evmonconsts.icn.html#517" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Rsub"/>
+<h3>Rsub</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Rsub
+<p/><a href="lang-evmonconsts.icn.html#519" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sbang"/>
+<h3>Sbang</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Sbang
+<p/><a href="lang-evmonconsts.icn.html#521" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Scan"/>
+<h3>Scan</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Scan
+<p/><a href="lang-evmonconsts.icn.html#459" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sclear"/>
+<h3>Sclear</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Sclear
+<p/><a href="lang-evmonconsts.icn.html#567" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Screate"/>
+<h3>Screate</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Screate
+<p/><a href="lang-evmonconsts.icn.html#523" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sdelete"/>
+<h3>Sdelete</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Sdelete
+<p/><a href="lang-evmonconsts.icn.html#525" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Selem"/>
+<h3>Selem</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Selem
+<p/><a href="lang-evmonconsts.icn.html#441" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Set"/>
+<h3>Set</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Set
+<p/><a href="lang-evmonconsts.icn.html#439" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sinsert"/>
+<h3>Sinsert</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Sinsert
+<p/><a href="lang-evmonconsts.icn.html#527" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Slots"/>
+<h3>Slots</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Slots
+<p/><a href="lang-evmonconsts.icn.html#443" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Smember"/>
+<h3>Smember</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Smember
+<p/><a href="lang-evmonconsts.icn.html#529" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Srand"/>
+<h3>Srand</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Srand
+<p/><a href="lang-evmonconsts.icn.html#531" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Ssasgn"/>
+<h3>Ssasgn</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Ssasgn
+<p/><a href="lang-evmonconsts.icn.html#573" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="StrDeAlc"/>
+<h3>StrDeAlc</h3>
+public static const<p/>
+<dl>
+<dd>
+E_StrDeAlc
+<p/><a href="lang-evmonconsts.icn.html#457" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="String"/>
+<h3>String</h3>
+public static const<p/>
+<dl>
+<dd>
+E_String
+<p/><a href="lang-evmonconsts.icn.html#449" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Sval"/>
+<h3>Sval</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Sval
+<p/><a href="lang-evmonconsts.icn.html#533" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Table"/>
+<h3>Table</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Table
+<p/><a href="lang-evmonconsts.icn.html#433" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tbang"/>
+<h3>Tbang</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tbang
+<p/><a href="lang-evmonconsts.icn.html#535" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tclear"/>
+<h3>Tclear</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tclear
+<p/><a href="lang-evmonconsts.icn.html#569" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tcreate"/>
+<h3>Tcreate</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tcreate
+<p/><a href="lang-evmonconsts.icn.html#537" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tdelete"/>
+<h3>Tdelete</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tdelete
+<p/><a href="lang-evmonconsts.icn.html#539" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Telem"/>
+<h3>Telem</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Telem
+<p/><a href="lang-evmonconsts.icn.html#435" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tenure"/>
+<h3>Tenure</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tenure
+<p/><a href="lang-evmonconsts.icn.html#599" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Timer"/>
+<h3>Timer</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Timer
+<p/><a href="lang-evmonconsts.icn.html#463" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tinsert"/>
+<h3>Tinsert</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tinsert
+<p/><a href="lang-evmonconsts.icn.html#541" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tkey"/>
+<h3>Tkey</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tkey
+<p/><a href="lang-evmonconsts.icn.html#543" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tmember"/>
+<h3>Tmember</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tmember
+<p/><a href="lang-evmonconsts.icn.html#545" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Trand"/>
+<h3>Trand</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Trand
+<p/><a href="lang-evmonconsts.icn.html#547" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tref"/>
+<h3>Tref</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tref
+<p/><a href="lang-evmonconsts.icn.html#549" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tsub"/>
+<h3>Tsub</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tsub
+<p/><a href="lang-evmonconsts.icn.html#551" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tval"/>
+<h3>Tval</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tval
+<p/><a href="lang-evmonconsts.icn.html#553" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tvsubs"/>
+<h3>Tvsubs</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tvsubs
+<p/><a href="lang-evmonconsts.icn.html#427" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Tvtbl"/>
+<h3>Tvtbl</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Tvtbl
+<p/><a href="lang-evmonconsts.icn.html#437" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Ucs"/>
+<h3>Ucs</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Ucs
+<p/><a href="lang-evmonconsts.icn.html#425" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+<a name="Weakref"/>
+<h3>Weakref</h3>
+public static const<p/>
+<dl>
+<dd>
+E_Weakref
+<p/><a href="lang-evmonconsts.icn.html#451" target="displayFrame">Source - evmonconsts.icn </a>
+</dd>
+</dl><hr>
+</body></html>

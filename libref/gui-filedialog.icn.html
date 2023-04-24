@@ -1,0 +1,1225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>filedialog.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>import 
+<a name="4"/>   ipl.wildcard,
+<a name="5"/>   ipl.sort,
+<a name="6"/>   ipl.filegui,
+<a name="7"/>   ipl.pdco,
+<a name="8"/>   ipl.functional,
+<a name="9"/>   util,
+<a name="10"/>   io,
+<a name="11"/>   lang,
+<a name="12"/>   datastruct(SortTable),
+<a name="13"/>   ipl.strings
+<a name="14"/>
+<a name="15"/>class FileDialogPos()
+<a name="16"/>   public const
+<a name="17"/>      cursor_name,
+<a name="18"/>      area_y
+<a name="19"/>
+<a name="20"/>   public new(cursor_name, area_y)
+<a name="21"/>      self.cursor_name := cursor_name
+<a name="22"/>      self.area_y := area_y
+<a name="23"/>      return
+<a name="24"/>   end
+<a name="25"/>end
+<a name="26"/>
+<a name="27"/>package class EditListField(FileSuggestField)
+<a name="28"/>   public override on_change(ev)
+<a name="29"/>      # Don't start a suggestion on navigation of the list.
+<a name="30"/>      parent.was_applied(ev) | SuggestField.on_change(ev)
+<a name="31"/>   end
+<a name="32"/>
+<a name="33"/>   protected override do_request(fg)
+<a name="34"/>      # Don't popup if an existing file warning is in place, except on
+<a name="35"/>      # tab press (fg is &amp;yes).
+<a name="36"/>      #
+<a name="37"/>      # Returning [] rather than failing causes the popup to close,
+<a name="38"/>      # rather than stay open.
+<a name="39"/>      #
+<a name="40"/>      if /fg &amp; \parent_dialog.warned then
+<a name="41"/>         return []
+<a name="42"/>      return FileSuggestField.do_request(fg)
+<a name="43"/>   end
+<a name="44"/>
+<a name="45"/>   public override new()
+<a name="46"/>      FileSuggestField.new()
+<a name="47"/>      set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+<a name="48"/>      return
+<a name="49"/>   end
+<a name="50"/>end
+<a name="51"/>
+<a name="52"/>package class FileListWithTooltip(ItemPaintList)
+<a name="53"/>   public override get_tooltip(e)
+<a name="54"/>      local t, s
+<a name="55"/>      if t := contents[get_line_under_pointer(e)] then {
+<a name="56"/>         s := item_paint.get_size(view.cbwin, t)
+<a name="57"/>         if s.w + item_border.get_total_width() &gt; view.w + get_area_x() then
+<a name="58"/>            return item_paint.get_string(t)
+<a name="59"/>      }
+<a name="60"/>   end
+<a name="61"/>end
+<a name="62"/>
+<a name="63"/>package class FileEditList(EditList)
+<a name="64"/>   public override layout()
+<a name="65"/>      # Hide the button if the init_files list was empty.
+<a name="66"/>      if *selection_list = 0 then {
+<a name="67"/>         view.x := x + border.get_l_inset()
+<a name="68"/>         view.y := y + border.get_t_inset()
+<a name="69"/>         view.w := w - border.get_total_width()
+<a name="70"/>         view.h := h - border.get_total_height()
+<a name="71"/>         b.x := x
+<a name="72"/>         b.y := y
+<a name="73"/>         b.w := b.h := 0
+<a name="74"/>         b.layout()
+<a name="75"/>         view.layout()
+<a name="76"/>      } else
+<a name="77"/>         EditList.layout()
+<a name="78"/>   end
+<a name="79"/>
+<a name="80"/>   public override create_view()
+<a name="81"/>      return EditListField()
+<a name="82"/>   end
+<a name="83"/>end
+<a name="84"/>
+<a name="85"/>package class FavouritesList(ButtonOnlyList)
+<a name="86"/>   public override create_button()
+<a name="87"/>      local b
+<a name="88"/>      b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
+<a name="89"/>      theme_toolbar_button(b, "emblem-favorite")
+<a name="90"/>      return b
+<a name="91"/>   end
+<a name="92"/>
+<a name="93"/>   protected override open_popup(ev)
+<a name="94"/>      set_selection_list(parent_dialog.get_favourites_directories())
+<a name="95"/>      object_set_selection(parent_dialog.loaded_dir_path.ucs()) | set_selection()
+<a name="96"/>      ButtonOnlyList.open_popup(ev)
+<a name="97"/>   end
+<a name="98"/>
+<a name="99"/>   public override create_popup()
+<a name="100"/>      return ItemPaintList().
+<a name="101"/>         set_item_paint(StringDirItemPaint()).
+<a name="102"/>         set_item_border(EmptyBorder().
+<a name="103"/>                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+<a name="104"/>                            set_x_align(Align.L))
+<a name="105"/>   end
+<a name="106"/>end
+<a name="107"/>
+<a name="108"/>#
+<a name="109"/>#
+<a name="110"/># File dialog class.  This class provides a standard file dialog.
+<a name="111"/>#
+<a name="112"/># Example :-
+<a name="113"/># ~
+<a name="114"/>#   d := FileDialog()
+<a name="115"/>#   d.show_modal()
+<a name="116"/>#   write(d.get_result() | "cancelled")
+<a name="117"/># ~
+<a name="118"/>class FileDialog(Dialog)
+<a name="119"/>   public
+<a name="120"/>      show_hidden_menu_item,
+<a name="121"/>      tools_menu_button,
+<a name="122"/>      tools_menu,
+<a name="123"/>      date_button,
+<a name="124"/>      name_button,
+<a name="125"/>      size_button,
+<a name="126"/>      home_button, 
+<a name="127"/>      prev_button,
+<a name="128"/>      next_button,
+<a name="129"/>      favourites_list,
+<a name="130"/>      trail,
+<a name="131"/>      up_button, 
+<a name="132"/>      centre_panel,
+<a name="133"/>      dlist, 
+<a name="134"/>      flist, 
+<a name="135"/>      ascending,
+<a name="136"/>      sorter,
+<a name="137"/>      history,
+<a name="138"/>      history_pos,
+<a name="139"/>      pos_table,
+<a name="140"/>      loaded_dir_path,
+<a name="141"/>      loaded_dir_list,
+<a name="142"/>      cancel_button, 
+<a name="143"/>      file, 
+<a name="144"/>      filter, 
+<a name="145"/>      okay_button,
+<a name="146"/>      init_dirs,                # Initial directory name
+<a name="147"/>      init_files,               # Initial file name
+<a name="148"/>      init_filters,
+<a name="149"/>      res,                      # Resulting file path          
+<a name="150"/>      message_label, 
+<a name="151"/>      existing_file_mode,
+<a name="152"/>      multiple_files_flag,
+<a name="153"/>      single_file_overlay_item,
+<a name="154"/>      multiple_files_overlay_item,
+<a name="155"/>      file_overlay,
+<a name="156"/>      file_label,
+<a name="157"/>      img,
+<a name="158"/>      img_label,
+<a name="159"/>      warned,
+<a name="160"/>      pats
+<a name="161"/>
+<a name="162"/>   public static const
+<a name="163"/>      WARN, IGNORE, REQUIRE, DISALLOW
+<a name="164"/>   
+<a name="165"/>   private static init()
+<a name="166"/>      WARN := "warn"
+<a name="167"/>      IGNORE := "ignore"
+<a name="168"/>      REQUIRE := "require"
+<a name="169"/>      DISALLOW := "disallow"
+<a name="170"/>   end
+<a name="171"/>
+<a name="172"/>   public set_existing_file_mode(s)
+<a name="173"/>      existing_file_mode := s
+<a name="174"/>      link
+<a name="175"/>   end
+<a name="176"/>
+<a name="177"/>   public set_multiple_files(s)
+<a name="178"/>      self.multiple_files_flag := need_flag(s)
+<a name="179"/>      link
+<a name="180"/>   end
+<a name="181"/>
+<a name="182"/>   public static ucs_list(l)
+<a name="183"/>      return ipl.pdco.List{ucs(!l)}
+<a name="184"/>   end
+<a name="185"/>
+<a name="186"/>   # Helper method to take a list of files and filter non-ucs files,
+<a name="187"/>   # and duplicates.  Duplicate and trailing slashes are also cleaned
+<a name="188"/>   # up (through use of `FilePath`).
+<a name="189"/>   #
+<a name="190"/>   public static unique_ucs_list(e)
+<a name="191"/>      local res, seen, f, k
+<a name="192"/>      res := []
+<a name="193"/>      seen := set()
+<a name="194"/>      every f := FilePath(ucs(|@e)) do {
+<a name="195"/>         k := f.standard_case().str()
+<a name="196"/>         unless member(seen, k) then {
+<a name="197"/>            insert(seen, k)
+<a name="198"/>            put(res, f.ucs())
+<a name="199"/>         }
+<a name="200"/>      }
+<a name="201"/>      return res
+<a name="202"/>   end
+<a name="203"/>
+<a name="204"/>   public override component_setup()
+<a name="205"/>      #
+<a name="206"/>      # Defaults and extra dirs.
+<a name="207"/>      #
+<a name="208"/>      /init_dirs := []
+<a name="209"/>      /init_files := []
+<a name="210"/>      init_filters := ucs_list(\init_filters)
+<a name="211"/>      if /init_filters | *init_filters = 0 then
+<a name="212"/>         init_filters := [u"*"]
+<a name="213"/>      filter.set_selection_list(init_filters).set_selection(1)
+<a name="214"/>      # Save needlessly reloading an image from a previous show()
+<a name="215"/>      (\img).clear_image()
+<a name="216"/>      synch_pats()
+<a name="217"/>      file.
+<a name="218"/>         set_selection_list(ucs_list(init_files)).
+<a name="219"/>         set_selection(1).
+<a name="220"/>         set_use_wheel(&amp;no)
+<a name="221"/>      flist.set_select_mode(if /multiple_files_flag then Select.ONE else Select.MANY)
+<a name="222"/>      synch_file_overlay()
+<a name="223"/>      pos_table := SortTable(, Files.standard_case_cmp)
+<a name="224"/>      res := &amp;null
+<a name="225"/>   end
+<a name="226"/>
+<a name="227"/>   public override init_dialog()
+<a name="228"/>      local s, x
+<a name="229"/>      # Clear any cached directory list in the suggest field
+<a name="230"/>      file.view.refresh()
+<a name="231"/>      file.grab_focus()
+<a name="232"/>      s := file.get_contents()
+<a name="233"/>      if *s &gt; 0 then {
+<a name="234"/>         file.view.move_cursor(1).move_cursor(*s + 1, &amp;yes)
+<a name="235"/>         if x := Files.get_extension(s) then
+<a name="236"/>            file.view.move_cursor(*s - *x, &amp;yes)
+<a name="237"/>      }
+<a name="238"/>      win.set_min_size(scale(500), scale(400))
+<a name="239"/>      goto_dir(gen_favourites_directories())
+<a name="240"/>   end
+<a name="241"/>
+<a name="242"/>   public check_current_selection()
+<a name="243"/>      local f, s
+<a name="244"/>      if /multiple_files_flag then {
+<a name="245"/>         f := get_current_selection().str()
+<a name="246"/>         if \f &amp; existing_file_mode === (WARN | DISALLOW) &amp; not Files.is_directory(f) &amp; Files.access(f) then {
+<a name="247"/>            warned := &amp;yes
+<a name="248"/>            msg("Existing file")
+<a name="249"/>         } else
+<a name="250"/>            warned := &amp;null
+<a name="251"/>      } else {
+<a name="252"/>         # For multiple selection, choose the selected item with the
+<a name="253"/>         # cursor (if any) as the file to show in the image tab.
+<a name="254"/>         if \img &amp; flist.is_selected(flist.get_cursor()) then
+<a name="255"/>            f := loaded_dir_path.child(flist.object_get_cursor().name).str()
+<a name="256"/>      }
+<a name="257"/>      if \img then {
+<a name="258"/>         if endswith(Text.lower(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
+<a name="259"/>            img.set_image(f)
+<a name="260"/>         else
+<a name="261"/>            img.clear_image()
+<a name="262"/>         s := if img.has_image() then
+<a name="263"/>                 ".cell\nHeight: " || img.get_image_height() || "\n.br\n" ||
+<a name="264"/>                                "Width: " || img.get_image_width() || "\n.br\n"
+<a name="265"/>              else ""
+<a name="266"/>         img_label.set_label(s)
+<a name="267"/>      }
+<a name="268"/>   end
+<a name="269"/>
+<a name="270"/>   public on_file_content_changed(ev)
+<a name="271"/>      msg()
+<a name="272"/>      synch_flist()
+<a name="273"/>      check_current_selection()
+<a name="274"/>   end
+<a name="275"/>
+<a name="276"/>   public synch_flist()
+<a name="277"/>      local i
+<a name="278"/>      if showing_file() then {
+<a name="279"/>         if i := Positions{ (!flist.contents).standard_case(),
+<a name="280"/>                            Files.standard_case(file.get_contents()) } then {
+<a name="281"/>            flist.
+<a name="282"/>               set_cursor(i).
+<a name="283"/>               set_selections([i]).
+<a name="284"/>               center_line(i)
+<a name="285"/>         } else
+<a name="286"/>            flist.clear_selections()
+<a name="287"/>      }
+<a name="288"/>   end
+<a name="289"/>
+<a name="290"/>   public override end_dialog()
+<a name="291"/>   end
+<a name="292"/>
+<a name="293"/>   #
+<a name="294"/>   # Get the directory part of the result.  In multiple files mode,
+<a name="295"/>   # this returns the directory which is common to each of the
+<a name="296"/>   # selected files.  The result is always a string, never ucs.
+<a name="297"/>   #
+<a name="298"/>   public get_directory()
+<a name="299"/>      \self.res | fail
+<a name="300"/>      return if /multiple_files_flag then
+<a name="301"/>         res.parent().str()
+<a name="302"/>      else
+<a name="303"/>         loaded_dir_path.str()
+<a name="304"/>   end
+<a name="305"/>
+<a name="306"/>   #
+<a name="307"/>   # Get the file part of the result; the result is always a string,
+<a name="308"/>   # never ucs. Not applicable in multiple files mode.
+<a name="309"/>   #
+<a name="310"/>   public get_file()
+<a name="311"/>      return string((\self.res).get(-1))
+<a name="312"/>   end
+<a name="313"/>
+<a name="314"/>   #
+<a name="315"/>   # Get the result, (will fail if cancel was pressed).  This will
+<a name="316"/>   # return a non-empty list in multiple files mode.
+<a name="317"/>   #
+<a name="318"/>   public get_result()
+<a name="319"/>      \self.res | fail
+<a name="320"/>      return if /multiple_files_flag then
+<a name="321"/>         res.str()
+<a name="322"/>      else
+<a name="323"/>         ipl.pdco.List{(!res).str()}
+<a name="324"/>   end
+<a name="325"/>
+<a name="326"/>   #
+<a name="327"/>   # Get the result, as a `FilePath` (will fail if cancel was
+<a name="328"/>   # pressed).  This will return a non-empty list of `FilePath`s in
+<a name="329"/>   # multiple files mode.
+<a name="330"/>   #
+<a name="331"/>   public get_result_path()
+<a name="332"/>      return \self.res
+<a name="333"/>   end
+<a name="334"/>
+<a name="335"/>   #
+<a name="336"/>   # Keep the directory last selected by this dialog.
+<a name="337"/>   #
+<a name="338"/>   public keep_directory()
+<a name="339"/>      return set_directory(get_dir_path().str())
+<a name="340"/>   end
+<a name="341"/>
+<a name="342"/>   #
+<a name="343"/>   # Set the initial directory.
+<a name="344"/>   #
+<a name="345"/>   public set_directory(s)
+<a name="346"/>      self.init_dirs := [ need_text(s) ]
+<a name="347"/>      link
+<a name="348"/>   end
+<a name="349"/>
+<a name="350"/>   #
+<a name="351"/>   # Set the initial directories as a list; the first is the one
+<a name="352"/>   # initially shown.
+<a name="353"/>   #
+<a name="354"/>   public set_directories(l)
+<a name="355"/>      self.init_dirs := need_list(l)
+<a name="356"/>      link
+<a name="357"/>   end
+<a name="358"/>
+<a name="359"/>   #
+<a name="360"/>   # Set the initial file
+<a name="361"/>   #
+<a name="362"/>   public set_file(s)
+<a name="363"/>      self.init_files := [ need_text(s) ]
+<a name="364"/>      link
+<a name="365"/>   end
+<a name="366"/>
+<a name="367"/>   #
+<a name="368"/>   # Set the initial files
+<a name="369"/>   #
+<a name="370"/>   public set_files(l)
+<a name="371"/>      self.init_files := need_list(l)
+<a name="372"/>      link
+<a name="373"/>   end
+<a name="374"/>
+<a name="375"/>   #
+<a name="376"/>   # Set the file filter pattern list.
+<a name="377"/>   #
+<a name="378"/>   public set_filters(l)
+<a name="379"/>      self.init_filters := need_list(l)
+<a name="380"/>      link
+<a name="381"/>   end
+<a name="382"/>
+<a name="383"/>   #
+<a name="384"/>   # Set the initial file/directory from a whole path.
+<a name="385"/>   # 
+<a name="386"/>   # :Parameters :
+<a name="387"/>   # :  `s` - something convertible to a `FilePath`.
+<a name="388"/>   #
+<a name="389"/>   public set_path(s)
+<a name="390"/>      local l
+<a name="391"/>      l := need_FilePath(s).canonical()
+<a name="392"/>      self.init_dirs := [l.parent().str()]
+<a name="393"/>      self.init_files := [l.get(-1)]
+<a name="394"/>      link
+<a name="395"/>   end
+<a name="396"/>
+<a name="397"/>   #
+<a name="398"/>   # Get the current file selected based on the file and dir fields;
+<a name="399"/>   # do not call in multiple file selection mode.
+<a name="400"/>   #
+<a name="401"/>   public get_current_selection()
+<a name="402"/>      local s
+<a name="403"/>      s := file.get_contents()
+<a name="404"/>      if *s = 0 then
+<a name="405"/>         fail
+<a name="406"/>      return FilePath(s).absolute(loaded_dir_path).canonical()
+<a name="407"/>   end
+<a name="408"/>
+<a name="409"/>   public on_okay_button()
+<a name="410"/>      local f, fs, sel
+<a name="411"/>      if /multiple_files_flag then {
+<a name="412"/>         unless f := get_current_selection() then {
+<a name="413"/>            msg("Please enter a filename")
+<a name="414"/>            fail
+<a name="415"/>         }
+<a name="416"/>         fs := f.str()
+<a name="417"/>         if Files.is_directory(fs) then {
+<a name="418"/>            msg("Selected file is a directory")
+<a name="419"/>            fail
+<a name="420"/>         }
+<a name="421"/>         # A prefix dir cannot be a file
+<a name="422"/>         if f.is_prefix() then {
+<a name="423"/>            msg("Invalid path")
+<a name="424"/>            fail
+<a name="425"/>         }
+<a name="426"/>         case existing_file_mode of {
+<a name="427"/>            REQUIRE: {
+<a name="428"/>               unless Files.access(fs) then {
+<a name="429"/>                  msg("Selected file doesn't exist")
+<a name="430"/>                  fail
+<a name="431"/>               }
+<a name="432"/>            }
+<a name="433"/>            DISALLOW: {
+<a name="434"/>               if Files.access(fs) then {
+<a name="435"/>                  msg("Selected file already exists")
+<a name="436"/>                  fail
+<a name="437"/>               }
+<a name="438"/>            }
+<a name="439"/>         }
+<a name="440"/>         self.res := f
+<a name="441"/>      } else {
+<a name="442"/>         sel := flist.object_get_selections()
+<a name="443"/>         if *sel = 0 then {
+<a name="444"/>            msg("Please select a file")
+<a name="445"/>            fail
+<a name="446"/>         }
+<a name="447"/>         self.res := ipl.pdco.List{loaded_dir_path.child((!sel).name)}
+<a name="448"/>      }
+<a name="449"/>      self.dispose()
+<a name="450"/>   end
+<a name="451"/>
+<a name="452"/>   public get_dir_path()
+<a name="453"/>      return loaded_dir_path
+<a name="454"/>   end
+<a name="455"/>
+<a name="456"/>   public on_cancel_button()
+<a name="457"/>      self.dispose()
+<a name="458"/>   end
+<a name="459"/>
+<a name="460"/>   public on_file_action(ev)
+<a name="461"/>      local f, p, q
+<a name="462"/>      if file.view.was_applied(ev) then
+<a name="463"/>         fail
+<a name="464"/>      p := get_current_selection() | fail
+<a name="465"/>      if Files.is_directory(f := p.str()) then {
+<a name="466"/>         file.set_contents(u"")
+<a name="467"/>         goto_dir(f)
+<a name="468"/>      } else if p.size() &gt; 1 &amp; Files.is_directory(f := p.parent().str()) then {
+<a name="469"/>         file.set_contents(p.get(-1))
+<a name="470"/>         goto_dir(f)
+<a name="471"/>      } else {
+<a name="472"/>         q := FilePath(file.get_contents())
+<a name="473"/>         if q.is_absolute() | q.size() &gt; 1 then {
+<a name="474"/>            # Something that looks like a directory, but isn't.  Treat
+<a name="475"/>            # it as a directory; an error message will be produced by goto_dir.
+<a name="476"/>            file.set_contents(u"")
+<a name="477"/>            goto_dir(p.str())
+<a name="478"/>         }
+<a name="479"/>      }
+<a name="480"/>   end
+<a name="481"/>
+<a name="482"/>   public on_dlist()
+<a name="483"/>      goto_dir(loaded_dir_path.child(dlist.object_first_selection().name))
+<a name="484"/>   end
+<a name="485"/>
+<a name="486"/>   public update_file_label()
+<a name="487"/>      # The label is only used when there are &gt;1 files selected.
+<a name="488"/>      file_label.set_label(*flist.get_selections() || " files selected")
+<a name="489"/>   end
+<a name="490"/>
+<a name="491"/>   public synch_file_overlay()
+<a name="492"/>      file_overlay.set_which_one(
+<a name="493"/>         if /multiple_files_flag | *flist.get_selections() &lt;= 1 then
+<a name="494"/>            single_file_overlay_item
+<a name="495"/>         else
+<a name="496"/>            multiple_files_overlay_item )
+<a name="497"/>   end
+<a name="498"/>
+<a name="499"/>   public showing_file()
+<a name="500"/>      if file_overlay.which_one === single_file_overlay_item then
+<a name="501"/>         return
+<a name="502"/>   end
+<a name="503"/>
+<a name="504"/>   public on_flist()
+<a name="505"/>      #
+<a name="506"/>      # Clicked in file list; set TextField
+<a name="507"/>      #
+<a name="508"/>      msg()
+<a name="509"/>      synch_file_overlay()
+<a name="510"/>      if showing_file() then
+<a name="511"/>         file.set_contents(flist.object_first_selection().name)
+<a name="512"/>      else
+<a name="513"/>         update_file_label()
+<a name="514"/>      check_current_selection()
+<a name="515"/>   end
+<a name="516"/>
+<a name="517"/>   public on_filter_action(ev)
+<a name="518"/>      refresh_dir()
+<a name="519"/>   end
+<a name="520"/>
+<a name="521"/>   protected synch_pats()
+<a name="522"/>      pats := ipl.pdco.List{ Wildcard(Files.standard_case(separate(filter.get_contents(), ';'))) }
+<a name="523"/>      file.view.set_patterns(pats)
+<a name="524"/>   end
+<a name="525"/>
+<a name="526"/>   public on_filter_content_changed(ev)
+<a name="527"/>      synch_pats()
+<a name="528"/>      if filter.was_applied(ev) then
+<a name="529"/>         refresh_dir()
+<a name="530"/>   end
+<a name="531"/>
+<a name="532"/>   public set_show_hidden_files(s)
+<a name="533"/>      show_hidden_menu_item.set_is_checked(s)
+<a name="534"/>      on_show_hidden_menu_item()
+<a name="535"/>      link
+<a name="536"/>   end
+<a name="537"/>
+<a name="538"/>   public on_show_hidden_menu_item(ev)
+<a name="539"/>      if is_live() then {
+<a name="540"/>         pos_table.clear()
+<a name="541"/>         refresh_dir() 
+<a name="542"/>      }
+<a name="543"/>      trail.set_show_hidden_files(show_hidden_menu_item.get_status())
+<a name="544"/>      file.view.set_show_hidden_files(show_hidden_menu_item.get_status())
+<a name="545"/>   end
+<a name="546"/>
+<a name="547"/>   public on_up_button(ev)
+<a name="548"/>      if loaded_dir_path.is_prefix() then
+<a name="549"/>         msg("At root")
+<a name="550"/>      else
+<a name="551"/>         goto_dir(loaded_dir_path.parent())
+<a name="552"/>   end
+<a name="553"/>
+<a name="554"/>   public on_home_button(ev)
+<a name="555"/>      goto_dir(Files.get_home())
+<a name="556"/>   end
+<a name="557"/>
+<a name="558"/>   public on_refresh_menu_item(ev)
+<a name="559"/>      refresh_dir(&amp;yes)
+<a name="560"/>   end
+<a name="561"/>
+<a name="562"/>   public on_prev_button(ev)
+<a name="563"/>      local s
+<a name="564"/>      (history_pos &lt; *history) | fail
+<a name="565"/>      s := history[history_pos +:= 1]
+<a name="566"/>      update_grey()
+<a name="567"/>      goto_dir(s, &amp;yes)
+<a name="568"/>   end
+<a name="569"/>   
+<a name="570"/>   public on_next_button(ev)
+<a name="571"/>      local s
+<a name="572"/>      (history_pos &gt; 1) | fail
+<a name="573"/>      s := history[history_pos -:= 1]
+<a name="574"/>      update_grey()
+<a name="575"/>      goto_dir(s, &amp;yes)
+<a name="576"/>   end
+<a name="577"/>
+<a name="578"/>   public update_grey()
+<a name="579"/>      prev_button.set_is_shaded(No{ history_pos &lt; *history })
+<a name="580"/>      next_button.set_is_shaded(No{ history_pos &gt; 1 })
+<a name="581"/>   end
+<a name="582"/>
+<a name="583"/>   public on_new_dir_menu_item(ev)
+<a name="584"/>      local d, s
+<a name="585"/>      s := loaded_dir_path.ucs() | return msg("Path not UTF-8")
+<a name="586"/>      d := NewDirectoryDialog(s).
+<a name="587"/>         show_modal(self)
+<a name="588"/>      goto_dir(\d.result)
+<a name="589"/>   end
+<a name="590"/>
+<a name="591"/>   public get_favourites_directories()
+<a name="592"/>      return unique_ucs_list{ gen_favourites_directories() }
+<a name="593"/>   end
+<a name="594"/>
+<a name="595"/>   public gen_favourites_directories()
+<a name="596"/>      suspend FilePath(!init_dirs).canonical().ucs() | FavouriteDirectoriesDialog.gen_directories_plus()
+<a name="597"/>   end
+<a name="598"/>
+<a name="599"/>   public on_favourite_dirs_menu_item(ev)
+<a name="600"/>      FavouriteDirectoriesDialog().show_modal(self)
+<a name="601"/>   end
+<a name="602"/>
+<a name="603"/>   public msg(s)
+<a name="604"/>      message_label.set(s)
+<a name="605"/>   end
+<a name="606"/>
+<a name="607"/>   public refresh_dir(load)
+<a name="608"/>      local e, s, t, c, i, j
+<a name="609"/>      save_pos()
+<a name="610"/>      msg()
+<a name="611"/>      if showing_file() then {
+<a name="612"/>         if \load then
+<a name="613"/>            load_dir_list()
+<a name="614"/>         annotate_dir_list()
+<a name="615"/>         set_lists(sort_dir_list())
+<a name="616"/>         synch_flist()
+<a name="617"/>      } else {
+<a name="618"/>         # Save cursor and selection settings.  If reloading, then we
+<a name="619"/>         # save names rather than objects.
+<a name="620"/>         if \load then {
+<a name="621"/>            s := Set{ flist.object_gen_selections().name }
+<a name="622"/>            c := flist.object_get_cursor().name
+<a name="623"/>            load_dir_list()
+<a name="624"/>         } else { 
+<a name="625"/>            s := flist.object_get_selections()
+<a name="626"/>            c := flist.object_get_cursor()
+<a name="627"/>         }
+<a name="628"/>         annotate_dir_list()
+<a name="629"/>         set_lists(sort_dir_list())
+<a name="630"/>         # Restore selections, and set j to new cursor index.
+<a name="631"/>         if \load then {
+<a name="632"/>            t := []
+<a name="633"/>            every e := flist.contents[i := 1 to *flist.contents] do {
+<a name="634"/>               if member(s, e.name) then
+<a name="635"/>                  put(t, i)
+<a name="636"/>               if e.name === c then
+<a name="637"/>                  j := i
+<a name="638"/>            }
+<a name="639"/>            flist.set_selections(t)
+<a name="640"/>         } else {
+<a name="641"/>            flist.object_set_selections(s)
+<a name="642"/>            j := flist.find_line(\c)
+<a name="643"/>         }
+<a name="644"/>         synch_file_overlay()
+<a name="645"/>         if showing_file() then {
+<a name="646"/>            # On a refresh, one of the selected files must have
+<a name="647"/>            # disappeared.  Update the file field accordingly.
+<a name="648"/>            # Setting j ensures the selection becomes the centred
+<a name="649"/>            # cursor below.
+<a name="650"/>            file.set_contents(
+<a name="651"/>               if j := flist.get_selections()[1] then
+<a name="652"/>                  flist.contents[j].name
+<a name="653"/>               else
+<a name="654"/>                  u"")
+<a name="655"/>         } else
+<a name="656"/>            update_file_label()
+<a name="657"/>         # If cursor found, set it and center line.
+<a name="658"/>         if \j then
+<a name="659"/>            flist.
+<a name="660"/>               set_cursor(j).
+<a name="661"/>               center_line(j)
+<a name="662"/>      }
+<a name="663"/>      check_current_selection()
+<a name="664"/>      restore_pos()
+<a name="665"/>   end
+<a name="666"/>
+<a name="667"/>   public save_pos()
+<a name="668"/>      pos_table.insert((\loaded_dir_path).ucs(),
+<a name="669"/>                       FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
+<a name="670"/>   end
+<a name="671"/>
+<a name="672"/>   public restore_pos()
+<a name="673"/>      local e, i
+<a name="674"/>      if e := pos_table.member(loaded_dir_path.ucs()) then {
+<a name="675"/>         if i := Positions{(!dlist.contents).name, e.cursor_name} then
+<a name="676"/>            dlist.set_cursor(i)
+<a name="677"/>         dlist.set_area_y(e.area_y)
+<a name="678"/>      }
+<a name="679"/>   end
+<a name="680"/>
+<a name="681"/>   public goto_dir(d, nav)
+<a name="682"/>      local t, ds
+<a name="683"/>      # Use a temporary variable here so that we save_pos() before
+<a name="684"/>      # setting loaded_dir_path.
+<a name="685"/>      t := need_FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
+<a name="686"/>      save_pos()
+<a name="687"/>      loaded_dir_path := t
+<a name="688"/>      trail.set_path(loaded_dir_path)
+<a name="689"/>      msg()
+<a name="690"/>      file.view.set_cwd(loaded_dir_path)
+<a name="691"/>      load_dir_list()
+<a name="692"/>      annotate_dir_list()
+<a name="693"/>      set_lists(sort_dir_list())
+<a name="694"/>      synch_file_overlay()
+<a name="695"/>      synch_flist()
+<a name="696"/>      check_current_selection()
+<a name="697"/>      restore_pos()
+<a name="698"/>      if /nav then {
+<a name="699"/>         ds := loaded_dir_path.ucs()
+<a name="700"/>         unless Files.standard_case_cmp(ds, history[history_pos]) = 0 then {
+<a name="701"/>            every 1 to history_pos - 1 do
+<a name="702"/>               pop(history)
+<a name="703"/>            push(history, ds)
+<a name="704"/>            history_pos := 1
+<a name="705"/>            update_grey()
+<a name="706"/>         }
+<a name="707"/>      }
+<a name="708"/>      link
+<a name="709"/>   end
+<a name="710"/>   
+<a name="711"/>   public set_lists(l)
+<a name="712"/>      #
+<a name="713"/>      # Update directory and file lists.
+<a name="714"/>      #
+<a name="715"/>      dlist.
+<a name="716"/>         set_contents(l[1]).
+<a name="717"/>         set_area_x(0).
+<a name="718"/>         set_area_y(0).
+<a name="719"/>         clear_selections().
+<a name="720"/>         set_cursor(1)
+<a name="721"/>
+<a name="722"/>      flist.
+<a name="723"/>         set_contents(l[2]).
+<a name="724"/>         set_area_x(0).
+<a name="725"/>         set_area_y(0).
+<a name="726"/>         clear_selections().
+<a name="727"/>         set_cursor(1)
+<a name="728"/>   end
+<a name="729"/>
+<a name="730"/>   public load_dir_list()
+<a name="731"/>      unless loaded_dir_list := Files.ucs_list(loaded_dir_path.str(), AnnotatedListEntryWithIcon) then {
+<a name="732"/>         msg(&amp;why)
+<a name="733"/>         loaded_dir_list := []
+<a name="734"/>      }
+<a name="735"/>   end
+<a name="736"/>
+<a name="737"/>   public annotate_dir_list()
+<a name="738"/>      local e, now
+<a name="739"/>      now := Time.get_system_seconds()
+<a name="740"/>      every e := !loaded_dir_list do {
+<a name="741"/>         if e.stat.mode_str[1] == "d" then
+<a name="742"/>            e.annotate_name()
+<a name="743"/>         else case sorter of {
+<a name="744"/>            Files.name_cmp : e.annotate_name()
+<a name="745"/>            Files.date_cmp : e.annotate_date(now)
+<a name="746"/>            Files.size_cmp : e.annotate_size()
+<a name="747"/>            default : syserr("Bad sorter_opt")
+<a name="748"/>         }
+<a name="749"/>      }
+<a name="750"/>   end
+<a name="751"/>
+<a name="752"/>   public sort_dir_list()
+<a name="753"/>      local e, dir_list, file_list, n
+<a name="754"/>      dir_list := []
+<a name="755"/>      file_list := []
+<a name="756"/>      every e := !loaded_dir_list do {
+<a name="757"/>         n := e.standard_case()
+<a name="758"/>         if show_hidden_menu_item.is_checked() | not(Files.is_hidden(n)) then {
+<a name="759"/>            if e.stat.mode_str[1] == "d" then
+<a name="760"/>               Files.is_relative_dir(n) | put(dir_list, e)
+<a name="761"/>            else if (!pats).match_all(n) then
+<a name="762"/>               put(file_list, e)
+<a name="763"/>         }
+<a name="764"/>      }
+<a name="765"/>      qsort(file_list, if /ascending then sorter else flip(sorter))
+<a name="766"/>      qsort(dir_list, Files.name_cmp)
+<a name="767"/>      return [dir_list, file_list]
+<a name="768"/>   end
+<a name="769"/>
+<a name="770"/>   #
+<a name="771"/>   # Add an image preview tab to the dialog.  This should only be
+<a name="772"/>   # called before the dialog is shown.
+<a name="773"/>   #
+<a name="774"/>   public add_image_preview()
+<a name="775"/>      local p, split, other, q
+<a name="776"/>      if is_initialized() then
+<a name="777"/>         fail
+<a name="778"/>      if /img then {
+<a name="779"/>         img := Image().
+<a name="780"/>            set_constraint(Grid.EOL, &amp;yes).
+<a name="781"/>            set_height(scale(100)).
+<a name="782"/>            set_border(NullBorder())
+<a name="783"/>         img_label := Label().
+<a name="784"/>            set_label("").
+<a name="785"/>            set_constraint(Grid.X_FILL, &amp;yes).
+<a name="786"/>            set_height(scale(100)).
+<a name="787"/>            set_border(NullBorder())
+<a name="788"/>         p := Panel().
+<a name="789"/>            set_layout(GridLayout()).
+<a name="790"/>            add(img).
+<a name="791"/>            add(img_label)
+<a name="792"/>         q := Border().
+<a name="793"/>            set_content(p).
+<a name="794"/>            set_width(scale(175)).
+<a name="795"/>            set_border(SunkenBorder())
+<a name="796"/>         other := centre_panel.children[1]
+<a name="797"/>         centre_panel.remove_index(1)
+<a name="798"/>         split := Split().
+<a name="799"/>            set_left(other).
+<a name="800"/>            set_right(q).
+<a name="801"/>            set_weight(1.0).
+<a name="802"/>            set_min(scale(250), scale(130))
+<a name="803"/>         centre_panel.add(split)
+<a name="804"/>      }
+<a name="805"/>      link
+<a name="806"/>   end
+<a name="807"/>
+<a name="808"/>   #
+<a name="809"/>   # Remove the image preview tab to the dialog.  This should only be
+<a name="810"/>   # called before the dialog is shown.
+<a name="811"/>   #
+<a name="812"/>   public remove_image_preview()
+<a name="813"/>      local split
+<a name="814"/>      if is_initialized() then
+<a name="815"/>         fail
+<a name="816"/>      if \img then {
+<a name="817"/>         split := centre_panel.children[1]
+<a name="818"/>         centre_panel.remove_index(1).add(split.first)
+<a name="819"/>         img := img_label := &amp;null
+<a name="820"/>      }
+<a name="821"/>      link
+<a name="822"/>   end
+<a name="823"/>
+<a name="824"/>   private on_trail(ev)
+<a name="825"/>      goto_dir(ev)
+<a name="826"/>   end
+<a name="827"/>
+<a name="828"/>   public override new()
+<a name="829"/>      Dialog.new()
+<a name="830"/>      self.setup()
+<a name="831"/>      tools_menu.set_border_mid(NullBorder())
+<a name="832"/>      # Try themed icon buttons
+<a name="833"/>      theme_toolbar_button(prev_button, "go-previous", "gui.PREV_SVG")
+<a name="834"/>      theme_toolbar_button(next_button, "go-next", "gui.NEXT_SVG")
+<a name="835"/>      theme_toolbar_button(home_button, "go-home")
+<a name="836"/>      theme_toolbar_button(up_button, "go-up", "gui.UP_SVG")
+<a name="837"/>      theme_toolbar_button(tools_menu_button, "applications-system")
+<a name="838"/>
+<a name="839"/>      trail.
+<a name="840"/>         set_height().
+<a name="841"/>         set_constraint("l_inset", scale(10)).
+<a name="842"/>         connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
+<a name="843"/>      favourites_list.set_size().set_selection_list([])
+<a name="844"/>
+<a name="845"/>      dlist.
+<a name="846"/>         set_selection_on_key_moves(&amp;no).
+<a name="847"/>         set_item_paint(IconFilesItemPaint()).
+<a name="848"/>         set_item_border(EmptyBorder().
+<a name="849"/>                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+<a name="850"/>                             set_x_align(Align.L))
+<a name="851"/>      flist.
+<a name="852"/>         set_item_paint(AnnotatedIconFilesItemPaint()).
+<a name="853"/>         set_item_border(EmptyBorder().
+<a name="854"/>                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+<a name="855"/>                             set_x_align(Align.L))
+<a name="856"/>      sorter := Files.name_cmp
+<a name="857"/>      synch_paints()
+<a name="858"/>      existing_file_mode := IGNORE
+<a name="859"/>      history := []
+<a name="860"/>      history_pos := 0
+<a name="861"/>      update_grey()
+<a name="862"/>      return
+<a name="863"/>   end
+<a name="864"/>
+<a name="865"/>   private synch_paints()
+<a name="866"/>      local cp, np, sp, dp, sz
+<a name="867"/>      sz := Gui.TOOLBAR_ICON_SIZE
+<a name="868"/>      cp := CompoundPaint().set_top(ImagePaint().set_cache(if /ascending then "gui.TINY_ARROW_DOWN" else "gui.TINY_ARROW_UP"))
+<a name="869"/>      np := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.FONT_SVG", "gui.FONT_24", sz, sz))
+<a name="870"/>      sp := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.FILESIZE_SVG", "gui.FILESIZE_24", sz, sz))
+<a name="871"/>      dp := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.CLOCK_SVG", "gui.CLOCK_24", sz, sz))
+<a name="872"/>      case sorter of {
+<a name="873"/>         Files.name_cmp: {
+<a name="874"/>            name_button.set_paint(cp.set_bottom(np))
+<a name="875"/>            date_button.set_paint(dp)
+<a name="876"/>            size_button.set_paint(sp)
+<a name="877"/>         }
+<a name="878"/>         Files.size_cmp: {
+<a name="879"/>            name_button.set_paint(np)
+<a name="880"/>            date_button.set_paint(dp)
+<a name="881"/>            size_button.set_paint(cp.set_bottom(sp))
+<a name="882"/>         }
+<a name="883"/>         Files.date_cmp: {
+<a name="884"/>            name_button.set_paint(np)
+<a name="885"/>            date_button.set_paint(cp.set_bottom(dp))
+<a name="886"/>            size_button.set_paint(sp)
+<a name="887"/>         }
+<a name="888"/>      }
+<a name="889"/>   end
+<a name="890"/>
+<a name="891"/>   private on_sort_button(f)
+<a name="892"/>      if sorter === f then
+<a name="893"/>         ascending := toggle_flag(ascending)
+<a name="894"/>      else
+<a name="895"/>         sorter := f
+<a name="896"/>      synch_paints()
+<a name="897"/>      refresh_dir()
+<a name="898"/>   end
+<a name="899"/>
+<a name="900"/>   private on_date_button(ev)
+<a name="901"/>      on_sort_button(Files.date_cmp)
+<a name="902"/>   end
+<a name="903"/>
+<a name="904"/>   private on_name_button(ev)
+<a name="905"/>      on_sort_button(Files.name_cmp)
+<a name="906"/>   end
+<a name="907"/>
+<a name="908"/>   private on_size_button(ev)
+<a name="909"/>      on_sort_button(Files.size_cmp)
+<a name="910"/>   end
+<a name="911"/>
+<a name="912"/>   private on_favourites_list(ev)
+<a name="913"/>      goto_dir(favourites_list.object_get_selection())
+<a name="914"/>   end
+<a name="915"/>
+<a name="916"/>   private setup()
+<a name="917"/>      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_49, paint_3, layout_8, paint_15, paint_46, layout_12, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint, panel_3, paint_28, paint_30, paint_48
+<a name="918"/>      self.set_label("Select file")
+<a name="919"/>      self.set_resize(&amp;yes)
+<a name="920"/>      paint_45 := ImagePaint().
+<a name="921"/>         set_cache("gui.CONFIGURE_24")
+<a name="922"/>      paint_42 := TextPaint("New directory...")
+<a name="923"/>      new_dir_menu_item := TextMenuItem().
+<a name="924"/>         connect(on_new_dir_menu_item, Event.ACTION).
+<a name="925"/>         set_paint_mid(paint_42)
+<a name="926"/>      paint_43 := TextPaint("Favourite dirs...")
+<a name="927"/>      favourite_dirs_menu_item := TextMenuItem().
+<a name="928"/>         connect(on_favourite_dirs_menu_item, Event.ACTION).
+<a name="929"/>         set_paint_mid(paint_43)
+<a name="930"/>      paint_44 := TextPaint("Show hidden files")
+<a name="931"/>      show_hidden_menu_item := CheckBoxMenuItem().
+<a name="932"/>         connect(on_show_hidden_menu_item, Event.ACTION).
+<a name="933"/>         set_paint_mid(paint_44)
+<a name="934"/>      paint_46 := TextPaint("Refresh")
+<a name="935"/>      refresh_menu_item := TextMenuItem().
+<a name="936"/>         connect(on_refresh_menu_item, Event.ACTION).
+<a name="937"/>         set_paint_mid(paint_46)
+<a name="938"/>      tools_menu := Menu().
+<a name="939"/>         set_paint_mid(paint_45).
+<a name="940"/>         add(new_dir_menu_item).
+<a name="941"/>         add(favourite_dirs_menu_item).
+<a name="942"/>         add(show_hidden_menu_item).
+<a name="943"/>         add(refresh_menu_item)
+<a name="944"/>      paint_47 := TextPaint("Tools")
+<a name="945"/>      tools_menu_button := MenuButton().
+<a name="946"/>         clear_constraints().
+<a name="947"/>         set_tooltip(paint_47).
+<a name="948"/>         set_menu(tools_menu)
+<a name="949"/>      paint_1 := ImagePaint().
+<a name="950"/>         set_cache("gui.HOME_24")
+<a name="951"/>      paint := TextPaint("Home")
+<a name="952"/>      home_button := IconButton().
+<a name="953"/>         set_align(Align.L, Align.C).
+<a name="954"/>         clear_constraints().
+<a name="955"/>         set_tooltip(paint).
+<a name="956"/>         connect(self.on_home_button, Event.ACTION).
+<a name="957"/>         set_no_click_focus(&amp;yes).
+<a name="958"/>         set_toggles(&amp;no).
+<a name="959"/>         set_paint(paint_1)
+<a name="960"/>      paint_3 := ImagePaint().
+<a name="961"/>         set_cache("gui.UP_24")
+<a name="962"/>      paint_2 := TextPaint("Up")
+<a name="963"/>      up_button := IconButton().
+<a name="964"/>         set_align(Align.L, Align.C).
+<a name="965"/>         clear_constraints().
+<a name="966"/>         set_tooltip(paint_2).
+<a name="967"/>         connect(self.on_up_button, Event.ACTION).
+<a name="968"/>         set_no_click_focus(&amp;yes).
+<a name="969"/>         set_toggles(&amp;no).
+<a name="970"/>         set_paint(paint_3)
+<a name="971"/>      paint_12 := ImagePaint().
+<a name="972"/>         set_cache("gui.PREV_24")
+<a name="973"/>      paint_13 := TextPaint("Prev")
+<a name="974"/>      prev_button := IconButton().
+<a name="975"/>         set_align(Align.L, Align.C).
+<a name="976"/>         clear_constraints().
+<a name="977"/>         set_tooltip(paint_13).
+<a name="978"/>         connect(self.on_prev_button, Event.ACTION).
+<a name="979"/>         set_no_click_focus(&amp;yes).
+<a name="980"/>         set_toggles(&amp;no).
+<a name="981"/>         set_paint(paint_12)
+<a name="982"/>      paint_14 := ImagePaint().
+<a name="983"/>         set_cache("gui.NEXT_24")
+<a name="984"/>      paint_15 := TextPaint("Next")
+<a name="985"/>      next_button := IconButton().
+<a name="986"/>         set_align(Align.L, Align.C).
+<a name="987"/>         clear_constraints().
+<a name="988"/>         set_tooltip(paint_15).
+<a name="989"/>         connect(self.on_next_button, Event.ACTION).
+<a name="990"/>         set_no_click_focus(&amp;yes).
+<a name="991"/>         set_toggles(&amp;no).
+<a name="992"/>         set_paint(paint_14)
+<a name="993"/>      paint_28 := ImagePaint().
+<a name="994"/>         set_cache("gui.FONT_24")
+<a name="995"/>      paint_27 := TextPaint("Sort by name")
+<a name="996"/>      name_button := IconButton().
+<a name="997"/>         set_align(Align.L, Align.C).
+<a name="998"/>         clear_constraints().
+<a name="999"/>         set_tooltip(paint_27).
+<a name="1000"/>         connect(self.on_name_button, Event.ACTION).
+<a name="1001"/>         set_no_click_focus(&amp;yes).
+<a name="1002"/>         set_toggles(&amp;no).
+<a name="1003"/>         set_paint(paint_28)
+<a name="1004"/>      paint_30 := ImagePaint().
+<a name="1005"/>         set_cache("gui.CLOCK_24")
+<a name="1006"/>      paint_29 := TextPaint("Sort by date")
+<a name="1007"/>      date_button := IconButton().
+<a name="1008"/>         set_align(Align.L, Align.C).
+<a name="1009"/>         clear_constraints().
+<a name="1010"/>         set_tooltip(paint_29).
+<a name="1011"/>         connect(self.on_date_button, Event.ACTION).
+<a name="1012"/>         set_no_click_focus(&amp;yes).
+<a name="1013"/>         set_toggles(&amp;no).
+<a name="1014"/>         set_paint(paint_30)
+<a name="1015"/>      paint_32 := ImagePaint().
+<a name="1016"/>         set_cache("gui.FILESIZE_24")
+<a name="1017"/>      paint_31 := TextPaint("Sort by size")
+<a name="1018"/>      size_button := IconButton().
+<a name="1019"/>         set_align(Align.L, Align.C).
+<a name="1020"/>         clear_constraints().
+<a name="1021"/>         set_tooltip(paint_31).
+<a name="1022"/>         connect(self.on_size_button, Event.ACTION).
+<a name="1023"/>         set_no_click_focus(&amp;yes).
+<a name="1024"/>         set_toggles(&amp;no).
+<a name="1025"/>         set_paint(paint_32)
+<a name="1026"/>      paint_49 := TextPaint("Favourite directories")
+<a name="1027"/>      favourites_list := FavouritesList().
+<a name="1028"/>         set_size(scale(37), scale(30)).
+<a name="1029"/>         clear_constraints().
+<a name="1030"/>         set_tooltip(paint_49).
+<a name="1031"/>         connect(self.on_favourites_list, Event.SELECTION_CHANGED)
+<a name="1032"/>      trail := FileTrail().
+<a name="1033"/>         set_size(scale(200), scale(20)).
+<a name="1034"/>         clear_constraints().
+<a name="1035"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="1036"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1037"/>         set_constraint(Grid.X_WEIGHT, 1.0)
+<a name="1038"/>      layout_6 := GridLayout().
+<a name="1039"/>         set_doi(scale(0)).
+<a name="1040"/>         set_dii(scale(2)).
+<a name="1041"/>         set_extra("cells")
+<a name="1042"/>      panel_4 := Panel().
+<a name="1043"/>         clear_constraints().
+<a name="1044"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="1045"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1046"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1047"/>         set_layout(layout_6).
+<a name="1048"/>         add(tools_menu_button).
+<a name="1049"/>         add(home_button).
+<a name="1050"/>         add(up_button).
+<a name="1051"/>         add(prev_button).
+<a name="1052"/>         add(next_button).
+<a name="1053"/>         add(name_button).
+<a name="1054"/>         add(date_button).
+<a name="1055"/>         add(size_button).
+<a name="1056"/>         add(favourites_list).
+<a name="1057"/>         add(trail)
+<a name="1058"/>      self.add(panel_4)
+<a name="1059"/>      dlist := FileListWithTooltip().
+<a name="1060"/>         set_size(scale(210), scale(200)).
+<a name="1061"/>         clear_constraints().
+<a name="1062"/>         set_constraint(Grid.R_INSET, scale(0)).
+<a name="1063"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1064"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1065"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="1066"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="1067"/>         connect(self.on_dlist, Event.SELECTION_CHANGED).
+<a name="1068"/>         set_select_mode(Select.ONE).
+<a name="1069"/>         set_contents([])
+<a name="1070"/>      layout_8 := GridLayout().
+<a name="1071"/>         set_doi(scale(0)).
+<a name="1072"/>         set_extra("cells")
+<a name="1073"/>      split_content_1 := Component().
+<a name="1074"/>         clear_constraints().
+<a name="1075"/>         set_layout(layout_8).
+<a name="1076"/>         add(dlist)
+<a name="1077"/>      flist := FileListWithTooltip().
+<a name="1078"/>         set_size(scale(465), scale(365)).
+<a name="1079"/>         clear_constraints().
+<a name="1080"/>         set_constraint(Grid.L_INSET, scale(0)).
+<a name="1081"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1082"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1083"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="1084"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="1085"/>         connect(self.on_flist, Event.SELECTION_CHANGED).
+<a name="1086"/>         set_select_mode(Select.ONE).
+<a name="1087"/>         set_contents([])
+<a name="1088"/>      layout_9 := GridLayout().
+<a name="1089"/>         set_doi(scale(0)).
+<a name="1090"/>         set_extra("cells")
+<a name="1091"/>      split_content_2 := Component().
+<a name="1092"/>         clear_constraints().
+<a name="1093"/>         set_layout(layout_9).
+<a name="1094"/>         add(flist)
+<a name="1095"/>      split_1 := Split().
+<a name="1096"/>         clear_constraints().
+<a name="1097"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1098"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1099"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="1100"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="1101"/>         set_left(split_content_1).
+<a name="1102"/>         set_right(split_content_2).
+<a name="1103"/>         set_min(scale(100), scale(100))
+<a name="1104"/>      layout_12 := GridLayout().
+<a name="1105"/>         set_doi(scale(0)).
+<a name="1106"/>         set_extra("cells")
+<a name="1107"/>      centre_panel := Panel().
+<a name="1108"/>         clear_constraints().
+<a name="1109"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="1110"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1111"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1112"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="1113"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="1114"/>         set_layout(layout_12).
+<a name="1115"/>         add(split_1)
+<a name="1116"/>      self.add(centre_panel)
+<a name="1117"/>      paint_35 := TextPaint("Filter")
+<a name="1118"/>      filter := EditList().
+<a name="1119"/>         set_size(scale(150)).
+<a name="1120"/>         set_align(Align.L, Align.B).
+<a name="1121"/>         clear_constraints().
+<a name="1122"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="1123"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1124"/>         set_tooltip(paint_35).
+<a name="1125"/>         connect(self.on_filter_action, Event.ACTION).
+<a name="1126"/>         connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
+<a name="1127"/>         set_selection_list([])
+<a name="1128"/>      layout_10 := GridLayout().
+<a name="1129"/>         set_doi(scale(0)).
+<a name="1130"/>         set_extra("cells")
+<a name="1131"/>      paint_37 := TextPaint("File")
+<a name="1132"/>      file := FileEditList().
+<a name="1133"/>         set_size(scale(150)).
+<a name="1134"/>         set_align(Align.L, Align.B).
+<a name="1135"/>         clear_constraints().
+<a name="1136"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="1137"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1138"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1139"/>         set_tooltip(paint_37).
+<a name="1140"/>         connect(self.on_file_action, Event.ACTION).
+<a name="1141"/>         connect(self.on_file_content_changed, Event.CONTENT_CHANGED).
+<a name="1142"/>         set_selection_list([])
+<a name="1143"/>      single_file_overlay_item := OverlayItem().
+<a name="1144"/>         set_layout(layout_10).
+<a name="1145"/>         add(file)
+<a name="1146"/>      layout_11 := GridLayout().
+<a name="1147"/>         set_doi(scale(0)).
+<a name="1148"/>         set_extra("cells")
+<a name="1149"/>      paint_48 := TextPaint("Label")
+<a name="1150"/>      file_label := Label().
+<a name="1151"/>         clear_constraints().
+<a name="1152"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="1153"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1154"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1155"/>         set_paint(paint_48)
+<a name="1156"/>      multiple_files_overlay_item := OverlayItem().
+<a name="1157"/>         set_layout(layout_11).
+<a name="1158"/>         add(file_label)
+<a name="1159"/>      file_overlay := OverlaySet().
+<a name="1160"/>         clear_constraints().
+<a name="1161"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="1162"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1163"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1164"/>         set_constraint(Grid.Y_FILL, &amp;yes).
+<a name="1165"/>         set_constraint(Grid.Y_WEIGHT, 1.0).
+<a name="1166"/>         add(single_file_overlay_item).
+<a name="1167"/>         add(multiple_files_overlay_item).
+<a name="1168"/>         set_which_one(single_file_overlay_item)
+<a name="1169"/>      layout_3 := GridLayout().
+<a name="1170"/>         set_doi(scale(0)).
+<a name="1171"/>         set_extra("cells")
+<a name="1172"/>      panel_2 := Panel().
+<a name="1173"/>         clear_constraints().
+<a name="1174"/>         set_constraint(Grid.EOL, &amp;yes).
+<a name="1175"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1176"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1177"/>         set_layout(layout_3).
+<a name="1178"/>         add(filter).
+<a name="1179"/>         add(file_overlay)
+<a name="1180"/>      self.add(panel_2)
+<a name="1181"/>      paint_9 := TextPaint("Okay")
+<a name="1182"/>      okay_button := TextButton().
+<a name="1183"/>         set_align(Align.L, Align.B).
+<a name="1184"/>         clear_constraints().
+<a name="1185"/>         connect(self.on_okay_button, Event.ACTION).
+<a name="1186"/>         set_toggles(&amp;no).
+<a name="1187"/>         set_paint(paint_9)
+<a name="1188"/>      paint_10 := TextPaint("Cancel")
+<a name="1189"/>      cancel_button := TextButton().
+<a name="1190"/>         set_align(Align.L, Align.B).
+<a name="1191"/>         clear_constraints().
+<a name="1192"/>         connect(self.on_cancel_button, Event.ACTION).
+<a name="1193"/>         set_toggles(&amp;no).
+<a name="1194"/>         set_paint(paint_10)
+<a name="1195"/>      paint_11 := TextPaint("")
+<a name="1196"/>      message_label := MessageLabel().
+<a name="1197"/>         set_size(scale(130)).
+<a name="1198"/>         set_align(Align.L, Align.B).
+<a name="1199"/>         clear_constraints().
+<a name="1200"/>         set_constraint(Grid.X_ALIGN, Align.L).
+<a name="1201"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1202"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1203"/>         set_paint(paint_11)
+<a name="1204"/>      layout_4 := GridLayout().
+<a name="1205"/>         set_doi(scale(0)).
+<a name="1206"/>         set_extra("cells")
+<a name="1207"/>      panel_3 := Panel().
+<a name="1208"/>         clear_constraints().
+<a name="1209"/>         set_constraint(Grid.X_FILL, &amp;yes).
+<a name="1210"/>         set_constraint(Grid.X_WEIGHT, 1.0).
+<a name="1211"/>         set_layout(layout_4).
+<a name="1212"/>         add(okay_button).
+<a name="1213"/>         add(cancel_button).
+<a name="1214"/>         add(message_label)
+<a name="1215"/>      self.add(panel_3)
+<a name="1216"/>      layout_7 := GridLayout().
+<a name="1217"/>         set_extra("cells")
+<a name="1218"/>      self.set_layout(layout_7)
+<a name="1219"/>   end
+<a name="1220"/>end
+<a name="1221"/>
+<a name="1222"/>### Ivib-v2 layout: layouts/$.layout
+</pre></body></html>

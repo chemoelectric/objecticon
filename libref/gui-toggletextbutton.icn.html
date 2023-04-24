@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>toggletextbutton.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: toggletextbutton.icn 7355 2019-01-07 18:29:40Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>
+<a name="12"/>#
+<a name="13"/># This is simply a TextButton which acts as a toggle button.
+<a name="14"/># In other words, when it is pressed down it stays down.  When
+<a name="15"/># it is pressed again it comes back up.  It therefore has one
+<a name="16"/># of two states, like a check box.
+<a name="17"/>#
+<a name="18"/>class ToggleTextButton(TextButton)
+<a name="19"/>   public override new()
+<a name="20"/>      TextButton.new()
+<a name="21"/>      self.toggles_flag := &amp;yes
+<a name="22"/>      return
+<a name="23"/>   end
+<a name="24"/>end
+<a name="25"/>
+</pre></body></html>

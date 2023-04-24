@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>icon.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: icon.icn 7355 2019-01-07 18:29:40Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>#
+<a name="12"/># This class displays an icon.  It is just a `Label`, with
+<a name="13"/># different border alignment settings, suitable for displaying an
+<a name="14"/># image rather than text.
+<a name="15"/>#
+<a name="16"/>class Icon(Label)
+<a name="17"/>   public override new()
+<a name="18"/>      # Bypass Label's constructor to save creating a border twice.
+<a name="19"/>      Component.new()
+<a name="20"/>      self.set_border(NullBorder())
+<a name="21"/>      return
+<a name="22"/>   end
+<a name="23"/>end
+<a name="24"/>
+</pre></body></html>

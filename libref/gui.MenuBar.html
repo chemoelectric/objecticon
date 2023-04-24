@@ -1,0 +1,869 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MenuBar</title></head><body>
+<h1>MenuBar</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Component.html" target="displayFrame">gui.Component</a><br>
+<a href="gui.MenuSystem.html" target="displayFrame">gui.MenuSystem</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This class is the base from which menu systems are created,
+other than popup menus.
+<p/>
+Menus are added to the menu bar with the <code><a href="gui.MenuBar.html#add">add()</a></code> method.
+<p/><a href="gui-menubar.icn.html#13" target="displayFrame">Source - menubar.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.MenuMode.html">gui.MenuMode</a>
+<a href="gui.MenuSystem.html">gui.MenuSystem</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="gui.MenuBar.html">gui.MenuBar</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#build_point_chain">build_point_chain()</a>
+<a href="gui.Component.html#can_drag">can_drag()</a>
+<a href="gui.Component.html#can_drop">can_drop()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#drag_event">drag_event()</a>
+<a href="gui.Component.html#drag_reset">drag_reset()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#focus_changed">focus_changed()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#keeps">keeps()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout">reset_layout()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_geometry">set_geometry()</a>
+<a href="gui.Component.html#set_height">set_height()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_pos">set_pos()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_size">set_size()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_width">set_width()</a>
+<a href="gui.Component.html#set_x">set_x()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y">set_y()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#add_list">add_list()</a>
+<a href="#allow_nested">allow_nested()</a>
+<a href="#close_all">close_all()</a>
+<a href="#display">display()</a>
+<a href="#finally">finally()</a>
+<a href="#find_key">find_key()</a>
+<a href="#gen_popup_components">gen_popup_components()</a>
+<a href="#get_default_height">get_default_height()</a>
+<a href="#get_default_width">get_default_width()</a>
+<a href="#get_index">get_index()</a>
+<a href="#get_nesting_component">get_nesting_component()</a>
+<a href="#get_tooltip">get_tooltip()</a>
+<a href="#go_left">go_left()</a>
+<a href="#go_right">go_right()</a>
+<a href="#handle_accel">handle_accel()</a>
+<a href="#handle_default">handle_default()</a>
+<a href="#handle_exit">handle_exit()</a>
+<a href="#handle_key">handle_key()</a>
+<a href="#handle_key_down">handle_key_down()</a>
+<a href="#handle_key_escape">handle_key_escape()</a>
+<a href="#handle_key_left">handle_key_left()</a>
+<a href="#handle_key_right">handle_key_right()</a>
+<a href="#handle_move">handle_move()</a>
+<a href="#handle_press">handle_press()</a>
+<a href="#handle_release">handle_release()</a>
+<a href="#initially">initially()</a>
+<a href="#layout">layout()</a>
+<a href="#make_partial">make_partial()</a>
+<a href="#match_accel">match_accel()</a>
+<a href="#new">new()</a>
+<a href="#remove">remove()</a>
+<a href="#remove_all">remove_all()</a>
+<a href="#remove_index">remove_index()</a>
+<a href="#remove_list">remove_list()</a>
+<a href="#reposition">reposition()</a>
+<a href="#reposition_index">reposition_index()</a>
+<a href="#set_which_highlight">set_which_highlight()</a>
+<a href="#set_which_open">set_which_open()</a>
+<a href="#shift">shift()</a>
+<a href="#should_close">should_close()</a>
+<a href="#which_item">which_item()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#menus">menus</a>
+<a href="#which_highlight">which_highlight</a>
+<a href="#which_open">which_open</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(c, i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#add">add()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Add the <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> c to the <code><a href="gui.MenuBar.html" target="displayFrame">MenuBar</a></code>.  This will be one drop down
+menu.  Items are then added to the <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> to add.
+</dd>
+<dd>
+<code>i</code> - The index to add at; if omitted then the new component
+is appended to the end.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-menubar.icn.html#29" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="add_list"/>
+<h3>add_list(l, i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#add_list">add_list()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Add all the <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code>s contained in list <code>l</code> at index <code>i</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - The list to add
+</dd>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-menubar.icn.html#133" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="allow_nested"/>
+<h3>allow_nested(c)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#allow_nested">allow_nested()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#448" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="close_all"/>
+<h3>close_all()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#close_all">close_all()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#25" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="display"/>
+<h3>display()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#display">display()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#160" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#finally">finally()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#154" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="find_key"/>
+<h3>find_key(k)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#299" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="gen_popup_components"/>
+<h3>gen_popup_components()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#gen_popup_components">gen_popup_components()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#452" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_height"/>
+<h3>get_default_height()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#get_default_height">get_default_height()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#408" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_width"/>
+<h3>get_default_width()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#get_default_width">get_default_width()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#416" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="get_index"/>
+<h3>get_index(c)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#get_index">get_index()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Get the index of the given <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code>
+<p/><a href="gui-menubar.icn.html#48" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="get_nesting_component"/>
+<h3>get_nesting_component()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#get_nesting_component">get_nesting_component()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#455" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="get_tooltip"/>
+<h3>get_tooltip(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#get_tooltip">get_tooltip()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#279" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="go_left"/>
+<h3>go_left()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuSystem.html#go_left">go_left()</a> in <a href="gui.MenuSystem.html" target="displayFrame">gui.MenuSystem</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#329" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="go_right"/>
+<h3>go_right()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuSystem.html#go_right">go_right()</a> in <a href="gui.MenuSystem.html" target="displayFrame">gui.MenuSystem</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#307" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_accel"/>
+<h3>handle_accel(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#handle_accel">handle_accel()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#260" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_default"/>
+<h3>handle_default(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#289" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_exit"/>
+<h3>handle_exit(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#371" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_key"/>
+<h3>handle_key(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#398" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_key_down"/>
+<h3>handle_key_down(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#244" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_key_escape"/>
+<h3>handle_key_escape(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#255" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_key_left"/>
+<h3>handle_key_left(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#234" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_key_right"/>
+<h3>handle_key_right(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#239" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_move"/>
+<h3>handle_move(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#357" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_press"/>
+<h3>handle_press(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#346" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_release"/>
+<h3>handle_release(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menubar.icn.html#383" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#initially">initially()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#149" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="layout"/>
+<h3>layout()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#layout">layout()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#424" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="make_partial"/>
+<h3>make_partial()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuSystem.html#make_partial">make_partial()</a> in <a href="gui.MenuSystem.html" target="displayFrame">gui.MenuSystem</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#251" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="match_accel"/>
+<h3>match_accel(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#match_accel">match_accel()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#271" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#new">new()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#459" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="remove"/>
+<h3>remove(c)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#remove">remove()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Remove the <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> from the menu list.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> to remove.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If c is not a child menu of this instance.
+</dd>
+</dl>
+<p/><a href="gui-menubar.icn.html#55" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_all"/>
+<h3>remove_all()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#remove_all">remove_all()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Remove all the menus.
+<p/><a href="gui-menubar.icn.html#83" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_index"/>
+<h3>remove_index(i)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#remove_index">remove_index()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Remove the <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> at the given index from the menu list.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-menubar.icn.html#66" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_list"/>
+<h3>remove_list(i, j)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#remove_list">remove_list()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Remove the menus in the range <code>i:j</code>, returning the
+removed menus in a list.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The start slice index, default 1
+</dd>
+<dd>
+<code>j</code> - The end slice index, default 0
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If the range is invalid.
+</dd>
+</dl>
+<p/><a href="gui-menubar.icn.html#115" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition"/>
+<h3>reposition(c, j)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#reposition">reposition()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Move the <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> to the given index position.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> to move.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If c is not a child of this instance, 
+or j is out of range.
+</dd>
+</dl>
+<p/><a href="gui-menubar.icn.html#90" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition_index"/>
+<h3>reposition_index(i, j)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#reposition_index">reposition_index()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+Move the <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> at position <code>i</code> to <code>j</code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The old position.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If either index is out of range.
+</dd>
+</dl>
+<p/><a href="gui-menubar.icn.html#103" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="set_which_highlight"/>
+<h3>set_which_highlight(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the which_highlight to x, which_open to null
+<p/><a href="gui-menubar.icn.html#206" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="set_which_open"/>
+<h3>set_which_open(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set which_open and which_highlight to (non-null) x.
+<p/><a href="gui-menubar.icn.html#189" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="shift"/>
+<h3>shift(dx, dy)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#shift">shift()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#439" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="should_close"/>
+<h3>should_close(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.MenuMode.html#should_close">should_close()</a> in <a href="gui.MenuMode.html" target="displayFrame">gui.MenuMode</a></dd>
+<dd>
+<p/><a href="gui-menubar.icn.html#275" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="which_item"/>
+<h3>which_item(e)</h3>
+public<p/>
+<dl>
+<dd>
+Determine which of the menu labels is selected, if any, given we're in region.
+<p/><a href="gui-menubar.icn.html#178" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="menus"/>
+<h3>menus</h3>
+public<p/>
+<dl>
+<dd>
+List of menus.
+<p/><a href="gui-menubar.icn.html#23" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="which_highlight"/>
+<h3>which_highlight</h3>
+public<p/>
+<dl>
+<dd>
+Currently highlighted menu
+<p/><a href="gui-menubar.icn.html#21" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+<a name="which_open"/>
+<h3>which_open</h3>
+public<p/>
+<dl>
+<dd>
+Currently open menu
+<p/><a href="gui-menubar.icn.html#22" target="displayFrame">Source - menubar.icn </a>
+</dd>
+</dl><hr>
+</body></html>

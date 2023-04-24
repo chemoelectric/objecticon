@@ -1,0 +1,276 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>HttpRequest</title></head><body>
+<h1>HttpRequest</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="util.MimeHeaders.html" target="displayFrame">util.MimeHeaders</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="http-package.html" target="listFrame">http</a></dd>
+</dl><p/>
+Encapsulate one request to <code><a href="http.HttpClient.html" target="displayFrame">HttpClient</a></code>.
+<p/><a href="http-httprequest.icn.html#9" target="displayFrame">Source - httprequest.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.MimeHeaders.html">util.MimeHeaders</a>
+<a href="http.HttpRequest.html">http.HttpRequest</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.MimeHeaders</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.MimeHeaders.html#add_header">add_header()</a>
+<a href="util.MimeHeaders.html#gen_header_entries">gen_header_entries()</a>
+<a href="util.MimeHeaders.html#gen_header_keys">gen_header_keys()</a>
+<a href="util.MimeHeaders.html#gen_headers">gen_headers()</a>
+<a href="util.MimeHeaders.html#get_catenated_headers">get_catenated_headers()</a>
+<a href="util.MimeHeaders.html#get_first_header">get_first_header()</a>
+<a href="util.MimeHeaders.html#get_headers">get_headers()</a>
+<a href="util.MimeHeaders.html#has_header">has_header()</a>
+<a href="util.MimeHeaders.html#set_header">set_header()</a>
+<a href="util.MimeHeaders.html#show_headers">show_headers()</a>
+<a href="util.MimeHeaders.html#unset_header">unset_header()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.MimeHeaders</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.MimeHeaders.html#headers">headers</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#new">new()</a>
+<a href="#set_content_type">set_content_type()</a>
+<a href="#set_helper">set_helper()</a>
+<a href="#set_html_form_data">set_html_form_data()</a>
+<a href="#set_input_stream">set_input_stream()</a>
+<a href="#set_method">set_method()</a>
+<a href="#set_multipart_form_data">set_multipart_form_data()</a>
+<a href="#set_output_stream">set_output_stream()</a>
+<a href="#set_range">set_range()</a>
+<a href="#set_referer">set_referer()</a>
+<a href="#set_url">set_url()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#content_type">content_type</a>
+<a href="#helper">helper</a>
+<a href="#input_stream">input_stream</a>
+<a href="#method">method</a>
+<a href="#output_stream">output_stream</a>
+<a href="#range_end">range_end</a>
+<a href="#range_start">range_start</a>
+<a href="#referer">referer</a>
+<a href="#url">url</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="util.MimeHeaders.html#new">new()</a> in <a href="util.MimeHeaders.html" target="displayFrame">util.MimeHeaders</a></dd>
+<dd>
+<p/><a href="http-httprequest.icn.html#128" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_content_type"/>
+<h3>set_content_type(content_type)</h3>
+public<p/>
+<dl>
+<dd>
+Set the content type of the post/put data.  The parameter may
+either be a string, or a <code><a href="mail.ContentType.html" target="displayFrame">ContentType</a></code> instance.  In the latter
+case, it is converted to string using <code><a href="mail.ContentType.html#to_rfc2616">ContentType.to_rfc2616()</a></code>.
+<p/><a href="http-httprequest.icn.html#73" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_helper"/>
+<h3>set_helper(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set an instance of <code><a href="http.HttpRequestHelper.html" target="displayFrame">HttpRequestHelper</a></code> to provide extra functions
+which can be called during the request.
+<p/><a href="http-httprequest.icn.html#119" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_html_form_data"/>
+<h3>set_html_form_data(t)</h3>
+public<p/>
+<dl>
+<dd>
+Convenience method to set the post data from a table
+which represents html form post data.  The content type
+is set appropriately too.
+<p/><a href="http-httprequest.icn.html#42" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_input_stream"/>
+<h3>set_input_stream(f)</h3>
+public<p/>
+<dl>
+<dd>
+For a POST or PUT, set the stream to read data from.
+<p/><a href="http-httprequest.icn.html#102" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_method"/>
+<h3>set_method(method)</h3>
+public<p/>
+<dl>
+<dd>
+Set the request method type.  The default is <code>GET</code>, unless post data is set, in which
+case the default is <code>POST</code>.
+<p/><a href="http-httprequest.icn.html#85" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_multipart_form_data"/>
+<h3>set_multipart_form_data(m)</h3>
+public<p/>
+<dl>
+<dd>
+Convenience method to set the post data from a Message
+which represents html form post data.  The content type
+is set appropriately too.
+<p/>
+The Message object must have content type multipart/form-data,
+and have an appropriate MultiPart set as its content object.
+<p/><a href="http-httprequest.icn.html#54" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_output_stream"/>
+<h3>set_output_stream(f)</h3>
+public<p/>
+<dl>
+<dd>
+Set a stream to use to receive the data; always required except
+on a "HEAD" method.
+<p/><a href="http-httprequest.icn.html#110" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_range"/>
+<h3>set_range(s, e)</h3>
+public<p/>
+<dl>
+<dd>
+Set the range of data to get; either being &amp;null implies the
+start or end of data respectively.
+<p/><a href="http-httprequest.icn.html#32" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_referer"/>
+<h3>set_referer(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the referer page; the value may be a string or a <code><a href="net.URL.html" target="displayFrame">URL</a></code>.
+<p/><a href="http-httprequest.icn.html#94" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="set_url"/>
+<h3>set_url(url)</h3>
+public<p/>
+<dl>
+<dd>
+Set the desired url.
+<p/><a href="http-httprequest.icn.html#24" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="content_type"/>
+<h3>content_type</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#21" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="helper"/>
+<h3>helper</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#22" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="input_stream"/>
+<h3>input_stream</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#15" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="method"/>
+<h3>method</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#16" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="output_stream"/>
+<h3>output_stream</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#17" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="range_end"/>
+<h3>range_end</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#20" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="range_start"/>
+<h3>range_start</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#19" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="referer"/>
+<h3>referer</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#18" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+<a name="url"/>
+<h3>url</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="http-httprequest.icn.html#14" target="displayFrame">Source - httprequest.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,387 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>colordialog.icn</title></head><body><pre>
+<a name="1"/>package ipl.colorgui
+<a name="2"/>
+<a name="3"/>import
+<a name="4"/>   gui, graphics, ipl.graphics, util
+<a name="5"/>
+<a name="6"/>class ColorRectangle(Component)
+<a name="7"/>   private readable c
+<a name="8"/>
+<a name="9"/>   public override display()
+<a name="10"/>      cbwin.set_fg(c)
+<a name="11"/>      cbwin.fill_rectangle(self.x, self.y, self.w, self.h)
+<a name="12"/>   end
+<a name="13"/>
+<a name="14"/>   public set_color(c)
+<a name="15"/>      self.c := c
+<a name="16"/>      invalidate()
+<a name="17"/>      link
+<a name="18"/>   end
+<a name="19"/>end
+<a name="20"/>
+<a name="21"/>class ColorDialog(Dialog)
+<a name="22"/>   private
+<a name="23"/>      blue,
+<a name="24"/>      red,
+<a name="25"/>      green,
+<a name="26"/>      rgb_label,
+<a name="27"/>      hue,
+<a name="28"/>      light,
+<a name="29"/>      saturation,
+<a name="30"/>      hls_label,
+<a name="31"/>      colr,
+<a name="32"/>      res,
+<a name="33"/>      okay_button,
+<a name="34"/>      cancel_button,
+<a name="35"/>      alpha,
+<a name="36"/>      alpha_label,
+<a name="37"/>      opaque_flag,
+<a name="38"/>      alpha_panel
+<a name="39"/>
+<a name="40"/>   public set_opaque(s)
+<a name="41"/>      self.opaque_flag := need_flag(s)
+<a name="42"/>      link
+<a name="43"/>   end
+<a name="44"/>
+<a name="45"/>   public override init_dialog()
+<a name="46"/>      alpha_panel.set_is_shaded(opaque_flag)
+<a name="47"/>      if \opaque_flag then {
+<a name="48"/>         alpha.set_value(65535)
+<a name="49"/>         update_rgb()
+<a name="50"/>         update_alpha()
+<a name="51"/>      }
+<a name="52"/>   end
+<a name="53"/>
+<a name="54"/>   private copy_rgb_label()
+<a name="55"/>      own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(colr.c))
+<a name="56"/>   end
+<a name="57"/>
+<a name="58"/>   private on_rgb_label(ev)
+<a name="59"/>      local pm, pm_menu
+<a name="60"/>      pm_menu := Menu()
+<a name="61"/>      pm_menu.add(TextMenuItem().set_label("Copy").connect(copy_rgb_label, Event.ACTION))
+<a name="62"/>      pm := PopupMenu()
+<a name="63"/>      pm.popup(self, pm_menu, ev.x, ev.y)
+<a name="64"/>   end
+<a name="65"/>
+<a name="66"/>   public override new(v)
+<a name="67"/>      local l
+<a name="68"/>      Dialog.new()
+<a name="69"/>      self.setup()
+<a name="70"/>      if l := Window.parse_color(\v) then {
+<a name="71"/>         red.set_value(l.red)
+<a name="72"/>         green.set_value(l.green)
+<a name="73"/>         blue.set_value(l.blue)
+<a name="74"/>         alpha.set_value(l.alpha)
+<a name="75"/>      }
+<a name="76"/>      update_rgb()
+<a name="77"/>      update_alpha()
+<a name="78"/>      colr.connect(on_rgb_label, Event.MOUSE_RIGHT_PRESS)
+<a name="79"/>      return
+<a name="80"/>   end
+<a name="81"/>
+<a name="82"/>   private update_rgb()
+<a name="83"/>      local c, hls
+<a name="84"/>      c := red.get_value() || "," || green.get_value() || "," || blue.get_value()
+<a name="85"/>      colr.set_color(c || "," || alpha.get_value())
+<a name="86"/>      rgb_label.set_label(c)
+<a name="87"/>      hls := rgb2hls(color2rgb(c))
+<a name="88"/>      hue.set_value(integer(hls.h))
+<a name="89"/>      light.set_value(integer(hls.l * 100))
+<a name="90"/>      saturation.set_value(integer(hls.s * 100))
+<a name="91"/>      hls_label.set_label(hue.get_value() || ":" || light.get_value() || ":" || saturation.get_value())
+<a name="92"/>   end
+<a name="93"/>
+<a name="94"/>   private update_hls()
+<a name="95"/>      local rgb, l
+<a name="96"/>      hls_label.set_label(hue.get_value() || ":" || light.get_value() || ":" || saturation.get_value())
+<a name="97"/>      rgb := rgb2color(hls2rgb(hls(hue.get_value(), light.get_value()/100.0, saturation.get_value()/100.0)))
+<a name="98"/>      l := Window.parse_color(rgb)
+<a name="99"/>      colr.set_color(l.red || "," || l.green || "," || l.blue || "," || alpha.get_value())
+<a name="100"/>      rgb_label.set_label(l.red || "," || l.green || "," || l.blue)
+<a name="101"/>      red.set_value(l.red)
+<a name="102"/>      green.set_value(l.green)
+<a name="103"/>      blue.set_value(l.blue)
+<a name="104"/>   end
+<a name="105"/>
+<a name="106"/>   private on_blue(ev)
+<a name="107"/>      update_rgb()   
+<a name="108"/>   end
+<a name="109"/>
+<a name="110"/>   private on_green(ev)
+<a name="111"/>      update_rgb()   
+<a name="112"/>   end
+<a name="113"/>
+<a name="114"/>   private on_red(ev)
+<a name="115"/>      update_rgb()   
+<a name="116"/>   end
+<a name="117"/>
+<a name="118"/>   private on_hue(ev)
+<a name="119"/>      update_hls()
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   private on_light(ev)
+<a name="123"/>      update_hls()
+<a name="124"/>   end
+<a name="125"/>
+<a name="126"/>   private on_saturation(ev)
+<a name="127"/>      update_hls()
+<a name="128"/>   end
+<a name="129"/>
+<a name="130"/>   private on_cancel_button(ev)
+<a name="131"/>      self.res := &amp;null
+<a name="132"/>      dispose()
+<a name="133"/>   end
+<a name="134"/>
+<a name="135"/>   private on_okay_button(ev)
+<a name="136"/>      self.res := colr.c
+<a name="137"/>      self.dispose()
+<a name="138"/>   end
+<a name="139"/>
+<a name="140"/>   public get_result()
+<a name="141"/>      return \res
+<a name="142"/>   end
+<a name="143"/>
+<a name="144"/>   private update_alpha()
+<a name="145"/>      alpha_label.set_label(alpha.get_value())
+<a name="146"/>   end
+<a name="147"/>
+<a name="148"/>   private on_alpha(ev)
+<a name="149"/>      local c
+<a name="150"/>      update_alpha()
+<a name="151"/>      c := red.get_value() || "," || green.get_value() || "," || blue.get_value() || "," || alpha.get_value()
+<a name="152"/>      colr.set_color(c)
+<a name="153"/>   end
+<a name="154"/>
+<a name="155"/>   private setup()
+<a name="156"/>      local label_2, paint_2, panel_2, layout_7, layout_4, paint_11, paint_4, layout_1, label_1, paint_1, paint_9, panel_1, border_2, layout_6, layout_3, paint_10, label_3, paint_3, panel_3, border_content_1, border_content_2, border_content_3, border_1, layout_5, paint_12, layout_2
+<a name="157"/>      self.set_label("Select color")
+<a name="158"/>      paint_2 := TextPaint("RGB")
+<a name="159"/>      label_1 := Label().
+<a name="160"/>         set_pos(scale(286), scale(248)).
+<a name="161"/>         clear_constraints().
+<a name="162"/>         set_constraint("x_align", Align.L).
+<a name="163"/>         set_paint(paint_2)
+<a name="164"/>      red := Slider().
+<a name="165"/>         set_size(scale(196)).
+<a name="166"/>         clear_constraints().
+<a name="167"/>         set_constraint("eol", &amp;yes).
+<a name="168"/>         set_constraint("x_fill", &amp;yes).
+<a name="169"/>         set_constraint("x_weight", 1.0).
+<a name="170"/>         connect(self.on_red, Event.VALUE_CHANGED).
+<a name="171"/>         set_range(0, 65535).
+<a name="172"/>         set_value(0).
+<a name="173"/>         set_increment_size(1024).
+<a name="174"/>         set_is_horizontal(&amp;yes)
+<a name="175"/>      green := Slider().
+<a name="176"/>         set_size(scale(169)).
+<a name="177"/>         clear_constraints().
+<a name="178"/>         set_constraint("eol", &amp;yes).
+<a name="179"/>         set_constraint("x_fill", &amp;yes).
+<a name="180"/>         connect(self.on_green, Event.VALUE_CHANGED).
+<a name="181"/>         set_range(0, 65535).
+<a name="182"/>         set_value(0).
+<a name="183"/>         set_increment_size(1024).
+<a name="184"/>         set_is_horizontal(&amp;yes)
+<a name="185"/>      blue := Slider().
+<a name="186"/>         set_size(scale(169)).
+<a name="187"/>         clear_constraints().
+<a name="188"/>         set_constraint("eol", &amp;yes).
+<a name="189"/>         set_constraint("x_fill", &amp;yes).
+<a name="190"/>         connect(self.on_blue, Event.VALUE_CHANGED).
+<a name="191"/>         set_range(0, 65535).
+<a name="192"/>         set_value(0).
+<a name="193"/>         set_increment_size(1024).
+<a name="194"/>         set_is_horizontal(&amp;yes)
+<a name="195"/>      paint_1 := TextPaint("Label")
+<a name="196"/>      rgb_label := Label().
+<a name="197"/>         clear_constraints().
+<a name="198"/>         set_constraint("x_align", Align.L).
+<a name="199"/>         set_constraint("x_fill", &amp;yes).
+<a name="200"/>         set_paint(paint_1)
+<a name="201"/>      layout_1 := GridLayout().
+<a name="202"/>         set_extra("cells")
+<a name="203"/>      border_content_1 := Component().
+<a name="204"/>         clear_constraints().
+<a name="205"/>         set_layout(layout_1).
+<a name="206"/>         add(red).
+<a name="207"/>         add(green).
+<a name="208"/>         add(blue).
+<a name="209"/>         add(rgb_label)
+<a name="210"/>      border_1 := Border().
+<a name="211"/>         clear_constraints().
+<a name="212"/>         set_constraint("eol", &amp;yes).
+<a name="213"/>         set_constraint("x_fill", &amp;yes).
+<a name="214"/>         set_constraint("x_weight", 1.0).
+<a name="215"/>         set_constraint("y_fill", &amp;yes).
+<a name="216"/>         set_constraint("y_weight", 1.0).
+<a name="217"/>         set_title(label_1).
+<a name="218"/>         set_content(border_content_1)
+<a name="219"/>      paint_4 := TextPaint("HLS")
+<a name="220"/>      label_2 := Label().
+<a name="221"/>         set_pos(scale(406), scale(228)).
+<a name="222"/>         clear_constraints().
+<a name="223"/>         set_constraint("x_align", Align.L).
+<a name="224"/>         set_paint(paint_4)
+<a name="225"/>      hue := Slider().
+<a name="226"/>         set_size(scale(169)).
+<a name="227"/>         clear_constraints().
+<a name="228"/>         set_constraint("eol", &amp;yes).
+<a name="229"/>         set_constraint("x_fill", &amp;yes).
+<a name="230"/>         set_constraint("x_weight", 1.0).
+<a name="231"/>         connect(self.on_hue, Event.VALUE_CHANGED).
+<a name="232"/>         set_range(0, 360).
+<a name="233"/>         set_value(0).
+<a name="234"/>         set_increment_size(10).
+<a name="235"/>         set_is_horizontal(&amp;yes)
+<a name="236"/>      light := Slider().
+<a name="237"/>         set_size(scale(100)).
+<a name="238"/>         clear_constraints().
+<a name="239"/>         set_constraint("eol", &amp;yes).
+<a name="240"/>         set_constraint("x_fill", &amp;yes).
+<a name="241"/>         connect(self.on_light, Event.VALUE_CHANGED).
+<a name="242"/>         set_range(0, 100).
+<a name="243"/>         set_value(0).
+<a name="244"/>         set_increment_size(5).
+<a name="245"/>         set_is_horizontal(&amp;yes)
+<a name="246"/>      saturation := Slider().
+<a name="247"/>         set_size(scale(100)).
+<a name="248"/>         clear_constraints().
+<a name="249"/>         set_constraint("eol", &amp;yes).
+<a name="250"/>         set_constraint("x_fill", &amp;yes).
+<a name="251"/>         connect(self.on_saturation, Event.VALUE_CHANGED).
+<a name="252"/>         set_range(0, 100).
+<a name="253"/>         set_value(0).
+<a name="254"/>         set_increment_size(1).
+<a name="255"/>         set_is_horizontal(&amp;yes)
+<a name="256"/>      paint_3 := TextPaint("Label")
+<a name="257"/>      hls_label := Label().
+<a name="258"/>         clear_constraints().
+<a name="259"/>         set_constraint("x_align", Align.L).
+<a name="260"/>         set_constraint("x_fill", &amp;yes).
+<a name="261"/>         set_paint(paint_3)
+<a name="262"/>      layout_2 := GridLayout().
+<a name="263"/>         set_extra("cells")
+<a name="264"/>      border_content_2 := Component().
+<a name="265"/>         clear_constraints().
+<a name="266"/>         set_layout(layout_2).
+<a name="267"/>         add(hue).
+<a name="268"/>         add(light).
+<a name="269"/>         add(saturation).
+<a name="270"/>         add(hls_label)
+<a name="271"/>      border_2 := Border().
+<a name="272"/>         clear_constraints().
+<a name="273"/>         set_constraint("eol", &amp;yes).
+<a name="274"/>         set_constraint("x_fill", &amp;yes).
+<a name="275"/>         set_constraint("x_weight", 1.0).
+<a name="276"/>         set_constraint("y_fill", &amp;yes).
+<a name="277"/>         set_constraint("y_weight", 1.0).
+<a name="278"/>         set_title(label_2).
+<a name="279"/>         set_content(border_content_2)
+<a name="280"/>      paint_11 := TextPaint("Alpha")
+<a name="281"/>      label_3 := Label().
+<a name="282"/>         set_pos(scale(215), scale(398)).
+<a name="283"/>         clear_constraints().
+<a name="284"/>         set_constraint("x_align", Align.L).
+<a name="285"/>         set_paint(paint_11)
+<a name="286"/>      alpha := Slider().
+<a name="287"/>         set_size(scale(100)).
+<a name="288"/>         clear_constraints().
+<a name="289"/>         set_constraint("eol", &amp;yes).
+<a name="290"/>         set_constraint("x_fill", &amp;yes).
+<a name="291"/>         set_constraint("x_weight", 1.0).
+<a name="292"/>         connect(self.on_alpha, Event.VALUE_CHANGED).
+<a name="293"/>         set_range(0, 65535).
+<a name="294"/>         set_value(65535).
+<a name="295"/>         set_increment_size(1024).
+<a name="296"/>         set_is_horizontal(&amp;yes)
+<a name="297"/>      paint_12 := TextPaint("Label")
+<a name="298"/>      alpha_label := Label().
+<a name="299"/>         clear_constraints().
+<a name="300"/>         set_constraint("x_align", Align.L).
+<a name="301"/>         set_constraint("x_fill", &amp;yes).
+<a name="302"/>         set_paint(paint_12)
+<a name="303"/>      layout_7 := GridLayout().
+<a name="304"/>         set_extra("cells")
+<a name="305"/>      border_content_3 := Component().
+<a name="306"/>         clear_constraints().
+<a name="307"/>         set_layout(layout_7).
+<a name="308"/>         add(alpha).
+<a name="309"/>         add(alpha_label)
+<a name="310"/>      alpha_panel := Border().
+<a name="311"/>         clear_constraints().
+<a name="312"/>         set_constraint("x_fill", &amp;yes).
+<a name="313"/>         set_constraint("x_weight", 1.0).
+<a name="314"/>         set_constraint("y_fill", &amp;yes).
+<a name="315"/>         set_constraint("y_weight", 1.0).
+<a name="316"/>         set_title(label_3).
+<a name="317"/>         set_content(border_content_3)
+<a name="318"/>      layout_5 := GridLayout().
+<a name="319"/>         set_doi(0).
+<a name="320"/>         set_extra("cells")
+<a name="321"/>      panel_2 := Panel().
+<a name="322"/>         clear_constraints().
+<a name="323"/>         set_constraint("x_fill", &amp;yes).
+<a name="324"/>         set_constraint("x_weight", 1.0).
+<a name="325"/>         set_constraint("y_fill", &amp;yes).
+<a name="326"/>         set_constraint("y_weight", 1.0).
+<a name="327"/>         set_layout(layout_5).
+<a name="328"/>         add(border_1).
+<a name="329"/>         add(border_2).
+<a name="330"/>         add(alpha_panel)
+<a name="331"/>      self.add(panel_2)
+<a name="332"/>      colr := ColorRectangle().
+<a name="333"/>         set_size(scale(154), scale(134)).
+<a name="334"/>         clear_constraints().
+<a name="335"/>         set_constraint("eol", &amp;yes).
+<a name="336"/>         set_constraint("x_fill", &amp;yes).
+<a name="337"/>         set_constraint("x_weight", 1.0).
+<a name="338"/>         set_constraint("y_fill", &amp;yes).
+<a name="339"/>         set_constraint("y_weight", 1.0)
+<a name="340"/>      paint_9 := TextPaint("Okay")
+<a name="341"/>      okay_button := TextButton().
+<a name="342"/>         set_align(Align.L, Align.B).
+<a name="343"/>         clear_constraints().
+<a name="344"/>         connect(self.on_okay_button, Event.ACTION).
+<a name="345"/>         set_toggles(&amp;no).
+<a name="346"/>         set_paint(paint_9)
+<a name="347"/>      paint_10 := TextPaint("Cancel")
+<a name="348"/>      cancel_button := TextButton().
+<a name="349"/>         set_align(Align.L, Align.B).
+<a name="350"/>         clear_constraints().
+<a name="351"/>         connect(self.on_cancel_button, Event.ACTION).
+<a name="352"/>         set_toggles(&amp;no).
+<a name="353"/>         set_paint(paint_10)
+<a name="354"/>      layout_6 := GridLayout().
+<a name="355"/>         set_doi(0).
+<a name="356"/>         set_extra("cells")
+<a name="357"/>      panel_3 := Panel().
+<a name="358"/>         clear_constraints().
+<a name="359"/>         set_constraint("x_fill", &amp;yes).
+<a name="360"/>         set_constraint("x_weight", 1.0).
+<a name="361"/>         set_layout(layout_6).
+<a name="362"/>         add(okay_button).
+<a name="363"/>         add(cancel_button)
+<a name="364"/>      layout_4 := GridLayout().
+<a name="365"/>         set_doi(0).
+<a name="366"/>         set_extra("cells")
+<a name="367"/>      panel_1 := Panel().
+<a name="368"/>         clear_constraints().
+<a name="369"/>         set_constraint("eol", &amp;yes).
+<a name="370"/>         set_constraint("x_fill", &amp;yes).
+<a name="371"/>         set_constraint("x_weight", 1.0).
+<a name="372"/>         set_constraint("y_fill", &amp;yes).
+<a name="373"/>         set_constraint("y_weight", 1.0).
+<a name="374"/>         set_layout(layout_4).
+<a name="375"/>         add(colr).
+<a name="376"/>         add(panel_3)
+<a name="377"/>      self.add(panel_1)
+<a name="378"/>      layout_3 := GridLayout().
+<a name="379"/>         set_extra("cells")
+<a name="380"/>      self.set_layout(layout_3)
+<a name="381"/>   end
+<a name="382"/>end
+<a name="383"/>
+<a name="384"/>### Ivib-v2 layout: layouts/$.layout
+</pre></body></html>

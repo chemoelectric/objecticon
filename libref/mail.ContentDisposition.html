@@ -1,0 +1,339 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ContentDisposition</title></head><body>
+<h1>ContentDisposition</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Package :</dt><dd><a href="mail-package.html" target="listFrame">mail</a></dd>
+</dl><p/>
+This class represents a content disposition
+<p/><a href="mail-contentdisposition.icn.html#9" target="displayFrame">Source - contentdisposition.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_creation_date">get_creation_date()</a>
+<a href="#get_filename">get_filename()</a>
+<a href="#get_modification_date">get_modification_date()</a>
+<a href="#get_parameter">get_parameter()</a>
+<a href="#get_read_date">get_read_date()</a>
+<a href="#get_size">get_size()</a>
+<a href="#get_type">get_type()</a>
+<a href="#new">new()</a>
+<a href="#parameter_error">parameter_error()</a>
+<a href="#parse">parse()</a>
+<a href="#parse_rfc2616">parse_rfc2616()</a>
+<a href="#set_creation_date">set_creation_date()</a>
+<a href="#set_filename">set_filename()</a>
+<a href="#set_modification_date">set_modification_date()</a>
+<a href="#set_parameter">set_parameter()</a>
+<a href="#set_read_date">set_read_date()</a>
+<a href="#set_size">set_size()</a>
+<a href="#set_type">set_type()</a>
+<a href="#to_rfc1521">to_rfc1521()</a>
+<a href="#to_rfc2616">to_rfc2616()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#parameters">parameters</a>
+<a href="#type">type</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_creation_date"/>
+<h3>get_creation_date()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "creation-date" parameter as a <code>Time</code> object.
+<dl>
+<dt>
+Fails :
+</dt>
+<dd>
+if the parameter is absent or cannot be parsed.
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code>Time</code> instance
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#70" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="get_filename"/>
+<h3>get_filename()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "filename" parameter, or fail if absent
+<p/><a href="mail-contentdisposition.icn.html#55" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="get_modification_date"/>
+<h3>get_modification_date()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "modification-date" parameter as a <code>Time</code> object.
+<dl>
+<dt>
+Fails :
+</dt>
+<dd>
+if the parameter is absent or cannot be parsed.
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code>Time</code> instance
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#92" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parameter"/>
+<h3>get_parameter(key)</h3>
+public<p/>
+<dl>
+<dd>
+Get the parameter for the given key.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>key</code> - the key
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#32" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="get_read_date"/>
+<h3>get_read_date()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "read-date" parameter as a <code>Time</code> object.
+<dl>
+<dt>
+Fails :
+</dt>
+<dd>
+if the parameter is absent or cannot be parsed.
+</dd>
+<dt>
+Returns :
+</dt>
+<dd>
+a <code>Time</code> instance
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#114" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="get_size"/>
+<h3>get_size()</h3>
+public<p/>
+<dl>
+<dd>
+Get the "size" parameter as an integer, or fail if it's absent or
+not an integer.
+<p/><a href="mail-contentdisposition.icn.html#136" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="get_type"/>
+<h3>get_type()</h3>
+public<p/>
+<dl>
+<dd>
+Get the type
+<p/><a href="mail-contentdisposition.icn.html#25" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(type)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#177" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="parameter_error"/>
+<h3>parameter_error(h, s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#51" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="parse"/>
+<h3>parse(s)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#153" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_rfc2616"/>
+<h3>parse_rfc2616(s)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#157" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="set_creation_date"/>
+<h3>set_creation_date(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "creation-date" parameter from the given <code>Time</code> object.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - the <code>Time</code> from which to set the date field.
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#83" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="set_filename"/>
+<h3>set_filename(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "filename" parameter.
+<p/><a href="mail-contentdisposition.icn.html#62" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="set_modification_date"/>
+<h3>set_modification_date(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "modification-date" parameter from the given <code>Time</code> object.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - the <code>Time</code> from which to set the date field.
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#105" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="set_parameter"/>
+<h3>set_parameter(key, value)</h3>
+public<p/>
+<dl>
+<dd>
+Set the parameter to the given value
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>key</code> - the key
+</dd>
+<dd>
+<code>value</code> - the value
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#41" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="set_read_date"/>
+<h3>set_read_date(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "read-date" parameter from the given <code>Time</code> object.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>t</code> - the <code>Time</code> from which to set the date field.
+</dd>
+</dl>
+<p/><a href="mail-contentdisposition.icn.html#127" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="set_size"/>
+<h3>set_size(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the "size" parameter from the given integer.
+<p/><a href="mail-contentdisposition.icn.html#146" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="set_type"/>
+<h3>set_type(t)</h3>
+public<p/>
+<dl>
+<dd>
+Set type type
+<p/><a href="mail-contentdisposition.icn.html#17" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="to_rfc1521"/>
+<h3>to_rfc1521()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#161" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="to_rfc2616"/>
+<h3>to_rfc2616()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#169" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="parameters"/>
+<h3>parameters</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#15" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+<a name="type"/>
+<h3>type</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="mail-contentdisposition.icn.html#14" target="displayFrame">Source - contentdisposition.icn </a>
+</dd>
+</dl><hr>
+</body></html>

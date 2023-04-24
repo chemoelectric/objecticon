@@ -1,0 +1,607 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>BigMath</title></head><body>
+<h1>BigMath</h1>
+<dl>
+<dt>Type :</dt><dd>final abstract class</dd>
+<dt>Package :</dt><dd><a href="ipl.numbers-package.html" target="listFrame">ipl.numbers</a></dd>
+</dl><p/>
+This class provides static methods to calculate some common
+mathematical functions using the arbitrary precision <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code> class.
+They are based on Eric Obermühlner's BigDecimalMath java library.
+See :-
+<p/>
+<a href="http://obermuhlner.ch/wordpress/2016/06/02/bigdecimalmath/">http://obermuhlner.ch/wordpress/2016/06/02/bigdecimalmath/</a>
+<p/><a href="ipl.numbers-bigmath.icn.html#219" target="displayFrame">Source - bigmath.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#acos">acos()</a>
+<a href="#asin">asin()</a>
+<a href="#atan">atan()</a>
+<a href="#atan2">atan2()</a>
+<a href="#calcAcceptableError">calcAcceptableError()</a>
+<a href="#calcLogTen">calcLogTen()</a>
+<a href="#cos">cos()</a>
+<a href="#cosh">cosh()</a>
+<a href="#e">e()</a>
+<a href="#exact_integer">exact_integer()</a>
+<a href="#exp">exp()</a>
+<a href="#expTaylor">expTaylor()</a>
+<a href="#fractional_part">fractional_part()</a>
+<a href="#init">init()</a>
+<a href="#integral_part">integral_part()</a>
+<a href="#log">log()</a>
+<a href="#log10">log10()</a>
+<a href="#logTen">logTen()</a>
+<a href="#logUsingNewton">logUsingNewton()</a>
+<a href="#mod2pi">mod2pi()</a>
+<a href="#pi">pi()</a>
+<a href="#piChudnovski">piChudnovski()</a>
+<a href="#pow">pow()</a>
+<a href="#powi">powi()</a>
+<a href="#remainder">remainder()</a>
+<a href="#root">root()</a>
+<a href="#sin">sin()</a>
+<a href="#sinh">sinh()</a>
+<a href="#sqrt">sqrt()</a>
+<a href="#tan">tan()</a>
+<a href="#tanh">tanh()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#EXPECTED_INITIAL_PRECISION">EXPECTED_INITIAL_PRECISION</a>
+<a href="#ONE">ONE</a>
+<a href="#ROUGHLY_TWO_PI">ROUGHLY_TWO_PI</a>
+<a href="#TWO">TWO</a>
+<a href="#ZERO">ZERO</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="acos"/>
+<h3>acos(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the arc cosine (inverted cosine) of <code>x</code>
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#630" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="asin"/>
+<h3>asin(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the arc sine (inverted sine) of <code>x</code>
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#601" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="atan"/>
+<h3>atan(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the arc tangent (inverted tangent) of <code>x</code>
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#647" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="atan2"/>
+<h3>atan2(y, x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the arc tangent (inverted tangent) of <code>y / x</code> in the range -pi to pi.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>y</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#713" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="calcAcceptableError"/>
+<h3>calcAcceptableError(result, mc)</h3>
+package static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#455" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="calcLogTen"/>
+<h3>calcLogTen(prec)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#424" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="cos"/>
+<h3>cos(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the cosine of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#566" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="cosh"/>
+<h3>cosh(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the hyperbolic cosine of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#681" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="e"/>
+<h3>e(rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Return <code><a href="ipl.numbers.BigMath.html#e">e</a></code> to the requested precision and rounding.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#257" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="exact_integer"/>
+<h3>exact_integer(x)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#522" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="exp"/>
+<h3>exp(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the natural exponent of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#272" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="expTaylor"/>
+<h3>expTaylor(x, rnd)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#301" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="fractional_part"/>
+<h3>fractional_part(x)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#530" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#234" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="integral_part"/>
+<h3>integral_part(x)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#526" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="log"/>
+<h3>log(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the natural logarithm of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#369" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="log10"/>
+<h3>log10(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the logarithm of <code>x</code> to the base 10.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#403" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="logTen"/>
+<h3>logTen(prec)</h3>
+private static<p/>
+<dl>
+<dd>
+Return ln(10) to the given precision.
+<p/><a href="ipl.numbers-bigmath.icn.html#417" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="logUsingNewton"/>
+<h3>logUsingNewton(x, prec)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#428" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="mod2pi"/>
+<h3>mod2pi(x, prec)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#538" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="pi"/>
+<h3>pi(rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Return Pi to the requested precision and rounding.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#242" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="piChudnovski"/>
+<h3>piChudnovski(prec)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#755" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="pow"/>
+<h3>pow(x, y, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates <code>x</code> raised to the power of <code>y</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>y</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#313" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="powi"/>
+<h3>powi(x, y, rnd)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#345" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="remainder"/>
+<h3>remainder(x, y)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#534" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="root"/>
+<h3>root(x, n, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the n'th root of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>n</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#459" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="sin"/>
+<h3>sin(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the sine (sinus) of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#547" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="sinh"/>
+<h3>sinh(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the hyperbolic sine of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#663" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="sqrt"/>
+<h3>sqrt(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the square root of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#745" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="tan"/>
+<h3>tan(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the tan of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#585" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="tanh"/>
+<h3>tanh(x, rnd)</h3>
+public static<p/>
+<dl>
+<dd>
+Calculates the hyperbolic tangent of <code>x</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>x</code> - something convertible to a <code><a href="numbers.Dec.html" target="displayFrame">Dec</a></code>.
+</dd>
+<dd>
+<code>rnd</code> - something convertible to a <code><a href="numbers.Round.html" target="displayFrame">Round</a></code>.
+</dd>
+</dl>
+<p/><a href="ipl.numbers-bigmath.icn.html#699" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="EXPECTED_INITIAL_PRECISION"/>
+<h3>EXPECTED_INITIAL_PRECISION</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#228" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="ONE"/>
+<h3>ONE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#231" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="ROUGHLY_TWO_PI"/>
+<h3>ROUGHLY_TWO_PI</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#229" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="TWO"/>
+<h3>TWO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#230" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+<a name="ZERO"/>
+<h3>ZERO</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.numbers-bigmath.icn.html#232" target="displayFrame">Source - bigmath.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,19 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>field_cmp</title></head><body>
+<h1>field_cmp(q, f)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.sort-package.html" target="listFrame">ipl.sort</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Return a compare function which applies the comparator function <code>f</code> to the
+field named <code>q</code> in each item.  <code>f</code> defaults to <code><a href="lang.Internal.html#compare">Internal.compare</a></code>.
+<p/>
+For example :-
+<pre>
+    l := [Point(1,2),Point(34,4),Point(3,56),Point(23,55)]
+    # sort by the x element of each item
+    qsort(l, field_cmp("x"))
+</pre>
+<p/><a href="ipl.sort-sort.icn.html#259" target="displayFrame">Source - sort.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,706 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>scheduler.icn</title></head><body><pre>
+<a name="1"/>package io
+<a name="2"/>
+<a name="3"/>import lang, util, ipl.printf, ipl.sort
+<a name="4"/>
+<a name="5"/>#
+<a name="6"/># This stream wraps another stream (normally a `SocketStream`).  The
+<a name="7"/># `in` and `out` methods are invoked from the co-expression of the
+<a name="8"/># owning `Task`.  Those methods activate the `Task`'s `Scheduler`'s
+<a name="9"/># co-expression.  The stream's co-expression is re-activated only when
+<a name="10"/># the `Scheduler` determines the stream is ready for i/o.
+<a name="11"/>#
+<a name="12"/>class TaskStream(Stream, HasTask, HasCloseUnderlying)
+<a name="13"/>   private readable
+<a name="14"/>      timeout
+<a name="15"/>   private const
+<a name="16"/>      other
+<a name="17"/>
+<a name="18"/>   public override in(n)
+<a name="19"/>      local r
+<a name="20"/>      r := task.poll([other, Poll.IN], timeout) | fail
+<a name="21"/>      return if /r then 
+<a name="22"/>         error(if /task.notify_flag then "Timeout" else "Notified")
+<a name="23"/>      else if DescStream.poll_in_test(r[1]) then
+<a name="24"/>         other.in(n)
+<a name="25"/>      else {
+<a name="26"/>         other.improve_why()
+<a name="27"/>         whyf("Error on poll(): %w")
+<a name="28"/>      }
+<a name="29"/>   end
+<a name="30"/>
+<a name="31"/>   public override out(s)
+<a name="32"/>      local r
+<a name="33"/>      r := task.poll([other, Poll.OUT], timeout) | fail
+<a name="34"/>      return if /r then
+<a name="35"/>         error(if /task.notify_flag then "Timeout" else "Notified")
+<a name="36"/>      else if DescStream.poll_out_test(r[1]) then
+<a name="37"/>         other.out(s)
+<a name="38"/>      else {
+<a name="39"/>         other.improve_why()
+<a name="40"/>         whyf("Error on poll(): %w")
+<a name="41"/>      }
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   public override close()
+<a name="45"/>      if \close_underlying_flag then
+<a name="46"/>         other.close() | fail
+<a name="47"/>      link
+<a name="48"/>   end
+<a name="49"/>
+<a name="50"/>   public override get_mode()
+<a name="51"/>      return other.get_mode()
+<a name="52"/>   end
+<a name="53"/>
+<a name="54"/>   public override seek(offset)
+<a name="55"/>      return other.seek(offset)
+<a name="56"/>   end
+<a name="57"/>
+<a name="58"/>   public override tell()
+<a name="59"/>      return other.tell()
+<a name="60"/>   end
+<a name="61"/>
+<a name="62"/>   public override truncate(len)
+<a name="63"/>      return other.truncate(len)
+<a name="64"/>   end
+<a name="65"/>
+<a name="66"/>   #
+<a name="67"/>   # Set the timeout in ms to use.  If `&amp;null`, then no timeout will
+<a name="68"/>   # be used.
+<a name="69"/>   #
+<a name="70"/>   public set_timeout(timeout)
+<a name="71"/>      self.timeout := /timeout | need_integer(timeout, 0)
+<a name="72"/>      link
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   public new(other, task, timeout)
+<a name="76"/>      self.other := need_Stream(other)
+<a name="77"/>      self.close_underlying_flag := &amp;yes
+<a name="78"/>      self.task := need_instance(task, Task)
+<a name="79"/>      set_timeout(timeout)
+<a name="80"/>      return
+<a name="81"/>   end
+<a name="82"/>end
+<a name="83"/>
+<a name="84"/>class Task()
+<a name="85"/>   public const
+<a name="86"/>      scheduler
+<a name="87"/>   private readable
+<a name="88"/>      time_from,
+<a name="89"/>      time_until,
+<a name="90"/>      poll_req
+<a name="91"/>   private const
+<a name="92"/>      xstate
+<a name="93"/>   package
+<a name="94"/>      coex,
+<a name="95"/>      state,
+<a name="96"/>      old_state
+<a name="97"/>   package readable
+<a name="98"/>      poll_err,
+<a name="99"/>      poll_res,
+<a name="100"/>      interrupt_why,
+<a name="101"/>      notify_flag
+<a name="102"/>
+<a name="103"/>   #
+<a name="104"/>   # If a task is currently sleeping or polling, then this alters the
+<a name="105"/>   # time it will sleep for, behaving as though the original call to
+<a name="106"/>   # `sleep` or `poll` had given `n` as its time parameter.
+<a name="107"/>   #
+<a name="108"/>   # :Parameters :
+<a name="109"/>   # :  `n` - The time to wait for.  If `&amp;null`, wait forever.
+<a name="110"/>   #
+<a name="111"/>   public change_time(n)
+<a name="112"/>      \coex | runerr("change_time() called on a currently active task")
+<a name="113"/>      n := need_integer(\n, 0)
+<a name="114"/>      if is_sleeping() | is_polling() then {
+<a name="115"/>         state.remove(self)
+<a name="116"/>         time_until := (time_from + \n) | &amp;null
+<a name="117"/>         state.add(self)
+<a name="118"/>      }
+<a name="119"/>      link
+<a name="120"/>   end
+<a name="121"/>
+<a name="122"/>   #
+<a name="123"/>   # This is like `change_time()`, but the time is set to `n`
+<a name="124"/>   # milliseconds from now, rather than from the time of the original
+<a name="125"/>   # call.
+<a name="126"/>   #
+<a name="127"/>   # :Parameters :
+<a name="128"/>   # :  `n` - The time to wait for.  If `&amp;null`, wait forever.
+<a name="129"/>   #
+<a name="130"/>   public change_time_from_now(n)
+<a name="131"/>      \coex | runerr("change_time_from_now() called on a currently active task")
+<a name="132"/>      n := need_integer(\n, 0)
+<a name="133"/>      if is_sleeping() | is_polling() then {
+<a name="134"/>         state.remove(self)
+<a name="135"/>         time_until := (Prog.get_runtime_millis() + \n) | &amp;null
+<a name="136"/>         state.add(self)
+<a name="137"/>      }
+<a name="138"/>      link
+<a name="139"/>   end
+<a name="140"/>
+<a name="141"/>   #
+<a name="142"/>   # Succeed iff the task is currently active.
+<a name="143"/>   #
+<a name="144"/>   public is_active()
+<a name="145"/>      succeed /coex
+<a name="146"/>   end
+<a name="147"/>
+<a name="148"/>   #
+<a name="149"/>   # Succeed iff the task is the current task.  Note that a task may
+<a name="150"/>   # be active, but not the current task, since a task may itself
+<a name="151"/>   # invoke `Scheduler.work` in order to activate another task, in a
+<a name="152"/>   # nested fashion.  This may happen for example when a task shows a
+<a name="153"/>   # modal dialog, and hence calls `Scheduler.work` via the dispatcher
+<a name="154"/>   # event loop.
+<a name="155"/>   #
+<a name="156"/>   public is_current()
+<a name="157"/>      succeed self === scheduler.curr_task
+<a name="158"/>   end
+<a name="159"/>
+<a name="160"/>   #
+<a name="161"/>   # Succeed iff the task is currently sleeping
+<a name="162"/>   #
+<a name="163"/>   public is_sleeping()
+<a name="164"/>      succeed state === scheduler.sleeping
+<a name="165"/>   end
+<a name="166"/>
+<a name="167"/>   #
+<a name="168"/>   # Succeed iff the task is currently polling
+<a name="169"/>   #
+<a name="170"/>   public is_polling()
+<a name="171"/>      succeed state === scheduler.polling
+<a name="172"/>   end
+<a name="173"/>
+<a name="174"/>   #
+<a name="175"/>   # Succeed iff the task is currently in the ready state
+<a name="176"/>   #
+<a name="177"/>   public is_ready()
+<a name="178"/>      succeed state === scheduler.ready
+<a name="179"/>   end
+<a name="180"/>
+<a name="181"/>   #
+<a name="182"/>   # Succeed iff the task is dormant, meaning it is not active, and is
+<a name="183"/>   # not sleeping, polling or ready, meaning it won't be scheduled by
+<a name="184"/>   # the scheduler, at least until `start` is called on it.
+<a name="185"/>   public is_dormant()
+<a name="186"/>      succeed \coex &amp; /state
+<a name="187"/>   end
+<a name="188"/>
+<a name="189"/>   #
+<a name="190"/>   # Suspend this task, which must be the currently scheduled task, in
+<a name="191"/>   # order to carry out a `DescStream.poll`.  The parameters and
+<a name="192"/>   # result are in the same form as for `DescStream.poll`.  The
+<a name="193"/>   # difference between this and `DescStream.poll` is that the
+<a name="194"/>   # scheduler will suspend this task whilst the poll is taking place,
+<a name="195"/>   # whereas `DescStream.poll` will block.  If `timeout` is zero, then
+<a name="196"/>   # there is no advantage in using this method, and `DescStream.poll`
+<a name="197"/>   # is preferable.
+<a name="198"/>   #
+<a name="199"/>   # If the task is interrupted whilst polling this method fails with
+<a name="200"/>   # `&amp;why` set to the value of `interrupt_why`, which will be
+<a name="201"/>   # non-null.
+<a name="202"/>   #
+<a name="203"/>   # If the task is notified whilst polling, this method returns
+<a name="204"/>   # `&amp;null`, ie it behaves as though a timeout occurred.  The
+<a name="205"/>   # `notify_flag` is also set.
+<a name="206"/>   #
+<a name="207"/>   # :Parameters :
+<a name="208"/>   # :  `l` - A list of alternating `DescStream`, flag (from `Poll`)
+<a name="209"/>   #          pairs.
+<a name="210"/>   # :  `timeout` - The optional timeout
+<a name="211"/>   #
+<a name="212"/>   public poll(l, timeout)
+<a name="213"/>      local f
+<a name="214"/>      is_current() | runerr("poll() called on task which is not current")
+<a name="215"/>      need_list(l)
+<a name="216"/>      if *l % 2 ~= 0 then
+<a name="217"/>         runerr(177, l)
+<a name="218"/>      timeout := need_integer(\timeout, 0)
+<a name="219"/>      coex := &amp;current
+<a name="220"/>      time_from := Prog.get_runtime_millis()
+<a name="221"/>      time_until := (time_from + \timeout) | &amp;null
+<a name="222"/>      poll_req := l
+<a name="223"/>      poll_err := poll_res := notify_flag := interrupt_why := &amp;null
+<a name="224"/>      scheduler.now_poll(self)
+<a name="225"/>      f := \interrupt_why | \poll_err
+<a name="226"/>      return error_if(f, poll_res)
+<a name="227"/>   end
+<a name="228"/>
+<a name="229"/>   #
+<a name="230"/>   # Suspend this task, which must be the currently scheduled task,
+<a name="231"/>   # for `n` milliseconds; `&amp;null` means indefinitely.
+<a name="232"/>   #
+<a name="233"/>   # This task is woken and the method returns after one of three
+<a name="234"/>   # things happens :-
+<a name="235"/>   #
+<a name="236"/>   # 1. After `n` milliseconds passes; the method succeeds.
+<a name="237"/>   # 2. After it is notified; the method succeeds and the
+<a name="238"/>   #    `notify_flag` is set.
+<a name="239"/>   # 3. After it is interrupted; the method fails with `&amp;why`
+<a name="240"/>   #    set to the value of `interrupt_why`, which will be
+<a name="241"/>   #    non-null.
+<a name="242"/>   #
+<a name="243"/>   # :Parameters :
+<a name="244"/>   # :  `n` - The time to wait for.  If `&amp;null`, wait forever (or until
+<a name="245"/>   #          interrupted or notified).
+<a name="246"/>   # :Returns :
+<a name="247"/>   # :  `self` when the task awakes; fails on interrupt
+<a name="248"/>   #
+<a name="249"/>   public sleep(n)
+<a name="250"/>      is_current() | runerr("sleep() called on task which is not current")
+<a name="251"/>      n := need_integer(\n, 0)
+<a name="252"/>      coex := &amp;current
+<a name="253"/>      time_from := Prog.get_runtime_millis()
+<a name="254"/>      time_until := (time_from + \n) | &amp;null
+<a name="255"/>      notify_flag := interrupt_why := &amp;null
+<a name="256"/>      scheduler.now_sleep(self)
+<a name="257"/>      link error_if(interrupt_why)
+<a name="258"/>   end
+<a name="259"/>
+<a name="260"/>   #
+<a name="261"/>   # Interrupt the task, which may not be currently active.  If the
+<a name="262"/>   # task is currently sleeping or polling, then it is placed back in
+<a name="263"/>   # the ready state.  This causes the original `poll` or `sleep` call
+<a name="264"/>   # to fail, setting `&amp;why` to the value given in the optional
+<a name="265"/>   # parameter `why` (the default `&amp;why` is "Interrupted").
+<a name="266"/>   #
+<a name="267"/>   public interrupt(why)
+<a name="268"/>      \coex | runerr("interrupt() called on a currently active task")
+<a name="269"/>      why := need_text(\why) | "Interrupted"
+<a name="270"/>      scheduler.interrupt(self, why)
+<a name="271"/>      link
+<a name="272"/>   end
+<a name="273"/>
+<a name="274"/>   #
+<a name="275"/>   # If the task is sleeping or polling, then place it immediately
+<a name="276"/>   # back into the ready state.  The task must not be currently
+<a name="277"/>   # active.
+<a name="278"/>   #
+<a name="279"/>   public notify()
+<a name="280"/>      \coex | runerr("notify() called on a currently active task")
+<a name="281"/>      scheduler.notify(self)
+<a name="282"/>      link
+<a name="283"/>   end
+<a name="284"/>
+<a name="285"/>   #
+<a name="286"/>   # Suspend this task, which must be the currently scheduled task,
+<a name="287"/>   # placing it immediately into the ready state in the scheduler.
+<a name="288"/>   #
+<a name="289"/>   public yield()
+<a name="290"/>      is_current() | runerr("yield() called on task which is not current")
+<a name="291"/>      self.coex := &amp;current
+<a name="292"/>      scheduler.now_yield(self)
+<a name="293"/>      link
+<a name="294"/>   end
+<a name="295"/>
+<a name="296"/>   #
+<a name="297"/>   # Suspend this task, which must be the currently scheduled task,
+<a name="298"/>   # but do not resume it.  Control reverts to the scheduler.  The
+<a name="299"/>   # task may be subsequently restarted with `start`.  Note that to
+<a name="300"/>   # end a task, it is not simply sufficient to fall off the end of
+<a name="301"/>   # the task's co-expression, `revert` must be used.
+<a name="302"/>   #
+<a name="303"/>   public revert()
+<a name="304"/>      is_current() | runerr("revert() called on task which is not current")
+<a name="305"/>      self.coex := &amp;current
+<a name="306"/>      scheduler.now_revert()
+<a name="307"/>      link
+<a name="308"/>   end
+<a name="309"/>
+<a name="310"/>   #
+<a name="311"/>   # Start the task, which may not be currently active.  If the task
+<a name="312"/>   # was previously stopped in a particular state (eg sleeping), then
+<a name="313"/>   # it continues from that same state.
+<a name="314"/>   #
+<a name="315"/>   public start()
+<a name="316"/>      \coex | runerr("start() called on a currently active task")
+<a name="317"/>      scheduler.start(self)
+<a name="318"/>      link
+<a name="319"/>   end
+<a name="320"/>
+<a name="321"/>   #
+<a name="322"/>   # Stop the task, which may not be currently active.  This prevents
+<a name="323"/>   # the scheduler from activating it.  Its present state is
+<a name="324"/>   # remembered, and it may be started again in that state using
+<a name="325"/>   # `start`.
+<a name="326"/>   #
+<a name="327"/>   public stop()
+<a name="328"/>      \coex | runerr("stop() called on a currently active task")
+<a name="329"/>      scheduler.stop(self)
+<a name="330"/>      link
+<a name="331"/>   end
+<a name="332"/>
+<a name="333"/>   #
+<a name="334"/>   # This method swaps the values of external state previously saved,
+<a name="335"/>   # by invoking the `swap()` on the xstate member (if set).
+<a name="336"/>   #
+<a name="337"/>   package xstate_swap()
+<a name="338"/>      (\xstate).swap()
+<a name="339"/>   end
+<a name="340"/>
+<a name="341"/>   #
+<a name="342"/>   # Create a new `Task`.
+<a name="343"/>   #
+<a name="344"/>   # :Parameters :
+<a name="345"/>   # :  `scheduler` - The `Scheduler` to use to activate the task.
+<a name="346"/>   # :  `coex` - The co-expression body of the task.
+<a name="347"/>   # :  `xstate` - An optional instance of `State` which is used
+<a name="348"/>   #        to save and restore external state when switching to and
+<a name="349"/>   #        from this Task.
+<a name="350"/>   #
+<a name="351"/>   public new(scheduler, coex, xstate)
+<a name="352"/>      self.scheduler := need_instance(scheduler, Scheduler)
+<a name="353"/>      self.coex := need_coexpression(coex)
+<a name="354"/>      self.xstate := need_instance(\xstate, State)
+<a name="355"/>      return
+<a name="356"/>   end
+<a name="357"/>end
+<a name="358"/>
+<a name="359"/>#
+<a name="360"/># A data structure for storing the ready set; it just mirrors the
+<a name="361"/># interface of Bag2 below.
+<a name="362"/>#
+<a name="363"/>package class Bag1()
+<a name="364"/>   public const
+<a name="365"/>      s
+<a name="366"/>
+<a name="367"/>   public add(t)
+<a name="368"/>      insert(s, t)
+<a name="369"/>      link
+<a name="370"/>   end
+<a name="371"/>
+<a name="372"/>   public remove(t)
+<a name="373"/>      delete(s, t)
+<a name="374"/>      link
+<a name="375"/>   end
+<a name="376"/>
+<a name="377"/>   public check()
+<a name="378"/>      local t
+<a name="379"/>      every t := !s do
+<a name="380"/>         t.state === self | return error("State wrong")
+<a name="381"/>      return
+<a name="382"/>   end
+<a name="383"/> 
+<a name="384"/>   public new()
+<a name="385"/>      s := set()
+<a name="386"/>      return
+<a name="387"/>   end
+<a name="388"/>end
+<a name="389"/>
+<a name="390"/>#
+<a name="391"/># A data structure for storing the polling and sleeping sets.
+<a name="392"/>#
+<a name="393"/>package class Bag2()
+<a name="394"/>   public const
+<a name="395"/>      # Tasks with time_util set, stored in a sorted list with
+<a name="396"/>      # ascending time_until.
+<a name="397"/>      l,
+<a name="398"/>      # A set of Tasks with time_until null.
+<a name="399"/>      s
+<a name="400"/>
+<a name="401"/>   #
+<a name="402"/>   # Compare Tasks by time_until, using Internal.compare() as a
+<a name="403"/>   # tie-breaker.
+<a name="404"/>   #
+<a name="405"/>   private static cmp(x, y)
+<a name="406"/>      local i
+<a name="407"/>      i := x.time_until - y.time_until
+<a name="408"/>      if i = 0 then
+<a name="409"/>         i := Internal.compare(x, y)
+<a name="410"/>      return i
+<a name="411"/>   end
+<a name="412"/>
+<a name="413"/>   public add(t)
+<a name="414"/>      local i, v
+<a name="415"/>      v := t.time_until
+<a name="416"/>      if /v then
+<a name="417"/>         insert(s, t)
+<a name="418"/>      else {
+<a name="419"/>         i := bsearch(l, t, cmp,,, &amp;yes)
+<a name="420"/>         insert(l, i, t)
+<a name="421"/>      }
+<a name="422"/>      link
+<a name="423"/>   end
+<a name="424"/>
+<a name="425"/>   public remove(t)
+<a name="426"/>      local i, v
+<a name="427"/>      v := t.time_until
+<a name="428"/>      if /v then
+<a name="429"/>         delete(s, t)
+<a name="430"/>      else if t === l[1] then
+<a name="431"/>         # Common case of getting the "most ready" Task.
+<a name="432"/>         get(l)
+<a name="433"/>      else if i := bsearch(l, t, cmp) then
+<a name="434"/>         delete(l, i)
+<a name="435"/>      else
+<a name="436"/>         syserr("remove() failed")
+<a name="437"/>      link
+<a name="438"/>   end
+<a name="439"/>
+<a name="440"/>   public check()
+<a name="441"/>      local t, x
+<a name="442"/>      every t := !l do {
+<a name="443"/>         \t.time_until | return error("Time until not set")
+<a name="444"/>         if cmp(\x, t) &gt;= 0 then return error("List items out of order")
+<a name="445"/>         x := t
+<a name="446"/>      }
+<a name="447"/>      every t := !s do
+<a name="448"/>         /t.time_until | return error("Time until set")
+<a name="449"/>      every t := !l | !s do
+<a name="450"/>         t.state === self | return error("State wrong")
+<a name="451"/>      return
+<a name="452"/>   end
+<a name="453"/>
+<a name="454"/>   public new()
+<a name="455"/>      l := []
+<a name="456"/>      s := set()
+<a name="457"/>      return
+<a name="458"/>   end
+<a name="459"/>end
+<a name="460"/>
+<a name="461"/>class Scheduler()
+<a name="462"/>   private readable 
+<a name="463"/>      poll_timeout,
+<a name="464"/>      curr_task
+<a name="465"/>   private
+<a name="466"/>      coex
+<a name="467"/>   package const
+<a name="468"/>      ready,
+<a name="469"/>      sleeping,
+<a name="470"/>      polling
+<a name="471"/>
+<a name="472"/>   #
+<a name="473"/>   # Create a new instance, using the given poll timeout (see
+<a name="474"/>   # `set_poll_timeout()`).
+<a name="475"/>   #
+<a name="476"/>   public new(n)
+<a name="477"/>      set_poll_timeout(n)
+<a name="478"/>      ready := Bag1()
+<a name="479"/>      sleeping := Bag2()
+<a name="480"/>      polling := Bag2()
+<a name="481"/>      return
+<a name="482"/>   end
+<a name="483"/>
+<a name="484"/>   #
+<a name="485"/>   # Set the timeout to use when invoking `DescStream.poll` with any
+<a name="486"/>   # polling tasks.  The actual interval used may in fact be smaller,
+<a name="487"/>   # as determined by `calc_sleep()`.  `n` defaults to 0.
+<a name="488"/>   #
+<a name="489"/>   public set_poll_timeout(n)
+<a name="490"/>      poll_timeout := need_integer(\n, 0) | 0
+<a name="491"/>      link
+<a name="492"/>   end
+<a name="493"/>
+<a name="494"/>   package start(t)
+<a name="495"/>      if /t.state then {
+<a name="496"/>         if /t.old_state then
+<a name="497"/>            set_state(t, ready)
+<a name="498"/>         else {
+<a name="499"/>            set_state(t, t.old_state)
+<a name="500"/>            t.old_state := &amp;null
+<a name="501"/>         }
+<a name="502"/>      }
+<a name="503"/>   end
+<a name="504"/>
+<a name="505"/>   package stop(t)
+<a name="506"/>      if \t.state then {
+<a name="507"/>         t.old_state := t.state
+<a name="508"/>         set_state(t)
+<a name="509"/>      }
+<a name="510"/>   end
+<a name="511"/>
+<a name="512"/>   private set_state(t, x)
+<a name="513"/>      (\t.state).remove(t)
+<a name="514"/>      t.state := x
+<a name="515"/>      (\t.state).add(t)
+<a name="516"/>   end
+<a name="517"/>
+<a name="518"/>   package interrupt(t, why)
+<a name="519"/>      if \t.state ~=== ready then {
+<a name="520"/>         t.interrupt_why := why
+<a name="521"/>         set_state(t, ready)
+<a name="522"/>      }
+<a name="523"/>   end
+<a name="524"/>
+<a name="525"/>   package notify(t)
+<a name="526"/>      if \t.state ~=== ready then {
+<a name="527"/>         t.notify_flag := &amp;yes
+<a name="528"/>         set_state(t, ready)
+<a name="529"/>      }
+<a name="530"/>   end
+<a name="531"/>
+<a name="532"/>   package now_sleep(t)
+<a name="533"/>      \coex | syserr("now_sleep() with null coex")
+<a name="534"/>      set_state(t, sleeping)
+<a name="535"/>      coact(, coex)
+<a name="536"/>   end
+<a name="537"/>
+<a name="538"/>   package now_poll(t)
+<a name="539"/>      \coex | syserr("now_poll() with null coex")
+<a name="540"/>      set_state(t, polling)
+<a name="541"/>      coact(, coex)
+<a name="542"/>   end
+<a name="543"/>
+<a name="544"/>   package now_yield(t)
+<a name="545"/>      \coex | syserr("now_yield() with null coex")
+<a name="546"/>      set_state(t, ready)
+<a name="547"/>      coact(, coex)
+<a name="548"/>   end
+<a name="549"/>
+<a name="550"/>   package now_revert()
+<a name="551"/>      \coex | syserr("now_revert() with null coex")
+<a name="552"/>      coact(, coex)
+<a name="553"/>   end
+<a name="554"/>
+<a name="555"/>   #
+<a name="556"/>   # Test whether there are any `Task`s in the internal lists.
+<a name="557"/>   #
+<a name="558"/>   public empty()
+<a name="559"/>      succeed *ready.s = *sleeping.l = *sleeping.s = *polling.l = *polling.s = 0
+<a name="560"/>   end
+<a name="561"/>
+<a name="562"/>   #
+<a name="563"/>   # Return the number of `Task`s in the internal lists.
+<a name="564"/>   #
+<a name="565"/>   public size()
+<a name="566"/>      return *ready.s + *sleeping.l + *sleeping.s + *polling.l + *polling.s
+<a name="567"/>   end
+<a name="568"/>
+<a name="569"/>   #
+<a name="570"/>   # Check the data structures for internal consistency.
+<a name="571"/>   #
+<a name="572"/>   public check()
+<a name="573"/>      return ready.check() &amp; sleeping.check() &amp; polling.check()
+<a name="574"/>   end
+<a name="575"/>
+<a name="576"/>   private run(t)
+<a name="577"/>      local sc, st, te
+<a name="578"/>      set_state(t)
+<a name="579"/>      sc := coex
+<a name="580"/>      st := curr_task
+<a name="581"/>      coex := &amp;current
+<a name="582"/>      curr_task := t
+<a name="583"/>      te := t.coex
+<a name="584"/>      t.coex := &amp;null
+<a name="585"/>      # Don't specify an activator unless we have to (ie if this is a
+<a name="586"/>      # new co-expression).
+<a name="587"/>      t.xstate_swap()
+<a name="588"/>      if Coexpression.get_activator(te) then
+<a name="589"/>         coact(, te)
+<a name="590"/>      else
+<a name="591"/>         @te
+<a name="592"/>      t.xstate_swap()
+<a name="593"/>      \t.coex | runerr("Incorrect reversion to scheduler, task co-expression not set", t)
+<a name="594"/>      coex === &amp;current | syserr("Scheduler co-expression not &amp;current")
+<a name="595"/>      coex := sc
+<a name="596"/>      curr_task := st
+<a name="597"/>   end
+<a name="598"/>
+<a name="599"/>   #
+<a name="600"/>   # Calculate a suitable time to sleep for.  The number returned will
+<a name="601"/>   # be at most `lim`, but may be lower if any sleeping or polling
+<a name="602"/>   # task will be ready to resume in a shorter period of time.
+<a name="603"/>   #
+<a name="604"/>   public calc_sleep(lim)
+<a name="605"/>      local curr_time, t, d
+<a name="606"/>      if lim &gt; 0 then {
+<a name="607"/>         curr_time := Prog.get_runtime_millis()
+<a name="608"/>         every t := (sleeping | polling).l[1] do {
+<a name="609"/>            if d := t.time_until - curr_time then {
+<a name="610"/>               if d &lt;= 0 then
+<a name="611"/>                  return 0
+<a name="612"/>               lim &gt;:= d
+<a name="613"/>            }
+<a name="614"/>         }
+<a name="615"/>      }
+<a name="616"/>      return lim
+<a name="617"/>   end
+<a name="618"/>
+<a name="619"/>   #
+<a name="620"/>   # Perhaps do some work; succeed if some was done, fail if not.
+<a name="621"/>   #
+<a name="622"/>   public work()
+<a name="623"/>      local t, r, curr_time, poll_l, x, poll_t, l
+<a name="624"/>      repeat {
+<a name="625"/>         if t := ?ready.s then {
+<a name="626"/>            run(t)
+<a name="627"/>            return
+<a name="628"/>         }
+<a name="629"/>
+<a name="630"/>         if *sleeping.l &gt; 0 then {
+<a name="631"/>            curr_time := Prog.get_runtime_millis()
+<a name="632"/>            while curr_time &gt;= sleeping.l[1].time_until do
+<a name="633"/>               set_state(sleeping.l[1], ready)
+<a name="634"/>            if *ready.s &gt; 0 then
+<a name="635"/>               next
+<a name="636"/>         }
+<a name="637"/>
+<a name="638"/>         unless *polling.l = *polling.s = 0 then {
+<a name="639"/>            l := []
+<a name="640"/>            poll_l := [] ; every put(poll_l, !(!polling.l | !polling.s).poll_req)
+<a name="641"/>            poll_t := calc_sleep(poll_timeout)
+<a name="642"/>            if r := DescStream.poll(poll_l, poll_t) then {
+<a name="643"/>               curr_time := Prog.get_runtime_millis()
+<a name="644"/>               if /r then {
+<a name="645"/>                  # Process timeout for each task.
+<a name="646"/>                  every t := !polling.l do {
+<a name="647"/>                     if curr_time &gt;= t.time_until then
+<a name="648"/>                        put(l, t)
+<a name="649"/>                     else
+<a name="650"/>                        break
+<a name="651"/>                  }
+<a name="652"/>               } else {
+<a name="653"/>                  every t := !polling.l do {
+<a name="654"/>                     # Extract relevant part of result
+<a name="655"/>                     x := []
+<a name="656"/>                     every 1 to *t.poll_req / 2 do
+<a name="657"/>                        put(x, pop(r))
+<a name="658"/>                     # If all zeros, it's the same as a timeout.
+<a name="659"/>                     if !x ~= 0 then {
+<a name="660"/>                        put(l, t)
+<a name="661"/>                        t.poll_res := x
+<a name="662"/>                     } else if curr_time &gt;= t.time_until then
+<a name="663"/>                        put(l, t)
+<a name="664"/>                  }
+<a name="665"/>                  # As above, but no timeouts
+<a name="666"/>                  every t := !polling.s do {
+<a name="667"/>                     x := []
+<a name="668"/>                     every 1 to *t.poll_req / 2 do
+<a name="669"/>                        put(x, pop(r))
+<a name="670"/>                     if !x ~= 0 then {
+<a name="671"/>                        put(l, t)
+<a name="672"/>                        t.poll_res := x
+<a name="673"/>                     }
+<a name="674"/>                  }
+<a name="675"/>               }
+<a name="676"/>            } else {
+<a name="677"/>               # poll error; forward error to each Task
+<a name="678"/>               every t := !polling.l | !polling.s do {
+<a name="679"/>                  put(l, t)
+<a name="680"/>                  t.poll_err := &amp;why
+<a name="681"/>               }
+<a name="682"/>            }
+<a name="683"/>            every set_state(!l, ready)
+<a name="684"/>            # If we slept in poll(), that counts as work; otherwise it does not
+<a name="685"/>            if poll_t &gt; 0 then
+<a name="686"/>               return
+<a name="687"/>            if *ready.s &gt; 0 then
+<a name="688"/>               next
+<a name="689"/>         }
+<a name="690"/>
+<a name="691"/>         fail
+<a name="692"/>      }
+<a name="693"/>   end
+<a name="694"/>
+<a name="695"/>   #
+<a name="696"/>   # Convenient method to call work(), and if no work is done, to
+<a name="697"/>   # sleep for the poll timeout period, possibly adjusted by
+<a name="698"/>   # `calc_sleep()`.
+<a name="699"/>   #
+<a name="700"/>   public work_or_sleep()
+<a name="701"/>      work() | delay(calc_sleep(poll_timeout))
+<a name="702"/>   end
+<a name="703"/>end
+</pre></body></html>

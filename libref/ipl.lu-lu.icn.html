@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lu.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     lu.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for LU manipulation
+<a name="6"/>#
+<a name="7"/>#	Author:   Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     August 14, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  lu_decomp(M, I) performs LU decomposition on the square matrix M
+<a name="18"/>#  using the vector I.  Both M and I are modified in the process.  The
+<a name="19"/>#  value returned is +1 or -1 depending on whether the number of row
+<a name="20"/>#  interchanges is even or odd.  lu_decomp() is used in combination with
+<a name="21"/>#  lu_back_sub() to solve linear equations or invert matrices.
+<a name="22"/>#
+<a name="23"/>#  lu_decomp() fails if the matrix is singular.
+<a name="24"/>#
+<a name="25"/>#  lu_back_sub(M, I, B) solves the set of linear equations M x X = B.  M
+<a name="26"/>#  is the matrix as modified by lu_decomp().  I is the index vector
+<a name="27"/>#  produced by lu_decomp().  B is the right-hand side vector and return
+<a name="28"/>#  with the solution vector. M and I are not modified by lu_back_sub()
+<a name="29"/>#  and can be used in successive calls of lu_back_sub() with different
+<a name="30"/>#  Bs.
+<a name="31"/>#
+<a name="32"/>############################################################################
+<a name="33"/>#
+<a name="34"/>#  Acknowledgement:  These procedures are based on algorithms given in
+<a name="35"/>#  "Numerical Recipes; The Art of Scientific Computing"; William H. Press,
+<a name="36"/>#  Brian P. Flannery, Saul A. Teukolsky. and William T. Vetterling;
+<a name="37"/>#  Cambridge University Press, 1986.
+<a name="38"/>#
+<a name="39"/>############################################################################
+<a name="40"/>
+<a name="41"/>package ipl.lu
+<a name="42"/>
+<a name="43"/>import
+<a name="44"/>   io(stop)
+<a name="45"/>
+<a name="46"/>procedure lu_decomp(M, I)
+<a name="47"/>   local small, d, n, vv, i, largest, j, sum, k, pivot_val, imax
+<a name="48"/>
+<a name="49"/>   initial small := 1.0e-20
+<a name="50"/>
+<a name="51"/>   d := 1.0
+<a name="52"/>
+<a name="53"/>   n := *M
+<a name="54"/>   if n ~= *M[1] then runerr("*** non-square matrix")
+<a name="55"/>   if n ~= *I then runerr("*** index vector incorrect length")
+<a name="56"/>
+<a name="57"/>   vv := list(n, 0.0)			# scaling vector
+<a name="58"/>
+<a name="59"/>   every i := 1 to n do {
+<a name="60"/>      largest := 0.0
+<a name="61"/>      every j := 1 to n do
+<a name="62"/>         largest &lt;:= abs(M[i][j])
+<a name="63"/>      if largest = 0.0 then fail		# matrix is singular
+<a name="64"/>      vv[i] := 1.0 / largest
+<a name="65"/>      }
+<a name="66"/>
+<a name="67"/>   every j := 1 to n do {			# Crout's method
+<a name="68"/>      if j &gt; 1 then {
+<a name="69"/>         every i := 1 to j - 1 do {
+<a name="70"/>            sum := M[i][j]
+<a name="71"/>            if i &gt; 1 then {
+<a name="72"/>               every k := 1 to i - 1 do
+<a name="73"/>                   sum -:= M[i][k] * M[k][j]
+<a name="74"/>               M[i][j] := sum
+<a name="75"/>               }
+<a name="76"/>            }
+<a name="77"/>         }
+<a name="78"/>
+<a name="79"/>      largest := 0.0				# search for largest pivot
+<a name="80"/>      every i := j to n do {
+<a name="81"/>         sum := M[i][j]
+<a name="82"/>         if j &gt; 1 then {
+<a name="83"/>            every k := 1 to j - 1 do
+<a name="84"/>               sum -:= M[i][k] * M[k][j]
+<a name="85"/>            M[i][j] := sum
+<a name="86"/>            }
+<a name="87"/>         pivot_val := vv[i] * abs(sum)
+<a name="88"/>         if pivot_val &gt; largest then {
+<a name="89"/>            largest := pivot_val
+<a name="90"/>            imax := i
+<a name="91"/>            }
+<a name="92"/>         }
+<a name="93"/>
+<a name="94"/>      if j ~= imax then {			# interchange rows?
+<a name="95"/>         every k := 1 to n do {
+<a name="96"/>            pivot_val := M[imax][k]
+<a name="97"/>            M[imax][k] := M[j][k]
+<a name="98"/>            M[j][k] := pivot_val
+<a name="99"/>            }
+<a name="100"/>         d := -d				# change parity
+<a name="101"/>         vv[imax] := vv[j]			# and scale factor
+<a name="102"/>         }
+<a name="103"/>      I[j] := imax
+<a name="104"/>      if j ~= n then {				# divide by the pivot element
+<a name="105"/>         if M[j][j] = 0.0 then M[j][j] := small	# small value is better than
+<a name="106"/>         pivot_val := 1.0 / M[j][j]		# zero for some applications
+<a name="107"/>         every i := j + 1 to n do
+<a name="108"/>            M[i][j] *:= pivot_val
+<a name="109"/>         }
+<a name="110"/>      }
+<a name="111"/>
+<a name="112"/>      if M[n][n] = 0.0 then M[n][n] := small
+<a name="113"/>
+<a name="114"/>      return d
+<a name="115"/>
+<a name="116"/>end
+<a name="117"/>
+<a name="118"/>procedure lu_back_sub(M, I, B)
+<a name="119"/>   local n, ii, i, ip, sum, j
+<a name="120"/>
+<a name="121"/>   n := *M
+<a name="122"/>   if n ~= *M[1] then runerr("*** matrix not square")
+<a name="123"/>   if n ~= *I then runerr("*** index vector wrong length")
+<a name="124"/>   if n ~= *B then runerr("*** output vector wrong length")
+<a name="125"/>
+<a name="126"/>   ii := 0
+<a name="127"/>
+<a name="128"/>   every i := 1 to n do {
+<a name="129"/>      ip := I[i] | stop("failed in line ", &amp;line)
+<a name="130"/>      sum := B[ip] | stop("failed in line ", &amp;line)
+<a name="131"/>      B[ip] := B[i] | stop("failed in line ", &amp;line)
+<a name="132"/>      if ii ~= 0 then
+<a name="133"/>         every j := ii to i - 1 do
+<a name="134"/>            sum -:= M[i][j] * B[j] | stop("failed in line ", &amp;line)
+<a name="135"/>      else if sum ~= 0.0 then ii := i
+<a name="136"/>      B[i] := sum | stop("failed in line ", &amp;line)
+<a name="137"/>      }
+<a name="138"/>   every i := n to 1 by -1 do {
+<a name="139"/>      sum := B[i] | stop("failed in line ", &amp;line)
+<a name="140"/>      if i &lt; n then {
+<a name="141"/>         every j := i + 1 to n do
+<a name="142"/>            sum -:= M[i][j] * B[j] | stop("failed in line ", &amp;line)
+<a name="143"/>         }
+<a name="144"/>      B[i] := sum / M[i][i] | stop("failed in line ", &amp;line)
+<a name="145"/>      }
+<a name="146"/>
+<a name="147"/>   return
+<a name="148"/>
+<a name="149"/>end
+</pre></body></html>

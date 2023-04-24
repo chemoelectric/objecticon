@@ -1,0 +1,620 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>ichartp.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     ichartp.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for a simple chart parser
+<a name="6"/>#
+<a name="7"/>#	Author:   Richard L. Goerwitz
+<a name="8"/>#
+<a name="9"/>#	Date:	  August 3, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Version:  1.11
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  General:
+<a name="22"/>#
+<a name="23"/>#      Ichartp implements a simple chart parser - a slow but
+<a name="24"/>#  easy-to-implement strategy for parsing context free grammars (it
+<a name="25"/>#  has a cubic worst-case time factor).  Chart parsers are flexible
+<a name="26"/>#  enough to handle a lot of natural language constructs.  They also
+<a name="27"/>#  lack many of the troubles associated with empty and left-recursive
+<a name="28"/>#  derivations.  To obtain a parse, just create a BNF file, obtain a
+<a name="29"/>#  line of input, and then invoke parse_sentence(sentence,
+<a name="30"/>#  bnf_filename, start-symbol).  Parse_sentence suspends successive
+<a name="31"/>#  edge structures corresponding to possible parses of the input
+<a name="32"/>#  sentence.  There is a routine called edge_2_tree() that converts
+<a name="33"/>#  these edges to a more standard form.  See the stub main() procedure
+<a name="34"/>#  for an example of how to make use of all these facilities.
+<a name="35"/>#
+<a name="36"/>############################################################################
+<a name="37"/>#
+<a name="38"/>#  Implementation details:
+<a name="39"/>#
+<a name="40"/>#      The parser itself operates in bottom-up fashion, but it might
+<a name="41"/>#  just as well have been coded top-down, or for that matter as a
+<a name="42"/>#  combination bottom-up/top-down parser (chart parsers don't care).
+<a name="43"/>#  The parser operates in breadth-first fashion, rather than walking
+<a name="44"/>#  through each alternative until it is exhausted.  As a result, there
+<a name="45"/>#  tends to be a pregnant pause before any results appear, but when
+<a name="46"/>#  they appear they come out in rapid succession.  To use a depth-first
+<a name="47"/>#  strategy, just change the "put" in "put(ch.active, new_e)" to read
+<a name="48"/>#  "push."  I haven't tried to do this, but it should be that simple
+<a name="49"/>#  to implement.
+<a name="50"/>#      BNFs are specified using the same notation used in Griswold &amp;
+<a name="51"/>#  Griswold, and as described in the IPL program "pargen.icn," with
+<a name="52"/>#  the following difference:  All metacharacters (space, tab, vertical
+<a name="53"/>#  slash, right/left parends, brackets and angle brackets) are
+<a name="54"/>#  converted to literals by prepending a backslash.  Comments can be
+<a name="55"/>#  include along with BNFs using the same notation as for Icon code
+<a name="56"/>#  (i.e. #-sign).
+<a name="57"/>#
+<a name="58"/>############################################################################
+<a name="59"/>#
+<a name="60"/>#  Gotchas:
+<a name="61"/>#
+<a name="62"/>#      Pitfalls to be aware of include things like &lt;L&gt; ::= &lt;L&gt; | ha |
+<a name="63"/>#  () (a weak attempt at a laugh recognizer).  This grammar will
+<a name="64"/>#  accept "ha," "ha ha," etc. but will suspend an infinite number of
+<a name="65"/>#  possible parses.  The right way to do this sort of thing is &lt;L&gt; ::=
+<a name="66"/>#  ha &lt;S&gt; | ha, or if you really insist on having the empty string as
+<a name="67"/>#  a possibility, try things like:
+<a name="68"/>#
+<a name="69"/>#          &lt;S&gt;      ::= () | &lt;LAUGHS&gt;
+<a name="70"/>#          &lt;LAUGHS&gt; ::= ha &lt;LAUGHS&gt; | ha
+<a name="71"/>#
+<a name="72"/>#  Of course, the whole problem of infinite parses can be avoided by
+<a name="73"/>#  simply invoking the parser in a context where it is not going to
+<a name="74"/>#  be resumed, or else one in which it will be resumed a finite number
+<a name="75"/>#  of times.
+<a name="76"/>#
+<a name="77"/>############################################################################
+<a name="78"/>#
+<a name="79"/>#  Motivation:
+<a name="80"/>#
+<a name="81"/>#      I was reading Byte Magazine (vol. 17:2 [February, 1992]), and
+<a name="82"/>#  ran into an article entitled "A Natural Solution" (pages 237-244)
+<a name="83"/>#  in which a standard chart parser was described in terms of its C++
+<a name="84"/>#  implementation.  The author remarked at how his optimizations made
+<a name="85"/>#  it possible to parse a 14-word sentence in only 32 seconds (versus
+<a name="86"/>#  146 for a straight Gazdar-Mellish LISP chart parser).  32 seconds
+<a name="87"/>#  struck me as hardly anything to write home about, so I coded up a
+<a name="88"/>#  quick system in Icon to see how it compared.  This library is the
+<a name="89"/>#  result.
+<a name="90"/>#      I'm quite sure that this code could be very much improved upon.
+<a name="91"/>#  As it stands, its performance seems as good as the C++ parser in
+<a name="92"/>#  BYTE, if not better.  It's hard to tell, though, seeing as I have
+<a name="93"/>#  no idea what hardware the guy was using.  I'd guess a 386 running
+<a name="94"/>#  DOS.  On a 386 running Xenix the Icon version beats the BYTE times
+<a name="95"/>#  by a factor of about four.  The Icon compiler creates an executable
+<a name="96"/>#  that (in the above environment) parses 14-15 word sentences in
+<a name="97"/>#  anywhere from 6 to 8 seconds.  Once the BNF file is read, it does
+<a name="98"/>#  short sentences in a second or two.  If I get around to writing it,
+<a name="99"/>#  I'll probably use the code here as the basic parsing engine for an
+<a name="100"/>#  adventure game my son wants me to write.
+<a name="101"/>#
+<a name="102"/>############################################################################
+<a name="103"/>#
+<a name="104"/>#  Links: trees, rewrap, scan, strip, stripcom, strings
+<a name="105"/>#
+<a name="106"/>############################################################################
+<a name="107"/>#
+<a name="108"/>#  Requires:  co-expressions
+<a name="109"/>#
+<a name="110"/>############################################################################
+<a name="111"/>#
+<a name="112"/>#       Here's a sample BNF file (taken, modified, from the BYTE
+<a name="113"/>#  Magazine article mentioned above).  Note again the conventions a)
+<a name="114"/>#  that nonterminals be enclosed in angle brackets &amp; b) that overlong
+<a name="115"/>#  lines be continued by terminating the preceding line with a
+<a name="116"/>#  backslash.  Although not illustrated below, the metacharacters &lt;,
+<a name="117"/>#  &gt;, (, ), and | can all be escaped (i.e. can all have their special
+<a name="118"/>#  meaning neutralized) with a backslash (e.g. \&lt;).  Comments can also
+<a name="119"/>#  be included using the Icon #-notation.  Empty symbols are illegal,
+<a name="120"/>#  so if you want to specify a zero-derivation, use "()."  There is an
+<a name="121"/>#  example of this usage below.
+<a name="122"/>#
+<a name="123"/>#  &lt;S&gt;    ::= &lt;NP&gt; &lt;VP&gt; | &lt;S&gt; &lt;CONJ&gt; &lt;S&gt;
+<a name="124"/>#  &lt;VP&gt;   ::= &lt;VP&gt; &lt;CONJ&gt; &lt;VP&gt; | &lt;IV&gt; ( () | &lt;PP&gt; ) | \
+<a name="125"/>#  	   &lt;TV&gt; ( &lt;NP&gt; | &lt;NP&gt; &lt;PP&gt; | &lt;NP&gt; &lt;VP&gt; | &lt;REL&gt; &lt;S&gt; )
+<a name="126"/>#  &lt;NP&gt;   ::= &lt;DET&gt; ( &lt;NP&gt; | &lt;ADJ&gt; &lt;NP&gt; | &lt;ADJ&gt; &lt;NP&gt; &lt;PP&gt; | &lt;NP&gt; &lt;PP&gt; ) | \
+<a name="127"/>#  	   &lt;ADJ&gt; &lt;NP&gt; | &lt;N&gt; | &lt;N&gt; &lt;CONJ&gt; &lt;N&gt; | \
+<a name="128"/>#  	   &lt;NP&gt; &lt;CONJ&gt; &lt;NP&gt;
+<a name="129"/>#  &lt;PP&gt;   ::= &lt;P&gt; ( &lt;NP&gt; | &lt;ADJ&gt; &lt;NP&gt; ) | &lt;PP&gt; &lt;CONJ&gt; &lt;PP&gt;
+<a name="130"/>#  &lt;ADJ&gt;  ::= &lt;ADJ&gt; &lt;CONJ&gt; &lt;ADJ&gt;
+<a name="131"/>#  &lt;CONJ&gt; ::= and
+<a name="132"/>#  &lt;DET&gt;  ::= the | a | his | her
+<a name="133"/>#  &lt;NP&gt;   ::= her | he | they
+<a name="134"/>#  &lt;N&gt;    ::= nurse | nurses | book | books | travel | arrow | arrows | \
+<a name="135"/>#  	  fortune | fortunes | report
+<a name="136"/>#  &lt;ADJ&gt;  ::= outrageous | silly | blue | green | heavy | white | red | \
+<a name="137"/>#  	  black | yellow
+<a name="138"/>#  &lt;IV&gt;   ::= travel | travels | report | see | suffer
+<a name="139"/>#  &lt;TV&gt;   ::= hear | see | suffer
+<a name="140"/>#  &lt;P&gt;    ::= on | of
+<a name="141"/>#  &lt;REL&gt;  ::= that
+<a name="142"/>#
+<a name="143"/>############################################################################
+<a name="144"/>#
+<a name="145"/>#  Addendum:
+<a name="146"/>#
+<a name="147"/>#      Sometimes, when writing BNFs, one finds oneself repeatedly
+<a name="148"/>#  writing the same things.  In efforts to help eliminate the need for
+<a name="149"/>#  doing this, I've written a simple macro facility.  It involves one
+<a name="150"/>#  reserved word:  "define."  Just make sure it begins a line.  It
+<a name="151"/>#  takes two arguments.  The first is the macro.  The second is its
+<a name="152"/>#  expansion.  The first argument must not contain any spaces.  The
+<a name="153"/>#  second, however, may.  Here's an example:
+<a name="154"/>#
+<a name="155"/>#      define &lt;silluq-clause&gt;    (   &lt;silluq-phrase&gt; | \
+<a name="156"/>#                                    &lt;tifcha-silluq-clause&gt; | \
+<a name="157"/>#                                    &lt;zaqef-silluq-clause&gt; \
+<a name="158"/>#                                )
+<a name="159"/>#
+<a name="160"/>############################################################################
+<a name="161"/>
+<a name="162"/>package ipl.ichartp
+<a name="163"/>
+<a name="164"/>import
+<a name="165"/>   io(close, ewrites, open, read,
+<a name="166"/>      stop, write),
+<a name="167"/>   ipl.rewrap(rewrap),
+<a name="168"/>   ipl.scan(slashbal, slashupto),
+<a name="169"/>   ipl.sets(elementset),
+<a name="170"/>   ipl.strings(replace),
+<a name="171"/>   ipl.strip(strip),
+<a name="172"/>   ipl.stripcom(stripcom),
+<a name="173"/>   ipl.trees(stree)
+<a name="174"/>
+<a name="175"/>record stats(edge_list, lhs_table, term_set)
+<a name="176"/>record chart(inactive, active)               # inactive - set; active - list
+<a name="177"/>record retval(no, item)
+<a name="178"/>
+<a name="179"/>record edge(LHS, RHS, LEN, DONE, BEG, END, SEEN)
+<a name="180"/>record short_edge(LHS, RHS)
+<a name="181"/>
+<a name="182"/>#
+<a name="183"/># For debugging only.
+<a name="184"/>#
+<a name="185"/>procedure main(a)
+<a name="186"/>
+<a name="187"/>    local res, filename, line
+<a name="188"/>    # &amp;trace := -1
+<a name="189"/>    filename := \a[1] | "bnfs.byte"
+<a name="190"/>    while line := read() do {
+<a name="191"/>	res := &amp;null
+<a name="192"/>        every res := parse_sentence(line, filename, "S") do {
+<a name="193"/>            if res.no = 0 then
+<a name="194"/>	        write(stree(edge2tree(res.item)))
+<a name="195"/>#	        write(ximage(res.item))
+<a name="196"/>	    else if res.no = 1 then {
+<a name="197"/>		write("hmmm")
+<a name="198"/>		write(stree(edge2tree(res.item)))
+<a name="199"/>	    }
+<a name="200"/>        }
+<a name="201"/>	/res &amp; write("can't parse ",line)
+<a name="202"/>    }
+<a name="203"/>
+<a name="204"/>end
+<a name="205"/>
+<a name="206"/>
+<a name="207"/>#
+<a name="208"/># parse_sentence:  string x string -&gt; edge records
+<a name="209"/>#                  (s, filename) -&gt; Es
+<a name="210"/>#     where s is a chunk of text presumed to constitute a sentence
+<a name="211"/>#     where filename is the name of a grammar file containing BNFs
+<a name="212"/>#     where Es are edge records containing possible parses of s
+<a name="213"/>#
+<a name="214"/>procedure parse_sentence(s, filename, start_symbol)
+<a name="215"/>
+<a name="216"/>    local file, e, i, elist, ltbl, tset, ch, tokens, st, 
+<a name="217"/>        memb, new_e, token_set, none_found, active_modified
+<a name="218"/>    static master, old_filename
+<a name="219"/>    initial master := table()
+<a name="220"/>
+<a name="221"/>    #
+<a name="222"/>    # Initialize and store stats for filename (if not already stored).
+<a name="223"/>    #
+<a name="224"/>    unless filename == \old_filename then {
+<a name="225"/>        file := open(filename, "r") | p_err(filename, 7)
+<a name="226"/>        #
+<a name="227"/>        # Read BNFs from file; turn them into edge structs, and
+<a name="228"/>        # store them all in a list; insert terminal symbols into a set.
+<a name="229"/>        #
+<a name="230"/>        elist := list(); ltbl := table(); tset := set()
+<a name="231"/>        every e := bnf_file_2_edges(file) do {
+<a name="232"/>            put(elist, e)                      # main edge list (active)
+<a name="233"/>            (/ltbl[e.LHS] := set(e)) | insert(ltbl[e.LHS], e) # index LHSs
+<a name="234"/>            every i := 1 to e.LEN do           # LEN holds length of e.RHS
+<a name="235"/>                if /e.RHS[i].RHS then          # RHS for terminals is null
+<a name="236"/>                    insert(tset, e.RHS[i].LHS)
+<a name="237"/>        }
+<a name="238"/>        insert(master, filename, stats(elist, ltbl, tset))
+<a name="239"/>        old_filename := filename
+<a name="240"/>        close(file)
+<a name="241"/>    }
+<a name="242"/>    elist := fullcopy(master[filename].edge_list)
+<a name="243"/>    ltbl  := fullcopy(master[filename].lhs_table)
+<a name="244"/>    tset  := master[filename].term_set
+<a name="245"/>    
+<a name="246"/>    #
+<a name="247"/>    # Make edge list into the active section of chart; tokenize the
+<a name="248"/>    # sentence s &amp; check for unrecognized terminals.
+<a name="249"/>    #
+<a name="250"/>    ch := chart(set(), elist)
+<a name="251"/>    tokens := tokenize(s)
+<a name="252"/>
+<a name="253"/>    #
+<a name="254"/>    # Begin parse by entering all tokens in s into the inactive set
+<a name="255"/>    # in the chart as edges with no RHS (a NULL RHS is characteristic
+<a name="256"/>    # of all terminals).
+<a name="257"/>    #
+<a name="258"/>    token_set := elementset(tokens)
+<a name="259"/>    every i := 1 to *tokens do {
+<a name="260"/>        # Flag words not in the grammar as errors.
+<a name="261"/>        unless member(tset, tokens[i]) then
+<a name="262"/>            suspend retval(1, tokens[i])
+<a name="263"/>        # Now, give us an inactive edge corresponding to word i.
+<a name="264"/>        insert(ch.inactive, e := edge(tokens[i], &amp;null, 1, 1, i, i+1))
+<a name="265"/>        # Insert word i into the LHS table.
+<a name="266"/>        (/ltbl[tokens[i]] := set(e)) | insert(ltbl[tokens[i]], e)
+<a name="267"/>	# Watch out for those empty RHSs.
+<a name="268"/>	insert(ch.inactive, e := edge("", &amp;null, 1, 1, i, i))
+<a name="269"/>        (/ltbl[""] := set(e)) | insert(ltbl[""], e)
+<a name="270"/>    }
+<a name="271"/>    *tokens = 0 &amp; i := 0
+<a name="272"/>    insert(ch.inactive, e := edge("", &amp;null, 1, 1, i+1, i+1))
+<a name="273"/>    (/ltbl[""] := set(e)) | insert(ltbl[""], e)
+<a name="274"/>
+<a name="275"/>    #
+<a name="276"/>    # Until no new active edges can be built, keep ploughing through
+<a name="277"/>    # the active edge list, trying to match unconfirmed members of their
+<a name="278"/>    # RHSs up with inactive edges.
+<a name="279"/>    #
+<a name="280"/>    until \none_found do {
+<a name="281"/>#	write(ximage(ch))
+<a name="282"/>        none_found := 1
+<a name="283"/>        every e := !ch.active do {
+<a name="284"/>            active_modified := &amp;null
+<a name="285"/>            # keep track of inactive edges we've already tried
+<a name="286"/>            /e.SEEN := set()
+<a name="287"/>            #
+<a name="288"/>            # e.RHS[e.DONE+1] is the first unconfirmed category in the
+<a name="289"/>            # RHS of e; ltbl[e.RHS[e.DONE+1].LHS] are all edges having
+<a name="290"/>            # as their LHS the LHS of the first unconfirmed category in
+<a name="291"/>            # e's RHS; we simply intersect this set with the inactives,
+<a name="292"/>            # and then subtract out those we've seen before in connec-
+<a name="293"/>            # tion with this edge -
+<a name="294"/>            #
+<a name="295"/>            if *(st := \ltbl[e.RHS[e.DONE+1].LHS] ** ch.inactive -- e.SEEN) &gt; 0
+<a name="296"/>            then {
+<a name="297"/>                # record all the inactive edges being looked at as seen
+<a name="298"/>                e.SEEN ++:= st
+<a name="299"/>                every memb := !st do {
+<a name="300"/>		    # make sure this inactive edge starts where the
+<a name="301"/>		    # last confirmed edge in e.RHS ends!
+<a name="302"/>		    if memb.BEG ~= \e.RHS[e.DONE].END then next
+<a name="303"/>		    # set none_found to indicate we've created a new edge
+<a name="304"/>		    else none_found := &amp;null
+<a name="305"/>                    # create a new edge, having the LHS of e, the RHS of e,
+<a name="306"/>                    # the start point of e, the end point of st, and one more
+<a name="307"/>                    # confirmed RHS members than e
+<a name="308"/>                    new_e := edge(e.LHS, fullcopy(e.RHS),
+<a name="309"/>				  e.LEN, e.DONE+1, e.BEG, memb.END)
+<a name="310"/>                    new_e.RHS[new_e.DONE] := memb
+<a name="311"/>                    /new_e.BEG := memb.BEG
+<a name="312"/>                    if new_e.LEN = new_e.DONE then {      # it's inactive
+<a name="313"/>                        insert(ch.inactive, new_e)
+<a name="314"/>                        insert(ltbl[e.LHS], new_e)
+<a name="315"/>                        if new_e.BEG = 1 &amp; new_e.END = (*tokens+1) then {
+<a name="316"/>                            if new_e.LHS == start_symbol  # complete parse
+<a name="317"/>                            then suspend retval(0, new_e)
+<a name="318"/>                        }
+<a name="319"/>                    } else {
+<a name="320"/>                        put(ch.active, new_e)            # it's active
+<a name="321"/>                        active_modified := 1
+<a name="322"/>                    }
+<a name="323"/>                }
+<a name="324"/>            }
+<a name="325"/>            # restart if the ch.active list has been modified
+<a name="326"/>            if \active_modified then break next
+<a name="327"/>        }
+<a name="328"/>    }
+<a name="329"/>
+<a name="330"/>end
+<a name="331"/>
+<a name="332"/>
+<a name="333"/>#
+<a name="334"/># tokenize:  break up a sentence into constituent words, using spaces,
+<a name="335"/>#            tabs, and other punctuation as separators (we'll need to
+<a name="336"/>#            change this a bit later on to cover apostrophed words)
+<a name="337"/>#
+<a name="338"/>procedure tokenize(s)
+<a name="339"/>
+<a name="340"/>    local l
+<a name="341"/>
+<a name="342"/>    l := list()
+<a name="343"/>    s ? {
+<a name="344"/>        while tab(upto(&amp;letters)) do
+<a name="345"/>            put(l, map(tab(many(&amp;letters))))
+<a name="346"/>    }
+<a name="347"/>    return l
+<a name="348"/>
+<a name="349"/>end
+<a name="350"/>
+<a name="351"/>
+<a name="352"/>#
+<a name="353"/># edge2tree:  edge -&gt; tree
+<a name="354"/>#             e -&gt; t
+<a name="355"/>#
+<a name="356"/>#    where e is an edge structure (active or inactive; both are okay)
+<a name="357"/>#    where t is a tree like what's described in Ralph Griswold's
+<a name="358"/>#    structs library (IPL); I don't know about the 2nd ed. of
+<a name="359"/>#    Griswold &amp; Griswold, but the structure is described in the 1st
+<a name="360"/>#    ed. in section 16.1
+<a name="361"/>#
+<a name="362"/>#    fails if, for some reason, the conversion can't be made (e.g. the
+<a name="363"/>#    edge structure has been screwed around with in some way)
+<a name="364"/>#
+<a name="365"/>procedure edge2tree(e)
+<a name="366"/>
+<a name="367"/>    local memb, t
+<a name="368"/>
+<a name="369"/>    t := [e.LHS]
+<a name="370"/>    \e.RHS | (return t)                                 # a terminal
+<a name="371"/>    type(e) == "edge" | (return put(t, []))             # An incomplete edge
+<a name="372"/>    every memb := !e.RHS do                             # has daughters.
+<a name="373"/>	put(t, edge2tree(memb))
+<a name="374"/>    return t
+<a name="375"/>
+<a name="376"/>end
+<a name="377"/>
+<a name="378"/>
+<a name="379"/>#
+<a name="380"/># bnf_file_2_edges: concatenate backslash-final lines &amp; parse
+<a name="381"/>#
+<a name="382"/>procedure bnf_file_2_edges(f)
+<a name="383"/>
+<a name="384"/>    local getline, line, macro_list, old, new, i
+<a name="385"/>
+<a name="386"/>    macro_list := list()
+<a name="387"/>    getline := create stripcom(!f)
+<a name="388"/>    while line := @getline do {
+<a name="389"/>        while line ?:= 1(tab(-2) || tab(slashupto('\\')), pos(-1)) || @getline
+<a name="390"/>	line ? {
+<a name="391"/>	    if ="define" then {
+<a name="392"/>		tab(many('\t '))
+<a name="393"/>		old := tab(slashupto('\t ')) |
+<a name="394"/>		    stop("bnf_file_2_edges", 7, tab(0))
+<a name="395"/>		tab(many('\t '))
+<a name="396"/>		new := tab(0)
+<a name="397"/>		(!macro_list)[1] == old &amp;
+<a name="398"/>		    stop("bnf_file_2_edges", 8, old)
+<a name="399"/>		put(macro_list, [old, new])
+<a name="400"/>		next		# go back to main loop
+<a name="401"/>	    }
+<a name="402"/>	    else {
+<a name="403"/>		every i := 1 to *macro_list do
+<a name="404"/>		    # Replace is in the IPL (strings.icn).
+<a name="405"/>		    line := replace(line, macro_list[i][1], macro_list[i][2])
+<a name="406"/>		suspend bnf_2_edges(line)
+<a name="407"/>	    }
+<a name="408"/>	}
+<a name="409"/>    }
+<a name="410"/>
+<a name="411"/>end
+<a name="412"/>
+<a name="413"/>
+<a name="414"/>#
+<a name="415"/># bnf_2_edges: string -&gt; edge records
+<a name="416"/>#              s -&gt; Es (a generator)
+<a name="417"/>#    where s is a CFPSG rule in BNF form
+<a name="418"/>#    where Es are edges
+<a name="419"/>#
+<a name="420"/>procedure bnf_2_edges(s)
+<a name="421"/>    
+<a name="422"/>    local tmp, RHS, LHS
+<a name="423"/>    #
+<a name="424"/>    # Break BNF-style CFPSG rule into LHS and RHS.  If there is more
+<a name="425"/>    # than one RHS (a la the | alternation op), suspend multiple re-
+<a name="426"/>    # sults.
+<a name="427"/>    #
+<a name="428"/>    s ? {
+<a name="429"/>	# tab upto the ::= sign
+<a name="430"/>	tmp := (tab(slashupto(':')) || ="::=") | p_err(s, 1)
+<a name="431"/>	# strip non-backslashed spaces, and extract LHS symbol
+<a name="432"/>	stripspaces(tmp) ? {
+<a name="433"/>	    LHS := 1(tab(slashbal(':', '&lt;', '&gt;')), ="::=") | p_err(s, 1)
+<a name="434"/>	    LHS ?:= strip(2(="&lt;", tab(-1), ="&gt;"), '\\') | p_err(s, 2)
+<a name="435"/>	    LHS == "" &amp; p_err(s, 6)
+<a name="436"/>	}
+<a name="437"/>        every RHS := do_slash(tab(0) \ 1) do {
+<a name="438"/>            RHS := string_2_list(RHS)
+<a name="439"/>            suspend edge(LHS, RHS, *RHS, 0, &amp;null, &amp;null)
+<a name="440"/>        }
+<a name="441"/>    }
+<a name="442"/>
+<a name="443"/>end
+<a name="444"/>
+<a name="445"/>
+<a name="446"/>#
+<a name="447"/># string_2_list:  string -&gt; list
+<a name="448"/>#                 s -&gt; L
+<a name="449"/>#    where L is a list of partially constructed (short) edges, having
+<a name="450"/>#    only LHS and RHS; in the case of nonterminals, the RHS is set
+<a name="451"/>#    to 1, while for terminals the RHS is null (and remains that way
+<a name="452"/>#    throughout the parse)
+<a name="453"/>#
+<a name="454"/>procedure string_2_list(s)
+<a name="455"/>
+<a name="456"/>    local tmp, RHS_list, LHS
+<a name="457"/>
+<a name="458"/>    (s || "\x00") ? {
+<a name="459"/>	tab(many(' \t'))
+<a name="460"/>        pos(-1) &amp; (return [short_edge("", &amp;null)])
+<a name="461"/>        RHS_list := list()
+<a name="462"/>        repeat {
+<a name="463"/>	    tab(many(' \t'))
+<a name="464"/>	    pos(-1) &amp; break
+<a name="465"/>            if match("&lt;") then {
+<a name="466"/>                tmp := ("" ~== tab(slashbal(&amp;cset, '&lt;', '&gt;'))) | p_err(s, 4)
+<a name="467"/>		LHS := stripspaces(tmp)
+<a name="468"/>                LHS ?:= strip(2(="&lt;", tab(-1), ="&gt;"), '\\') | p_err(s, 4)
+<a name="469"/>		LHS == "" &amp; p_err(s, 10)
+<a name="470"/>                put(RHS_list, short_edge(LHS, 1))
+<a name="471"/>            } else {
+<a name="472"/>                LHS := stripspaces(tab(slashupto(' &lt;') | -1))
+<a name="473"/>                slashupto('&gt;', LHS) &amp; p_err(s, 5)
+<a name="474"/>                put(RHS_list, short_edge(strip(LHS, '\\'), &amp;null))
+<a name="475"/>            }
+<a name="476"/>        }
+<a name="477"/>    }
+<a name="478"/>    return RHS_list
+<a name="479"/>
+<a name="480"/>end
+<a name="481"/>
+<a name="482"/>
+<a name="483"/>#
+<a name="484"/># fullcopy:  make full recursive copy of object
+<a name="485"/>#
+<a name="486"/>procedure fullcopy(obj)
+<a name="487"/>
+<a name="488"/>    local retval, i, k
+<a name="489"/>
+<a name="490"/>    case type(obj) of {
+<a name="491"/>        "co-expression"  : return obj
+<a name="492"/>        "cset"           : return obj
+<a name="493"/>        "file"           : return obj
+<a name="494"/>        "integer"        : return obj
+<a name="495"/>        "list"           : {
+<a name="496"/>            retval := list(*obj)
+<a name="497"/>            every i := 1 to *obj do
+<a name="498"/>                retval[i] := fullcopy(obj[i])
+<a name="499"/>            return retval
+<a name="500"/>        }
+<a name="501"/>        "null"           :  return &amp;null
+<a name="502"/>        "procedure"      :  return obj
+<a name="503"/>        "real"           :  return obj
+<a name="504"/>        "set"            :  {
+<a name="505"/>            retval := set()
+<a name="506"/>            every insert(retval, fullcopy(!obj))
+<a name="507"/>            return retval
+<a name="508"/>        }
+<a name="509"/>        "string"         :  return obj
+<a name="510"/>        "table"          :  {
+<a name="511"/>            retval := table(obj[[]])
+<a name="512"/>            every k := key(obj) do
+<a name="513"/>                insert(retval, fullcopy(k), fullcopy(obj[k]))
+<a name="514"/>            return retval
+<a name="515"/>        }
+<a name="516"/>        # probably a record; if not, we're dealing with a new
+<a name="517"/>        # version of Icon or a nonstandard implementation, and
+<a name="518"/>	# we're screwed
+<a name="519"/>        default          :  {
+<a name="520"/>            retval := copy(obj)
+<a name="521"/>            every i := 1 to *obj do
+<a name="522"/>                retval[i] := fullcopy(obj[i])
+<a name="523"/>            return retval
+<a name="524"/>        }
+<a name="525"/>    }
+<a name="526"/>
+<a name="527"/>end
+<a name="528"/>
+<a name="529"/>
+<a name="530"/>#
+<a name="531"/># do_slash:  string -&gt; string(s)
+<a name="532"/>#     Given a|b suspend a then b.  Used in conjunction with do_parends().
+<a name="533"/>#
+<a name="534"/>procedure do_slash(s)
+<a name="535"/>
+<a name="536"/>    local chunk
+<a name="537"/>    s ? {
+<a name="538"/>	while chunk := tab(slashbal('|', '(', ')')) do {
+<a name="539"/>	    suspend do_parends(chunk)
+<a name="540"/>	    move(1)
+<a name="541"/>	}
+<a name="542"/>	suspend do_parends(tab(0))
+<a name="543"/>    }
+<a name="544"/>
+<a name="545"/>end
+<a name="546"/>
+<a name="547"/>
+<a name="548"/>#
+<a name="549"/># do_parends:  string -&gt; string(s)
+<a name="550"/>#    Given a(b)c suspend abc; given a(b|c)d suspend abd and acd, etc.
+<a name="551"/>#    Used in conjuction with do_slash().
+<a name="552"/>#
+<a name="553"/>procedure do_parends(s)
+<a name="554"/>
+<a name="555"/>    local chunk, i, j
+<a name="556"/>    s ? {
+<a name="557"/>	unless i := slashupto('(') then {
+<a name="558"/>	    chunk := tab(0)
+<a name="559"/>	    slashupto(')') &amp; p_err(s, 8)
+<a name="560"/>	    suspend chunk
+<a name="561"/>	} else {
+<a name="562"/>	    j := i + slashbal(')', '(', ')', s[i+1:0]) | p_err(s, 9)
+<a name="563"/>	    suspend tab(i) ||
+<a name="564"/>		(move(1), do_slash(tab(j))) ||
+<a name="565"/>		(move(1), do_parends(tab(0)))
+<a name="566"/>	}
+<a name="567"/>    }
+<a name="568"/>
+<a name="569"/>end
+<a name="570"/>
+<a name="571"/>
+<a name="572"/>#
+<a name="573"/># p_err:  print error message to stderr &amp; abort
+<a name="574"/>#
+<a name="575"/>procedure p_err(s, n)
+<a name="576"/>
+<a name="577"/>    local i, msg
+<a name="578"/>    static errlist
+<a name="579"/>    initial {
+<a name="580"/>        errlist := [[1,  "malformed LHS"],
+<a name="581"/>                    [2,  "nonterminal lacks proper &lt;&gt; enclosure"],
+<a name="582"/>                    [3,  "missing left angle bracket"],
+<a name="583"/>                    [4,  "unmatched left angle bracket"],
+<a name="584"/>                    [5,  "unmatched right angle bracket"],
+<a name="585"/>		    [6,  "empty symbol in LHS"],
+<a name="586"/>                    [7,  "unable to open file"],
+<a name="587"/>                    [8,  "unmatched right parenthesis"],
+<a name="588"/>                    [9,  "unmatched left parenthesis"],
+<a name="589"/>                    [10, "empty symbol in RHS"]
+<a name="590"/>                   ]
+<a name="591"/>    }
+<a name="592"/>    every i := 1 to *errlist do
+<a name="593"/>        if errlist[i][1] = n then msg := errlist[i][2]
+<a name="594"/>    ewrites( "error ", n, " (", msg, ") in \n")
+<a name="595"/>    every write("\t", rewrap(s) | rewrap())
+<a name="596"/>    exit(n)
+<a name="597"/>
+<a name="598"/>end
+<a name="599"/>
+<a name="600"/>
+<a name="601"/>#
+<a name="602"/># Remove non-backslashed spaces and tabs.
+<a name="603"/>#
+<a name="604"/>procedure stripspaces(s)
+<a name="605"/>
+<a name="606"/>    local s2
+<a name="607"/>
+<a name="608"/>    s2 := ""
+<a name="609"/>    s ? {
+<a name="610"/>        while s2 ||:= tab(slashupto(' \t')) do
+<a name="611"/>            tab(many(' \t'))
+<a name="612"/>        s2 ||:= tab(0)
+<a name="613"/>    }
+<a name="614"/>
+<a name="615"/>    return s2
+<a name="616"/>
+<a name="617"/>end
+</pre></body></html>

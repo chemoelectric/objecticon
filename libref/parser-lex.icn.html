@@ -1,0 +1,557 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>lex.icn</title></head><body><pre>
+<a name="1"/>package parser
+<a name="2"/>
+<a name="3"/>#
+<a name="4"/># A hand-written lex compatible icon lexer.
+<a name="5"/>#
+<a name="6"/>import io, lang, util
+<a name="7"/>
+<a name="8"/>class Lex(Connectable)
+<a name="9"/>   #
+<a name="10"/>   # the tokflags will tell you whether the token can start an expression or
+<a name="11"/>   # end an expression, as well as whether a newline was seen since the last
+<a name="12"/>   # token
+<a name="13"/>   #
+<a name="14"/>   private
+<a name="15"/>      tokflags,
+<a name="16"/>      yylineno, yycolno, yyfilename, yyencoding, 
+<a name="17"/>      yytokval, yylinestart, yytext
+<a name="18"/>
+<a name="19"/>   public static const
+<a name="20"/>      idchars, reswords,
+<a name="21"/>      Beginner, Ender, Newline
+<a name="22"/>
+<a name="23"/>   private static init()
+<a name="24"/>      Beginner := 1
+<a name="25"/>      Ender := 2
+<a name="26"/>      Newline := 4
+<a name="27"/>      idchars := &amp;letters ++ '_' ++ &amp;digits
+<a name="28"/>      reswords := table([Beginner+Ender, YY.IDENT])
+<a name="29"/>      reswords["abstract"] := [0, YY.ABSTRACT]
+<a name="30"/>      reswords["break"] := [Beginner+Ender, YY.BREAK]
+<a name="31"/>      reswords["by"] := [0, YY.BY]
+<a name="32"/>      reswords["case"] := [Beginner, YY.CASE]
+<a name="33"/>      reswords["class"] := [0, YY.CLASS]
+<a name="34"/>      reswords["const"] := [0, YY.CONST]
+<a name="35"/>      reswords["create"] := [Beginner, YY.CREATE]
+<a name="36"/>      reswords["default"] := [Beginner, YY.DEFAULT]
+<a name="37"/>      reswords["do"] := [0, YY.DO]
+<a name="38"/>      reswords["else"] := [0, YY.ELSE]
+<a name="39"/>      reswords["end"] := [0, YY.END]
+<a name="40"/>      reswords["every"] := [Beginner, YY.EVERY]
+<a name="41"/>      reswords["fail"] := [Beginner+Ender, YY.FAIL]
+<a name="42"/>      reswords["final"] := [0, YY.FINAL]
+<a name="43"/>      reswords["global"] := [0, YY.GLOBAL]
+<a name="44"/>      reswords["if"] := [Beginner, YY.IF]
+<a name="45"/>      reswords["import"] := [0, YY.IMPORT]
+<a name="46"/>      reswords["initial"] := [0, YY.INITIAL]
+<a name="47"/>      reswords["invocable"] := [0, YY.INVOCABLE]
+<a name="48"/>      reswords["link"] := [Beginner+Ender, YY.LINK]
+<a name="49"/>      reswords["local"] := [0, YY.LOCAL]
+<a name="50"/>      reswords["native"] := [0, YY.NATIVE]
+<a name="51"/>      reswords["next"] := [Beginner+Ender, YY.NEXT]
+<a name="52"/>      reswords["not"] := [Beginner, YY.NOT]
+<a name="53"/>      reswords["of"] := [0, YY.OF]
+<a name="54"/>      reswords["optional"] := [0, YY.OPTIONAL]
+<a name="55"/>      reswords["override"] := [0, YY.OVERRIDE]
+<a name="56"/>      reswords["package"] := [0, YY.PACKAGE]
+<a name="57"/>      reswords["private"] := [0, YY.PRIVATE]
+<a name="58"/>      reswords["procedure"] := [0, YY.PROCEDURE]
+<a name="59"/>      reswords["protected"] := [0, YY.PROTECTED]
+<a name="60"/>      reswords["public"] := [0, YY.PUBLIC]
+<a name="61"/>      reswords["readable"] := [0, YY.READABLE]
+<a name="62"/>      reswords["record"] := [0, YY.RECORD]
+<a name="63"/>      reswords["repeat"] := [Beginner, YY.REPEAT]
+<a name="64"/>      reswords["return"] := [Beginner+Ender, YY.RETURN]
+<a name="65"/>      reswords["static"] := [0, YY.STATIC]
+<a name="66"/>      reswords["succeed"] := [Beginner+Ender, YY.SUCCEED]
+<a name="67"/>      reswords["suspend"] := [Beginner+Ender, YY.SUSPEND]
+<a name="68"/>      reswords["then"] := [0, YY.THEN]
+<a name="69"/>      reswords["to"] := [0, YY.TO]
+<a name="70"/>      reswords["unless"] := [Beginner, YY.UNLESS]
+<a name="71"/>      reswords["until"] := [Beginner, YY.UNTIL]
+<a name="72"/>      reswords["while"] := [Beginner, YY.WHILE]
+<a name="73"/>   end
+<a name="74"/>
+<a name="75"/>   private err(msg)
+<a name="76"/>      fire("error", ErrorDetail(yyfilename, yylineno, image(yytext) || ": " || msg))
+<a name="77"/>   end
+<a name="78"/>
+<a name="79"/>   private do_encoding()
+<a name="80"/>      if any(&amp;letters) then {
+<a name="81"/>         yyencoding := tab(many(&amp;letters ++ &amp;digits ++ '-'))
+<a name="82"/>         (yyencoding == ("ASCII" | "UTF-8" |"ISO-8859-1")) | fire("error", ErrorDetail(yyfilename, yylineno, "Invalid encoding: " || yyencoding))
+<a name="83"/>      }
+<a name="84"/>   end
+<a name="85"/>
+<a name="86"/>   private yylex2()
+<a name="87"/>      repeat {
+<a name="88"/>         tab(many(' \r\t\v\^l'))
+<a name="89"/>         if pos(0) then {
+<a name="90"/>            yycolno := &amp;pos - yylinestart
+<a name="91"/>            fail
+<a name="92"/>         }
+<a name="93"/>         if ="#" then {
+<a name="94"/>            if ="line " then {
+<a name="95"/>               if yylineno := integer(tab(many(&amp;digits))) - 1 then {
+<a name="96"/>                  tab(many(' \t'))
+<a name="97"/>                  if ="\"" then {
+<a name="98"/>                     yyfilename := FilePath(tab(find("\"" | "\n") | 0)).canonical().str()
+<a name="99"/>                     ="\""
+<a name="100"/>                     tab(many(' \t'))
+<a name="101"/>                     do_encoding()
+<a name="102"/>                  }
+<a name="103"/>               }
+<a name="104"/>            }
+<a name="105"/>            tab(find("\n") | 0)
+<a name="106"/>            next
+<a name="107"/>         }
+<a name="108"/>         if ="$" then {
+<a name="109"/>            # Handle $encoding if we are parsing an unpreprocessed string.
+<a name="110"/>            if ="encoding" then {
+<a name="111"/>               tab(many(' \t'))
+<a name="112"/>               do_encoding()
+<a name="113"/>            }
+<a name="114"/>            tab(find("\n") | 0)
+<a name="115"/>            next
+<a name="116"/>         }
+<a name="117"/>         if ="\n" then {
+<a name="118"/>            yylineno +:= 1
+<a name="119"/>            yylinestart := &amp;pos - 1
+<a name="120"/>            if tokflags &lt; Newline then
+<a name="121"/>               tokflags +:= Newline
+<a name="122"/>            next
+<a name="123"/>         }
+<a name="124"/>
+<a name="125"/>         yycolno := &amp;pos - yylinestart
+<a name="126"/>         yytext := move(1)
+<a name="127"/>         return case yytext of {
+<a name="128"/>            "'": do_csetlit()
+<a name="129"/>            "\"": do_strlit()
+<a name="130"/>            "!": do_bang()
+<a name="131"/>            "%": do_mod()
+<a name="132"/>            "&amp;": do_and()
+<a name="133"/>            "*": do_star()
+<a name="134"/>            "+": do_plus()
+<a name="135"/>            "-": do_minus()
+<a name="136"/>            ".": do_dot()
+<a name="137"/>            "/": do_slash()
+<a name="138"/>            ":": do_colon()
+<a name="139"/>            "&lt;": do_less()
+<a name="140"/>            "=": do_equal()
+<a name="141"/>            "&gt;": do_greater()
+<a name="142"/>            "?": do_qmark()
+<a name="143"/>            "@": do_at()
+<a name="144"/>            "\\": do_backslash()
+<a name="145"/>            "^": do_caret()
+<a name="146"/>            "|": do_or()
+<a name="147"/>            "~": do_tilde()
+<a name="148"/>            "(": do_lparen()
+<a name="149"/>            ")": do_rparen()
+<a name="150"/>            "[": do_lbrack()
+<a name="151"/>            "]": do_rbrack()
+<a name="152"/>            "{": do_lbrace()
+<a name="153"/>            "}": do_rbrace()
+<a name="154"/>            ",": do_comma()
+<a name="155"/>            ";": do_semi()
+<a name="156"/>            !&amp;digits: do_digits()
+<a name="157"/>            "u"|"U" : do_u()
+<a name="158"/>            "_" | !&amp;letters: do_letters()
+<a name="159"/>            default: err("Token not recognized")
+<a name="160"/>         }
+<a name="161"/>      }
+<a name="162"/>   end
+<a name="163"/>
+<a name="164"/>   #
+<a name="165"/>   # Tab to end of current str literal, setting yytext to its (unescaped)
+<a name="166"/>   # value.  yytext should be set to the start of the literal, either ",
+<a name="167"/>   # u" or ', depending on the type.
+<a name="168"/>   #
+<a name="169"/>   private get_strlit()
+<a name="170"/>      local spos, cs, q, val, i, vpos
+<a name="171"/>      vpos := spos := &amp;pos
+<a name="172"/>      val := ""
+<a name="173"/>      # Closing quote is last char of yytext (either ' or ")
+<a name="174"/>      q := cset(yytext[-1])
+<a name="175"/>      cs := '\\_\n' ++ q
+<a name="176"/>      repeat {
+<a name="177"/>         tab(upto(cs) | 0)
+<a name="178"/>         if pos(0) | any('\n') then {
+<a name="179"/>            err("Unclosed quote")
+<a name="180"/>            break
+<a name="181"/>         }
+<a name="182"/>         if any(q) then {
+<a name="183"/>            val ||:= &amp;subject[vpos:&amp;pos]
+<a name="184"/>            move(1)
+<a name="185"/>            yytext ||:= &amp;subject[spos:&amp;pos]
+<a name="186"/>            break
+<a name="187"/>         }
+<a name="188"/>         if any('_') then {
+<a name="189"/>            if i := &amp;pos &amp; =("_\n" | "_\r\n") then {
+<a name="190"/>               val ||:= &amp;subject[vpos:i]
+<a name="191"/>               yylineno +:= 1
+<a name="192"/>               yylinestart := &amp;pos - 1
+<a name="193"/>               tab(many(' \t'))
+<a name="194"/>               vpos := &amp;pos
+<a name="195"/>            } else
+<a name="196"/>               move(1)
+<a name="197"/>         } else {
+<a name="198"/>            # Must be at a "\".  Skip that and the first char of the
+<a name="199"/>            # escape; the others will be skipped by the tab at the top
+<a name="200"/>            # of the loop.  A \^ must be treated specially however, to
+<a name="201"/>            # avoid treating (eg) \^" as a closing quote.
+<a name="202"/>            move(1)
+<a name="203"/>            ="^"
+<a name="204"/>            move(1)
+<a name="205"/>         }
+<a name="206"/>      }
+<a name="207"/>
+<a name="208"/>      # Check encodings for valid chars
+<a name="209"/>      if yyencoding == "UTF-8" then
+<a name="210"/>         val := ucs(val)  | err("Invalid UTF-8 in string")
+<a name="211"/>      else if yyencoding == "ASCII" then {
+<a name="212"/>         if upto(~&amp;ascii, val) then
+<a name="213"/>            err("Non-ascii character in string")
+<a name="214"/>      }
+<a name="215"/>
+<a name="216"/>      return val
+<a name="217"/>   end
+<a name="218"/>
+<a name="219"/>   private do_u()
+<a name="220"/>      local val, t
+<a name="221"/>      if yytext ||:= ="\"" then {
+<a name="222"/>         val := get_strlit()   
+<a name="223"/>         if yyencoding ~== "UTF-8" then {
+<a name="224"/>            # Convert val to by-codepoint ucs equivalent
+<a name="225"/>            t := ""
+<a name="226"/>            every t ||:= Text.utf8_seq(ord(val))
+<a name="227"/>            val := ucs(t)
+<a name="228"/>         }
+<a name="229"/>         yytokval := Format.unescape(val) | err(&amp;why)
+<a name="230"/>         tokflags +:= Beginner + Ender
+<a name="231"/>         return YY.UCSLIT
+<a name="232"/>      } else {
+<a name="233"/>         return do_letters()
+<a name="234"/>      }
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   private do_strlit()
+<a name="238"/>      local val, u, i
+<a name="239"/>      val := get_strlit()   
+<a name="240"/>      if yyencoding == "UTF-8" then {
+<a name="241"/>         # Convert val to by-codepoint string equivalent
+<a name="242"/>         u := ""
+<a name="243"/>         every i := ord(val) do
+<a name="244"/>            u ||:= char(i) | err("Code point out of range for string literal")
+<a name="245"/>         val := u
+<a name="246"/>      }
+<a name="247"/>      yytokval := Format.unescape(val) | err(&amp;why)
+<a name="248"/>      tokflags +:= Beginner + Ender
+<a name="249"/>      return YY.STRINGLIT
+<a name="250"/>   end
+<a name="251"/>
+<a name="252"/>   private do_csetlit()
+<a name="253"/>      local val
+<a name="254"/>      val := get_strlit()
+<a name="255"/>      yytokval := Format.cset_unescape(val) | err(&amp;why)
+<a name="256"/>      tokflags +:= Beginner + Ender
+<a name="257"/>      return YY.CSETLIT
+<a name="258"/>   end
+<a name="259"/>
+<a name="260"/>   private do_letters()
+<a name="261"/>      local x
+<a name="262"/>      yytext ||:= tab(many(idchars))
+<a name="263"/>      x := reswords[yytext]
+<a name="264"/>      tokflags +:= x[1]
+<a name="265"/>      return x[2]
+<a name="266"/>   end
+<a name="267"/>
+<a name="268"/>   private do_digits()
+<a name="269"/>      yytext ||:= tab(many(&amp;digits))
+<a name="270"/>      tokflags +:= Beginner+Ender
+<a name="271"/>      if yytext ||:= ="." then {
+<a name="272"/>         yytext ||:= tab(many(&amp;digits))
+<a name="273"/>         if yytext ||:= tab(any('eE')) then {
+<a name="274"/>            yytext ||:= tab(any('+\-'))
+<a name="275"/>            yytext ||:= tab(many(&amp;digits))
+<a name="276"/>         }
+<a name="277"/>         yytokval := real(yytext) | err("Invalid real literal")
+<a name="278"/>         return YY.REALLIT
+<a name="279"/>      }
+<a name="280"/>      else if yytext ||:= tab(any('eE')) then {
+<a name="281"/>         yytext ||:= tab(any('+\-'))
+<a name="282"/>         yytext ||:= tab(many(&amp;digits))
+<a name="283"/>         yytokval := real(yytext) | err("Invalid real literal")
+<a name="284"/>         return YY.REALLIT
+<a name="285"/>      }
+<a name="286"/>      else {
+<a name="287"/>         if yytext ||:= tab(any('rR')) then {
+<a name="288"/>            yytext ||:= tab(many(&amp;digits ++ &amp;letters))
+<a name="289"/>         }
+<a name="290"/>         yytokval := integer(yytext) | err("Invalid integer literal")
+<a name="291"/>         return YY.INTLIT
+<a name="292"/>      }
+<a name="293"/>   end
+<a name="294"/>
+<a name="295"/>   private do_comma()
+<a name="296"/>      return YY.COMMA
+<a name="297"/>   end
+<a name="298"/>
+<a name="299"/>   private do_lbrack()
+<a name="300"/>      tokflags +:= Beginner; return YY.LBRACK
+<a name="301"/>   end
+<a name="302"/>
+<a name="303"/>   private do_rbrack()
+<a name="304"/>      tokflags +:= Ender; return YY.RBRACK
+<a name="305"/>   end
+<a name="306"/>
+<a name="307"/>   private do_lbrace()
+<a name="308"/>      tokflags +:= Beginner; return YY.LBRACE
+<a name="309"/>   end
+<a name="310"/>
+<a name="311"/>   private do_rbrace()
+<a name="312"/>      tokflags +:= Ender; return YY.RBRACE
+<a name="313"/>   end
+<a name="314"/>
+<a name="315"/>   private do_semi()
+<a name="316"/>      return YY.SEMICOL
+<a name="317"/>   end
+<a name="318"/>
+<a name="319"/>   private do_lparen()
+<a name="320"/>      tokflags +:= Beginner; return YY.LPAREN
+<a name="321"/>   end
+<a name="322"/>
+<a name="323"/>   private do_rparen()
+<a name="324"/>      tokflags +:= Ender; return YY.RPAREN
+<a name="325"/>   end
+<a name="326"/>
+<a name="327"/>   private do_tilde()
+<a name="328"/>      if yytext ||:= ="=" then {
+<a name="329"/>         if yytext ||:= ="=" then {
+<a name="330"/>            if yytext ||:= ="=" then {
+<a name="331"/>               if yytext ||:= =":=" then {return YY.AUGNEQUIV }
+<a name="332"/>               tokflags +:= Beginner
+<a name="333"/>               return YY.NEQUIV
+<a name="334"/>            }
+<a name="335"/>            if yytext ||:= =":=" then {return YY.AUGSNE}
+<a name="336"/>            tokflags +:= Beginner
+<a name="337"/>            return YY.SNE
+<a name="338"/>         }
+<a name="339"/>         if yytext ||:= =":=" then { return YY.AUGNMNE}
+<a name="340"/>         tokflags +:= Beginner
+<a name="341"/>         return YY.NMNE
+<a name="342"/>      }
+<a name="343"/>      tokflags +:= Beginner
+<a name="344"/>      return YY.TILDE
+<a name="345"/>   end
+<a name="346"/>
+<a name="347"/>   private do_or()
+<a name="348"/>      if yytext ||:= ="|" then {
+<a name="349"/>         if yytext ||:= ="|" then {
+<a name="350"/>            if yytext ||:= =":=" then{return YY.AUGLCONCAT}
+<a name="351"/>            tokflags +:= Beginner
+<a name="352"/>            return YY.LCONCAT
+<a name="353"/>         }
+<a name="354"/>         if yytext ||:= =":=" then { return YY.AUGCONCAT}
+<a name="355"/>         tokflags +:= Beginner
+<a name="356"/>         return YY.CONCAT
+<a name="357"/>      }
+<a name="358"/>      tokflags +:= Beginner
+<a name="359"/>      return YY.BAR
+<a name="360"/>   end
+<a name="361"/>
+<a name="362"/>   private do_caret()
+<a name="363"/>      if yytext ||:= =":=" then {  return YY.AUGCARET }
+<a name="364"/>      tokflags +:= Beginner
+<a name="365"/>      return YY.CARET
+<a name="366"/>   end
+<a name="367"/>
+<a name="368"/>   private do_backslash()
+<a name="369"/>      tokflags +:= Beginner
+<a name="370"/>      return YY.BACKSLASH
+<a name="371"/>   end
+<a name="372"/>
+<a name="373"/>   private do_at()
+<a name="374"/>      if yytext ||:= =":=" then { return YY.AUGAT }
+<a name="375"/>      tokflags +:= Beginner
+<a name="376"/>      return YY.AT
+<a name="377"/>   end
+<a name="378"/>
+<a name="379"/>   private do_qmark()
+<a name="380"/>      if yytext ||:= =":=" then { return YY.AUGQMARK }
+<a name="381"/>      tokflags +:= Beginner
+<a name="382"/>      return YY.QMARK
+<a name="383"/>   end
+<a name="384"/>
+<a name="385"/>   private do_equal()
+<a name="386"/>      if yytext ||:= ="=" then {
+<a name="387"/>         if yytext ||:= ="=" then {
+<a name="388"/>            if yytext ||:= =":=" then{return YY.AUGEQUIV}
+<a name="389"/>            tokflags +:= Beginner
+<a name="390"/>            return YY.EQUIV
+<a name="391"/>         }
+<a name="392"/>         if yytext ||:= =":=" then { return YY.AUGSEQ }
+<a name="393"/>         tokflags +:= Beginner
+<a name="394"/>         return YY.SEQ
+<a name="395"/>      }
+<a name="396"/>      if yytext ||:= =":=" then { return YY.AUGNMEQ }
+<a name="397"/>      tokflags +:= Beginner
+<a name="398"/>      return YY.NMEQ
+<a name="399"/>   end
+<a name="400"/>
+<a name="401"/>   private do_greater()
+<a name="402"/>      if yytext ||:= =":=" then { return YY.AUGNMGT }
+<a name="403"/>      if yytext ||:= ="&gt;" then {
+<a name="404"/>         if yytext ||:= =":=" then { return YY.AUGSGT }
+<a name="405"/>         if yytext ||:= ="=" then {
+<a name="406"/>            if yytext ||:= =":=" then {return YY.AUGSGE}
+<a name="407"/>            return YY.SGE
+<a name="408"/>         }
+<a name="409"/>         return YY.SGT
+<a name="410"/>      }
+<a name="411"/>      if yytext ||:= ="=" then {
+<a name="412"/>         if yytext ||:= =":=" then { return YY.AUGNMGE }
+<a name="413"/>         return YY.NMGE
+<a name="414"/>      }
+<a name="415"/>      return YY.NMGT
+<a name="416"/>   end
+<a name="417"/>
+<a name="418"/>   private do_less()
+<a name="419"/>      if yytext ||:= =":=" then { return YY.AUGNMLT }
+<a name="420"/>      if yytext ||:= ="-" then {
+<a name="421"/>         if yytext ||:= ="&gt;" then { return YY.REVSWAP }
+<a name="422"/>         return YY.REVASSIGN
+<a name="423"/>      }
+<a name="424"/>      if yytext ||:= ="&lt;" then {
+<a name="425"/>         if yytext ||:= =":=" then { return YY.AUGSLT }
+<a name="426"/>         if yytext ||:= ="=" then {
+<a name="427"/>            if yytext ||:= =":=" then {return YY.AUGSLE}
+<a name="428"/>            return YY.SLE
+<a name="429"/>         }
+<a name="430"/>         return YY.SLT
+<a name="431"/>      }
+<a name="432"/>      if yytext ||:= ="=" then {
+<a name="433"/>         if yytext ||:= =":=" then { return YY.AUGNMLE }
+<a name="434"/>         return YY.NMLE
+<a name="435"/>      }
+<a name="436"/>      return YY.NMLT
+<a name="437"/>   end
+<a name="438"/>
+<a name="439"/>   private do_colon()
+<a name="440"/>      if yytext ||:= ="=" then {
+<a name="441"/>         if yytext ||:= =":" then { return YY.SWAP }
+<a name="442"/>         return YY.ASSIGN
+<a name="443"/>      }
+<a name="444"/>      return YY.COLON
+<a name="445"/>   end
+<a name="446"/>
+<a name="447"/>   private do_slash()
+<a name="448"/>      if yytext ||:= =":=" then { return YY.AUGSLASH }
+<a name="449"/>      tokflags +:= Beginner
+<a name="450"/>      return YY.SLASH
+<a name="451"/>   end
+<a name="452"/>
+<a name="453"/>   private do_dot()
+<a name="454"/>      if yytext ||:= tab(many(&amp;digits)) then {
+<a name="455"/>         if yytext ||:= tab(any('eE')) then {
+<a name="456"/>            yytext ||:= tab(any('+\-'))
+<a name="457"/>            yytext ||:= tab(many(&amp;digits))
+<a name="458"/>         }
+<a name="459"/>         tokflags +:= Beginner+Ender
+<a name="460"/>         yytokval := real(yytext) | err("Invalid real literal")
+<a name="461"/>         return YY.REALLIT
+<a name="462"/>      }
+<a name="463"/>      else {
+<a name="464"/>         tokflags +:= Beginner
+<a name="465"/>         return YY.DOT
+<a name="466"/>      }
+<a name="467"/>   end
+<a name="468"/>
+<a name="469"/>   private do_minus()
+<a name="470"/>      if yytext ||:= =":" then {
+<a name="471"/>         if yytext ||:= ="=" then { return YY.AUGMINUS}
+<a name="472"/>         return YY.MCOLON
+<a name="473"/>      }
+<a name="474"/>      if yytext ||:= ="-" then {
+<a name="475"/>         if yytext ||:= =":=" then { return YY.AUGDIFF}
+<a name="476"/>         return YY.DIFF
+<a name="477"/>      }
+<a name="478"/>      tokflags +:= Beginner
+<a name="479"/>      return YY.MINUS
+<a name="480"/>   end
+<a name="481"/>
+<a name="482"/>   private do_plus()
+<a name="483"/>      if yytext ||:= =":" then {
+<a name="484"/>         if yytext ||:= ="=" then { return YY.AUGPLUS }
+<a name="485"/>         return YY.PCOLON
+<a name="486"/>      }
+<a name="487"/>      if yytext ||:= ="+" then {
+<a name="488"/>         if yytext ||:= =":=" then {return YY.AUGUNION}
+<a name="489"/>         return YY.UNION
+<a name="490"/>      }
+<a name="491"/>      tokflags +:= Beginner
+<a name="492"/>      return YY.PLUS
+<a name="493"/>   end
+<a name="494"/>
+<a name="495"/>   private do_star()
+<a name="496"/>      if yytext ||:= =":=" then { return YY.AUGSTAR }
+<a name="497"/>      if yytext ||:= ="*" then {
+<a name="498"/>         if yytext ||:= =":=" then {return YY.AUGINTER}
+<a name="499"/>         return YY.INTER
+<a name="500"/>      }
+<a name="501"/>      tokflags +:= Beginner
+<a name="502"/>      return YY.STAR
+<a name="503"/>   end
+<a name="504"/>
+<a name="505"/>   private do_and()
+<a name="506"/>      if yytext ||:= =":=" then { return YY.AUGAND }
+<a name="507"/>      tokflags +:= Beginner
+<a name="508"/>      return YY.AND
+<a name="509"/>   end
+<a name="510"/>
+<a name="511"/>   private do_mod()
+<a name="512"/>      if yytext ||:= =":=" then { return YY.AUGMOD }
+<a name="513"/>      return YY.MOD
+<a name="514"/>   end
+<a name="515"/>
+<a name="516"/>   private do_bang()
+<a name="517"/>      if yytext ||:= =":=" then { return YY.AUGBANG }
+<a name="518"/>      tokflags +:= Beginner
+<a name="519"/>      return YY.BANG
+<a name="520"/>   end
+<a name="521"/>
+<a name="522"/>   public yylex(str, filename, encoding, line)
+<a name="523"/>      local rv, ender, chunk, buffer
+<a name="524"/>
+<a name="525"/>      str := need_string(str)
+<a name="526"/>      yytext := ""
+<a name="527"/>      yytokval := &amp;null
+<a name="528"/>      yyencoding := need_string(\encoding) | "ASCII"
+<a name="529"/>      yyfilename := need_string(\filename)
+<a name="530"/>      yylineno := need_integer(\line, 0) | 0
+<a name="531"/>      yylinestart := 0
+<a name="532"/>      buffer := str
+<a name="533"/>      tokflags := 0
+<a name="534"/>
+<a name="535"/>      repeat {
+<a name="536"/>         ender := iand(tokflags, Ender)
+<a name="537"/>         tokflags := 0
+<a name="538"/>         yytokval := &amp;null
+<a name="539"/>         buffer ? {
+<a name="540"/>            if rv := yylex2() then {
+<a name="541"/>               chunk := buffer[1:&amp;pos]
+<a name="542"/>               yylinestart -:= &amp;pos - 1
+<a name="543"/>               buffer := tab(0)
+<a name="544"/>            }
+<a name="545"/>            else
+<a name="546"/>               return Token(YY.EOFX, "", buffer, yytokval, yylineno, yycolno, yyfilename)
+<a name="547"/>         }
+<a name="548"/>         if ender ~= 0 &amp; iand(tokflags, Beginner) ~= 0 &amp; iand(tokflags, Newline) ~= 0 then
+<a name="549"/>            suspend Token(YY.SEMICOL, ";", "", &amp;null, yylineno, yycolno, yyfilename)
+<a name="550"/>
+<a name="551"/>         suspend Token(rv, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
+<a name="552"/>      }
+<a name="553"/>   end
+<a name="554"/>end
+</pre></body></html>

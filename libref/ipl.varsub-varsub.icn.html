@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>varsub.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     varsub.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to perform UNIX-shell-style substitution
+<a name="6"/>#
+<a name="7"/>#	Author:   Robert J. Alexander
+<a name="8"/>#
+<a name="9"/>#	Date:     November 2, 1995
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  Variable values are obtained from the supplied procedure, "varProc",
+<a name="18"/>#  which returns the value of its variable-name argument or fails if
+<a name="19"/>#  there is no such variable.  "varProc" defaults to the procedure,
+<a name="20"/>#  "getenv".
+<a name="21"/>#
+<a name="22"/>#  As with the UNIX Bourne shell and C shell, variable names are
+<a name="23"/>#  preceded by $.  Optionally, the variable name can additionally be
+<a name="24"/>#  surrounded by curly braces {}, which is usually done when necessary
+<a name="25"/>#  to isolate the variable name from surrounding text.
+<a name="26"/>#
+<a name="27"/>#  As with the C-shell, the special symbol ~&lt;username&gt; is handled.
+<a name="28"/>#  Username can be omitted, in which case the value of the variable
+<a name="29"/>#  "HOME" is substituted.  If username is supplied, the /etc/passwd file
+<a name="30"/>#  is searched to supply the home directory of username (this action is
+<a name="31"/>#  obviously not portable to non-UNIX environments).
+<a name="32"/>#
+<a name="33"/>############################################################################
+<a name="34"/>
+<a name="35"/>package ipl.varsub
+<a name="36"/>
+<a name="37"/>import
+<a name="38"/>   io(close, open, read),
+<a name="39"/>   posix(System)
+<a name="40"/>
+<a name="41"/>procedure varsub(s,varProc)
+<a name="42"/>   local var,p,user,pw,i,c,line
+<a name="43"/>   static nameChar
+<a name="44"/>   initial nameChar := &amp;letters ++ &amp;digits ++ "_"
+<a name="45"/>   /varProc := System.getenv
+<a name="46"/>   s ? {
+<a name="47"/>      s := ""
+<a name="48"/>      while s ||:= tab(upto('$~')) do {
+<a name="49"/>     p := &amp;pos
+<a name="50"/>     s ||:= case move(1) of {
+<a name="51"/>        "$": {
+<a name="52"/>           if c := tab(any('{(')) then var := tab(find(map(c,"{(","})"))) &amp; 
+<a name="53"/>move(1)
+<a name="54"/>           else var := tab(many(nameChar)) | ""
+<a name="55"/>           "" ~== varProc(\var) | &amp;subject[p:&amp;pos]
+<a name="56"/>           }
+<a name="57"/>        "~": {
+<a name="58"/>           if user := tab(many(nameChar)) || ":" then {
+<a name="59"/>          if pw := open("/etc/passwd") then {
+<a name="60"/>             (while line := read(pw) do 
+<a name="61"/>               if match(user,line) then break) | (line := &amp;null)
+<a name="62"/>             close(pw)
+<a name="63"/>             if \line then {
+<a name="64"/>            every i := find(":",line)\5
+<a name="65"/>            i +:= 1
+<a name="66"/>            line[i:find(":",line,i)]
+<a name="67"/>            }
+<a name="68"/>             else &amp;subject[p:&amp;pos]
+<a name="69"/>             }
+<a name="70"/>          else &amp;subject[p:&amp;pos]
+<a name="71"/>          }
+<a name="72"/>           else System.getenv("HOME") 
+<a name="73"/>           }
+<a name="74"/>        }
+<a name="75"/>     }
+<a name="76"/>      s ||:= tab(0)
+<a name="77"/>      }
+<a name="78"/>   return s
+<a name="79"/>end
+</pre></body></html>

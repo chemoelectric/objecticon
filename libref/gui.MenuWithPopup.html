@@ -1,0 +1,317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MenuWithPopup</title></head><body>
+<h1>MenuWithPopup</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Menu.html" target="displayFrame">gui.Menu</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+A version of <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> which allows for a popup menu to be shown on a
+right click on one of the child items.
+<p/><a href="gui-menuwithpopup.icn.html#5" target="displayFrame">Source - menuwithpopup.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.MenuComponent.html">gui.MenuComponent</a>
+<a href="gui.TextMenuItem.html">gui.TextMenuItem</a>
+<a href="gui.Menu.html">gui.Menu</a>
+<a href="gui.MenuWithPopup.html">gui.MenuWithPopup</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.MenuComponent</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.MenuComponent.html#add">add()</a>
+<a href="gui.MenuComponent.html#add_list">add_list()</a>
+<a href="gui.MenuComponent.html#close_all">close_all()</a>
+<a href="gui.MenuComponent.html#get_accel">get_accel()</a>
+<a href="gui.MenuComponent.html#get_index">get_index()</a>
+<a href="gui.MenuComponent.html#get_label_rect">get_label_rect()</a>
+<a href="gui.MenuComponent.html#get_parent">get_parent()</a>
+<a href="gui.MenuComponent.html#get_parent_component">get_parent_component()</a>
+<a href="gui.MenuComponent.html#get_tooltip">get_tooltip()</a>
+<a href="gui.MenuComponent.html#in_label_region">in_label_region()</a>
+<a href="gui.MenuComponent.html#in_region">in_region()</a>
+<a href="gui.MenuComponent.html#is_decorative">is_decorative()</a>
+<a href="gui.MenuComponent.html#is_initialized">is_initialized()</a>
+<a href="gui.MenuComponent.html#is_shaded">is_shaded()</a>
+<a href="gui.MenuComponent.html#is_sub_menu">is_sub_menu()</a>
+<a href="gui.MenuComponent.html#is_unshaded">is_unshaded()</a>
+<a href="gui.MenuComponent.html#move_all">move_all()</a>
+<a href="gui.MenuComponent.html#possibly_invalidate">possibly_invalidate()</a>
+<a href="gui.MenuComponent.html#prepare_parent_proxy">prepare_parent_proxy()</a>
+<a href="gui.MenuComponent.html#remove">remove()</a>
+<a href="gui.MenuComponent.html#remove_all">remove_all()</a>
+<a href="gui.MenuComponent.html#remove_index">remove_index()</a>
+<a href="gui.MenuComponent.html#remove_list">remove_list()</a>
+<a href="gui.MenuComponent.html#reposition">reposition()</a>
+<a href="gui.MenuComponent.html#reposition_index">reposition_index()</a>
+<a href="gui.MenuComponent.html#selected">selected()</a>
+<a href="gui.MenuComponent.html#set_accel">set_accel()</a>
+<a href="gui.MenuComponent.html#set_border">set_border()</a>
+<a href="gui.MenuComponent.html#set_component_link">set_component_link()</a>
+<a href="gui.MenuComponent.html#set_is_decorative">set_is_decorative()</a>
+<a href="gui.MenuComponent.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.MenuComponent.html#set_keep_open_on_shift">set_keep_open_on_shift()</a>
+<a href="gui.MenuComponent.html#set_label_pos">set_label_pos()</a>
+<a href="gui.MenuComponent.html#set_parent">set_parent()</a>
+<a href="gui.MenuComponent.html#set_parent_component">set_parent_component()</a>
+<a href="gui.MenuComponent.html#set_tooltip">set_tooltip()</a>
+<a href="gui.MenuComponent.html#show">show()</a>
+<a href="gui.MenuComponent.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.MenuComponent.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.MenuComponent.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.MenuComponent.html#which_item">which_item()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.MenuComponent</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.MenuComponent.html#accel">accel</a>
+<a href="gui.MenuComponent.html#accel_skip">accel_skip</a>
+<a href="gui.MenuComponent.html#border">border</a>
+<a href="gui.MenuComponent.html#children">children</a>
+<a href="gui.MenuComponent.html#component_link">component_link</a>
+<a href="gui.MenuComponent.html#is_decorative_flag">is_decorative_flag</a>
+<a href="gui.MenuComponent.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.MenuComponent.html#is_sub_menu_flag">is_sub_menu_flag</a>
+<a href="gui.MenuComponent.html#keep_open_on_shift_flag">keep_open_on_shift_flag</a>
+<a href="gui.MenuComponent.html#label_h">label_h</a>
+<a href="gui.MenuComponent.html#label_w">label_w</a>
+<a href="gui.MenuComponent.html#label_x">label_x</a>
+<a href="gui.MenuComponent.html#label_y">label_y</a>
+<a href="gui.MenuComponent.html#parent">parent</a>
+<a href="gui.MenuComponent.html#parent_component">parent_component</a>
+<a href="gui.MenuComponent.html#temp_win">temp_win</a>
+<a href="gui.MenuComponent.html#tooltip">tooltip</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.TextMenuItem</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.TextMenuItem.html#draw_label">draw_label()</a>
+<a href="gui.TextMenuItem.html#finally">finally()</a>
+<a href="gui.TextMenuItem.html#get_label_left_height">get_label_left_height()</a>
+<a href="gui.TextMenuItem.html#get_label_left_width">get_label_left_width()</a>
+<a href="gui.TextMenuItem.html#get_label_mid_height">get_label_mid_height()</a>
+<a href="gui.TextMenuItem.html#get_label_mid_width">get_label_mid_width()</a>
+<a href="gui.TextMenuItem.html#get_label_right_height">get_label_right_height()</a>
+<a href="gui.TextMenuItem.html#get_label_right_width">get_label_right_width()</a>
+<a href="gui.TextMenuItem.html#initially">initially()</a>
+<a href="gui.TextMenuItem.html#set_border_left">set_border_left()</a>
+<a href="gui.TextMenuItem.html#set_border_mid">set_border_mid()</a>
+<a href="gui.TextMenuItem.html#set_border_right">set_border_right()</a>
+<a href="gui.TextMenuItem.html#set_image_left">set_image_left()</a>
+<a href="gui.TextMenuItem.html#set_image_right">set_image_right()</a>
+<a href="gui.TextMenuItem.html#set_label">set_label()</a>
+<a href="gui.TextMenuItem.html#set_label_left">set_label_left()</a>
+<a href="gui.TextMenuItem.html#set_label_right">set_label_right()</a>
+<a href="gui.TextMenuItem.html#set_paint">set_paint()</a>
+<a href="gui.TextMenuItem.html#set_paint_left">set_paint_left()</a>
+<a href="gui.TextMenuItem.html#set_paint_mid">set_paint_mid()</a>
+<a href="gui.TextMenuItem.html#set_paint_right">set_paint_right()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.TextMenuItem</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.TextMenuItem.html#border_left">border_left</a>
+<a href="gui.TextMenuItem.html#border_mid">border_mid</a>
+<a href="gui.TextMenuItem.html#border_right">border_right</a>
+<a href="gui.TextMenuItem.html#paint_left">paint_left</a>
+<a href="gui.TextMenuItem.html#paint_mid">paint_mid</a>
+<a href="gui.TextMenuItem.html#paint_right">paint_right</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Menu</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Menu.html#create_proxy">create_proxy()</a>
+<a href="gui.Menu.html#cursor_on">cursor_on()</a>
+<a href="gui.Menu.html#display">display()</a>
+<a href="gui.Menu.html#find_key">find_key()</a>
+<a href="gui.Menu.html#handle_default">handle_default()</a>
+<a href="gui.Menu.html#handle_exit">handle_exit()</a>
+<a href="gui.Menu.html#handle_key">handle_key()</a>
+<a href="gui.Menu.html#handle_key_down">handle_key_down()</a>
+<a href="gui.Menu.html#handle_key_end">handle_key_end()</a>
+<a href="gui.Menu.html#handle_key_escape">handle_key_escape()</a>
+<a href="gui.Menu.html#handle_key_home">handle_key_home()</a>
+<a href="gui.Menu.html#handle_key_left">handle_key_left()</a>
+<a href="gui.Menu.html#handle_key_return">handle_key_return()</a>
+<a href="gui.Menu.html#handle_key_right">handle_key_right()</a>
+<a href="gui.Menu.html#handle_key_up">handle_key_up()</a>
+<a href="gui.Menu.html#handle_move">handle_move()</a>
+<a href="gui.Menu.html#handle_release">handle_release()</a>
+<a href="gui.Menu.html#hide">hide()</a>
+<a href="gui.Menu.html#new">new()</a>
+<a href="gui.Menu.html#resize">resize()</a>
+<a href="gui.Menu.html#set_which_open">set_which_open()</a>
+<a href="gui.Menu.html#tidy">tidy()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Menu</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Menu.html#max_label_left_w">max_label_left_w</a>
+<a href="gui.Menu.html#max_label_mid_w">max_label_mid_w</a>
+<a href="gui.Menu.html#max_label_right_w">max_label_right_w</a>
+<a href="gui.Menu.html#pressed">pressed</a>
+<a href="gui.Menu.html#which_highlight">which_highlight</a>
+<a href="gui.Menu.html#which_open">which_open</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#create_popup">create_popup()</a>
+<a href="#handle_press">handle_press()</a>
+<a href="#set_which_highlight">set_which_highlight()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#popup">popup</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="create_popup"/>
+<h3>create_popup(item, ev)</h3>
+public abstract<p/>
+<dl>
+<dd>
+This method must be implemented to return the popup <code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> to
+show on a right click.  It may fail, to indicate no menu should
+be shown for this event.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>item</code> - the child menu item clicked on
+</dd>
+<dd>
+<code>ev</code> - the right click event.
+</dd>
+</dl>
+<p/><a href="gui-menuwithpopup.icn.html#12" target="displayFrame">Source - menuwithpopup.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_press"/>
+<h3>handle_press(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Menu.html#handle_press">handle_press()</a> in <a href="gui.Menu.html" target="displayFrame">gui.Menu</a></dd>
+<dd>
+<p/><a href="gui-menuwithpopup.icn.html#45" target="displayFrame">Source - menuwithpopup.icn </a>
+</dd>
+</dl><hr>
+<a name="set_which_highlight"/>
+<h3>set_which_highlight(x)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Menu.html#set_which_highlight">set_which_highlight()</a> in <a href="gui.Menu.html" target="displayFrame">gui.Menu</a></dd>
+<dd>
+<p/><a href="gui-menuwithpopup.icn.html#21" target="displayFrame">Source - menuwithpopup.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="popup"/>
+<h3>popup</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menuwithpopup.icn.html#9" target="displayFrame">Source - menuwithpopup.icn </a>
+</dd>
+</dl><hr>
+</body></html>

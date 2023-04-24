@@ -1,0 +1,18 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>compose_trace</title></head><body>
+<h1>compose_trace(trace, call_1, call_2)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.gtrace-package.html" target="listFrame">ipl.gtrace</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+compose_trace(call_1, call_2) composes the trace for call_1 with the
+trace for call_2; that is, the trace for call_1 is passed through
+call_2.  For example, if call_1 traces a circle and call_2 draws a
+star, the result is a star on each point of the circle.
+<p/>
+The procedure assumes that the first two arguments to call_2 are
+the x and y coordinates of the point in which it is interested
+(standard trace format).
+<p/><a href="ipl.gtrace-gtrace.icn.html#124" target="displayFrame">Source - gtrace.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>open</title></head><body>
+<h1>open(name, mode)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="io-package.html" target="listFrame">io</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+This procedure emulates the old Icon builtin function of the same
+name.  It always returns a <code><a href="io.BufferStream.html" target="displayFrame">BufferStream</a></code> or fails and sets <code>&amp;why</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>name</code> - The file name
+</dd>
+<dd>
+<code>mode</code> - The mode; possible values are :-
+<dl>
+<dd>
+"r" - <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> with <code><a href="io.FileOpt.html#RDONLY">FileOpt.RDONLY</a></code>.  This is the default mode.
+</dd>
+<dd>
+"w" - <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> with <code><a href="io.FileOpt.html#WRONLY">FileOpt.WRONLY</a></code>, <code><a href="io.FileOpt.html#TRUNC">FileOpt.TRUNC</a></code>, <code><a href="io.FileOpt.html#CREAT">FileOpt.CREAT</a></code>
+</dd>
+<dd>
+"b"|"rw"|"r+" - <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> with <code><a href="io.FileOpt.html#RDWR">FileOpt.RDWR</a></code>
+</dd>
+<dd>
+"crw"|"w+" - <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> with <code><a href="io.FileOpt.html#RDWR">FileOpt.RDWR</a></code>, <code><a href="io.FileOpt.html#TRUNC">FileOpt.TRUNC</a></code>, <code><a href="io.FileOpt.html#CREAT">FileOpt.CREAT</a></code>
+</dd>
+<dd>
+"a" - <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> with <code><a href="io.FileOpt.html#WRONLY">FileOpt.WRONLY</a></code>, <code><a href="io.FileOpt.html#APPEND">FileOpt.APPEND</a></code>, <code><a href="io.FileOpt.html#CREAT">FileOpt.CREAT</a></code>
+</dd>
+<dd>
+"a+" - <code><a href="io.FileStream.html" target="displayFrame">FileStream</a></code> with <code><a href="io.FileOpt.html#RDWR">FileOpt.RDWR</a></code>, <code><a href="io.FileOpt.html#APPEND">FileOpt.APPEND</a></code>, <code><a href="io.FileOpt.html#CREAT">FileOpt.CREAT</a></code>
+</dd>
+<dd>
+"p"|"pr" - <code><a href="io.ProgInputStream.html" target="displayFrame">ProgInputStream</a></code>, using shell interpreter
+</dd>
+<dd>
+"pw" - <code><a href="io.ProgOutputStream.html" target="displayFrame">ProgOutputStream</a></code>, using shell interpreter
+</dd>
+<dd>
+"prw" - <code><a href="io.ProgInputOutputStream.html" target="displayFrame">ProgInputOutputStream</a></code>, using shell interpreter
+</dd>
+</dl>
+</dd>
+</dl>
+<p/><a href="io-streams.icn.html#770" target="displayFrame">Source - streams.icn </a>
+<p/>
+</body></html>

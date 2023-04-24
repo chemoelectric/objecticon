@@ -1,0 +1,999 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>MenuComponent</title></head><body>
+<h1>MenuComponent</h1>
+<dl>
+<dt>Type :</dt><dd>abstract class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Rect.html" target="displayFrame">gui.Rect</a><br>
+<a href="util.Connectable.html" target="displayFrame">util.Connectable</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="gui.MenuReserve.html">gui.MenuReserve</a><br>
+<a href="gui.MenuSeparator.html">gui.MenuSeparator</a><br>
+<a href="gui.TextMenuItem.html">gui.TextMenuItem</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="gui-package.html" target="listFrame">gui</a></dd>
+</dl><p/>
+This is the superclass of all the objects that make up the
+menu system (other than the top level <code><a href="gui.Component.html" target="displayFrame">Component</a></code>s of course).
+<p/>
+It encapsulates the position and space of labels in the parent
+menu, as well as methods which allow this item to be a popup
+submenu. A submenu need not necessarily contain other
+<code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code>s; see for example the <code>Palette</code> class.  A
+conventional submenu, which does contain children, is in the
+<code><a href="gui.Menu.html" target="displayFrame">Menu</a></code> class.
+<p/><a href="gui-menucomponent.icn.html#13" target="displayFrame">Source - menucomponent.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.MenuComponent.html">gui.MenuComponent</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add">add()</a>
+<a href="#add_list">add_list()</a>
+<a href="#close_all">close_all()</a>
+<a href="#create_proxy">create_proxy()</a>
+<a href="#cursor_on">cursor_on()</a>
+<a href="#display">display()</a>
+<a href="#draw_label">draw_label()</a>
+<a href="#finally">finally()</a>
+<a href="#get_accel">get_accel()</a>
+<a href="#get_index">get_index()</a>
+<a href="#get_label_left_height">get_label_left_height()</a>
+<a href="#get_label_left_width">get_label_left_width()</a>
+<a href="#get_label_mid_height">get_label_mid_height()</a>
+<a href="#get_label_mid_width">get_label_mid_width()</a>
+<a href="#get_label_rect">get_label_rect()</a>
+<a href="#get_label_right_height">get_label_right_height()</a>
+<a href="#get_label_right_width">get_label_right_width()</a>
+<a href="#get_parent">get_parent()</a>
+<a href="#get_parent_component">get_parent_component()</a>
+<a href="#get_tooltip">get_tooltip()</a>
+<a href="#handle_key">handle_key()</a>
+<a href="#hide">hide()</a>
+<a href="#in_label_region">in_label_region()</a>
+<a href="#in_region">in_region()</a>
+<a href="#initially">initially()</a>
+<a href="#is_decorative">is_decorative()</a>
+<a href="#is_initialized">is_initialized()</a>
+<a href="#is_shaded">is_shaded()</a>
+<a href="#is_sub_menu">is_sub_menu()</a>
+<a href="#is_unshaded">is_unshaded()</a>
+<a href="#move_all">move_all()</a>
+<a href="#new">new()</a>
+<a href="#possibly_invalidate">possibly_invalidate()</a>
+<a href="#prepare_parent_proxy">prepare_parent_proxy()</a>
+<a href="#remove">remove()</a>
+<a href="#remove_all">remove_all()</a>
+<a href="#remove_index">remove_index()</a>
+<a href="#remove_list">remove_list()</a>
+<a href="#reposition">reposition()</a>
+<a href="#reposition_index">reposition_index()</a>
+<a href="#resize">resize()</a>
+<a href="#selected">selected()</a>
+<a href="#set_accel">set_accel()</a>
+<a href="#set_border">set_border()</a>
+<a href="#set_component_link">set_component_link()</a>
+<a href="#set_is_decorative">set_is_decorative()</a>
+<a href="#set_is_shaded">set_is_shaded()</a>
+<a href="#set_keep_open_on_shift">set_keep_open_on_shift()</a>
+<a href="#set_label_pos">set_label_pos()</a>
+<a href="#set_parent">set_parent()</a>
+<a href="#set_parent_component">set_parent_component()</a>
+<a href="#set_tooltip">set_tooltip()</a>
+<a href="#show">show()</a>
+<a href="#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="#traverse_postorder">traverse_postorder()</a>
+<a href="#traverse_preorder">traverse_preorder()</a>
+<a href="#which_item">which_item()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#accel">accel</a>
+<a href="#accel_skip">accel_skip</a>
+<a href="#border">border</a>
+<a href="#children">children</a>
+<a href="#component_link">component_link</a>
+<a href="#is_decorative_flag">is_decorative_flag</a>
+<a href="#is_shaded_flag">is_shaded_flag</a>
+<a href="#is_sub_menu_flag">is_sub_menu_flag</a>
+<a href="#keep_open_on_shift_flag">keep_open_on_shift_flag</a>
+<a href="#label_h">label_h</a>
+<a href="#label_w">label_w</a>
+<a href="#label_x">label_x</a>
+<a href="#label_y">label_y</a>
+<a href="#parent">parent</a>
+<a href="#parent_component">parent_component</a>
+<a href="#temp_win">temp_win</a>
+<a href="#tooltip">tooltip</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add"/>
+<h3>add(c, i)</h3>
+public<p/>
+<dl>
+<dd>
+Add the given <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> to the Menu.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> to add.
+</dd>
+<dd>
+<code>i</code> - The index to add at; if omitted then the new component
+is appended to the end.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#56" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="add_list"/>
+<h3>add_list(l, i)</h3>
+public<p/>
+<dl>
+<dd>
+Add all the <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code>s contained in list <code>l</code> at index <code>i</code>.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>l</code> - The list to add
+</dd>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#160" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="close_all"/>
+<h3>close_all()</h3>
+public<p/>
+<dl>
+<dd>
+Close the menu system.
+<p/><a href="gui-menucomponent.icn.html#358" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="create_proxy"/>
+<h3>create_proxy()</h3>
+protected<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#467" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_on"/>
+<h3>cursor_on()</h3>
+public<p/>
+<dl>
+<dd>
+Invoked by the parent menu when the right cursor key is pressed.
+<p/><a href="gui-menucomponent.icn.html#430" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="display"/>
+<h3>display(w)</h3>
+public optional<p/>
+<dl>
+<dd>
+Display the submenu
+<p/><a href="gui-menucomponent.icn.html#436" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_label"/>
+<h3>draw_label(W, lw, mw, rw)</h3>
+public abstract<p/>
+<dl>
+<dd>
+Abstract method for the display of the labels.
+<p/><a href="gui-menucomponent.icn.html#402" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#50" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_accel"/>
+<h3>get_accel()</h3>
+public<p/>
+<dl>
+<dd>
+Get the mnemonic key, if present, or fail otherwise.
+<p/><a href="gui-menucomponent.icn.html#342" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_index"/>
+<h3>get_index(c)</h3>
+public<p/>
+<dl>
+<dd>
+Get the index of the given child component
+<p/><a href="gui-menucomponent.icn.html#75" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label_left_height"/>
+<h3>get_label_left_height()</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#396" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label_left_width"/>
+<h3>get_label_left_width()</h3>
+public abstract<p/>
+<dl>
+<dd>
+Abstract methods for the label sizes.
+<p/><a href="gui-menucomponent.icn.html#392" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label_mid_height"/>
+<h3>get_label_mid_height()</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#398" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label_mid_width"/>
+<h3>get_label_mid_width()</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#397" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label_rect"/>
+<h3>get_label_rect()</h3>
+public<p/>
+<dl>
+<dd>
+The label's area as a <code><a href="gui.Rect.html" target="displayFrame">Rect</a></code>
+<p/><a href="gui-menucomponent.icn.html#271" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label_right_height"/>
+<h3>get_label_right_height()</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#400" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label_right_width"/>
+<h3>get_label_right_width()</h3>
+public abstract<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#399" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parent"/>
+<h3>get_parent()</h3>
+public<p/>
+<dl>
+<dd>
+Get the parent <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code>, or fail if there is none.
+<p/><a href="gui-menucomponent.icn.html#221" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_parent_component"/>
+<h3>get_parent_component()</h3>
+public<p/>
+<dl>
+<dd>
+Return the parent <code><a href="gui.Component.html" target="displayFrame">Component</a></code>, for example a <code><a href="gui.MenuBar.html" target="displayFrame">MenuBar</a></code>.
+<p/><a href="gui-menucomponent.icn.html#278" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="get_tooltip"/>
+<h3>get_tooltip()</h3>
+public<p/>
+<dl>
+<dd>
+Return the tooltip, if any.
+<p/><a href="gui-menucomponent.icn.html#326" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_key"/>
+<h3>handle_key(e)</h3>
+public optional<p/>
+<dl>
+<dd>
+Handle the given key event.
+<p/><a href="gui-menucomponent.icn.html#441" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="hide"/>
+<h3>hide()</h3>
+public<p/>
+<dl>
+<dd>
+Hide the submenu.
+<p/><a href="gui-menucomponent.icn.html#547" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="in_label_region"/>
+<h3>in_label_region(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#313" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="in_region"/>
+<h3>in_region(e)</h3>
+public<p/>
+<dl>
+<dd>
+Is the cursor over us?
+<p/>
+<p/><a href="gui-menucomponent.icn.html#446" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#44" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_decorative"/>
+<h3>is_decorative()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#309" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_initialized"/>
+<h3>is_initialized()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the component has been initialized with <code>init()</code>, but
+not yet cleaned up with <code><a href="gui.MenuComponent.html#finally">finally()</a></code>.
+<p/><a href="gui-menucomponent.icn.html#208" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_shaded"/>
+<h3>is_shaded()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed iff the component is shaded
+<p/><a href="gui-menucomponent.icn.html#228" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_sub_menu"/>
+<h3>is_sub_menu()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#300" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_unshaded"/>
+<h3>is_unshaded()</h3>
+public<p/>
+<dl>
+<dd>
+Succeed if the component is not shaded.
+<p/><a href="gui-menucomponent.icn.html#235" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="move_all"/>
+<h3>move_all(other, i)</h3>
+public<p/>
+<dl>
+<dd>
+Move all the children of <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> <code>other</code>, to this
+<code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code>, adding them at index <code>i</code>.  <code>other</code> will be left empty.
+<p/>
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>other</code> - The source <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code>.
+</dd>
+<dd>
+<code>i</code> - The index to add at; if omitted then the new components
+are appended to the end.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#176" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Rect.html#new">new()</a> in <a href="gui.Rect.html" target="displayFrame">gui.Rect</a></dd>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#563" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="possibly_invalidate"/>
+<h3>possibly_invalidate()</h3>
+public<p/>
+<dl>
+<dd>
+Invalidate the parent <code><a href="gui.Component.html" target="displayFrame">Component</a></code> if this is the root of the menu hierarchy, or
+the parent menu if it is open.
+<p/><a href="gui-menucomponent.icn.html#259" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="prepare_parent_proxy"/>
+<h3>prepare_parent_proxy()</h3>
+public<p/>
+<dl>
+<dd>
+Called on each child after the proxy window has been created.
+<p/><a href="gui-menucomponent.icn.html#386" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="remove"/>
+<h3>remove(c)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> from the menu.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> to remove.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If c is not a child of this instance.
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#82" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_all"/>
+<h3>remove_all()</h3>
+public<p/>
+<dl>
+<dd>
+Remove all the children.
+<p/><a href="gui-menucomponent.icn.html#110" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_index"/>
+<h3>remove_index(i)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> at the given index from the list of children.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The index
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If i is out of range
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#93" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="remove_list"/>
+<h3>remove_list(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Remove the children in the range <code>i:j</code>, returning the
+removed children in a list.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The start slice index, default 1
+</dd>
+<dd>
+<code>j</code> - The end slice index, default 0
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If the range is invalid.
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#142" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition"/>
+<h3>reposition(c, j)</h3>
+public<p/>
+<dl>
+<dd>
+Move the <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> to the given index position.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>c</code> - The <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> to move.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If c is not a child of this instance, 
+or j is out of range.
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#117" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="reposition_index"/>
+<h3>reposition_index(i, j)</h3>
+public<p/>
+<dl>
+<dd>
+Move the <code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code> at position <code>i</code> to <code>j</code>.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>i</code> - The old position.
+</dd>
+<dd>
+<code>j</code> - The new position.
+</dd>
+<dt>
+Fails :
+</dt>
+<dd>
+If either index is out of range.
+</dd>
+</dl>
+<p/><a href="gui-menucomponent.icn.html#130" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="resize"/>
+<h3>resize()</h3>
+public optional<p/>
+<dl>
+<dd>
+Invoked after the x,y co-ordinates are set, this method should be implemented
+so that the submenu may initialize its size.  The method should leave the
+instance variables w and h initialized.
+<p/><a href="gui-menucomponent.icn.html#423" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="selected"/>
+<h3>selected(ev)</h3>
+public<p/>
+<dl>
+<dd>
+Called when the menu component is selected
+<p/><a href="gui-menucomponent.icn.html#375" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_accel"/>
+<h3>set_accel(k)</h3>
+public<p/>
+<dl>
+<dd>
+Set the mnemonic key, which will be used with the Alt key to provide keyboard
+shortcuts.
+<p/><a href="gui-menucomponent.icn.html#333" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_border"/>
+<h3>set_border(b)</h3>
+public<p/>
+<dl>
+<dd>
+Set the border to use - this relates to the popup submenu, 
+not the label.
+<p/><a href="gui-menucomponent.icn.html#453" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_component_link"/>
+<h3>set_component_link(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the link to the parent component for the root of a tree of
+<code><a href="gui.MenuComponent.html" target="displayFrame">MenuComponent</a></code>s.  The tree's <code><a href="gui.MenuComponent.html#parent_component">parent_component</a></code> links will then
+be set in the <code><a href="gui.MenuComponent.html#initially">initially</a></code> method.
+<p/><a href="gui-menucomponent.icn.html#290" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_is_decorative"/>
+<h3>set_is_decorative(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#304" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_is_shaded"/>
+<h3>set_is_shaded(s)</h3>
+public<p/>
+<dl>
+<dd>
+Set the shaded status of the component.
+<p/><a href="gui-menucomponent.icn.html#250" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_keep_open_on_shift"/>
+<h3>set_keep_open_on_shift(s)</h3>
+public<p/>
+<dl>
+<dd>
+If this flag is set, then the menu system is not closed when this
+item is selected via mouse or return key, if the shift key is
+down.
+<p/><a href="gui-menucomponent.icn.html#365" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_label_pos"/>
+<h3>set_label_pos(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Invoked by the menu system to set the component's label position.
+<p/><a href="gui-menucomponent.icn.html#349" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_parent"/>
+<h3>set_parent(x)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#216" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_parent_component"/>
+<h3>set_parent_component(x)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#285" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="set_tooltip"/>
+<h3>set_tooltip(x)</h3>
+public<p/>
+<dl>
+<dd>
+Set the tooltip.
+<p/><a href="gui-menucomponent.icn.html#318" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="show"/>
+<h3>show(x, y, xa, ya)</h3>
+public<p/>
+<dl>
+<dd>
+Display the submenu. The preferred position is x, y.  If that is
+not possible, then xa, ya give another position to try, but this
+time the values are right-adjusted.  These params default to the
+right and bottom of the screen respectively.
+<p/><a href="gui-menucomponent.icn.html#471" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="toggle_is_shaded"/>
+<h3>toggle_is_shaded()</h3>
+public<p/>
+<dl>
+<dd>
+Toggle whether or not the item is shaded.  If it is, it is
+displayed in a filtered way and will not accept input.
+<p/><a href="gui-menucomponent.icn.html#242" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_postorder"/>
+<h3>traverse_postorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the components, including subcomponents, with a
+post-order traversal.
+<p/><a href="gui-menucomponent.icn.html#190" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_preorder"/>
+<h3>traverse_preorder()</h3>
+public<p/>
+<dl>
+<dd>
+Traverse all the components, including subcomponents, with a
+pre-order traversal.
+<p/><a href="gui-menucomponent.icn.html#199" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="which_item"/>
+<h3>which_item(e)</h3>
+public<p/>
+<dl>
+<dd>
+The following methods are only called for a MenuComponent which pops up
+a sub-menu, ie is_sub_menu_flag is non-null.
+<p/>
+<p/>
+Deduce which child label is under pointer, if any, given we're in the region.
+<p/><a href="gui-menucomponent.icn.html#407" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="accel"/>
+<h3>accel</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#38" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="accel_skip"/>
+<h3>accel_skip</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#42" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="border"/>
+<h3>border</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#40" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="children"/>
+<h3>children</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#39" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="component_link"/>
+<h3>component_link</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#33" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_decorative_flag"/>
+<h3>is_decorative_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#31" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_shaded_flag"/>
+<h3>is_shaded_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#35" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="is_sub_menu_flag"/>
+<h3>is_sub_menu_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#30" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="keep_open_on_shift_flag"/>
+<h3>keep_open_on_shift_flag</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#32" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="label_h"/>
+<h3>label_h</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#29" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="label_w"/>
+<h3>label_w</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#28" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="label_x"/>
+<h3>label_x</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#26" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="label_y"/>
+<h3>label_y</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#27" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="parent"/>
+<h3>parent</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#36" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="parent_component"/>
+<h3>parent_component</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#34" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="temp_win"/>
+<h3>temp_win</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#41" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+<a name="tooltip"/>
+<h3>tooltip</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="gui-menucomponent.icn.html#37" target="displayFrame">Source - menucomponent.icn </a>
+</dd>
+</dl><hr>
+</body></html>

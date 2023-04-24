@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>adjuncts.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     adjuncts.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for gettext and idxtext
+<a name="6"/>#
+<a name="7"/>#	Author:   Richard L. Goerwitz
+<a name="8"/>#
+<a name="9"/>#	Date:     June 21, 2000
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#  Version:  1.4  December 28, 1993  Phillip Lee Thomas
+<a name="18"/>#                 _delimiter added to global list.
+<a name="19"/>#                 OS conventions moved to Set_OS() from
+<a name="20"/>#                    idxtext.icn and gettext.icn.
+<a name="21"/>#  Version:  1.5  August 5, 1995 Add MS-DOS/386 to features check.
+<a name="22"/>#
+<a name="23"/>############################################################################
+<a name="24"/>#  
+<a name="25"/>#  Pretty mundane stuff.  Set_OS(), Basename(), Pathname(), Strip(), and
+<a name="26"/>#     a utility for creating index filenames.
+<a name="27"/>#
+<a name="28"/>############################################################################
+<a name="29"/>#
+<a name="30"/>#  See also: gettext.icn, idxtext,icn
+<a name="31"/>#
+<a name="32"/>############################################################################
+<a name="33"/>
+<a name="34"/>
+<a name="35"/>package ipl.adjuncts
+<a name="36"/>
+<a name="37"/>import
+<a name="38"/>   io(stop)
+<a name="39"/>
+<a name="40"/>global _slash, _baselen, _delimiter, _OS_offset, firstline
+<a name="41"/>
+<a name="42"/># set global OS features
+<a name="43"/>procedure Set_OS()                   
+<a name="44"/>
+<a name="45"/>      # delimiter for indexed values      
+<a name="46"/>      _delimiter := char(255)
+<a name="47"/>
+<a name="48"/>      # Initialize filename and line termination conventions.
+<a name="49"/>      # _baselen:   number of characters in filename base.
+<a name="50"/>      # _OS_offset: number of characters marking newline.
+<a name="51"/>
+<a name="52"/>      if find("UNIX"|"Amiga", &amp;features) then {
+<a name="53"/>         _slash := "/"
+<a name="54"/>         _baselen := 10
+<a name="55"/>         _OS_offset := 1
+<a name="56"/>         }
+<a name="57"/>      else if find("MS Win32", &amp;features) then {
+<a name="58"/>         _slash := "\\"
+<a name="59"/>         _baselen := 8
+<a name="60"/>         _OS_offset := 2
+<a name="61"/>         }
+<a name="62"/>      else if find("Macintosh", &amp;features) then {
+<a name="63"/>         _slash := ":"
+<a name="64"/>         _baselen := 15
+<a name="65"/>         _OS_offset := 1
+<a name="66"/>         }
+<a name="67"/>      else stop("gettext:  OS not supported")
+<a name="68"/>      return
+<a name="69"/>end
+<a name="70"/>
+<a name="71"/># obtain base filename
+<a name="72"/>procedure Basename(s)                  
+<a name="73"/>
+<a name="74"/>   # global _slash
+<a name="75"/>   s ? {
+<a name="76"/>      while tab(find(_slash)+1)
+<a name="77"/>      return tab(0)
+<a name="78"/>      }
+<a name="79"/>end
+<a name="80"/>
+<a name="81"/>
+<a name="82"/># obtain path of filename
+<a name="83"/>procedure Pathname(s)                  
+<a name="84"/>
+<a name="85"/>   local s2
+<a name="86"/>   # global _slash
+<a name="87"/>
+<a name="88"/>   s2 := ""
+<a name="89"/>   s ? {
+<a name="90"/>      while s2 ||:= tab(find(_slash)+1)
+<a name="91"/>      return s2
+<a name="92"/>      }
+<a name="93"/>end
+<a name="94"/>
+<a name="95"/>
+<a name="96"/># obtain index from datafile name
+<a name="97"/>procedure getidxname(FNAME)     
+<a name="98"/>
+<a name="99"/>   #
+<a name="100"/>   # Discard path component.  Cut basename down to a small enough
+<a name="101"/>   # size that the OS will be able to handle addition of the ex-
+<a name="102"/>   # tension ".IDX"
+<a name="103"/>   #
+<a name="104"/>
+<a name="105"/>   # global _slash, _baselen
+<a name="106"/>   return right(Strip(Basename(FNAME,_slash),'.'), _baselen, "x") || ".IDX"
+<a name="107"/>end
+<a name="108"/>
+<a name="109"/>
+<a name="110"/># remove chars from string
+<a name="111"/>procedure Strip(s,c)                   
+<a name="112"/>
+<a name="113"/>   local s2
+<a name="114"/>
+<a name="115"/>   s2 := ""
+<a name="116"/>   s ? {
+<a name="117"/>      while s2 ||:= tab(upto(c))
+<a name="118"/>         do tab(many(c))
+<a name="119"/>      s2 ||:= tab(0)
+<a name="120"/>      }
+<a name="121"/>   return s2
+<a name="122"/>end
+</pre></body></html>

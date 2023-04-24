@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>gpxlib.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     gpxlib.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for graphics tasks
+<a name="6"/>#
+<a name="7"/>#	Author:   Gregg M. Townsend
+<a name="8"/>#
+<a name="9"/>#	Date:     August 21, 1998
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	This file contains a few eclectic graphics procedures.
+<a name="18"/>#
+<a name="19"/>#	ScratchCanvas(w, h, id)	  creates a temporary, hidden window.
+<a name="20"/>#
+<a name="21"/>#	Distance(x1, y1, x2, y2)  computes the distance between two points.
+<a name="22"/>#
+<a name="23"/>#	InBounds(x, y, w, h)	  succeeds if (AmperX,AmperY) is within (x,y,w,h).
+<a name="24"/>#
+<a name="25"/>############################################################################
+<a name="26"/>#
+<a name="27"/>#   The following procedure allows an additional first argument
+<a name="28"/>#   specifying a window to use instead of amper_window:
+<a name="29"/>#
+<a name="30"/>#   ScratchCanvas(w, h, id) returns a hidden-canvas window for temporary
+<a name="31"/>#   use.  The same scratch window (per display) is returned by successive
+<a name="32"/>#   calls with the same ID, avoiding the cost of creation.  The size is
+<a name="33"/>#   guaranteed to be at least (w, h), which default to the size of the
+<a name="34"/>#   window.  The scratch window must not be closed by the caller, but an
+<a name="35"/>#   EraseArea can be done to reclaim any allocated colors.
+<a name="36"/>#
+<a name="37"/>############################################################################
+<a name="38"/>#
+<a name="39"/>#   The following procedures do not accept a window argument:
+<a name="40"/>#
+<a name="41"/>#   Distance(x1, y1, x2, y2) returns the distance between two points
+<a name="42"/>#   as a real number.
+<a name="43"/>#
+<a name="44"/>#   InBounds(x, y, w, h) checks whether AmperX and AmperY are within the given
+<a name="45"/>#   region:  it returns &amp;null if x &lt;= AmperX &lt;= x+w and y &lt;= AmperY &lt;= y+h,
+<a name="46"/>#   and fails otherwise.
+<a name="47"/>#
+<a name="48"/>############################################################################
+<a name="49"/>#
+<a name="50"/>#  Links: wopen
+<a name="51"/>#
+<a name="52"/>############################################################################
+<a name="53"/>#
+<a name="54"/>#  Requires:  Version 9 graphics
+<a name="55"/>#
+<a name="56"/>############################################################################
+<a name="57"/>
+<a name="58"/>package ipl.graphics
+<a name="59"/>
+<a name="60"/>import
+<a name="61"/>   graphics(Window),
+<a name="62"/>   util(Math)
+<a name="63"/>
+<a name="64"/>
+<a name="65"/>#   Distance(x1, y1, x2, y2) -- compute distance between two points.
+<a name="66"/>
+<a name="67"/># distance between two points
+<a name="68"/>procedure Distance(x1, y1, x2, y2)		
+<a name="69"/>   x1 -:= x2
+<a name="70"/>   y1 -:= y2
+<a name="71"/>   return Math.sqrt(x1 * x1 + y1 * y1)
+<a name="72"/>end
+<a name="73"/>
+<a name="74"/>
+<a name="75"/>#   InBounds(x, y, w, h) -- succeed if (AmperX,AmperY) is in a rectangular area.
+<a name="76"/>
+<a name="77"/># check point within rectangle
+<a name="78"/>procedure InBounds(x, y, w, h, AmperX, AmperY)			
+<a name="79"/>   succeed (x &lt;= AmperX &lt; x + w) &amp; (y &lt;= AmperY &lt; y + h)
+<a name="80"/>end
+<a name="81"/>
+<a name="82"/>
+<a name="83"/>#  ScratchCanvas(win, w, h, id) -- return hidden window for temporary use.
+<a name="84"/>
+<a name="85"/># return scratch canvas
+<a name="86"/>procedure ScratchCanvas(win, w, h, id)		
+<a name="87"/>   local d, s
+<a name="88"/>   static dpytab
+<a name="89"/>
+<a name="90"/>   initial {
+<a name="91"/>      dpytab := table()
+<a name="92"/>      }
+<a name="93"/>
+<a name="94"/>   /w := win.get_width()
+<a name="95"/>   /h := win.get_height()
+<a name="96"/>
+<a name="97"/>   d := win.get_display()
+<a name="98"/>   s := d || "," || image(id)
+<a name="99"/>   (win := member(dpytab, s)) | insert(dpytab, s, win := Window(d)) | fail
+<a name="100"/>   if win.get_width() &lt; w | win.get_height() &lt; h then
+<a name="101"/>      win.set_size(w, h)
+<a name="102"/>   return win
+<a name="103"/>end
+</pre></body></html>

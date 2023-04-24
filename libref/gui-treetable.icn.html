@@ -1,0 +1,262 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>treetable.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: treetable.icn 7415 2019-01-25 16:51:58Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package gui
+<a name="10"/>
+<a name="11"/>import util, ipl.lists
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># A node in a `TreeTable`.  It provides the column data
+<a name="15"/># for the extra (non-tree) columns.  For example if
+<a name="16"/># the TreeTable's columns were named A, B, C, then a
+<a name="17"/># `TreeTableNode` might be created as follows :-
+<a name="18"/>#
+<a name="19"/># Example :-
+<a name="20"/># ~
+<a name="21"/>#   n := TreeTableNode().
+<a name="22"/>#           set_label("Col A label").
+<a name="23"/>#           set_contents(["Col B data", "Col C data"])
+<a name="24"/># ~
+<a name="25"/>class TreeTableNode(TreeNode)
+<a name="26"/>   public contents
+<a name="27"/>
+<a name="28"/>   #
+<a name="29"/>   # Set the column data to fill the columns 2 onwards.
+<a name="30"/>   #
+<a name="31"/>   public set_contents(l)
+<a name="32"/>      self.contents := l
+<a name="33"/>      link
+<a name="34"/>   end
+<a name="35"/>end
+<a name="36"/>
+<a name="37"/>#
+<a name="38"/># This abstract class provides the table content for a `TreeTable`.
+<a name="39"/># It extends `BaseTree`, and uses that class's methods for event
+<a name="40"/># handling and drawing of the first column.
+<a name="41"/>#
+<a name="42"/>abstract class BaseTreeTableContent(BaseTree)
+<a name="43"/>   public slice(col)
+<a name="44"/>      suspend (\(!contents).contents)[col - 1]
+<a name="45"/>   end
+<a name="46"/>
+<a name="47"/>   public get_cell(row, col)
+<a name="48"/>      return (\contents[row].contents)[col - 1]
+<a name="49"/>   end
+<a name="50"/>
+<a name="51"/>   public get_column(n)
+<a name="52"/>      return parent.table_header.children[n]
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   public override on_hsb()
+<a name="56"/>      BaseTree.on_hsb()
+<a name="57"/>      synch_header()
+<a name="58"/>   end
+<a name="59"/>
+<a name="60"/>   public override handle_key_right(e)
+<a name="61"/>      BaseTree.handle_key_right(e)
+<a name="62"/>      synch_header()
+<a name="63"/>   end
+<a name="64"/>
+<a name="65"/>   public override handle_key_left(e)
+<a name="66"/>      BaseTree.handle_key_left(e)
+<a name="67"/>      synch_header()
+<a name="68"/>   end
+<a name="69"/>
+<a name="70"/>   public synch_header()
+<a name="71"/>      parent.table_header.synch_with_content()
+<a name="72"/>   end
+<a name="73"/>
+<a name="74"/>   public override draw()
+<a name="75"/>      local xp, yp, i, j, info, h, lh, r, cols, col, cc, W
+<a name="76"/>
+<a name="77"/>      r := view.get_cbwin_clip()
+<a name="78"/>
+<a name="79"/>      info := get_line_info(r) | fail
+<a name="80"/>      h := get_line_height()
+<a name="81"/>
+<a name="82"/>      cols := parent.table_header.children
+<a name="83"/>
+<a name="84"/>      # First (tree) column
+<a name="85"/>      #
+<a name="86"/>      col := cols[1]
+<a name="87"/>      # If the column is visible
+<a name="88"/>      if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
+<a name="89"/>         # Clip on the column.  We must clip directly on view.cbwin
+<a name="90"/>         # since we borrow Tree's draw_line()
+<a name="91"/>         view.cbwin.clip!cc
+<a name="92"/>         yp := r.y - info.offset
+<a name="93"/>         xp := col.x
+<a name="94"/>         # Write each line in this column
+<a name="95"/>         every i := info.first to info.last do {
+<a name="96"/>            lh := integer(h) | h[i]
+<a name="97"/>            BaseTree.draw_line(xp, yp, lh, i)
+<a name="98"/>            yp +:= lh
+<a name="99"/>         }
+<a name="100"/>         # Reset the clip.
+<a name="101"/>         view.cbwin.clip(r.x, r.y, r.w, r.h)
+<a name="102"/>      }
+<a name="103"/>
+<a name="104"/>      # Other columns
+<a name="105"/>      #
+<a name="106"/>      use {
+<a name="107"/>         W := view.cbwin.clone(), 
+<a name="108"/>         {
+<a name="109"/>            every j := 2 to *cols do {
+<a name="110"/>               col := cols[j]
+<a name="111"/>               # If the column is visible
+<a name="112"/>               if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
+<a name="113"/>                  # Clip on the column.
+<a name="114"/>                  W.clip!cc
+<a name="115"/>                  yp := r.y - info.offset
+<a name="116"/>                  # Write each line in this column
+<a name="117"/>                  every i := info.first to info.last do {
+<a name="118"/>                     lh := integer(h) | h[i]
+<a name="119"/>                     col.draw_cell(W, 
+<a name="120"/>                                   (\self.contents[i].contents)[j - 1], i, j, yp, lh)
+<a name="121"/>                     yp +:= lh
+<a name="122"/>                  }
+<a name="123"/>               }
+<a name="124"/>            }
+<a name="125"/>         }
+<a name="126"/>      }
+<a name="127"/>      # Call the superclass draw to do the selection, highlight etc.
+<a name="128"/>      SelectableScrollArea.draw()
+<a name="129"/>   end
+<a name="130"/>
+<a name="131"/>   # Override draw_line so that call to SelectableScrollArea.draw() above draws
+<a name="132"/>   # the selections etc (rather than displaying the tree column again).
+<a name="133"/>   public override draw_line(xp, yp, lh, i, sel, cur, hi, ov)
+<a name="134"/>      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi, ov)
+<a name="135"/>   end
+<a name="136"/>
+<a name="137"/>   public override calculate_line_height()
+<a name="138"/>      local t, m, h, r, e, i, j, cols
+<a name="139"/>      t := []
+<a name="140"/>      m := 0
+<a name="141"/>      cols := parent.table_header.children
+<a name="142"/>      every j := 1 to *cols do {
+<a name="143"/>         h := if j = 1 then
+<a name="144"/>            calculate_tree_line_height()
+<a name="145"/>         else
+<a name="146"/>            cols[j].calculate_line_height(self.cbwin)
+<a name="147"/>         if integer(h) then
+<a name="148"/>            m &lt;:= h
+<a name="149"/>         else
+<a name="150"/>            put(t, h)
+<a name="151"/>      }
+<a name="152"/>      #
+<a name="153"/>      # Easy case, all columns report fixed row heights, so the row height for the
+<a name="154"/>      # table is the maximum.
+<a name="155"/>      if *t = 0 then
+<a name="156"/>         return m
+<a name="157"/>
+<a name="158"/>      r := list(*t[1], m)
+<a name="159"/>      every e := !t do {
+<a name="160"/>         *e = *r | syserr("Inconsistent table column row height list sizes returned")
+<a name="161"/>         every i := 1 to *r do
+<a name="162"/>            r[i] &lt;:= e[i]
+<a name="163"/>      }
+<a name="164"/>
+<a name="165"/>      return r
+<a name="166"/>   end
+<a name="167"/>
+<a name="168"/>   public override calculate_subject_width()
+<a name="169"/>      return parent.get_total_column_width()
+<a name="170"/>   end
+<a name="171"/>
+<a name="172"/>   protected abstract calculate_tree_line_height()
+<a name="173"/>end
+<a name="174"/>
+<a name="175"/># The basic content implementation, which displays simple textual node
+<a name="176"/># data in the tree column.
+<a name="177"/>#
+<a name="178"/>class TreeTableContent(BaseTreeTableContent,Tree)
+<a name="179"/>   protected override calculate_tree_line_height()
+<a name="180"/>      return Tree.calculate_line_height()
+<a name="181"/>   end
+<a name="182"/>end
+<a name="183"/>
+<a name="184"/>class TreeTableHeader(TableHeader)
+<a name="185"/>   public override can_drag(ev)
+<a name="186"/>      local c
+<a name="187"/>      every c := children[2 to *children] do {
+<a name="188"/>         if \c.is_down then {
+<a name="189"/>            c.clear_down()
+<a name="190"/>            return c
+<a name="191"/>         }
+<a name="192"/>      }
+<a name="193"/>   end
+<a name="194"/>
+<a name="195"/>   public override can_drop(drag, e)
+<a name="196"/>      return drag.content ~=== (children[1] ~=== \which_highlight)
+<a name="197"/>   end
+<a name="198"/>
+<a name="199"/>   public override perform_drop(drag, drop, e)
+<a name="200"/>      local i, j
+<a name="201"/>      i := drag.content.get_column_index()
+<a name="202"/>      j := drop.content.get_column_index()
+<a name="203"/>      every lmove(\ (!parent.table_content.contents).contents, i - 1, j - 1)
+<a name="204"/>      reposition_index(i, j)
+<a name="205"/>      layout()
+<a name="206"/>      parent.invalidate()
+<a name="207"/>      return
+<a name="208"/>   end
+<a name="209"/>end
+<a name="210"/>
+<a name="211"/>#
+<a name="212"/># A `TreeTable` is a `Table` where the first column is
+<a name="213"/># a Tree.  The data for the component is provided as
+<a name="214"/># a tree of `TreeTableNode`s.
+<a name="215"/>#
+<a name="216"/># See the example program ttexplorer.icn for one in use.
+<a name="217"/>#
+<a name="218"/>class TreeTable(Table)
+<a name="219"/>   public override create_table_header()
+<a name="220"/>      return TreeTableHeader()
+<a name="221"/>   end
+<a name="222"/>
+<a name="223"/>   public override create_table_content()
+<a name="224"/>      return TreeTableContent()
+<a name="225"/>   end
+<a name="226"/>end
+<a name="227"/>
+<a name="228"/>#
+<a name="229"/># A content implementation which delegates interpretation of the tree
+<a name="230"/># node data to an `ItemPaint` instance.
+<a name="231"/>#
+<a name="232"/>class ItemPaintTreeTableContent(BaseTreeTableContent,ItemPaintTree)
+<a name="233"/>   protected override calculate_tree_line_height()
+<a name="234"/>      return ItemPaintTree.calculate_line_height()
+<a name="235"/>   end
+<a name="236"/>
+<a name="237"/>   public override draw_node_data(n, xp, yp, lh)
+<a name="238"/>      local r, s, col
+<a name="239"/>      col := parent.table_header.children[1]
+<a name="240"/>      s := item_paint.get_size(view.cbwin, n.label)
+<a name="241"/>      # r is the rectangle available to draw in, limited by the column width.
+<a name="242"/>      r := Rect(xp, yp, col.x + col.w - xp, lh)
+<a name="243"/>      item_paint.draw_rect(view.cbwin, n.label, item_border.float(r, s))
+<a name="244"/>      item_border.draw_rect(view.cbwin, r)
+<a name="245"/>   end
+<a name="246"/>end
+<a name="247"/>
+<a name="248"/>#
+<a name="249"/># A `TreeTable` which uses an `ItemPaint` to paint its tree column.
+<a name="250"/>#
+<a name="251"/>class ItemPaintTreeTable(Table)
+<a name="252"/>   public override create_table_header()
+<a name="253"/>      return TreeTableHeader()
+<a name="254"/>   end
+<a name="255"/>
+<a name="256"/>   public override create_table_content()
+<a name="257"/>      return ItemPaintTreeTableContent()
+<a name="258"/>   end
+<a name="259"/>end
+</pre></body></html>

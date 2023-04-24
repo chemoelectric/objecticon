@@ -1,0 +1,17 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>primel</title></head><body>
+<h1>primel()</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.factors-package.html" target="listFrame">ipl.factors</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Generates the primes from a precompiled list, "primes.lst", in the
+directory indicated by the environment variable <code>DPATH</code> (see
+<code><a href="ipl.io.dopen.html" target="displayFrame">dopen</a></code>).  If the sequence won't be generated to exhaustion, enclose
+the call in <code><a href="util.clean.html" target="displayFrame">util.clean</a></code> to ensure the underlying file is closed; eg
+<pre>
+  clean{ every write(primel() \ 20) }
+</pre>
+<p/><a href="ipl.factors-factors.icn.html#309" target="displayFrame">Source - factors.icn </a>
+<p/>
+</body></html>

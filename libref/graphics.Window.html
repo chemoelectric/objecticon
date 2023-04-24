@@ -1,0 +1,2178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Window</title></head><body>
+<h1>Window</h1>
+<dl>
+<dt>Type :</dt><dd>final class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="lang.NoCopy.html" target="displayFrame">lang.NoCopy</a><br>
+<a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a><br>
+<a href="util.HasClose.html" target="displayFrame">util.HasClose</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="graphics-package.html" target="listFrame">graphics</a></dd>
+</dl><p/>
+<p/><a href="graphics-graphics.icn.html#331" target="displayFrame">Source - graphics.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.HasClose.html">util.HasClose</a>
+<a href="lang.ObjectOutput.html">lang.ObjectOutput</a>
+<a href="lang.ObjectCodec.html">lang.ObjectCodec</a>
+<a href="lang.Unencodable.html">lang.Unencodable</a>
+<a href="lang.ObjectClone.html">lang.ObjectClone</a>
+<a href="lang.SelfClone.html">lang.SelfClone</a>
+<a href="lang.NoCopy.html">lang.NoCopy</a>
+<a href="graphics.Window.html">graphics.Window</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.Unencodable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.Unencodable.html#object_decode">object_decode()</a>
+<a href="lang.Unencodable.html#object_encode">object_encode()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from lang.SelfClone</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="lang.SelfClone.html#object_clone">object_clone()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#alert">alert()</a>
+<a href="#can_resize">can_resize()</a>
+<a href="#canonical">canonical()</a>
+<a href="#clip">clip()</a>
+<a href="#clone">clone()</a>
+<a href="#clone_impl">clone_impl()</a>
+<a href="#close">close()</a>
+<a href="#color_value">color_value()</a>
+<a href="#copy_pointer">copy_pointer()</a>
+<a href="#copy_to">copy_to()</a>
+<a href="#couple">couple()</a>
+<a href="#couple_impl">couple_impl()</a>
+<a href="#create_for_ptr">create_for_ptr()</a>
+<a href="#define_pointer">define_pointer()</a>
+<a href="#define_pointer_impl">define_pointer_impl()</a>
+<a href="#draw_arc">draw_arc()</a>
+<a href="#draw_circle">draw_circle()</a>
+<a href="#draw_curve">draw_curve()</a>
+<a href="#draw_image">draw_image()</a>
+<a href="#draw_image_impl">draw_image_impl()</a>
+<a href="#draw_line">draw_line()</a>
+<a href="#draw_point">draw_point()</a>
+<a href="#draw_polygon">draw_polygon()</a>
+<a href="#draw_rectangle">draw_rectangle()</a>
+<a href="#draw_string">draw_string()</a>
+<a href="#drawable">drawable()</a>
+<a href="#erase_area">erase_area()</a>
+<a href="#event">event()</a>
+<a href="#fill_arc">fill_arc()</a>
+<a href="#fill_circle">fill_circle()</a>
+<a href="#fill_polygon">fill_polygon()</a>
+<a href="#fill_rectangle">fill_rectangle()</a>
+<a href="#fill_triangles">fill_triangles()</a>
+<a href="#filter">filter()</a>
+<a href="#focus">focus()</a>
+<a href="#get_absolute_leading">get_absolute_leading()</a>
+<a href="#get_base_height">get_base_height()</a>
+<a href="#get_base_size">get_base_size()</a>
+<a href="#get_base_width">get_base_width()</a>
+<a href="#get_bg">get_bg()</a>
+<a href="#get_canvas">get_canvas()</a>
+<a href="#get_clip">get_clip()</a>
+<a href="#get_clip_impl">get_clip_impl()</a>
+<a href="#get_default_font">get_default_font()</a>
+<a href="#get_default_font_size">get_default_font_size()</a>
+<a href="#get_default_leading">get_default_leading()</a>
+<a href="#get_depth">get_depth()</a>
+<a href="#get_display">get_display()</a>
+<a href="#get_display_size">get_display_size()</a>
+<a href="#get_display_size_impl">get_display_size_impl()</a>
+<a href="#get_display_size_mm">get_display_size_mm()</a>
+<a href="#get_display_size_mm_impl">get_display_size_mm_impl()</a>
+<a href="#get_draw_op">get_draw_op()</a>
+<a href="#get_dx">get_dx()</a>
+<a href="#get_dy">get_dy()</a>
+<a href="#get_fd">get_fd()</a>
+<a href="#get_fg">get_fg()</a>
+<a href="#get_fill_pattern">get_fill_pattern()</a>
+<a href="#get_fill_rule">get_fill_rule()</a>
+<a href="#get_font">get_font()</a>
+<a href="#get_font_ascent">get_font_ascent()</a>
+<a href="#get_font_descent">get_font_descent()</a>
+<a href="#get_font_height">get_font_height()</a>
+<a href="#get_font_width">get_font_width()</a>
+<a href="#get_format">get_format()</a>
+<a href="#get_geometry">get_geometry()</a>
+<a href="#get_height">get_height()</a>
+<a href="#get_id">get_id()</a>
+<a href="#get_increment_height">get_increment_height()</a>
+<a href="#get_increment_size">get_increment_size()</a>
+<a href="#get_increment_width">get_increment_width()</a>
+<a href="#get_label">get_label()</a>
+<a href="#get_leading">get_leading()</a>
+<a href="#get_line_ascent">get_line_ascent()</a>
+<a href="#get_line_descent">get_line_descent()</a>
+<a href="#get_line_end">get_line_end()</a>
+<a href="#get_line_height">get_line_height()</a>
+<a href="#get_line_join">get_line_join()</a>
+<a href="#get_line_width">get_line_width()</a>
+<a href="#get_max_aspect_ratio">get_max_aspect_ratio()</a>
+<a href="#get_max_height">get_max_height()</a>
+<a href="#get_max_size">get_max_size()</a>
+<a href="#get_max_width">get_max_width()</a>
+<a href="#get_min_aspect_ratio">get_min_aspect_ratio()</a>
+<a href="#get_min_height">get_min_height()</a>
+<a href="#get_min_size">get_min_size()</a>
+<a href="#get_min_width">get_min_width()</a>
+<a href="#get_offset">get_offset()</a>
+<a href="#get_pixels">get_pixels()</a>
+<a href="#get_pixels_impl">get_pixels_impl()</a>
+<a href="#get_pointer">get_pointer()</a>
+<a href="#get_pos">get_pos()</a>
+<a href="#get_references">get_references()</a>
+<a href="#get_references_impl">get_references_impl()</a>
+<a href="#get_size">get_size()</a>
+<a href="#get_width">get_width()</a>
+<a href="#get_x">get_x()</a>
+<a href="#get_y">get_y()</a>
+<a href="#grab_keyboard">grab_keyboard()</a>
+<a href="#grab_pointer">grab_pointer()</a>
+<a href="#hold">hold()</a>
+<a href="#init">init()</a>
+<a href="#lower">lower()</a>
+<a href="#mk_pattern">mk_pattern()</a>
+<a href="#new">new()</a>
+<a href="#new_impl">new_impl()</a>
+<a href="#object_output">object_output()</a>
+<a href="#open_image">open_image()</a>
+<a href="#own_selection">own_selection()</a>
+<a href="#palette_chars">palette_chars()</a>
+<a href="#palette_color">palette_color()</a>
+<a href="#palette_color_rgb">palette_color_rgb()</a>
+<a href="#palette_color_rgb_impl">palette_color_rgb_impl()</a>
+<a href="#palette_key">palette_key()</a>
+<a href="#palette_key_rgb">palette_key_rgb()</a>
+<a href="#parse_color">parse_color()</a>
+<a href="#parse_color_impl">parse_color_impl()</a>
+<a href="#peek">peek()</a>
+<a href="#pending">pending()</a>
+<a href="#query_pointer">query_pointer()</a>
+<a href="#query_pointer_impl">query_pointer_impl()</a>
+<a href="#query_root_pointer">query_root_pointer()</a>
+<a href="#query_root_pointer_impl">query_root_pointer_impl()</a>
+<a href="#raise">raise()</a>
+<a href="#rectangle_impl">rectangle_impl()</a>
+<a href="#request_selection">request_selection()</a>
+<a href="#restore">restore()</a>
+<a href="#send_selection_response">send_selection_response()</a>
+<a href="#set_base_height">set_base_height()</a>
+<a href="#set_base_size">set_base_size()</a>
+<a href="#set_base_width">set_base_width()</a>
+<a href="#set_bg">set_bg()</a>
+<a href="#set_canvas">set_canvas()</a>
+<a href="#set_draw_op">set_draw_op()</a>
+<a href="#set_dx">set_dx()</a>
+<a href="#set_dy">set_dy()</a>
+<a href="#set_fg">set_fg()</a>
+<a href="#set_fill_rule">set_fill_rule()</a>
+<a href="#set_font">set_font()</a>
+<a href="#set_geometry">set_geometry()</a>
+<a href="#set_height">set_height()</a>
+<a href="#set_icon">set_icon()</a>
+<a href="#set_icon_impl">set_icon_impl()</a>
+<a href="#set_image">set_image()</a>
+<a href="#set_increment_height">set_increment_height()</a>
+<a href="#set_increment_size">set_increment_size()</a>
+<a href="#set_increment_width">set_increment_width()</a>
+<a href="#set_label">set_label()</a>
+<a href="#set_leading">set_leading()</a>
+<a href="#set_line_end">set_line_end()</a>
+<a href="#set_line_join">set_line_join()</a>
+<a href="#set_line_width">set_line_width()</a>
+<a href="#set_mask">set_mask()</a>
+<a href="#set_mask_impl">set_mask_impl()</a>
+<a href="#set_masked_pattern">set_masked_pattern()</a>
+<a href="#set_max_aspect_ratio">set_max_aspect_ratio()</a>
+<a href="#set_max_height">set_max_height()</a>
+<a href="#set_max_size">set_max_size()</a>
+<a href="#set_max_width">set_max_width()</a>
+<a href="#set_min_aspect_ratio">set_min_aspect_ratio()</a>
+<a href="#set_min_height">set_min_height()</a>
+<a href="#set_min_size">set_min_size()</a>
+<a href="#set_min_width">set_min_width()</a>
+<a href="#set_offset">set_offset()</a>
+<a href="#set_pattern">set_pattern()</a>
+<a href="#set_pattern_impl">set_pattern_impl()</a>
+<a href="#set_pointer">set_pointer()</a>
+<a href="#set_pos">set_pos()</a>
+<a href="#set_resize">set_resize()</a>
+<a href="#set_size">set_size()</a>
+<a href="#set_textured_pattern">set_textured_pattern()</a>
+<a href="#set_transient_for">set_transient_for()</a>
+<a href="#set_width">set_width()</a>
+<a href="#set_x">set_x()</a>
+<a href="#set_y">set_y()</a>
+<a href="#shared_copy">shared_copy()</a>
+<a href="#text_width">text_width()</a>
+<a href="#unclip">unclip()</a>
+<a href="#ungrab_keyboard">ungrab_keyboard()</a>
+<a href="#ungrab_pointer">ungrab_pointer()</a>
+<a href="#viewable">viewable()</a>
+<a href="#warp_pointer">warp_pointer()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#CLOSE_BUTTON">CLOSE_BUTTON</a>
+<a href="#FOCUS_IN">FOCUS_IN</a>
+<a href="#FOCUS_OUT">FOCUS_OUT</a>
+<a href="#FORMAT">FORMAT</a>
+<a href="#INVOKE_LATER">INVOKE_LATER</a>
+<a href="#MOVE">MOVE</a>
+<a href="#PATTERNS">PATTERNS</a>
+<a href="#ptr">ptr</a>
+<a href="#RESIZE">RESIZE</a>
+<a href="#STATE">STATE</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="alert"/>
+<h3>alert(volume)</h3>
+public native<p/>
+<dl>
+<dd>
+Produces a beep or other signal to attract attention.
+<p/><a href="graphics-graphics.icn.html#1123" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="can_resize"/>
+<h3>can_resize()</h3>
+public native<p/>
+<dl>
+<dd>
+Succeed iff the window is resizable, according to the flag set
+with <code><a href="graphics.Window.html#set_resize">set_resize()</a></code>.
+<p/><a href="graphics-graphics.icn.html#607" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="canonical"/>
+<h3>canonical(x, y, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+Return a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> created from the given parameters, after
+applying the same defaults as <code><a href="graphics.Window.html#drawable">drawable()</a></code>.  Negative width or
+height values are set to zero.
+<p/>
+The resulting rectangle may be partially or fully off-screen, or
+empty.
+<p/><a href="graphics-graphics.icn.html#1410" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="clip"/>
+<h3>clip(x, y, width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Sets the clipping region to the specified rectangle; subsequent
+output extending outside its bounds is discarded. To disable
+clipping, use <code><a href="graphics.Window.html#unclip">unclip()</a></code>.
+<p/><a href="graphics-graphics.icn.html#1128" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="clone"/>
+<h3>clone()</h3>
+public<p/>
+<dl>
+<dd>
+Produces a new window value that combines the canvas of <code>self</code>
+with a new graphics context. The new graphics attributes are
+copied from <code>self</code>.
+<p/><a href="graphics-graphics.icn.html#410" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="clone_impl"/>
+<h3>clone_impl()</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#436" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="close"/>
+<h3>close()</h3>
+public override native<p/>
+<dl>
+<dd>Overrides <a href="util.HasClose.html#close">close()</a> in <a href="util.HasClose.html" target="displayFrame">util.HasClose</a></dd>
+<dd>
+Close this binding to the window.  If no other bindings to the
+same canvas exist, the underlying window is closed.
+<p/><a href="graphics-graphics.icn.html#1527" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="color_value"/>
+<h3>color_value(k)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the r,g,b values (plus possibly a if not opaque) of the
+given color, as a color string
+<p/><a href="graphics-graphics.icn.html#1140" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_pointer"/>
+<h3>copy_pointer(dest, src)</h3>
+public native<p/>
+<dl>
+<dd>
+Make the destination pointer be the same as the src.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>dest</code> - the destination name, which need not currently be defined
+</dd>
+<dd>
+<code>src</code> - the current name.
+</dd>
+</dl>
+<p/><a href="graphics-graphics.icn.html#1519" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="copy_to"/>
+<h3>copy_to(x1, y1, width, height, dest, x2, y2)</h3>
+public native<p/>
+<dl>
+<dd>
+Copy a rectangular area from this window to another window, <code>dest</code>, at <code>x2</code>.
+<code>y2</code>.
+<p/><a href="graphics-graphics.icn.html#1204" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="couple"/>
+<h3>couple(other)</h3>
+public<p/>
+<dl>
+<dd>
+Produces a new window value that binds the canvas of <code>self</code> with
+the graphics context of <code>other</code>.
+<p/><a href="graphics-graphics.icn.html#427" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="couple_impl"/>
+<h3>couple_impl(other)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#437" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="create_for_ptr"/>
+<h3>create_for_ptr(ptr)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#386" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="define_pointer"/>
+<h3>define_pointer(name, v, x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Define a custom pointer.  <code>name</code> is the name of the pointer, to
+be used subsequently with <code><a href="graphics.Window.html#set_pointer">set_pointer()</a></code>.  <code>v</code> may be a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code>
+instance, a raw binary image data (eg a gif file), or the name of
+a file containing an image.  <code>x</code> and <code>y</code> specify the pointer's
+hotspot (such as the exact tip of an arrow cursor) and default to
+zero.
+<p/><a href="graphics-graphics.icn.html#1500" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="define_pointer_impl"/>
+<h3>define_pointer_impl(name, v, x, y)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1517" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_arc"/>
+<h3>draw_arc(x, y, rx, ry, angle1, angle2)</h3>
+public native<p/>
+<dl>
+<dd>
+Draw the given arc of an ellipse (centre <code>x</code>, <code>y</code>, major radius
+<code>rx</code>, minor radius <code>ry</code>), starting at <code>angle1</code> radians clockwise
+from the positive x-axis (default <code>0</code>), and going round clockwise
+<code>angle2</code> further radians (default <code>2*pi</code>).
+<p/><a href="graphics-graphics.icn.html#1156" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_circle"/>
+<h3>draw_circle(x, y, r, angle1, angle2)</h3>
+public<p/>
+<dl>
+<dd>
+Draw the given circle (centre <code>x</code>, <code>y</code> with radius <code>r</code>), starting
+at <code>angle1</code> radians clockwise from the positive x-axis (default
+<code>0</code>), and going round clockwise <code>angle2</code> further radians (default
+<code>2*pi</code>).
+<p/><a href="graphics-graphics.icn.html#1169" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_curve"/>
+<h3>draw_curve(a[])</h3>
+public native<p/>
+<dl>
+<dd>
+Draw a smooth curve through the given points <code>(x1,y1,...xN,yN)</code>.
+At least 3 points (6 parameters) must be given.
+<p/><a href="graphics-graphics.icn.html#1180" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_image"/>
+<h3>draw_image(x1, y1, src, x2, y2, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+Draw an image at <code>x1</code>, <code>y1</code>.  The image <code>src</code> can be raw image data,
+a filename, or a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> instance.
+<p/>
+The optional parameters after <code>src</code> specify a region of the source
+image to copy; they default to the whole image.
+<p/><a href="graphics-graphics.icn.html#1186" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_image_impl"/>
+<h3>draw_image_impl(x1, y1, src, x2, y2, width, height)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1202" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_line"/>
+<h3>draw_line(a[])</h3>
+public native<p/>
+<dl>
+<dd>
+Draw a line through the points <code>(x1,y1,...xN,yN)</code>.  At least 2
+points (4 parameters) must be given.
+<p/><a href="graphics-graphics.icn.html#1210" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_point"/>
+<h3>draw_point(x, y)</h3>
+public<p/>
+<dl>
+<dd>
+Fill a single pixel at x, y
+<p/><a href="graphics-graphics.icn.html#1216" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_polygon"/>
+<h3>draw_polygon(a[])</h3>
+public<p/>
+<dl>
+<dd>
+Draw a polygon defined by the points <code>(x1,y1,...xN,yN)</code>.
+<p/><a href="graphics-graphics.icn.html#1223" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_rectangle"/>
+<h3>draw_rectangle(x, y, width, height, thickness)</h3>
+public native<p/>
+<dl>
+<dd>
+A boundary of the given thickness (default 1 pixel) is filled
+inside the given rectangle, so that the area drawn is always
+bounded by exactly that rectangle.  If the thickness is too wide
+to leave a gap inside the rectangle, then the rectangle is simply
+filled.
+<p/><a href="graphics-graphics.icn.html#1232" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_string"/>
+<h3>draw_string(x, y, s)</h3>
+public native<p/>
+<dl>
+<dd>
+Draw a string (or ucs) <code>s</code> at <code>x</code>, <code>y</code>.
+<p/><a href="graphics-graphics.icn.html#1241" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="drawable"/>
+<h3>drawable(x, y, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+Return a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> record, representing that part of the given
+rectangle which would be drawable on the canvas; ie the
+intersection of the rectangle, the window and the clip area if
+set.  If the result would be an empty area, the method fails.
+<p/>
+<code>x</code> and <code>y</code> default to the top left of the window, whilst <code>width</code>
+and <code>height</code> default to extending to the right or bottom edge
+respectively.
+<p/><a href="graphics-graphics.icn.html#1389" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="erase_area"/>
+<h3>erase_area(x, y, width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Clear an area of the window by filling with the background
+colour.
+<p/><a href="graphics-graphics.icn.html#1246" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="event"/>
+<h3>event()</h3>
+public native<p/>
+<dl>
+<dd>
+Return an event from this window, failing if none is available.
+<p/><a href="graphics-graphics.icn.html#1164" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="fill_arc"/>
+<h3>fill_arc(x, y, rx, ry, angle1, angle2)</h3>
+public native<p/>
+<dl>
+<dd>
+Fill the given arc of an ellipse; the parameters are as for
+<code><a href="graphics.Window.html#draw_arc">draw_arc()</a></code>.
+<p/><a href="graphics-graphics.icn.html#1273" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="fill_circle"/>
+<h3>fill_circle(x, y, r, angle1, angle2)</h3>
+public<p/>
+<dl>
+<dd>
+Fill the given circle; the parameters are as for <code><a href="graphics.Window.html#draw_circle">draw_circle()</a></code>.
+<p/><a href="graphics-graphics.icn.html#1279" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="fill_polygon"/>
+<h3>fill_polygon(a[])</h3>
+public native<p/>
+<dl>
+<dd>
+Fill a polygon given by the points <code>(x1, y1, ...xN, yN)</code>.  At
+least 3 points (6 parameters) must be given.
+<p/><a href="graphics-graphics.icn.html#1286" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="fill_rectangle"/>
+<h3>fill_rectangle(x, y, width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Fill the given rectangle.
+<p/><a href="graphics-graphics.icn.html#1298" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="fill_triangles"/>
+<h3>fill_triangles(a[])</h3>
+public native<p/>
+<dl>
+<dd>
+Fill triangles defined by <code>(topx1, topy1, leftx1, lefty1,</code>
+rightx1, righty1, ...)<code>.</code>
+<p/><a href="graphics-graphics.icn.html#1292" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="filter"/>
+<h3>filter(x, y, width, height, filter)</h3>
+public<p/>
+<dl>
+<dd>
+Filter the given pixels according to the given filter spec.
+<p/><a href="graphics-graphics.icn.html#1369" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="focus"/>
+<h3>focus()</h3>
+public native<p/>
+<dl>
+<dd>
+Give the window the input focus
+<p/><a href="graphics-graphics.icn.html#1472" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_absolute_leading"/>
+<h3>get_absolute_leading()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the absolute leading, which is the pixels equivalent of
+the leading attribute.  It is the rounded value of the current
+font height multiplied by the leading attribute.
+<p/><a href="graphics-graphics.icn.html#1533" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_base_height"/>
+<h3>get_base_height()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the base height; see <code><a href="graphics.Window.html#set_base_height">set_base_height()</a></code>.
+<p/><a href="graphics-graphics.icn.html#906" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_base_size"/>
+<h3>get_base_size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the base size as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record; see <code><a href="graphics.Window.html#set_base_size">set_base_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#916" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_base_width"/>
+<h3>get_base_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the base width; see <code><a href="graphics.Window.html#set_base_width">set_base_width()</a></code>.
+<p/><a href="graphics-graphics.icn.html#911" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_bg"/>
+<h3>get_bg()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the background colour as set by <code><a href="graphics.Window.html#set_bg">set_bg()</a></code>
+<p/><a href="graphics-graphics.icn.html#466" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_canvas"/>
+<h3>get_canvas()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the canvas type as set by <code><a href="graphics.Window.html#set_canvas">set_canvas()</a></code>
+<p/><a href="graphics-graphics.icn.html#471" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clip"/>
+<h3>get_clip()</h3>
+public<p/>
+<dl>
+<dd>
+Return the current clip as a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> record, or fail if there
+is no clip set.
+<p/><a href="graphics-graphics.icn.html#632" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_clip_impl"/>
+<h3>get_clip_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#640" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_font"/>
+<h3>get_default_font()</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the default font for a window, as optionally specified with
+the OI_FONT environment variable.
+<p/><a href="graphics-graphics.icn.html#1337" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_font_size"/>
+<h3>get_default_font_size()</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the default font size for a font, as optionally specified
+with the OI_FONT_SIZE environment variable.
+<p/><a href="graphics-graphics.icn.html#1343" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_default_leading"/>
+<h3>get_default_leading()</h3>
+public static native<p/>
+<dl>
+<dd>
+Get the default leading, as optionally specified with the
+OI_LEADING environment variable.
+<p/><a href="graphics-graphics.icn.html#1349" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_depth"/>
+<h3>get_depth()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the depth in bits used by the window system for this window.
+<p/><a href="graphics-graphics.icn.html#476" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_display"/>
+<h3>get_display()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the display value used when this window was constructed,
+or the default setting if no display parameter was used.
+<p/><a href="graphics-graphics.icn.html#486" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_display_size"/>
+<h3>get_display_size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the current display size in pixels, as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record.
+<p/><a href="graphics-graphics.icn.html#1433" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_display_size_impl"/>
+<h3>get_display_size_impl(con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1440" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_display_size_mm"/>
+<h3>get_display_size_mm()</h3>
+public<p/>
+<dl>
+<dd>
+Return the current display size in millimeters, as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code>
+record.
+<p/><a href="graphics-graphics.icn.html#1442" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_display_size_mm_impl"/>
+<h3>get_display_size_mm_impl(con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1450" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_draw_op"/>
+<h3>get_draw_op()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the drawing operator as set by <code><a href="graphics.Window.html#set_draw_op">set_draw_op()</a></code>.
+<p/><a href="graphics-graphics.icn.html#504" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_dx"/>
+<h3>get_dx()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the x offset, as set by <code><a href="graphics.Window.html#set_dx">set_dx()</a></code>.
+<p/><a href="graphics-graphics.icn.html#509" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_dy"/>
+<h3>get_dy()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the y offset, as set by <code><a href="graphics.Window.html#set_dy">set_dy()</a></code>.
+<p/><a href="graphics-graphics.icn.html#514" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fd"/>
+<h3>get_fd()</h3>
+public native<p/>
+<dl>
+<dd>
+Return a system-dependent integer which represents the connection
+to the window system.
+<p/><a href="graphics-graphics.icn.html#498" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fg"/>
+<h3>get_fg()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the foreground colour as set by <code><a href="graphics.Window.html#set_fg">set_fg()</a></code>
+<p/><a href="graphics-graphics.icn.html#524" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fill_pattern"/>
+<h3>get_fill_pattern(s, fg, bg)</h3>
+public static<p/>
+<dl>
+<dd>
+Return a new <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> instance with a paletted image which
+represents the classic Icon pattern of the given name, with the
+given foreground and background colours.
+<p/><a href="graphics-graphics.icn.html#1013" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_fill_rule"/>
+<h3>get_fill_rule()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the fill rule setting as set by <code><a href="graphics.Window.html#set_fill_rule">set_fill_rule()</a></code>.
+<p/><a href="graphics-graphics.icn.html#567" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_font"/>
+<h3>get_font()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the font as set by <code><a href="graphics.Window.html#set_font">set_font()</a></code>.  Note that the system's
+identifier of the font will be returned, rather than the exact
+value passed to <code><a href="graphics.Window.html#set_font">set_font()</a></code>.
+<p/><a href="graphics-graphics.icn.html#529" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_font_ascent"/>
+<h3>get_font_ascent()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the ascent height of the font in pixels.
+<p/><a href="graphics-graphics.icn.html#461" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_font_descent"/>
+<h3>get_font_descent()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the descent height of the font in pixels.
+<p/><a href="graphics-graphics.icn.html#481" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_font_height"/>
+<h3>get_font_height()</h3>
+public<p/>
+<dl>
+<dd>
+Return the font height, which is always the sum of the font
+ascent and the descent.
+<p/><a href="graphics-graphics.icn.html#1540" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_font_width"/>
+<h3>get_font_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the font width in pixels of the current font; for a
+proportional font this is the maximum width of one character.
+<p/><a href="graphics-graphics.icn.html#536" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_format"/>
+<h3>get_format()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> format this window uses internally.
+<p/><a href="graphics-graphics.icn.html#1355" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_geometry"/>
+<h3>get_geometry()</h3>
+public<p/>
+<dl>
+<dd>
+Return the geometry of this window as a <code><a href="graphics.Rectangle.html" target="displayFrame">Rectangle</a></code> record; see
+<code><a href="graphics.Window.html#get_pos">get_pos()</a></code> and <code><a href="graphics.Window.html#get_size">get_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#692" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_height"/>
+<h3>get_height()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the height of this window; see <code><a href="graphics.Window.html#get_size">get_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#542" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_id"/>
+<h3>get_id()</h3>
+public native<p/>
+<dl>
+<dd>
+Return a system-dependent string which can identify the visible
+window to external programs.  Fails if the window is hidden.
+<p/><a href="graphics-graphics.icn.html#492" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_increment_height"/>
+<h3>get_increment_height()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the resize increment height; see <code><a href="graphics.Window.html#set_increment_height">set_increment_height()</a></code>.
+<p/><a href="graphics-graphics.icn.html#944" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_increment_size"/>
+<h3>get_increment_size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the increment size as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record; see <code><a href="graphics.Window.html#set_increment_size">set_increment_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#954" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_increment_width"/>
+<h3>get_increment_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Get the resize increment width; see <code><a href="graphics.Window.html#set_increment_width">set_increment_width()</a></code>.
+<p/><a href="graphics-graphics.icn.html#949" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_label"/>
+<h3>get_label()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the window label as set by <code><a href="graphics.Window.html#set_label">set_label()</a></code>.
+<p/><a href="graphics-graphics.icn.html#547" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_leading"/>
+<h3>get_leading()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the font leading value, as set by <code><a href="graphics.Window.html#set_leading">set_leading()</a></code>.
+<p/><a href="graphics-graphics.icn.html#519" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_ascent"/>
+<h3>get_line_ascent()</h3>
+public<p/>
+<dl>
+<dd>
+Return the line ascent, which is the font ascent plus the
+absolute leading.
+<p/><a href="graphics-graphics.icn.html#1558" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_descent"/>
+<h3>get_line_descent()</h3>
+public<p/>
+<dl>
+<dd>
+Return the line descent, which is the font descent plus the
+absolute leading.
+<p/><a href="graphics-graphics.icn.html#1566" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_end"/>
+<h3>get_line_end()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the line style setting as set by <code><a href="graphics.Window.html#set_line_end">set_line_end()</a></code>.
+<p/><a href="graphics-graphics.icn.html#552" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_height"/>
+<h3>get_line_height()</h3>
+public<p/>
+<dl>
+<dd>
+Return the line height, which is always the sum of the font
+ascent, the font descent, and two amounts of the absolute leading
+(notionally one for the top and one for the bottom of the line).
+This sum is also equal to the line ascent plus the line descent.
+<p/><a href="graphics-graphics.icn.html#1548" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_join"/>
+<h3>get_line_join()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the line style setting as set by <code><a href="graphics.Window.html#set_line_join">set_line_join()</a></code>.
+<p/><a href="graphics-graphics.icn.html#557" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_line_width"/>
+<h3>get_line_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the line width (a real), as set by <code><a href="graphics.Window.html#set_line_width">set_line_width()</a></code>.
+<p/><a href="graphics-graphics.icn.html#562" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_max_aspect_ratio"/>
+<h3>get_max_aspect_ratio()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the maximum aspect ratio allowed during resizing, or fail
+if no value is set; see <code><a href="graphics.Window.html#set_max_aspect_ratio">set_max_aspect_ratio()</a></code>.
+<p/><a href="graphics-graphics.icn.html#968" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_max_height"/>
+<h3>get_max_height()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the maximum allowed height of this window, see <code><a href="graphics.Window.html#get_max_size">get_max_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#572" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_max_size"/>
+<h3>get_max_size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the maximum size of the window as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record.
+<p/><a href="graphics-graphics.icn.html#665" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_max_width"/>
+<h3>get_max_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the maximum allowed width of this window, see <code><a href="graphics.Window.html#get_max_size">get_max_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#577" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_min_aspect_ratio"/>
+<h3>get_min_aspect_ratio()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the minimum aspect ratio allowed during resizing, or fail
+if no value is set; see <code><a href="graphics.Window.html#set_min_aspect_ratio">set_min_aspect_ratio()</a></code>.
+<p/><a href="graphics-graphics.icn.html#981" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_min_height"/>
+<h3>get_min_height()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the minimum allowed height of this window; see <code><a href="graphics.Window.html#get_min_size">get_min_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#582" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_min_size"/>
+<h3>get_min_size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the minimum size of the window as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record.
+<p/><a href="graphics-graphics.icn.html#672" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_min_width"/>
+<h3>get_min_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the minimum allowed width of this window; see <code><a href="graphics.Window.html#get_min_size">get_min_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#587" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_offset"/>
+<h3>get_offset()</h3>
+public<p/>
+<dl>
+<dd>
+Return the <code>dx, dy</code> offset as a <code><a href="graphics.Vector.html" target="displayFrame">Vector</a></code> record.
+<p/><a href="graphics-graphics.icn.html#618" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_pixels"/>
+<h3>get_pixels(x, y, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+Get the contents of some pixels as a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> object.
+<p/><a href="graphics-graphics.icn.html#1360" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_pixels_impl"/>
+<h3>get_pixels_impl(x, y, width, height)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1367" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_pointer"/>
+<h3>get_pointer()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the mouse pointer as set by <code><a href="graphics.Window.html#set_pointer">set_pointer()</a></code>.
+<p/><a href="graphics-graphics.icn.html#592" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_pos"/>
+<h3>get_pos()</h3>
+public<p/>
+<dl>
+<dd>
+Return the position of this window as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record.  If the
+window is hidden, or the position is unavailable, this method
+fails.
+<p/>
+Note that, for a bordered window, this method always returns the
+location of the inner client area.  This is distinct from the
+corresponding <code><a href="graphics.Window.html#set_pos">set_pos()</a></code> method.
+<p/><a href="graphics-graphics.icn.html#679" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_references"/>
+<h3>get_references()</h3>
+public<p/>
+<dl>
+<dd>
+Return the number of references to this window's canvas and
+context, as a <code><a href="graphics.References.html" target="displayFrame">References</a></code> record.
+<p/><a href="graphics-graphics.icn.html#700" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_references_impl"/>
+<h3>get_references_impl(r)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#708" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_size"/>
+<h3>get_size()</h3>
+public<p/>
+<dl>
+<dd>
+Return the size of the window as a <code><a href="graphics.Size.html" target="displayFrame">Size</a></code> record.
+<p/><a href="graphics-graphics.icn.html#658" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_width"/>
+<h3>get_width()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the width of this window; see <code><a href="graphics.Window.html#get_size">get_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#613" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_x"/>
+<h3>get_x()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the window's x position on the screen; see <code><a href="graphics.Window.html#get_pos">get_pos()</a></code>.
+<p/><a href="graphics-graphics.icn.html#597" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="get_y"/>
+<h3>get_y()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the window's y position on the screen; see <code><a href="graphics.Window.html#get_pos">get_pos()</a></code>.
+<p/><a href="graphics-graphics.icn.html#602" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="grab_keyboard"/>
+<h3>grab_keyboard()</h3>
+public native<p/>
+<dl>
+<dd>
+Grab the keyboard so that all key events are directed to this
+window.
+<p/><a href="graphics-graphics.icn.html#450" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="grab_pointer"/>
+<h3>grab_pointer()</h3>
+public native<p/>
+<dl>
+<dd>
+Grab the pointer so that all mouse events are directed to this
+window.
+<p/><a href="graphics-graphics.icn.html#439" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="hold"/>
+<h3>hold()</h3>
+public native<p/>
+<dl>
+<dd>
+Temporarily stop copying graphic operations from the backing
+image to the visible window.  This call must be followed by a
+call to <code><a href="graphics.Window.html#restore">restore()</a></code>.
+<p/><a href="graphics-graphics.icn.html#642" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#354" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="lower"/>
+<h3>lower()</h3>
+public native<p/>
+<dl>
+<dd>
+Lower this window to the bottom of the window stack
+<p/><a href="graphics-graphics.icn.html#1303" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="mk_pattern"/>
+<h3>mk_pattern(s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#350" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(display)</h3>
+public<p/>
+<dl>
+<dd>
+Open a new window.  The meaning of the optional parameter
+<code>display</code> (a string) is system dependent; on X11 it specifies the
+display to connect to.
+<p/><a href="graphics-graphics.icn.html#393" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="new_impl"/>
+<h3>new_impl(display)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#435" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="object_output"/>
+<h3>object_output(oo)</h3>
+protected override<p/>
+<dl>
+<dd>Overrides <a href="lang.ObjectOutput.html#object_output">object_output()</a> in <a href="lang.ObjectOutput.html" target="displayFrame">lang.ObjectOutput</a></dd>
+<dd>
+<p/><a href="graphics-graphics.icn.html#403" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="open_image"/>
+<h3>open_image(img)</h3>
+public static<p/>
+<dl>
+<dd>
+Convenient method to open an image and return a hidden window with
+its contents.
+<dl>
+<dt>
+Parameters :
+</dt>
+<dd>
+<code>img</code> - the image
+</dd>
+</dl>
+<p/><a href="graphics-graphics.icn.html#1574" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="own_selection"/>
+<h3>own_selection(selection)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the window system's selection.  The value returned is an
+integer, which should be the result of any future selection of
+the TIMESTAMP property (this is relevant to X11 only).
+<p/><a href="graphics-graphics.icn.html#1483" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="palette_chars"/>
+<h3>palette_chars(p)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return the characters forming keys to palette p
+<p/><a href="graphics-graphics.icn.html#1308" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="palette_color"/>
+<h3>palette_color(s1, s2)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return color of key s2 in palette s1
+<p/><a href="graphics-graphics.icn.html#1313" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="palette_color_rgb"/>
+<h3>palette_color_rgb(s1, s2)</h3>
+public static<p/>
+<dl>
+<dd>
+Like <code><a href="graphics.Window.html#palette_color">palette_color()</a></code>, but returns a <code><a href="graphics.Color.html" target="displayFrame">Color</a></code> record.
+<p/><a href="graphics-graphics.icn.html#1318" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="palette_color_rgb_impl"/>
+<h3>palette_color_rgb_impl(s1, s2, con)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1325" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="palette_key"/>
+<h3>palette_key(s1, s2)</h3>
+public static native<p/>
+<dl>
+<dd>
+Return key of closest color to s2 in palette s1
+<p/><a href="graphics-graphics.icn.html#1327" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="palette_key_rgb"/>
+<h3>palette_key_rgb(s1, r, g, b)</h3>
+public static native<p/>
+<dl>
+<dd>
+Like <code><a href="graphics.Window.html#palette_key">palette_key()</a></code>, but takes integer color values.
+<p/><a href="graphics-graphics.icn.html#1332" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_color"/>
+<h3>parse_color(k)</h3>
+public static<p/>
+<dl>
+<dd>
+Return the r,g,b,a values of the given color string, as a <code><a href="graphics.Color.html" target="displayFrame">Color</a></code>
+record.
+<p/><a href="graphics-graphics.icn.html#1146" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_color_impl"/>
+<h3>parse_color_impl(k, con)</h3>
+private static native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1154" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="peek"/>
+<h3>peek()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the event code of the next event (without removing it), or
+fail if there is no event available.  It will give the same
+result as
+<pre>
+    pending()[1]
+</pre>
+<p/><a href="graphics-graphics.icn.html#1263" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="pending"/>
+<h3>pending()</h3>
+public native<p/>
+<dl>
+<dd>
+Return the window's event queue (a list) after bringing it
+up-to-date with any events from the window system.
+<p/>
+The list may be edited to add events to the queue; in this case
+the caller must ensure the addition makes sense, or a fatal error
+will occur when <code><a href="graphics.Window.html#event">event</a></code> is called (see the function wgetevent in
+rwindow.r for details).
+<p/><a href="graphics-graphics.icn.html#1252" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="query_pointer"/>
+<h3>query_pointer()</h3>
+public<p/>
+<dl>
+<dd>
+Return the pointer's current position as a <code><a href="graphics.Point.html" target="displayFrame">Point</a></code> record,
+relative to this window.
+<p/><a href="graphics-graphics.icn.html#1452" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="query_pointer_impl"/>
+<h3>query_pointer_impl(con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1460" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="query_root_pointer"/>
+<h3>query_root_pointer()</h3>
+public<p/>
+<dl>
+<dd>
+Return the current root pointer position as a <code><a href="graphics.Point.html" target="displayFrame">Point</a></code> record.
+<p/><a href="graphics-graphics.icn.html#1424" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="query_root_pointer_impl"/>
+<h3>query_root_pointer_impl(con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1431" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="raise"/>
+<h3>raise()</h3>
+public native<p/>
+<dl>
+<dd>
+Raise window to the top of the window stack
+<p/><a href="graphics-graphics.icn.html#1467" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="rectangle_impl"/>
+<h3>rectangle_impl(mode, x, y, width, height, con)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1422" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="request_selection"/>
+<h3>request_selection(selection, target_type)</h3>
+public native<p/>
+<dl>
+<dd>
+Get the window system's selection
+<p/><a href="graphics-graphics.icn.html#1495" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="restore"/>
+<h3>restore(x, y, width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+After a call to <code><a href="graphics.Window.html#hold">hold()</a></code>, update the visible window with the
+drawing that has taken place since <code><a href="graphics.Window.html#hold">hold()</a></code>, by copying the given
+region from the off-screen buffer to the visible window.  This
+can be used as a form of double-buffering, with several drawing
+operations taking place off-screen, and being updated in one go.
+<p/><a href="graphics-graphics.icn.html#649" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="send_selection_response"/>
+<h3>send_selection_response(requestor, property, target, selection, data)</h3>
+public native<p/>
+<dl>
+<dd>
+Send a response to a selection request event.
+<p/><a href="graphics-graphics.icn.html#1490" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_base_height"/>
+<h3>set_base_height(height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the base height to use in aspect ratio and resize increment
+calculations.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#882" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_base_size"/>
+<h3>set_base_size(width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the base size to use in aspect ratio and resize increment
+calculations.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#898" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_base_width"/>
+<h3>set_base_width(width)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the base width to use in aspect ratio and resize increment
+calculations.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#890" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_bg"/>
+<h3>set_bg(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the current background color.
+<p/><a href="graphics-graphics.icn.html#710" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_canvas"/>
+<h3>set_canvas(v)</h3>
+public native<p/>
+<dl>
+<dd>
+The canvas attribute canvas specifies the window visibility.
+Possible values are system dependent, but include "hidden",
+"normal", and "popup".  The X11 implementation also provides
+"iconic", "fullscreen", "maximized", "root", "withdrawn".  (See
+<code><a href="graphics.Canvas.html" target="displayFrame">Canvas</a></code> for symbolic constants).
+<p/><a href="graphics-graphics.icn.html#715" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_draw_op"/>
+<h3>set_draw_op(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the drawing operator, which specifies the way in which newly
+drawn pixels are combined with the pixels that are already in a
+window.  Possible values are system dependent, but include "over"
+and "source".  The X11 implementation also allows the Porter-Duff
+operators "atop", "clear", "dest", "dest atop", "dest in", "dest
+out", "dest over", "in", "out", and several other more exotic
+ones.  (See <code><a href="graphics.DrawOp.html" target="displayFrame">DrawOp</a></code> for these, as well as symbolic constants).
+<p/><a href="graphics-graphics.icn.html#724" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dx"/>
+<h3>set_dx(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set <code>dx</code>, a horizontal offset that is added to the x value of
+every coordinate pair before interpretation.
+<p/><a href="graphics-graphics.icn.html#744" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_dy"/>
+<h3>set_dy(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set <code>dy</code>, a vertical offset that is added to the y value of every
+coordinate pair before interpretation.
+<p/><a href="graphics-graphics.icn.html#750" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fg"/>
+<h3>set_fg(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the current foreground color.
+<p/><a href="graphics-graphics.icn.html#756" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_fill_rule"/>
+<h3>set_fill_rule(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the fill rule, which specifies how <code><a href="graphics.Window.html#fill_polygon">fill_polygon()</a></code> fills
+polygons with overlapping edges.  Possible values are "even-odd",
+"non-zero".  (See <code><a href="graphics.FillRule.html" target="displayFrame">FillRule</a></code> for symbolic constants).
+<p/><a href="graphics-graphics.icn.html#839" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_font"/>
+<h3>set_font(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the current text font.
+<p/><a href="graphics-graphics.icn.html#761" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_geometry"/>
+<h3>set_geometry(x, y, width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Specifies the position and size of the window; see <code><a href="graphics.Window.html#set_pos">set_pos()</a></code>
+and <code><a href="graphics.Window.html#set_size">set_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#766" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_height"/>
+<h3>set_height(height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the height of the window in pixels; see <code><a href="graphics.Window.html#set_size">set_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#772" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_icon"/>
+<h3>set_icon(v)</h3>
+public<p/>
+<dl>
+<dd>
+Specify an image used to identify the window.  If null, then the
+setting is cleared.  The parameter takes the same format as
+<code><a href="graphics.Window.html#set_image">set_image()</a></code>.
+<p/><a href="graphics-graphics.icn.html#798" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_icon_impl"/>
+<h3>set_icon_impl(id)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#812" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_image"/>
+<h3>set_image(v)</h3>
+public<p/>
+<dl>
+<dd>
+Specifies an image to load into the window.  On success, the
+window is resized to the size of the image.  The given parameter
+<code>v</code> may be raw binary image data (eg a gif file), or the name of
+a file containing an image, or a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> instance.
+<p/>
+Note that mask and draw_op settings are not changed before
+drawing the image; if the image could be transparent it may be
+desirable to set draw_op to "source" beforehand, so that the
+image does not mix with the existing background.
+<p/><a href="graphics-graphics.icn.html#777" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_increment_height"/>
+<h3>set_increment_height(height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the resize increment height to use during resizing.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#923" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_increment_size"/>
+<h3>set_increment_size(width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the resize increment size to use during resizing.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#937" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_increment_width"/>
+<h3>set_increment_width(width)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the resize increment width to use during resizing.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#930" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_label"/>
+<h3>set_label(v)</h3>
+public native<p/>
+<dl>
+<dd>
+The canvas attribute label specifies a title used to identify the
+window.
+<p/><a href="graphics-graphics.icn.html#814" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_leading"/>
+<h3>set_leading(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the line leading, which specifies extra space to add to font
+ascent, descent and height, to calculate line ascent, descent and
+height.  It is specified as a real number, being the proportion
+of font height.  The default leading value is <code>0.075</code>, and this
+can be changed by setting the environment variable <code>OI_LEADING</code>.
+<p/><a href="graphics-graphics.icn.html#735" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_end"/>
+<h3>set_line_end(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the line style, which specifies how <code><a href="graphics.Window.html#draw_line">draw_line()</a></code> draws the
+ends of a line.  Possible values are "flat", "point", "round",
+and "square".  (See <code><a href="graphics.LineEnd.html" target="displayFrame">LineEnd</a></code> for symbolic constants).
+<p/><a href="graphics-graphics.icn.html#820" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_join"/>
+<h3>set_line_join(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the line style, which specifies how <code><a href="graphics.Window.html#draw_line">draw_line()</a></code> draws the
+joins of a line.  Possible values are "bevel", "miter", "round".
+(See <code><a href="graphics.LineJoin.html" target="displayFrame">LineJoin</a></code> for symbolic constants).
+<p/><a href="graphics-graphics.icn.html#827" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_line_width"/>
+<h3>set_line_width(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the width of drawn lines.
+<p/><a href="graphics-graphics.icn.html#834" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_mask"/>
+<h3>set_mask(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set a mask to use with certain drawing operations.
+<p/>
+If no parameter is given, the setting is cleared and the
+foreground colour is used again.  Otherwise, the parameter should
+be a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> instance or raw image data, or an image filename.
+<p/><a href="graphics-graphics.icn.html#1044" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_mask_impl"/>
+<h3>set_mask_impl(v)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1060" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_masked_pattern"/>
+<h3>set_masked_pattern(s)</h3>
+public<p/>
+<dl>
+<dd>
+A helpful method to set the pattern to something equivalent to
+the old Icon pattern of the same name using a masked fill
+style.  (See <code><a href="graphics.Pattern.html" target="displayFrame">Pattern</a></code> for symbolic constant pattern names).
+<p/><a href="graphics-graphics.icn.html#1000" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_max_aspect_ratio"/>
+<h3>set_max_aspect_ratio(r)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the maximum aspect ratio allowed during resizing.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#961" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_max_height"/>
+<h3>set_max_height(height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the maximum height of the window in pixels.  This only
+affects visible windows, not hidden windows.
+<p/><a href="graphics-graphics.icn.html#846" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_max_size"/>
+<h3>set_max_size(width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the maximum size of the window in pixels.  This only affects
+visible windows, not hidden windows.
+<p/><a href="graphics-graphics.icn.html#852" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_max_width"/>
+<h3>set_max_width(width)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the maximum width of the window in pixels.  This only affects
+visible windows, not hidden windows.
+<p/><a href="graphics-graphics.icn.html#858" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_min_aspect_ratio"/>
+<h3>set_min_aspect_ratio(r)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the minimum aspect ratio allowed during resizing.
+<p/>
+This value is currently only effective on X11.
+<p/><a href="graphics-graphics.icn.html#974" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_min_height"/>
+<h3>set_min_height(height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the minimum height of the window in pixels.  This only
+affects visible windows, not hidden windows.
+<p/><a href="graphics-graphics.icn.html#864" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_min_size"/>
+<h3>set_min_size(width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the minimum size of the window in pixels.  This only affects
+visible windows, not hidden windows.
+<p/><a href="graphics-graphics.icn.html#870" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_min_width"/>
+<h3>set_min_width(width)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the minimum width of the window in pixels.  This only affects
+visible windows, not hidden windows.
+<p/><a href="graphics-graphics.icn.html#876" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_offset"/>
+<h3>set_offset(dx, dy)</h3>
+public<p/>
+<dl>
+<dd>
+Set the <code>dx, dy</code> offset; see <code><a href="graphics.Window.html#set_dx">set_dx()</a></code> and <code><a href="graphics.Window.html#set_dy">set_dy()</a></code>.
+<p/><a href="graphics-graphics.icn.html#625" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pattern"/>
+<h3>set_pattern(v)</h3>
+public<p/>
+<dl>
+<dd>
+Set the fill pattern (texture) to fill shapes (instead of the
+foreground colour).  If no parameter is given, the setting is
+cleared and the foreground colour is used again.  Otherwise, the
+parameter should be a <code><a href="graphics.Pixels.html" target="displayFrame">Pixels</a></code> instance or raw image data, or an
+image filename.
+<p/><a href="graphics-graphics.icn.html#1026" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pattern_impl"/>
+<h3>set_pattern_impl(v)</h3>
+private native<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#1042" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pointer"/>
+<h3>set_pointer(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the shape of the figure that represents the mouse position.
+The recognised values for string <code>v</code> are system dependent; see
+the <code>cursors</code> example program for the available pointer shapes.
+<p/><a href="graphics-graphics.icn.html#1062" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_pos"/>
+<h3>set_pos(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the position of the window on the screen.  If the window is
+currently hidden, then either <code>x</code> or <code>y</code> may be null, meaning
+that the underlying window system will place the window at a
+default position when it is unhidden.
+<p/>
+For a bordered window, the position normally refers to the
+positon of the border rather than the client area.  However, this
+is system dependent.
+<p/>
+After a call to <code><a href="graphics.Window.html#set_pos">set_pos()</a></code> on an unhidden window, the value of
+<code><a href="graphics.Window.html#get_pos">get_pos()</a></code> will normally only be updated after a window system
+event.
+<p/><a href="graphics-graphics.icn.html#1069" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_resize"/>
+<h3>set_resize(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Configure whether the window can or cannot be resized by the
+user.  The parameter should be a flag value.
+<p/><a href="graphics-graphics.icn.html#1095" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_size"/>
+<h3>set_size(width, height)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the size of the window in pixels.
+<p/><a href="graphics-graphics.icn.html#1101" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_textured_pattern"/>
+<h3>set_textured_pattern(s)</h3>
+public<p/>
+<dl>
+<dd>
+A helpful method to set the pattern to something equivalent to
+the old Icon pattern of the same name using a textured fill
+style.  (See <code><a href="graphics.Pattern.html" target="displayFrame">Pattern</a></code> for symbolic constant pattern names).
+<p/><a href="graphics-graphics.icn.html#987" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_transient_for"/>
+<h3>set_transient_for(w)</h3>
+public native<p/>
+<dl>
+<dd>
+Configure this window so that it is transient in respect of the
+given window <code>w</code>.  This generally means that the transient window
+stays on top of the other window, although the exact behaviour
+depends on the window system.
+<p/>
+When calling this method, this window must not be visible, and
+the other window must be visible; if that is not the case this
+method fails.
+<p/><a href="graphics-graphics.icn.html#1111" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_width"/>
+<h3>set_width(width)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the width of the window in pixels; see <code><a href="graphics.Window.html#set_size">set_size()</a></code>.
+<p/><a href="graphics-graphics.icn.html#1106" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_x"/>
+<h3>set_x(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the x position of the window on the screen; see <code><a href="graphics.Window.html#set_pos">set_pos()</a></code>.
+<p/><a href="graphics-graphics.icn.html#1085" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="set_y"/>
+<h3>set_y(v)</h3>
+public native<p/>
+<dl>
+<dd>
+Set the y position of the window on the screen; see <code><a href="graphics.Window.html#set_pos">set_pos()</a></code>.
+<p/><a href="graphics-graphics.icn.html#1090" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="shared_copy"/>
+<h3>shared_copy()</h3>
+public<p/>
+<dl>
+<dd>
+Return a new instance which shares both canvas and context of
+<code>self</code>.
+<p/><a href="graphics-graphics.icn.html#419" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="text_width"/>
+<h3>text_width(s)</h3>
+public native<p/>
+<dl>
+<dd>
+Returns the width of string s, in pixels, as drawn using the
+current font.
+<p/><a href="graphics-graphics.icn.html#1477" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="unclip"/>
+<h3>unclip()</h3>
+public native<p/>
+<dl>
+<dd>
+Clear the clip settings
+<p/><a href="graphics-graphics.icn.html#1135" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="ungrab_keyboard"/>
+<h3>ungrab_keyboard()</h3>
+public native<p/>
+<dl>
+<dd>
+Undoes the effect of <code><a href="graphics.Window.html#grab_keyboard">grab_keyboard()</a></code>.
+<p/><a href="graphics-graphics.icn.html#456" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="ungrab_pointer"/>
+<h3>ungrab_pointer()</h3>
+public native<p/>
+<dl>
+<dd>
+Undoes the effect of <code><a href="graphics.Window.html#grab_pointer">grab_pointer()</a></code>.
+<p/><a href="graphics-graphics.icn.html#445" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="viewable"/>
+<h3>viewable(x, y, width, height)</h3>
+public<p/>
+<dl>
+<dd>
+This is the same as <code><a href="graphics.Window.html#drawable">drawable</a></code>, but ignores the clip region.
+<p/><a href="graphics-graphics.icn.html#1403" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="warp_pointer"/>
+<h3>warp_pointer(x, y)</h3>
+public native<p/>
+<dl>
+<dd>
+Warp the pointer to the given location, relative to this window.
+<p/><a href="graphics-graphics.icn.html#1462" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="CLOSE_BUTTON"/>
+<h3>CLOSE_BUTTON</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#341" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="FOCUS_IN"/>
+<h3>FOCUS_IN</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#339" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="FOCUS_OUT"/>
+<h3>FOCUS_OUT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#340" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="FORMAT"/>
+<h3>FORMAT</h3>
+public static const<p/>
+<dl>
+<dd>
+The format of a <code><a href="graphics.Window.html" target="displayFrame">Window</a></code> constructed with empty display
+parameter.  This will be <code>&amp;null</code> if no window could be created.
+<p/><a href="graphics-graphics.icn.html#343" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="INVOKE_LATER"/>
+<h3>INVOKE_LATER</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#342" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="MOVE"/>
+<h3>MOVE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#337" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="PATTERNS"/>
+<h3>PATTERNS</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#347" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="ptr"/>
+<h3>ptr</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#332" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="RESIZE"/>
+<h3>RESIZE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#336" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+<a name="STATE"/>
+<h3>STATE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="graphics-graphics.icn.html#338" target="displayFrame">Source - graphics.icn </a>
+</dd>
+</dl><hr>
+</body></html>

@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>globalname.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: globalname.icn 642 2009-01-23 23:50:18Z r.parlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>#
+<a name="12"/># This class represents a global name, ie one which has been
+<a name="13"/># created using XML namespaces.   It has two parts, a local_name and
+<a name="14"/># a URI.  The URI is &amp;null if the global name is the same as
+<a name="15"/># the local name.
+<a name="16"/>#
+<a name="17"/># For example with the XML fragment
+<a name="18"/>#
+<a name="19"/>#   &lt;SOAP-ENV:Envelope
+<a name="20"/>#      xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+<a name="21"/>#
+<a name="22"/># the global name of the element would be the instance
+<a name="23"/>#
+<a name="24"/># GlobalName("Envelope", "http://schemas.xmlsoap.org/soap/envelope/")
+<a name="25"/>#
+<a name="26"/>class GlobalName()
+<a name="27"/>   private readable
+<a name="28"/>      local_name,
+<a name="29"/>      uri
+<a name="30"/>
+<a name="31"/>   #
+<a name="32"/>   # Return the original tag local_name
+<a name="33"/>   # 
+<a name="34"/>   public get_local_name()
+<a name="35"/>      return .local_name
+<a name="36"/>   end
+<a name="37"/>
+<a name="38"/>   #
+<a name="39"/>   # Return the URI obtained during namespace processing.  For a global name
+<a name="40"/>   # which is just a local name, then this is &amp;null.
+<a name="41"/>   #
+<a name="42"/>   public get_uri()
+<a name="43"/>      return .uri
+<a name="44"/>   end
+<a name="45"/>
+<a name="46"/>   public new(local_name, uri)
+<a name="47"/>      self.local_name := local_name
+<a name="48"/>      self.uri := uri
+<a name="49"/>      return
+<a name="50"/>   end
+<a name="51"/>end
+<a name="52"/>
+</pre></body></html>

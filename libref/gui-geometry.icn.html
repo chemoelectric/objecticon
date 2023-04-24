@@ -1,0 +1,293 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>geometry.icn</title></head><body><pre>
+<a name="1"/>package gui
+<a name="2"/>
+<a name="3"/>#
+<a name="4"/># This class represents an integer x, y location.
+<a name="5"/>#
+<a name="6"/>class Point()
+<a name="7"/>   public x, y
+<a name="8"/>
+<a name="9"/>   public get_x()
+<a name="10"/>      return x
+<a name="11"/>   end
+<a name="12"/>
+<a name="13"/>   public get_y()
+<a name="14"/>      return y
+<a name="15"/>   end
+<a name="16"/>
+<a name="17"/>   public new(x, y)
+<a name="18"/>      self.x := x
+<a name="19"/>      self.y := y
+<a name="20"/>      return
+<a name="21"/>   end
+<a name="22"/>
+<a name="23"/>   # A comparator function for points, ordering by y first, then x.
+<a name="24"/>   public static cmp_yx(p, q)
+<a name="25"/>      return if p.y = q.y then p.x - q.x else p.y - q.y
+<a name="26"/>   end
+<a name="27"/>
+<a name="28"/>   # A comparator function for points, ordering by x first, then y.
+<a name="29"/>   public static cmp_xy(p, q)
+<a name="30"/>      return if p.x = q.x then p.y - q.y else p.x - q.x
+<a name="31"/>   end
+<a name="32"/>end
+<a name="33"/>
+<a name="34"/>#
+<a name="35"/># This class represents an integer width and height size.
+<a name="36"/>#
+<a name="37"/>class Size()
+<a name="38"/>   public w, h
+<a name="39"/>
+<a name="40"/>   public get_width()
+<a name="41"/>      return w
+<a name="42"/>   end
+<a name="43"/>
+<a name="44"/>   public get_height()
+<a name="45"/>      return h
+<a name="46"/>   end
+<a name="47"/>
+<a name="48"/>   #
+<a name="49"/>   # Succeed if either dimension is zero or negative.
+<a name="50"/>   #
+<a name="51"/>   public empty()
+<a name="52"/>      succeed (w | h) &lt;= 0
+<a name="53"/>   end
+<a name="54"/>
+<a name="55"/>   public new(w, h)
+<a name="56"/>      self.w := w
+<a name="57"/>      self.h := h
+<a name="58"/>      return
+<a name="59"/>   end
+<a name="60"/>end
+<a name="61"/>
+<a name="62"/>#
+<a name="63"/># This class combines `Point` and `Size` to represent a rectangle.
+<a name="64"/>#
+<a name="65"/>class Rect(Point,Size)
+<a name="66"/>   public str()
+<a name="67"/>      return self.x || "," || self.y || "," || self.w || "," || self.h
+<a name="68"/>   end
+<a name="69"/>
+<a name="70"/>   #
+<a name="71"/>   # Succeed iff the given point is inside this `Rect`.
+<a name="72"/>   #
+<a name="73"/>   public inside(x1, y1)
+<a name="74"/>      succeed (x &lt;= x1 &lt; x + w) &amp; (y &lt;= y1 &lt; y + h)
+<a name="75"/>   end
+<a name="76"/>
+<a name="77"/>   #
+<a name="78"/>   # Succeed iff this `Rect` contains `r`.  An empty `Rect` can
+<a name="79"/>   # neither contain, or be contained by, another `Rect`.
+<a name="80"/>   #
+<a name="81"/>   public contains(r)
+<a name="82"/>      succeed (w &gt; 0 &amp; h &gt; 0) &amp; (r.w &gt; 0 &amp; r.h &gt; 0) &amp;
+<a name="83"/>         (r.x &gt;= x) &amp; (r.y &gt;= y) &amp; (r.x + r.w &lt;= x + w) &amp; (r.y + r.h &lt;= y + h)
+<a name="84"/>   end
+<a name="85"/>
+<a name="86"/>   #
+<a name="87"/>   # Succeed iff this `Rect` touches `r`, ie intersects or abuts it.
+<a name="88"/>   # An empty `Rect` can neither touch, or be touched by, another
+<a name="89"/>   # `Rect`.
+<a name="90"/>   #
+<a name="91"/>   public touches(r)
+<a name="92"/>      succeed (w &gt; 0 &amp; h &gt; 0) &amp; (r.w &gt; 0 &amp; r.h &gt; 0) &amp;
+<a name="93"/>         (x &lt;= r.x + r.w) &amp; (x + w &gt;= r.x) &amp; (y &lt;= r.y + r.h) &amp; (y + h &gt;= r.y)
+<a name="94"/>   end
+<a name="95"/>
+<a name="96"/>   #
+<a name="97"/>   # Return the center `Point` of this `Rect`, which is assumed to be
+<a name="98"/>   # non-empty.
+<a name="99"/>   #
+<a name="100"/>   public center()
+<a name="101"/>      return Point(x + w / 2, y + h / 2)
+<a name="102"/>   end
+<a name="103"/>
+<a name="104"/>   #
+<a name="105"/>   # Return the union of this `Rect` and another.  A new `Rect` is
+<a name="106"/>   # returned.  Note that the union of a non-empty `Rect` and an empty
+<a name="107"/>   # `Rect` is equal to the former.
+<a name="108"/>   #
+<a name="109"/>   #
+<a name="110"/>   public union(r)
+<a name="111"/>      local tx1, ty1, tx2, ty2, rx1, ry1, rx2, ry2
+<a name="112"/>
+<a name="113"/>      (rx2 := 0 &lt; r.w &amp; ry2 := 0 &lt; r.h) |
+<a name="114"/>         return Rect(x, y, w, h)
+<a name="115"/>      (tx2 := 0 &lt; w &amp; ty2 := 0 &lt; h) |
+<a name="116"/>         return Rect(r.x, r.y, r.w, r.h)
+<a name="117"/>
+<a name="118"/>      tx1 := x
+<a name="119"/>      tx2 +:= tx1
+<a name="120"/>      rx1 := r.x
+<a name="121"/>      rx2 +:= rx1
+<a name="122"/>      tx1 &gt;:= rx1
+<a name="123"/>      tx2 &lt;:= rx2
+<a name="124"/>      tx2 -:= tx1
+<a name="125"/>
+<a name="126"/>      ty1 := y
+<a name="127"/>      ty2 +:= ty1
+<a name="128"/>      ry1 := r.y
+<a name="129"/>      ry2 +:= ry1
+<a name="130"/>      ty1 &gt;:= ry1
+<a name="131"/>      ty2 &lt;:= ry2
+<a name="132"/>      ty2 -:= ty1
+<a name="133"/>
+<a name="134"/>      return Rect(tx1, ty1, tx2, ty2)
+<a name="135"/>   end
+<a name="136"/>
+<a name="137"/>   #
+<a name="138"/>   # Return the intersection of this `Rect` and another, or fail if
+<a name="139"/>   # there is no intersection.  A new non-empty `Rect` is returned.
+<a name="140"/>   #
+<a name="141"/>   public intersect(r)
+<a name="142"/>      local tx1, ty1, tx2, ty2, rx1, ry1, rx2, ry2
+<a name="143"/>
+<a name="144"/>      tx1 := x
+<a name="145"/>      rx1 := r.x
+<a name="146"/>      tx2 := tx1 + w
+<a name="147"/>      rx2 := rx1 + r.w
+<a name="148"/>      tx1 &lt;:= rx1
+<a name="149"/>      tx2 &gt;:= rx2
+<a name="150"/>      tx2 -:= tx1
+<a name="151"/>      if tx2 &lt;= 0 then
+<a name="152"/>         fail
+<a name="153"/>
+<a name="154"/>      ty1 := y
+<a name="155"/>      ry1 := r.y
+<a name="156"/>      ty2 := ty1 + h
+<a name="157"/>      ry2 := ry1 + r.h
+<a name="158"/>      ty1 &lt;:= ry1
+<a name="159"/>      ty2 &gt;:= ry2
+<a name="160"/>      ty2 -:= ty1
+<a name="161"/>      if ty2 &lt;= 0 then
+<a name="162"/>         fail
+<a name="163"/>
+<a name="164"/>      return Rect(tx1, ty1, tx2, ty2)
+<a name="165"/>   end
+<a name="166"/>
+<a name="167"/>   #
+<a name="168"/>   # Float the given `Size` within this `Rect`, according to the given
+<a name="169"/>   # `XYAlign`, but limit the result so that it lies within this
+<a name="170"/>   # `Rect`.  A `Rect` is returned, with width and height set to the
+<a name="171"/>   # input values, or this `Rect`'s values, depending on whether the
+<a name="172"/>   # result was so limited.
+<a name="173"/>   #
+<a name="174"/>   public float(s, a)
+<a name="175"/>      local x1, y1, w1, h1
+<a name="176"/>      if s.w &gt; self.w then {
+<a name="177"/>         x1 := self.x
+<a name="178"/>         w1 := self.w
+<a name="179"/>      } else {
+<a name="180"/>         x1 := case a.x_align of {
+<a name="181"/>            Align.C : self.x + (self.w - s.w) / 2
+<a name="182"/>            Align.L : self.x
+<a name="183"/>            Align.R : self.x + self.w - s.w
+<a name="184"/>            default : runerr("Incorrect x_align specifier", a.x_align)
+<a name="185"/>         }
+<a name="186"/>         w1 := s.w
+<a name="187"/>      }         
+<a name="188"/>
+<a name="189"/>      if s.h &gt; self.h then {
+<a name="190"/>         y1 := self.y
+<a name="191"/>         h1 := self.h
+<a name="192"/>      } else {
+<a name="193"/>         y1 := case a.y_align of {
+<a name="194"/>            Align.C : self.y + (self.h - s.h) / 2
+<a name="195"/>            Align.T : self.y
+<a name="196"/>            Align.B : self.y + self.h - s.h
+<a name="197"/>            default : runerr("Incorrect y_align specifier", a.y_align)
+<a name="198"/>         }
+<a name="199"/>         h1 := s.h
+<a name="200"/>      }
+<a name="201"/>
+<a name="202"/>      return Rect(x1, y1, w1, h1)
+<a name="203"/>   end
+<a name="204"/>
+<a name="205"/>   #
+<a name="206"/>   # Return a new `Rect`, being this `Rect` surrounded by the given
+<a name="207"/>   # padding in the x and y directions.
+<a name="208"/>   #
+<a name="209"/>   public pad(xa, ya)
+<a name="210"/>      return Rect(x - xa, y - ya, w + 2 * xa, h + 2 * ya)
+<a name="211"/>   end
+<a name="212"/>
+<a name="213"/>   public override new(x, y, w, h)
+<a name="214"/>      self.x := x
+<a name="215"/>      self.y := y
+<a name="216"/>      self.w := w
+<a name="217"/>      self.h := h
+<a name="218"/>      return
+<a name="219"/>   end
+<a name="220"/>end
+<a name="221"/>
+<a name="222"/>#
+<a name="223"/># This class represents four insets, typically used around the four
+<a name="224"/># sides of a rectangle.
+<a name="225"/>#
+<a name="226"/>class Insets()
+<a name="227"/>   public 
+<a name="228"/>      l_inset, 
+<a name="229"/>      r_inset,
+<a name="230"/>      t_inset,
+<a name="231"/>      b_inset
+<a name="232"/>
+<a name="233"/>   #
+<a name="234"/>   # Given a `Rect` r, return the inner `Rect` obtained by applying
+<a name="235"/>   # the four insets.
+<a name="236"/>   #
+<a name="237"/>   public get_inner_rect(r)
+<a name="238"/>      return Rect(r.x + l_inset, 
+<a name="239"/>                  r.y + t_inset,
+<a name="240"/>                  r.w - l_inset - r_inset,
+<a name="241"/>                  r.h - t_inset - b_inset)
+<a name="242"/>   end
+<a name="243"/>
+<a name="244"/>   #
+<a name="245"/>   # The total width, being the sum of the left and right insets.
+<a name="246"/>   #
+<a name="247"/>   public get_total_width()
+<a name="248"/>      return l_inset + r_inset
+<a name="249"/>   end
+<a name="250"/>
+<a name="251"/>   #
+<a name="252"/>   # The total width, being the sum of the top and bottom insets.
+<a name="253"/>   #
+<a name="254"/>   public get_total_height()
+<a name="255"/>      return t_inset + b_inset
+<a name="256"/>   end
+<a name="257"/>
+<a name="258"/>   public get_l_inset()
+<a name="259"/>      return l_inset
+<a name="260"/>   end
+<a name="261"/>
+<a name="262"/>   public get_t_inset()
+<a name="263"/>      return t_inset
+<a name="264"/>   end
+<a name="265"/>
+<a name="266"/>   public get_r_inset()
+<a name="267"/>      return r_inset
+<a name="268"/>   end
+<a name="269"/>
+<a name="270"/>   public get_b_inset()
+<a name="271"/>      return b_inset
+<a name="272"/>   end
+<a name="273"/>end
+<a name="274"/>
+<a name="275"/>#
+<a name="276"/># A class for storing x and y alignments.  Each value will be one of
+<a name="277"/># those enumerated in `Align`.
+<a name="278"/>#
+<a name="279"/>class XYAlign()
+<a name="280"/>   public x_align,
+<a name="281"/>          y_align
+<a name="282"/>
+<a name="283"/>   public get_x_align()
+<a name="284"/>      return x_align
+<a name="285"/>   end
+<a name="286"/>
+<a name="287"/>   public get_y_align()
+<a name="288"/>      return y_align
+<a name="289"/>   end
+<a name="290"/>end
+</pre></body></html>

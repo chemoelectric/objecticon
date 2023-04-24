@@ -1,0 +1,733 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>findre.icn</title></head><body><pre>
+<a name="1"/>############################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     findre.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedure to find regular expression
+<a name="6"/>#
+<a name="7"/>#	Author:   Richard L. Goerwitz
+<a name="8"/>#
+<a name="9"/>#	Date:	  March 3, 1996
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>#
+<a name="17"/>#	Version:  1.17
+<a name="18"/>#
+<a name="19"/>############################################################################
+<a name="20"/>#
+<a name="21"/>#  DESCRIPTION:  findre() is like the Icon builtin function find(),
+<a name="22"/>#  except that it takes, as its first argument, a regular expression
+<a name="23"/>#  pretty much like the ones the Unix egrep command uses (the few
+<a name="24"/>#  minor differences are listed below).  Its syntax is the same as
+<a name="25"/>#  find's (i.e. findre(s1,s2,i,j)), with the exception that a no-
+<a name="26"/>#  argument invocation wipes out all static structures utilized by
+<a name="27"/>#  findre, and then forces a garbage collection.
+<a name="28"/>#
+<a name="29"/>############################################################################
+<a name="30"/>#
+<a name="31"/>#  (For those not familiar with regular expressions and the Unix egrep
+<a name="32"/>#  command: findre() offers a simple and compact wildcard-based search
+<a name="33"/>#  system.  If you do a lot of searches through text files, or write
+<a name="34"/>#  programs which do searches based on user input, then findre is a
+<a name="35"/>#  utility you might want to look over.)
+<a name="36"/>#
+<a name="37"/>#  IMPORTANT DIFFERENCES between find and findre:  As noted above,
+<a name="38"/>#  findre() is just a find() function that takes a regular expression
+<a name="39"/>#  as its first argument.  One major problem with this setup is that
+<a name="40"/>#  it leaves the user with no easy way to tab past a matched
+<a name="41"/>#  substring, as with
+<a name="42"/># 
+<a name="43"/>#	s ? write(tab(find("hello")+5))
+<a name="44"/>#
+<a name="45"/>#  In order to remedy this intrinsic deficiency, findre() sets the
+<a name="46"/>#  global variable __endpoint to the first position after any given
+<a name="47"/>#  match occurs.  Use this variable with great care, preferably
+<a name="48"/>#  assigning its value to some other variable immediately after the
+<a name="49"/>#  match (for example, findre("hello [.?!]*",s) &amp; tmp := __endpoint).
+<a name="50"/>#  Otherwise, you will certainly run into trouble.  (See the example
+<a name="51"/>#  below for an illustration of how __endpoint is used).
+<a name="52"/>#
+<a name="53"/>#  IMPORTANT DIFFERENCES between egrep and findre:  findre utilizes
+<a name="54"/>#  the same basic language as egrep.  The only big difference is that
+<a name="55"/>#  findre uses intrinsic Icon data structures and escaping conven-
+<a name="56"/>#  tions rather than those of any particular Unix variant.  Be care-
+<a name="57"/>#  ful!  If you put findre("\(hello\)",s) into your source file,
+<a name="58"/>#  findre will treat it just like findre("(hello)",s).  If, however,
+<a name="59"/>#  you enter '\(hello\)' at run-time (via, say, findre(,s)),
+<a name="60"/>#  what Icon receives will depend on your operating system (most
+<a name="61"/>#  likely, a trace will show "\\(hello\\)").
+<a name="62"/>#
+<a name="63"/>############################################################################
+<a name="64"/>#
+<a name="65"/>#  BUGS:  Space has essentially been conserved at the expense of time
+<a name="66"/>#  in the automata produced by findre().  The algorithm, in other
+<a name="67"/>#  words, will produce the equivalent of a pushdown automaton under
+<a name="68"/>#  certain circumstances, rather than strive (at the expense of space)
+<a name="69"/>#  for full determinism.  I tried to make up a nfa -&gt; dfa converter
+<a name="70"/>#  that would only create that portion of the dfa it needed to accept
+<a name="71"/>#  or reject a string, but the resulting automaton was actually quite
+<a name="72"/>#  slow (if anyone can think of a way to do this in Icon, and keep it
+<a name="73"/>#  small and fast, please let us all know about it).  Note that under
+<a name="74"/>#  version 8 of Icon, findre takes up negligible storage space, due to
+<a name="75"/>#  the much improved hashing algorithm.  I have not tested it under
+<a name="76"/>#  version 7, but I would expect it to use up quite a bit more space
+<a name="77"/>#  in that environment.
+<a name="78"/>#
+<a name="79"/>#  IMPORTANT NOTE:  Findre takes a shortest-possible-match approach
+<a name="80"/>#  to regular expressions.  In other words, if you look for "a*",
+<a name="81"/>#  findre will not even bother looking for an "a."  It will just match
+<a name="82"/>#  the empty string.  Without this feature, findre would perform a bit
+<a name="83"/>#  more slowly.  The problem with such an approach is that often the
+<a name="84"/>#  user will want to tab past the longest possible string of matched
+<a name="85"/>#  characters (say tab((findre("a*|b*"), __endpoint)).  In circumstan-
+<a name="86"/>#  ces like this, please just use something like:
+<a name="87"/>#
+<a name="88"/>#      s ? {
+<a name="89"/>#          tab(find("a")) &amp;  # or use Arb() from the IPL (patterns.icn)
+<a name="90"/>#          tab(many('a'))
+<a name="91"/>#          tab(many('b'))
+<a name="92"/>#      }
+<a name="93"/>#
+<a name="94"/>#  or else use some combination of findre and the above.
+<a name="95"/>#    
+<a name="96"/>############################################################################
+<a name="97"/>#
+<a name="98"/>#  REGULAR EXPRESSION SYNTAX: Regular expression syntax is complex,
+<a name="99"/>#  and yet simple.  It is simple in the sense that most of its power
+<a name="100"/>#  is concentrated in about a dozen easy-to-learn symbols.  It is
+<a name="101"/>#  complex in the sense that, by combining these symbols with
+<a name="102"/>#  characters, you can represent very intricate patterns.
+<a name="103"/>#
+<a name="104"/>#  I make no pretense here of offering a full explanation of regular
+<a name="105"/>#  expressions, their usage, and the deeper nuances of their syntax.
+<a name="106"/>#  As noted above, this should be gleaned from a Unix manual.  For
+<a name="107"/>#  quick reference, however, I have included a brief summary of all
+<a name="108"/>#  the special symbols used, accompanied by an explanation of what
+<a name="109"/>#  they mean, and, in some cases, of how they are used (most of this
+<a name="110"/>#  is taken from the comments prepended to Jerry Nowlin's Icon-grep
+<a name="111"/>#  command, as posted a couple of years ago):
+<a name="112"/>#
+<a name="113"/>#     ^   -  matches if the following pattern is at the beginning
+<a name="114"/>#            of a line (i.e. ^# matches lines beginning with "#")
+<a name="115"/>#     $   -  matches if the preceding pattern is at the end of a line
+<a name="116"/>#     .   -  matches any single character
+<a name="117"/>#     +   -  matches from 1 to any number of occurrences of the
+<a name="118"/>#            previous expression (i.e. a character, or set of paren-
+<a name="119"/>#            thesized/bracketed characters)
+<a name="120"/>#     *   -  matches from 0 to any number of occurrences of the previous
+<a name="121"/>#            expression
+<a name="122"/>#     \   -  removes the special meaning of any special characters
+<a name="123"/>#            recognized by this program (i.e if you want to match lines
+<a name="124"/>#            beginning with a "[", write ^\[, and not ^[)
+<a name="125"/>#     |   -  matches either the pattern before it, or the one after
+<a name="126"/>#            it (i.e. abc|cde matches either abc or cde)
+<a name="127"/>#     []  -  matches any member of the enclosed character set, or,
+<a name="128"/>#            if ^ is the first character, any nonmember of the
+<a name="129"/>#            enclosed character set (i.e. [^ab] matches any character
+<a name="130"/>#	     _except_ a and b).
+<a name="131"/>#     ()  -  used for grouping (e.g. ^(abc|cde)$ matches lines consist-
+<a name="132"/>#            ing of either "abc" or "cde," while ^abc|cde$ matches
+<a name="133"/>#            lines either beginning with "abc" or ending in "cde")
+<a name="134"/>#
+<a name="135"/>############################################################################
+<a name="136"/>#
+<a name="137"/>#  EXAMPLE program:
+<a name="138"/>#
+<a name="139"/>#  procedure main(a)
+<a name="140"/>#      while line :=  do {
+<a name="141"/>#          token_list := tokenize_line(line,a[1])
+<a name="142"/>#          every write(!token_list)
+<a name="143"/>#      }
+<a name="144"/>#  end
+<a name="145"/>#
+<a name="146"/>#  procedure tokenize_line(s,sep)
+<a name="147"/>#      tmp_lst := []
+<a name="148"/>#      s ? {
+<a name="149"/>#          while field := tab(findre(sep)|0) &amp;
+<a name="150"/>#          mark := __endpoint
+<a name="151"/>#          do {
+<a name="152"/>#              put(tmp_lst,"" ~== field)
+<a name="153"/>#              if pos(0) then break
+<a name="154"/>#              else tab(mark)
+<a name="155"/>#          }
+<a name="156"/>#      }
+<a name="157"/>#      return tmp_lst
+<a name="158"/>#  end
+<a name="159"/>#
+<a name="160"/>#  The above program would be compiled with findre (e.g. "icont
+<a name="161"/>#  test_prg.icn findre.icn") to produce a single executable which
+<a name="162"/>#  tokenizes each line of input based on a user-specified delimiter.
+<a name="163"/>#  Note how __endpoint is set soon after findre() succeeds.  Note
+<a name="164"/>#  also how empty fields are excluded with "" ~==, etc.  Finally, note
+<a name="165"/>#  that the temporary list, tmp_lst, is not needed.  It is included
+<a name="166"/>#  here merely to illustrate one way in which tokens might be stored.
+<a name="167"/>#
+<a name="168"/>#  Tokenizing is, of course, only one of many uses one might put
+<a name="169"/>#  findre to.  It is very helpful in allowing the user to construct
+<a name="170"/>#  automata at run-time.  If, say, you want to write a program that
+<a name="171"/>#  searches text files for patterns given by the user, findre would be
+<a name="172"/>#  a perfect utility to use.  Findre in general permits more compact
+<a name="173"/>#  expression of patterns than one can obtain using intrinsic Icon
+<a name="174"/>#  scanning facilities.  Its near complete compatibility with the Unix
+<a name="175"/>#  regexp library, moreover, makes for greater ease of porting,
+<a name="176"/>#  especially in cases where Icon is being used to prototype C code.
+<a name="177"/>#
+<a name="178"/>############################################################################
+<a name="179"/>
+<a name="180"/>
+<a name="181"/>package ipl.findre
+<a name="182"/>
+<a name="183"/>import
+<a name="184"/>   ipl.scan(begin_analysis),
+<a name="185"/>   io(ewrite, ewrites)
+<a name="186"/>
+<a name="187"/>global state_table, parends_present, slash_present
+<a name="188"/>global biggest_nonmeta_str, __endpoint
+<a name="189"/>record o_a_s(op,arg,state)
+<a name="190"/>
+<a name="191"/>
+<a name="192"/>procedure findre(re, s, i, j)
+<a name="193"/>
+<a name="194"/>    local a, p, x, nonmeta_len, tokenized_re, tmp
+<a name="195"/>    static FSTN_table, STRING_table
+<a name="196"/>    initial {
+<a name="197"/>	FSTN_table := table()
+<a name="198"/>	STRING_table := table()
+<a name="199"/>    }
+<a name="200"/>
+<a name="201"/>    if /re then {
+<a name="202"/>	FSTN_table := table()
+<a name="203"/>	STRING_table := table()
+<a name="204"/>	collect()  # do it *now*
+<a name="205"/>	return
+<a name="206"/>    }
+<a name="207"/>
+<a name="208"/>    a := begin_analysis(s, i, j) | fail
+<a name="209"/>    s := a.s; i := a.i; j := a.j
+<a name="210"/>
+<a name="211"/>    if /FSTN_table[re] then {
+<a name="212"/>	# If we haven't seen this re before, then...
+<a name="213"/>	if \STRING_table[re] then {
+<a name="214"/>	    # ...if it's in the STRING_table, use plain find()
+<a name="215"/>	    every p := find(STRING_table[re],s,i,j)
+<a name="216"/>	    do { __endpoint := p + *STRING_table[re]; suspend p }
+<a name="217"/>	    fail
+<a name="218"/>	}
+<a name="219"/>	else {
+<a name="220"/>	    # However, if it's not in the string table, we have to
+<a name="221"/>	    # tokenize it and check for metacharacters.  If it has
+<a name="222"/>	    # metas, we create an FSTN, and put that into FSTN_table;
+<a name="223"/>	    # otherwise, we just put it into the STRING_table.
+<a name="224"/>	    tokenized_re := tokenize(re)
+<a name="225"/>	    if 0 &gt; !tokenized_re then {
+<a name="226"/>		# if at least one element is &lt; 0, re has metas
+<a name="227"/>		MakeFSTN(tokenized_re) | err_out(re,2)
+<a name="228"/>		# both biggest_nonmeta_str and state_table are global
+<a name="229"/>		/FSTN_table[re] := [.biggest_nonmeta_str, copy(state_table)]
+<a name="230"/>	    }
+<a name="231"/>	    else {
+<a name="232"/>		# re has no metas; put the input string into STRING_table
+<a name="233"/>		# for future reference, and execute find() at once
+<a name="234"/>		tmp := ""; every tmp ||:= char(!tokenized_re)
+<a name="235"/>		insert(STRING_table,re,tmp)
+<a name="236"/>		every p := find(STRING_table[re],s,i,j)
+<a name="237"/>		do { __endpoint := p + *STRING_table[re]; suspend p }
+<a name="238"/>		fail
+<a name="239"/>	    }
+<a name="240"/>	}
+<a name="241"/>    }
+<a name="242"/>
+<a name="243"/>
+<a name="244"/>    if nonmeta_len := (1 &lt; *FSTN_table[re][1]) then {
+<a name="245"/>	# If the biggest non-meta string in the original re
+<a name="246"/>	# was more than 1, then put in a check for it...
+<a name="247"/>	s[1:j] ? {
+<a name="248"/>	    tab(x := i to j - nonmeta_len) &amp;
+<a name="249"/>		(find(FSTN_table[re][1]) | fail) \ 1 &amp;
+<a name="250"/>		(__endpoint := apply_FSTN(&amp;null,FSTN_table[re][2])) &amp;
+<a name="251"/>		(suspend x)
+<a name="252"/>	}
+<a name="253"/>    }
+<a name="254"/>    else {
+<a name="255"/>	#...otherwise it's not worth worrying about the biggest nonmeta str
+<a name="256"/>	s[1:j] ? {
+<a name="257"/>	    tab(x := i to j) &amp;
+<a name="258"/>	    (__endpoint := apply_FSTN(&amp;null,FSTN_table[re][2])) &amp;
+<a name="259"/>	    (suspend x)
+<a name="260"/>	}
+<a name="261"/>    }
+<a name="262"/>
+<a name="263"/>end
+<a name="264"/>
+<a name="265"/>
+<a name="266"/>
+<a name="267"/>procedure apply_FSTN(ini,tbl)
+<a name="268"/>
+<a name="269"/>    local biggest_pos, POS, tmp, fin
+<a name="270"/>    static s_tbl
+<a name="271"/>
+<a name="272"/>    /ini := 1 &amp; s_tbl := tbl &amp; biggest_pos := 1
+<a name="273"/>    if ini = 0 then {
+<a name="274"/>	return &amp;pos
+<a name="275"/>    }
+<a name="276"/>    POS := &amp;pos
+<a name="277"/>    fin := 0
+<a name="278"/>
+<a name="279"/>    repeat {
+<a name="280"/>	if tmp := !s_tbl[ini] &amp;
+<a name="281"/>	    tab(tmp.op(tmp.arg))
+<a name="282"/>	then {
+<a name="283"/>	    if tmp.state = fin
+<a name="284"/>	    then return &amp;pos
+<a name="285"/>	    else ini := tmp.state
+<a name="286"/>	}
+<a name="287"/>	else (&amp;pos := POS, fail)
+<a name="288"/>    }
+<a name="289"/>
+<a name="290"/>end
+<a name="291"/>    
+<a name="292"/>
+<a name="293"/>
+<a name="294"/>procedure tokenize(s)
+<a name="295"/>
+<a name="296"/>    local token_list, chr, tmp, b_loc, next_one, fixed_length_token_list, i
+<a name="297"/>
+<a name="298"/>    token_list := list()
+<a name="299"/>    s ? {
+<a name="300"/>	tab(many('*+?|'))
+<a name="301"/>	while chr := move(1) do {
+<a name="302"/>	    if chr == "\\"
+<a name="303"/>	    # it can't be a metacharacter; remove the \ and "put"
+<a name="304"/>	    # the integer value of the next chr into token_list
+<a name="305"/>	    then put(token_list,ord(move(1))) | err_out(s,2,chr)
+<a name="306"/>	    else if any('*+()|?.$^',chr)
+<a name="307"/>	    then {
+<a name="308"/>		# Yuck!  Egrep compatibility stuff.
+<a name="309"/>		case chr of {
+<a name="310"/>		    "*"    : {
+<a name="311"/>			tab(many('*+?'))
+<a name="312"/>			put(token_list,-ord("*"))
+<a name="313"/>		    }
+<a name="314"/>		    "+"    : {
+<a name="315"/>			tmp := tab(many('*?+')) | &amp;null
+<a name="316"/>			if upto('*?',\tmp)
+<a name="317"/>			then put(token_list,-ord("*"))
+<a name="318"/>			else put(token_list,-ord("+"))
+<a name="319"/>		    }
+<a name="320"/>		    "?"    : {
+<a name="321"/>			tmp := tab(many('*?+')) | &amp;null
+<a name="322"/>			if upto('*+',\tmp)
+<a name="323"/>			then put(token_list,-ord("*"))
+<a name="324"/>			else put(token_list,-ord("?"))
+<a name="325"/>		    }
+<a name="326"/>		    "("    : {
+<a name="327"/>			tab(many('*+?'))
+<a name="328"/>			put(token_list,-ord("("))
+<a name="329"/>		    }
+<a name="330"/>		    default: {
+<a name="331"/>			put(token_list,-ord(chr))
+<a name="332"/>		    }
+<a name="333"/>		}
+<a name="334"/>	    }
+<a name="335"/>	    else {
+<a name="336"/>		case chr of {
+<a name="337"/>		    # More egrep compatibility stuff.
+<a name="338"/>		    "["    : {
+<a name="339"/>			b_loc := find("[") | *&amp;subject+1
+<a name="340"/>			every next_one := find("]",,,b_loc)
+<a name="341"/>			\next_one ~= &amp;pos | err_out(s,2,chr)
+<a name="342"/>			put(token_list,-ord(chr))
+<a name="343"/>		    }
+<a name="344"/>                    "]"    : {
+<a name="345"/>			if &amp;pos = (\next_one+1)
+<a name="346"/>			then put(token_list,-ord(chr)) &amp;
+<a name="347"/>			     next_one := &amp;null
+<a name="348"/>			else put(token_list,ord(chr))
+<a name="349"/>		    }
+<a name="350"/>		    default: put(token_list,ord(chr))
+<a name="351"/>		}
+<a name="352"/>	    }
+<a name="353"/>	}
+<a name="354"/>    }
+<a name="355"/>
+<a name="356"/>    token_list := UnMetaBrackets(token_list)
+<a name="357"/>
+<a name="358"/>    fixed_length_token_list := list(*token_list)
+<a name="359"/>    every i := 1 to *token_list
+<a name="360"/>    do fixed_length_token_list[i] := token_list[i]
+<a name="361"/>    return fixed_length_token_list
+<a name="362"/>
+<a name="363"/>end
+<a name="364"/>
+<a name="365"/>
+<a name="366"/>
+<a name="367"/>procedure UnMetaBrackets(l)
+<a name="368"/>
+<a name="369"/>    # Since brackets delineate a cset, it doesn't make
+<a name="370"/>    # any sense to have metacharacters inside of them.
+<a name="371"/>    # UnMetaBrackets makes sure there are no metacharac-
+<a name="372"/>    # ters inside of the braces.
+<a name="373"/>
+<a name="374"/>    local tmplst, i, Lb, Rb
+<a name="375"/>
+<a name="376"/>    tmplst := list(); i := 0
+<a name="377"/>    Lb := -ord("[")
+<a name="378"/>    Rb := -ord("]")
+<a name="379"/>
+<a name="380"/>    while (i +:= 1) &lt;= *l do {
+<a name="381"/>	if l[i] = Lb then {
+<a name="382"/>	    put(tmplst,l[i])
+<a name="383"/>	    until l[i +:= 1] = Rb
+<a name="384"/>	    do put(tmplst,abs(l[i]))
+<a name="385"/>	    put(tmplst,l[i])
+<a name="386"/>	}
+<a name="387"/>	else put(tmplst,l[i])
+<a name="388"/>    }
+<a name="389"/>    return tmplst
+<a name="390"/>
+<a name="391"/>end
+<a name="392"/>
+<a name="393"/>
+<a name="394"/>
+<a name="395"/>procedure MakeFSTN(l,INI,FIN)
+<a name="396"/>
+<a name="397"/>    # MakeFSTN recursively descends through the tree structure
+<a name="398"/>    # implied by the tokenized string, l, recording in (global)
+<a name="399"/>    # fstn_table a list of operations to be performed, and the
+<a name="400"/>    # initial and final states which apply to them.
+<a name="401"/>
+<a name="402"/>    local i, inter, inter2, tmp, Op, Arg
+<a name="403"/>    static Lp, Rp, Sl, Lb, Rb, Caret_inside, Dot, Dollar, Caret_outside
+<a name="404"/>    # global biggest_nonmeta_str, slash_present, parends_present
+<a name="405"/>    initial {
+<a name="406"/>	Lp := -ord("("); Rp := -ord(")")
+<a name="407"/>	Sl := -ord("|")
+<a name="408"/>	Lb := -ord("["); Rb := -ord("]"); Caret_inside := ord("^")
+<a name="409"/>	Dot := -ord("."); Dollar := -ord("$"); Caret_outside := -ord("^")
+<a name="410"/>    }
+<a name="411"/>
+<a name="412"/>    /INI := 1 &amp; state_table := table() &amp;
+<a name="413"/>    NextState("new") &amp; biggest_nonmeta_str := ""
+<a name="414"/>    /FIN := 0
+<a name="415"/>
+<a name="416"/>    # I haven't bothered to test for empty lists everywhere.
+<a name="417"/>    if *l = 0 then {
+<a name="418"/>	/state_table[INI] := []
+<a name="419"/>	put(state_table[INI],o_a_s(zSucceed,&amp;null,FIN))
+<a name="420"/>	return
+<a name="421"/>    }
+<a name="422"/>
+<a name="423"/>    # HUNT DOWN THE SLASH (ALTERNATION OPERATOR)
+<a name="424"/>    every i := 1 to *l do {
+<a name="425"/>	if l[i] = Sl &amp; tab_bal(l,Lp,Rp) = i then {
+<a name="426"/>	    if i = 1 then err_out(l,2,char(abs(l[i]))) else {
+<a name="427"/>		/slash_present := "yes"
+<a name="428"/>		inter := NextState()
+<a name="429"/>		inter2:= NextState()
+<a name="430"/>		MakeFSTN(l[1:i],inter2,FIN)
+<a name="431"/>		MakeFSTN(l[i+1:0],inter,FIN)
+<a name="432"/>		/state_table[INI] := []
+<a name="433"/>		put(state_table[INI],o_a_s(apply_FSTN,inter2,0))
+<a name="434"/>		put(state_table[INI],o_a_s(apply_FSTN,inter,0))
+<a name="435"/>		return
+<a name="436"/>	    }
+<a name="437"/>	}
+<a name="438"/>    }
+<a name="439"/>
+<a name="440"/>    # HUNT DOWN PARENTHESES
+<a name="441"/>    if l[1] = Lp then {
+<a name="442"/>	i := tab_bal(l,Lp,Rp) | err_out(l,2,"(")
+<a name="443"/>	inter := NextState()
+<a name="444"/>	if any('*+?',char(abs(0 &gt; l[i+1]))) then {
+<a name="445"/>	    case l[i+1] of {
+<a name="446"/>		-ord("*")   : {
+<a name="447"/>		    /state_table[INI] := []
+<a name="448"/>		    put(state_table[INI],o_a_s(apply_FSTN,inter,0))
+<a name="449"/>		    MakeFSTN(l[2:i],INI,INI)
+<a name="450"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="451"/>		    return
+<a name="452"/>		}
+<a name="453"/>		-ord("+")   : {
+<a name="454"/>		    inter2 := NextState()
+<a name="455"/>		    /state_table[inter2] := []
+<a name="456"/>		    MakeFSTN(l[2:i],INI,inter2)
+<a name="457"/>		    put(state_table[inter2],o_a_s(apply_FSTN,inter,0))
+<a name="458"/>		    MakeFSTN(l[2:i],inter2,inter2)
+<a name="459"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="460"/>		    return
+<a name="461"/>		}
+<a name="462"/>		-ord("?")   : {
+<a name="463"/>		    /state_table[INI] := []
+<a name="464"/>		    put(state_table[INI],o_a_s(apply_FSTN,inter,0))
+<a name="465"/>		    MakeFSTN(l[2:i],INI,inter)
+<a name="466"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="467"/>		    return
+<a name="468"/>		}
+<a name="469"/>	    }
+<a name="470"/>	}
+<a name="471"/>	else {
+<a name="472"/>	    MakeFSTN(l[2:i],INI,inter)
+<a name="473"/>	    MakeFSTN(l[i+1:0],inter,FIN)
+<a name="474"/>	    return
+<a name="475"/>	}
+<a name="476"/>    }
+<a name="477"/>    else {     # I.E. l[1] NOT = Lp (left parenthesis as -ord("("))
+<a name="478"/>	every i := 1 to *l do {
+<a name="479"/>	    case l[i] of {
+<a name="480"/>		Lp     : {
+<a name="481"/>		    inter := NextState()
+<a name="482"/>		    MakeFSTN(l[1:i],INI,inter)
+<a name="483"/>		    /parends_present := "yes"
+<a name="484"/>		    MakeFSTN(l[i:0],inter,FIN)
+<a name="485"/>		    return
+<a name="486"/>		}
+<a name="487"/>		Rp     : err_out(l,2,")")
+<a name="488"/>	    }
+<a name="489"/>	}
+<a name="490"/>    }
+<a name="491"/>
+<a name="492"/>    # NOW, HUNT DOWN BRACKETS
+<a name="493"/>    if l[1] = Lb then {
+<a name="494"/>	i := tab_bal(l,Lb,Rb) | err_out(l,2,"[")
+<a name="495"/>	inter := NextState()
+<a name="496"/>	tmp := ""; every tmp ||:= char(l[2 to i-1])
+<a name="497"/>	if Caret_inside = l[2]
+<a name="498"/>	then tmp := ~cset(Expand(tmp[2:0]))
+<a name="499"/>	else tmp :=  cset(Expand(tmp))
+<a name="500"/>	if any('*+?',char(abs(0 &gt; l[i+1]))) then {
+<a name="501"/>	    case l[i+1] of {
+<a name="502"/>		-ord("*")   : {
+<a name="503"/>		    /state_table[INI] := []
+<a name="504"/>		    put(state_table[INI],o_a_s(apply_FSTN,inter,0))
+<a name="505"/>		    put(state_table[INI],o_a_s(any,tmp,INI))
+<a name="506"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="507"/>		    return
+<a name="508"/>		}
+<a name="509"/>		-ord("+")   : {
+<a name="510"/>		    inter2 := NextState()
+<a name="511"/>		    /state_table[INI] := []
+<a name="512"/>		    put(state_table[INI],o_a_s(any,tmp,inter2))
+<a name="513"/>		    /state_table[inter2] := []
+<a name="514"/>		    put(state_table[inter2],o_a_s(apply_FSTN,inter,0))
+<a name="515"/>		    put(state_table[inter2],o_a_s(any,tmp,inter2))
+<a name="516"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="517"/>		    return
+<a name="518"/>		}
+<a name="519"/>		-ord("?")   : {
+<a name="520"/>		    /state_table[INI] := []
+<a name="521"/>		    put(state_table[INI],o_a_s(apply_FSTN,inter,0))
+<a name="522"/>		    put(state_table[INI],o_a_s(any,tmp,inter))
+<a name="523"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="524"/>		    return
+<a name="525"/>		}
+<a name="526"/>	    }
+<a name="527"/>	}
+<a name="528"/>	else {
+<a name="529"/>	    /state_table[INI] := []
+<a name="530"/>	    put(state_table[INI],o_a_s(any,tmp,inter))
+<a name="531"/>	    MakeFSTN(l[i+1:0],inter,FIN)
+<a name="532"/>	    return
+<a name="533"/>	}
+<a name="534"/>    }
+<a name="535"/>    else {           # I.E. l[1] not = Lb
+<a name="536"/>	every i := 1 to *l do {
+<a name="537"/>	    case l[i] of {
+<a name="538"/>		Lb     : {
+<a name="539"/>		    inter := NextState()
+<a name="540"/>		    MakeFSTN(l[1:i],INI,inter)
+<a name="541"/>		    MakeFSTN(l[i:0],inter,FIN)
+<a name="542"/>		    return
+<a name="543"/>		}
+<a name="544"/>		Rb     : err_out(l,2,"]")
+<a name="545"/>	    }
+<a name="546"/>	}
+<a name="547"/>    }
+<a name="548"/>
+<a name="549"/>    # FIND INITIAL SEQUENCES OF POSITIVE INTEGERS, CONCATENATE THEM
+<a name="550"/>    if i := match_positive_ints(l) then {
+<a name="551"/>	inter := NextState()
+<a name="552"/>	tmp := Ints2String(l[1:i])
+<a name="553"/>	# if a slash has been encountered already, forget optimizing
+<a name="554"/>        # in this way; if parends are present, too, then forget it,
+<a name="555"/>        # unless we are at the beginning or end of the input string
+<a name="556"/>	if  INI = 1 | FIN = 2 | /parends_present &amp;
+<a name="557"/>	    /slash_present &amp; *tmp &gt; *biggest_nonmeta_str
+<a name="558"/>	then biggest_nonmeta_str := tmp
+<a name="559"/>	/state_table[INI] := []
+<a name="560"/>	put(state_table[INI],o_a_s(match,tmp,inter))
+<a name="561"/>	MakeFSTN(l[i:0],inter,FIN)
+<a name="562"/>	return
+<a name="563"/>    }
+<a name="564"/>
+<a name="565"/>    # OKAY, CLEAN UP ALL THE JUNK THAT'S LEFT
+<a name="566"/>    i := 0
+<a name="567"/>    while (i +:= 1) &lt;= *l do {
+<a name="568"/>	case l[i] of {
+<a name="569"/>	    Dot          : { Op := any;   Arg := &amp;cset }
+<a name="570"/>	    Dollar       : { Op := pos;   Arg := 0     }
+<a name="571"/>	    Caret_outside: { Op := pos;   Arg := 1     }
+<a name="572"/>	    default      : { Op := match; Arg := char(0 &lt; l[i]) }
+<a name="573"/>	} | err_out(l,2,char(abs(l[i])))
+<a name="574"/>	inter := NextState()
+<a name="575"/>	if any('*+?',char(abs(0 &gt; l[i+1]))) then {
+<a name="576"/>	    case l[i+1] of {
+<a name="577"/>		-ord("*")   : {
+<a name="578"/>		    /state_table[INI] := []
+<a name="579"/>		    put(state_table[INI],o_a_s(apply_FSTN,inter,0))
+<a name="580"/>		    put(state_table[INI],o_a_s(Op,Arg,INI))
+<a name="581"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="582"/>		    return
+<a name="583"/>		}
+<a name="584"/>		-ord("+")   : {
+<a name="585"/>		    inter2 := NextState()
+<a name="586"/>		    /state_table[INI] := []
+<a name="587"/>		    put(state_table[INI],o_a_s(Op,Arg,inter2))
+<a name="588"/>		    /state_table[inter2] := []
+<a name="589"/>		    put(state_table[inter2],o_a_s(apply_FSTN,inter,0))
+<a name="590"/>		    put(state_table[inter2],o_a_s(Op,Arg,inter2))
+<a name="591"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="592"/>		    return
+<a name="593"/>		}
+<a name="594"/>		-ord("?")   : {
+<a name="595"/>		    /state_table[INI] := []
+<a name="596"/>		    put(state_table[INI],o_a_s(apply_FSTN,inter,0))
+<a name="597"/>		    put(state_table[INI],o_a_s(Op,Arg,inter))
+<a name="598"/>		    MakeFSTN(l[i+2:0],inter,FIN)
+<a name="599"/>		    return
+<a name="600"/>		}
+<a name="601"/>	    }
+<a name="602"/>	}
+<a name="603"/>	else {
+<a name="604"/>	    /state_table[INI] := []
+<a name="605"/>	    put(state_table[INI],o_a_s(Op,Arg,inter))
+<a name="606"/>	    MakeFSTN(l[i+1:0],inter,FIN)
+<a name="607"/>	    return
+<a name="608"/>	}
+<a name="609"/>    }
+<a name="610"/>
+<a name="611"/>    # WE SHOULD NOW BE DONE INSERTING EVERYTHING INTO state_table
+<a name="612"/>    # IF WE GET TO HERE, WE'VE PARSED INCORRECTLY!
+<a name="613"/>    err_out(l,4)
+<a name="614"/>
+<a name="615"/>end
+<a name="616"/>
+<a name="617"/>
+<a name="618"/>
+<a name="619"/>procedure NextState(new)
+<a name="620"/>    static nextstate
+<a name="621"/>    if \new then nextstate := 1
+<a name="622"/>    else nextstate +:= 1
+<a name="623"/>    return nextstate
+<a name="624"/>end
+<a name="625"/>
+<a name="626"/>
+<a name="627"/>
+<a name="628"/>procedure err_out(x,i,elem)
+<a name="629"/>    ewrites("Error number ",i," parsing ",image(x)," at ")
+<a name="630"/>    if \elem 
+<a name="631"/>    then ewrite(image(elem),".")
+<a name="632"/>    else ewrite("(?).")
+<a name="633"/>    exit(i)
+<a name="634"/>end
+<a name="635"/>
+<a name="636"/>
+<a name="637"/>
+<a name="638"/>procedure zSucceed()
+<a name="639"/>    return .&amp;pos
+<a name="640"/>end
+<a name="641"/>
+<a name="642"/>
+<a name="643"/>
+<a name="644"/>procedure Expand(s)
+<a name="645"/>
+<a name="646"/>    local s2, c1, c2
+<a name="647"/>
+<a name="648"/>    s2 := ""
+<a name="649"/>    s ? {
+<a name="650"/>	s2 ||:= ="^"
+<a name="651"/>	s2 ||:= ="-"
+<a name="652"/>	while s2 ||:= tab(find("-")-1) do {
+<a name="653"/>	    if (c1 := move(1), ="-",
+<a name="654"/>		c2 := move(1),
+<a name="655"/>		c1 &lt;&lt; c2)
+<a name="656"/>	    then every s2 ||:= char(ord(c1) to ord(c2))
+<a name="657"/>	    else s2 ||:= 1(move(2), not(pos(0))) | err_out(s,2,"-")
+<a name="658"/>	}
+<a name="659"/>	s2 ||:= tab(0)
+<a name="660"/>    }
+<a name="661"/>    return s2
+<a name="662"/>
+<a name="663"/>end
+<a name="664"/>
+<a name="665"/>
+<a name="666"/>
+<a name="667"/>procedure tab_bal(l,i1,i2)
+<a name="668"/>
+<a name="669"/>    local i, i1_count, i2_count
+<a name="670"/>
+<a name="671"/>    i := 0
+<a name="672"/>    i1_count := 0; i2_count := 0
+<a name="673"/>    while (i +:= 1) &lt;= *l do {
+<a name="674"/>	case l[i] of {
+<a name="675"/>	    i1  : i1_count +:= 1
+<a name="676"/>	    i2  : i2_count +:= 1
+<a name="677"/>	}
+<a name="678"/>	if i1_count = i2_count
+<a name="679"/>	then suspend i
+<a name="680"/>    }
+<a name="681"/>
+<a name="682"/>end
+<a name="683"/>
+<a name="684"/>
+<a name="685"/>procedure match_positive_ints(l)
+<a name="686"/>    
+<a name="687"/>    # Matches the longest sequence of positive integers in l,
+<a name="688"/>    # beginning at l[1], which neither contains, nor is fol-
+<a name="689"/>    # lowed by a negative integer.  Returns the first position
+<a name="690"/>    # after the match.  Hence, given [55, 55, 55, -42, 55],
+<a name="691"/>    # match_positive_ints will return 3.  [55, -42] will cause
+<a name="692"/>    # it to fail rather than return 1 (NOTE WELL!).
+<a name="693"/>
+<a name="694"/>    local i
+<a name="695"/>
+<a name="696"/>    every i := 1 to *l do {
+<a name="697"/>	if l[i] &lt; 0
+<a name="698"/>	then return (3 &lt; i) - 1 | fail
+<a name="699"/>    }
+<a name="700"/>    return *l + 1
+<a name="701"/>
+<a name="702"/>end
+<a name="703"/>
+<a name="704"/>
+<a name="705"/>procedure Ints2String(l)
+<a name="706"/>
+<a name="707"/>    local tmp
+<a name="708"/>
+<a name="709"/>    tmp := ""
+<a name="710"/>    every tmp ||:= char(!l)
+<a name="711"/>    return tmp
+<a name="712"/>
+<a name="713"/>end
+<a name="714"/>
+<a name="715"/>
+<a name="716"/>procedure StripChar(s,s2)
+<a name="717"/>
+<a name="718"/>    local tmp
+<a name="719"/>
+<a name="720"/>    if find(s2,s) then {
+<a name="721"/>	tmp := ""
+<a name="722"/>	s ? {
+<a name="723"/>	    while tmp ||:= tab(find("s2"))
+<a name="724"/>	    do tab(many(cset(s2)))
+<a name="725"/>	    tmp ||:= tab(0)
+<a name="726"/>	}
+<a name="727"/>    }
+<a name="728"/>    return \tmp | s
+<a name="729"/>
+<a name="730"/>end
+</pre></body></html>

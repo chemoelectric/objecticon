@@ -1,0 +1,2718 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>Browser</title></head><body>
+<h1>Browser</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.ComponentScrollArea.html" target="displayFrame">gui.ComponentScrollArea</a><br>
+<a href="ipl.browser.WorkerPoolOwner.html" target="displayFrame">ipl.browser.WorkerPoolOwner</a><br>
+</dd>
+<dt>Subclasses :</dt><dd>
+<a href="ipl.browser.SimpleBrowser.html">ipl.browser.SimpleBrowser</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+<p/><a href="ipl.browser-browser.icn.html#2893" target="displayFrame">Source - browser.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.WorkerPoolOwner.html">ipl.browser.WorkerPoolOwner</a>
+<a href="util.Connectable.html">util.Connectable</a>
+<a href="gui.HasUseWheel.html">gui.HasUseWheel</a>
+<a href="gui.XYAlign.html">gui.XYAlign</a>
+<a href="gui.Size.html">gui.Size</a>
+<a href="gui.Point.html">gui.Point</a>
+<a href="gui.Rect.html">gui.Rect</a>
+<a href="gui.Component.html">gui.Component</a>
+<a href="gui.ScrollArea.html">gui.ScrollArea</a>
+<a href="gui.ComponentScrollArea.html">gui.ComponentScrollArea</a>
+<a href="ipl.browser.Browser.html">ipl.browser.Browser</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from ipl.browser.WorkerPoolOwner</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="ipl.browser.WorkerPoolOwner.html#configure_http_client">configure_http_client()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#connect">connect()</a>
+<a href="util.Connectable.html#connect_n">connect_n()</a>
+<a href="util.Connectable.html#disconnect_impl">disconnect_impl()</a>
+<a href="util.Connectable.html#fire">fire()</a>
+<a href="util.Connectable.html#gen_listener_types">gen_listener_types()</a>
+<a href="util.Connectable.html#gen_listeners">gen_listeners()</a>
+<a href="util.Connectable.html#get_last_listener">get_last_listener()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from util.Connectable</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="util.Connectable.html#last_listener">last_listener</a>
+<a href="util.Connectable.html#listeners">listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#set_use_wheel">set_use_wheel()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.HasUseWheel</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.HasUseWheel.html#wheel_listeners">wheel_listeners</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#get_x_align">get_x_align()</a>
+<a href="gui.XYAlign.html#get_y_align">get_y_align()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.XYAlign</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.XYAlign.html#x_align">x_align</a>
+<a href="gui.XYAlign.html#y_align">y_align</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#empty">empty()</a>
+<a href="gui.Size.html#get_height">get_height()</a>
+<a href="gui.Size.html#get_width">get_width()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Size</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Size.html#h">h</a>
+<a href="gui.Size.html#w">w</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Rect</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Rect.html#center">center()</a>
+<a href="gui.Rect.html#contains">contains()</a>
+<a href="gui.Rect.html#float">float()</a>
+<a href="gui.Rect.html#inside">inside()</a>
+<a href="gui.Rect.html#intersect">intersect()</a>
+<a href="gui.Rect.html#pad">pad()</a>
+<a href="gui.Rect.html#str">str()</a>
+<a href="gui.Rect.html#touches">touches()</a>
+<a href="gui.Rect.html#union">union()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accepts_focus">accepts_focus()</a>
+<a href="gui.Component.html#add">add()</a>
+<a href="gui.Component.html#add_list">add_list()</a>
+<a href="gui.Component.html#can_drag">can_drag()</a>
+<a href="gui.Component.html#can_drop">can_drop()</a>
+<a href="gui.Component.html#clear_constraints">clear_constraints()</a>
+<a href="gui.Component.html#clear_wattribs">clear_wattribs()</a>
+<a href="gui.Component.html#component_tabsort">component_tabsort()</a>
+<a href="gui.Component.html#component_zsort">component_zsort()</a>
+<a href="gui.Component.html#compute_absolutes">compute_absolutes()</a>
+<a href="gui.Component.html#compute_tab_order">compute_tab_order()</a>
+<a href="gui.Component.html#compute_z_order">compute_z_order()</a>
+<a href="gui.Component.html#copy_wattrib">copy_wattrib()</a>
+<a href="gui.Component.html#create_tooltip_component">create_tooltip_component()</a>
+<a href="gui.Component.html#define_dnd_pointers">define_dnd_pointers()</a>
+<a href="gui.Component.html#display_child">display_child()</a>
+<a href="gui.Component.html#display_children">display_children()</a>
+<a href="gui.Component.html#do_layout">do_layout()</a>
+<a href="gui.Component.html#drag_event">drag_event()</a>
+<a href="gui.Component.html#drag_reset">drag_reset()</a>
+<a href="gui.Component.html#end_drag">end_drag()</a>
+<a href="gui.Component.html#find_accel">find_accel()</a>
+<a href="gui.Component.html#find_focus">find_focus()</a>
+<a href="gui.Component.html#focus_changed">focus_changed()</a>
+<a href="gui.Component.html#gen_focusable">gen_focusable()</a>
+<a href="gui.Component.html#gen_parents">gen_parents()</a>
+<a href="gui.Component.html#get_accel">get_accel()</a>
+<a href="gui.Component.html#get_bottom_z">get_bottom_z()</a>
+<a href="gui.Component.html#get_cbwin">get_cbwin()</a>
+<a href="gui.Component.html#get_cbwin_clip">get_cbwin_clip()</a>
+<a href="gui.Component.html#get_children">get_children()</a>
+<a href="gui.Component.html#get_clip_rect">get_clip_rect()</a>
+<a href="gui.Component.html#get_constraint">get_constraint()</a>
+<a href="gui.Component.html#get_effective_wattribs">get_effective_wattribs()</a>
+<a href="gui.Component.html#get_index">get_index()</a>
+<a href="gui.Component.html#get_parent">get_parent()</a>
+<a href="gui.Component.html#get_parent_dialog">get_parent_dialog()</a>
+<a href="gui.Component.html#get_parent_win">get_parent_win()</a>
+<a href="gui.Component.html#get_pointer">get_pointer()</a>
+<a href="gui.Component.html#get_preferred_focus">get_preferred_focus()</a>
+<a href="gui.Component.html#get_preferred_height">get_preferred_height()</a>
+<a href="gui.Component.html#get_preferred_width">get_preferred_width()</a>
+<a href="gui.Component.html#get_tooltip">get_tooltip()</a>
+<a href="gui.Component.html#get_tooltip_end_delay">get_tooltip_end_delay()</a>
+<a href="gui.Component.html#get_tooltip_start_delay">get_tooltip_start_delay()</a>
+<a href="gui.Component.html#get_top_z">get_top_z()</a>
+<a href="gui.Component.html#get_wattrib">get_wattrib()</a>
+<a href="gui.Component.html#got_focus">got_focus()</a>
+<a href="gui.Component.html#grab_focus">grab_focus()</a>
+<a href="gui.Component.html#handle_accel">handle_accel()</a>
+<a href="gui.Component.html#has_focus">has_focus()</a>
+<a href="gui.Component.html#hidden_change">hidden_change()</a>
+<a href="gui.Component.html#in_region">in_region()</a>
+<a href="gui.Component.html#invalidate">invalidate()</a>
+<a href="gui.Component.html#invoke_display">invoke_display()</a>
+<a href="gui.Component.html#is_held">is_held()</a>
+<a href="gui.Component.html#is_hidden">is_hidden()</a>
+<a href="gui.Component.html#is_initialized">is_initialized()</a>
+<a href="gui.Component.html#is_live">is_live()</a>
+<a href="gui.Component.html#is_shaded">is_shaded()</a>
+<a href="gui.Component.html#is_unhidden">is_unhidden()</a>
+<a href="gui.Component.html#is_unshaded">is_unshaded()</a>
+<a href="gui.Component.html#lost_focus">lost_focus()</a>
+<a href="gui.Component.html#match_accel">match_accel()</a>
+<a href="gui.Component.html#move_all">move_all()</a>
+<a href="gui.Component.html#parse_pos">parse_pos()</a>
+<a href="gui.Component.html#perform_drop">perform_drop()</a>
+<a href="gui.Component.html#remove">remove()</a>
+<a href="gui.Component.html#remove_all">remove_all()</a>
+<a href="gui.Component.html#remove_constraint">remove_constraint()</a>
+<a href="gui.Component.html#remove_index">remove_index()</a>
+<a href="gui.Component.html#remove_list">remove_list()</a>
+<a href="gui.Component.html#remove_wattrib">remove_wattrib()</a>
+<a href="gui.Component.html#reposition">reposition()</a>
+<a href="gui.Component.html#reposition_index">reposition_index()</a>
+<a href="gui.Component.html#reset">reset()</a>
+<a href="gui.Component.html#reset_all_layouts">reset_all_layouts()</a>
+<a href="gui.Component.html#reset_layout">reset_layout()</a>
+<a href="gui.Component.html#reset_layout_chain">reset_layout_chain()</a>
+<a href="gui.Component.html#resize">resize()</a>
+<a href="gui.Component.html#set_accel">set_accel()</a>
+<a href="gui.Component.html#set_accepts_focus">set_accepts_focus()</a>
+<a href="gui.Component.html#set_align">set_align()</a>
+<a href="gui.Component.html#set_all_wattribs">set_all_wattribs()</a>
+<a href="gui.Component.html#set_allow_drag">set_allow_drag()</a>
+<a href="gui.Component.html#set_allow_drop">set_allow_drop()</a>
+<a href="gui.Component.html#set_bg">set_bg()</a>
+<a href="gui.Component.html#set_border">set_border()</a>
+<a href="gui.Component.html#set_constraint">set_constraint()</a>
+<a href="gui.Component.html#set_draw_op">set_draw_op()</a>
+<a href="gui.Component.html#set_draw_own_shading">set_draw_own_shading()</a>
+<a href="gui.Component.html#set_fg">set_fg()</a>
+<a href="gui.Component.html#set_font">set_font()</a>
+<a href="gui.Component.html#set_geometry">set_geometry()</a>
+<a href="gui.Component.html#set_height">set_height()</a>
+<a href="gui.Component.html#set_is_hidden">set_is_hidden()</a>
+<a href="gui.Component.html#set_is_shaded">set_is_shaded()</a>
+<a href="gui.Component.html#set_layout">set_layout()</a>
+<a href="gui.Component.html#set_leading">set_leading()</a>
+<a href="gui.Component.html#set_line_end">set_line_end()</a>
+<a href="gui.Component.html#set_line_join">set_line_join()</a>
+<a href="gui.Component.html#set_line_width">set_line_width()</a>
+<a href="gui.Component.html#set_mask">set_mask()</a>
+<a href="gui.Component.html#set_parent">set_parent()</a>
+<a href="gui.Component.html#set_parent_dialog">set_parent_dialog()</a>
+<a href="gui.Component.html#set_pattern">set_pattern()</a>
+<a href="gui.Component.html#set_pointer">set_pointer()</a>
+<a href="gui.Component.html#set_pos">set_pos()</a>
+<a href="gui.Component.html#set_preferred_focus">set_preferred_focus()</a>
+<a href="gui.Component.html#set_show_layout">set_show_layout()</a>
+<a href="gui.Component.html#set_size">set_size()</a>
+<a href="gui.Component.html#set_tab_ord">set_tab_ord()</a>
+<a href="gui.Component.html#set_tooltip">set_tooltip()</a>
+<a href="gui.Component.html#set_tooltip_end_delay">set_tooltip_end_delay()</a>
+<a href="gui.Component.html#set_tooltip_start_delay">set_tooltip_start_delay()</a>
+<a href="gui.Component.html#set_wattrib">set_wattrib()</a>
+<a href="gui.Component.html#set_wattrib_ancestor">set_wattrib_ancestor()</a>
+<a href="gui.Component.html#set_width">set_width()</a>
+<a href="gui.Component.html#set_x">set_x()</a>
+<a href="gui.Component.html#set_x_align">set_x_align()</a>
+<a href="gui.Component.html#set_y">set_y()</a>
+<a href="gui.Component.html#set_y_align">set_y_align()</a>
+<a href="gui.Component.html#set_z">set_z()</a>
+<a href="gui.Component.html#shaded_change">shaded_change()</a>
+<a href="gui.Component.html#shift">shift()</a>
+<a href="gui.Component.html#should_draw_focus">should_draw_focus()</a>
+<a href="gui.Component.html#toggle_is_hidden">toggle_is_hidden()</a>
+<a href="gui.Component.html#toggle_is_shaded">toggle_is_shaded()</a>
+<a href="gui.Component.html#traverse_postorder">traverse_postorder()</a>
+<a href="gui.Component.html#traverse_preorder">traverse_preorder()</a>
+<a href="gui.Component.html#whose_point">whose_point()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Component</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Component.html#accel">accel</a>
+<a href="gui.Component.html#accepts_focus_flag">accepts_focus_flag</a>
+<a href="gui.Component.html#allow_drag_flag">allow_drag_flag</a>
+<a href="gui.Component.html#allow_drop_flag">allow_drop_flag</a>
+<a href="gui.Component.html#border">border</a>
+<a href="gui.Component.html#cbwin">cbwin</a>
+<a href="gui.Component.html#children">children</a>
+<a href="gui.Component.html#constraints">constraints</a>
+<a href="gui.Component.html#draw_own_shading_flag">draw_own_shading_flag</a>
+<a href="gui.Component.html#effective_is_hidden_flag">effective_is_hidden_flag</a>
+<a href="gui.Component.html#effective_is_shaded_flag">effective_is_shaded_flag</a>
+<a href="gui.Component.html#effective_wattribs">effective_wattribs</a>
+<a href="gui.Component.html#h_spec">h_spec</a>
+<a href="gui.Component.html#is_hidden_flag">is_hidden_flag</a>
+<a href="gui.Component.html#is_shaded_flag">is_shaded_flag</a>
+<a href="gui.Component.html#layout_delegate">layout_delegate</a>
+<a href="gui.Component.html#parent">parent</a>
+<a href="gui.Component.html#parent_dialog">parent_dialog</a>
+<a href="gui.Component.html#pointer">pointer</a>
+<a href="gui.Component.html#preferred_focus">preferred_focus</a>
+<a href="gui.Component.html#show_layout_flag">show_layout_flag</a>
+<a href="gui.Component.html#tab_children">tab_children</a>
+<a href="gui.Component.html#tab_ord">tab_ord</a>
+<a href="gui.Component.html#tooltip">tooltip</a>
+<a href="gui.Component.html#tooltip_end_delay">tooltip_end_delay</a>
+<a href="gui.Component.html#tooltip_start_delay">tooltip_start_delay</a>
+<a href="gui.Component.html#w_spec">w_spec</a>
+<a href="gui.Component.html#wattrib_ancestor">wattrib_ancestor</a>
+<a href="gui.Component.html#wattribs">wattribs</a>
+<a href="gui.Component.html#x_spec">x_spec</a>
+<a href="gui.Component.html#y_spec">y_spec</a>
+<a href="gui.Component.html#z">z</a>
+<a href="gui.Component.html#z_children">z_children</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#at_bottom">at_bottom()</a>
+<a href="gui.ScrollArea.html#at_top">at_top()</a>
+<a href="gui.ScrollArea.html#center_region_horizontally">center_region_horizontally()</a>
+<a href="gui.ScrollArea.html#center_region_vertically">center_region_vertically()</a>
+<a href="gui.ScrollArea.html#compute_and_invalidate">compute_and_invalidate()</a>
+<a href="gui.ScrollArea.html#ensure_region_visible">ensure_region_visible()</a>
+<a href="gui.ScrollArea.html#get_area_x">get_area_x()</a>
+<a href="gui.ScrollArea.html#get_area_y">get_area_y()</a>
+<a href="gui.ScrollArea.html#get_default_height">get_default_height()</a>
+<a href="gui.ScrollArea.html#get_default_width">get_default_width()</a>
+<a href="gui.ScrollArea.html#get_subject_height">get_subject_height()</a>
+<a href="gui.ScrollArea.html#get_subject_width">get_subject_width()</a>
+<a href="gui.ScrollArea.html#get_subject_x">get_subject_x()</a>
+<a href="gui.ScrollArea.html#get_subject_y">get_subject_y()</a>
+<a href="gui.ScrollArea.html#goto_bottom">goto_bottom()</a>
+<a href="gui.ScrollArea.html#goto_top">goto_top()</a>
+<a href="gui.ScrollArea.html#handle_wheel_left">handle_wheel_left()</a>
+<a href="gui.ScrollArea.html#handle_wheel_right">handle_wheel_right()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_height">invalidate_subject_height()</a>
+<a href="gui.ScrollArea.html#invalidate_subject_width">invalidate_subject_width()</a>
+<a href="gui.ScrollArea.html#keeps">keeps()</a>
+<a href="gui.ScrollArea.html#on_default_key">on_default_key()</a>
+<a href="gui.ScrollArea.html#on_hsb">on_hsb()</a>
+<a href="gui.ScrollArea.html#on_vsb">on_vsb()</a>
+<a href="gui.ScrollArea.html#predict_total_height">predict_total_height()</a>
+<a href="gui.ScrollArea.html#predict_total_width">predict_total_width()</a>
+<a href="gui.ScrollArea.html#predict_view_height">predict_view_height()</a>
+<a href="gui.ScrollArea.html#predict_view_width">predict_view_width()</a>
+<a href="gui.ScrollArea.html#remove_hsb">remove_hsb()</a>
+<a href="gui.ScrollArea.html#remove_vsb">remove_vsb()</a>
+<a href="gui.ScrollArea.html#set_area_x">set_area_x()</a>
+<a href="gui.ScrollArea.html#set_area_y">set_area_y()</a>
+<a href="gui.ScrollArea.html#set_ideal_size">set_ideal_size()</a>
+<a href="gui.ScrollArea.html#set_internal_fields">set_internal_fields()</a>
+<a href="gui.ScrollArea.html#set_use_default_keys">set_use_default_keys()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.ScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ScrollArea.html#default_key_listener">default_key_listener</a>
+<a href="gui.ScrollArea.html#hsb">hsb</a>
+<a href="gui.ScrollArea.html#SCROLLBAR_SIZE">SCROLLBAR_SIZE</a>
+<a href="gui.ScrollArea.html#subject_height">subject_height</a>
+<a href="gui.ScrollArea.html#subject_width">subject_width</a>
+<a href="gui.ScrollArea.html#view">view</a>
+<a href="gui.ScrollArea.html#vsb">vsb</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.ComponentScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ComponentScrollArea.html#build_point_chain">build_point_chain()</a>
+<a href="gui.ComponentScrollArea.html#calculate_subject_height">calculate_subject_height()</a>
+<a href="gui.ComponentScrollArea.html#calculate_subject_width">calculate_subject_width()</a>
+<a href="gui.ComponentScrollArea.html#convert_to_area">convert_to_area()</a>
+<a href="gui.ComponentScrollArea.html#create_view">create_view()</a>
+<a href="gui.ComponentScrollArea.html#get_default_subject_height">get_default_subject_height()</a>
+<a href="gui.ComponentScrollArea.html#get_default_subject_width">get_default_subject_width()</a>
+<a href="gui.ComponentScrollArea.html#refresh">refresh()</a>
+<a href="gui.ComponentScrollArea.html#set_inner">set_inner()</a>
+<a href="gui.ComponentScrollArea.html#set_reset_layouts_on_size_inner">set_reset_layouts_on_size_inner()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.ComponentScrollArea</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.ComponentScrollArea.html#reset_layouts_on_size_inner_flag">reset_layouts_on_size_inner_flag</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#add_component">add_component()</a>
+<a href="#add_form_component">add_form_component()</a>
+<a href="#additional_keys">additional_keys()</a>
+<a href="#browse_for_file">browse_for_file()</a>
+<a href="#calculate_banded">calculate_banded()</a>
+<a href="#calculate_banded_rect">calculate_banded_rect()</a>
+<a href="#calculate_links_selection">calculate_links_selection()</a>
+<a href="#calculate_text_selection">calculate_text_selection()</a>
+<a href="#can_lpress">can_lpress()</a>
+<a href="#can_rpress">can_rpress()</a>
+<a href="#cancel">cancel()</a>
+<a href="#check_id">check_id()</a>
+<a href="#check_scroll_ticker">check_scroll_ticker()</a>
+<a href="#clear_mark">clear_mark()</a>
+<a href="#clear_searched">clear_searched()</a>
+<a href="#clear_selections">clear_selections()</a>
+<a href="#clone_history">clone_history()</a>
+<a href="#convert_cap_align">convert_cap_align()</a>
+<a href="#convert_color">convert_color()</a>
+<a href="#convert_comp_align">convert_comp_align()</a>
+<a href="#convert_halign">convert_halign()</a>
+<a href="#convert_not_utf8">convert_not_utf8()</a>
+<a href="#convert_valign">convert_valign()</a>
+<a href="#create_hsb">create_hsb()</a>
+<a href="#create_image_menu">create_image_menu()</a>
+<a href="#create_link_menu">create_link_menu()</a>
+<a href="#create_page_menu">create_page_menu()</a>
+<a href="#create_vsb">create_vsb()</a>
+<a href="#display">display()</a>
+<a href="#display_externally">display_externally()</a>
+<a href="#do_decrease_font">do_decrease_font()</a>
+<a href="#do_height_param">do_height_param()</a>
+<a href="#do_increase_font">do_increase_font()</a>
+<a href="#do_jump">do_jump()</a>
+<a href="#do_next">do_next()</a>
+<a href="#do_prev">do_prev()</a>
+<a href="#do_refresh">do_refresh()</a>
+<a href="#do_search">do_search()</a>
+<a href="#do_stop">do_stop()</a>
+<a href="#do_update_grey">do_update_grey()</a>
+<a href="#do_width_param">do_width_param()</a>
+<a href="#dump_forms">dump_forms()</a>
+<a href="#enqueue">enqueue()</a>
+<a href="#finally">finally()</a>
+<a href="#finish_selection">finish_selection()</a>
+<a href="#focus_scroll">focus_scroll()</a>
+<a href="#get_authentication">get_authentication()</a>
+<a href="#get_band_rect">get_band_rect()</a>
+<a href="#get_cache">get_cache()</a>
+<a href="#get_child_index">get_child_index()</a>
+<a href="#get_col_info">get_col_info()</a>
+<a href="#get_colgroup_cols">get_colgroup_cols()</a>
+<a href="#get_current_links_selection">get_current_links_selection()</a>
+<a href="#get_current_text_selection">get_current_text_selection()</a>
+<a href="#get_datalist">get_datalist()</a>
+<a href="#get_favicon">get_favicon()</a>
+<a href="#get_focusable_index">get_focusable_index()</a>
+<a href="#get_map">get_map()</a>
+<a href="#get_meta_charset">get_meta_charset()</a>
+<a href="#get_nth_child">get_nth_child()</a>
+<a href="#get_nth_focusable">get_nth_focusable()</a>
+<a href="#get_page_info">get_page_info()</a>
+<a href="#got_favicon">got_favicon()</a>
+<a href="#goto">goto()</a>
+<a href="#goto_externally">goto_externally()</a>
+<a href="#goto_searched">goto_searched()</a>
+<a href="#handle_copy">handle_copy()</a>
+<a href="#handle_copy_links">handle_copy_links()</a>
+<a href="#handle_in_chain">handle_in_chain()</a>
+<a href="#handle_interrupted">handle_interrupted()</a>
+<a href="#handle_ldrag">handle_ldrag()</a>
+<a href="#handle_lpress">handle_lpress()</a>
+<a href="#handle_lrelease">handle_lrelease()</a>
+<a href="#handle_rpress">handle_rpress()</a>
+<a href="#handle_select_all">handle_select_all()</a>
+<a href="#handle_wheel_down">handle_wheel_down()</a>
+<a href="#handle_wheel_up">handle_wheel_up()</a>
+<a href="#info_msg">info_msg()</a>
+<a href="#init">init()</a>
+<a href="#initially">initially()</a>
+<a href="#is_banded">is_banded()</a>
+<a href="#is_html">is_html()</a>
+<a href="#is_image">is_image()</a>
+<a href="#is_searched">is_searched()</a>
+<a href="#is_text">is_text()</a>
+<a href="#is_visited">is_visited()</a>
+<a href="#layout">layout()</a>
+<a href="#limit_text">limit_text()</a>
+<a href="#link_left_clicked">link_left_clicked()</a>
+<a href="#link_middle_clicked">link_middle_clicked()</a>
+<a href="#lookup_named_anchor">lookup_named_anchor()</a>
+<a href="#magnify">magnify()</a>
+<a href="#mk_anchor">mk_anchor()</a>
+<a href="#mk_anchor_cell">mk_anchor_cell()</a>
+<a href="#mk_link">mk_link()</a>
+<a href="#msg">msg()</a>
+<a href="#new">new()</a>
+<a href="#on_lost_primary_ownership">on_lost_primary_ownership()</a>
+<a href="#page_fully_loaded">page_fully_loaded()</a>
+<a href="#page_loaded">page_loaded()</a>
+<a href="#parse_size">parse_size()</a>
+<a href="#put_new_row">put_new_row()</a>
+<a href="#put_new_row1">put_new_row1()</a>
+<a href="#put_para">put_para()</a>
+<a href="#put_para1">put_para1()</a>
+<a href="#redo_search">redo_search()</a>
+<a href="#reset_history_pos">reset_history_pos()</a>
+<a href="#restore_form_values">restore_form_values()</a>
+<a href="#restore_last_highlight">restore_last_highlight()</a>
+<a href="#save_attachment">save_attachment()</a>
+<a href="#save_form_values">save_form_values()</a>
+<a href="#scale_font">scale_font()</a>
+<a href="#scroll_tick">scroll_tick()</a>
+<a href="#select_family">select_family()</a>
+<a href="#set_cursor_from_pos">set_cursor_from_pos()</a>
+<a href="#set_font_factor">set_font_factor()</a>
+<a href="#set_history_size">set_history_size()</a>
+<a href="#set_last_highlight">set_last_highlight()</a>
+<a href="#set_outermost_border">set_outermost_border()</a>
+<a href="#set_shared_worker_pool">set_shared_worker_pool()</a>
+<a href="#set_top_data">set_top_data()</a>
+<a href="#set_ui">set_ui()</a>
+<a href="#set_worker_pool">set_worker_pool()</a>
+<a href="#setup_tabbing">setup_tabbing()</a>
+<a href="#show_bounds">show_bounds()</a>
+<a href="#show_input">show_input()</a>
+<a href="#show_output">show_output()</a>
+<a href="#show_parents">show_parents()</a>
+<a href="#show_structure">show_structure()</a>
+<a href="#status">status()</a>
+<a href="#strip_newlines">strip_newlines()</a>
+<a href="#synch_font">synch_font()</a>
+<a href="#tidy_cache">tidy_cache()</a>
+<a href="#title_grid">title_grid()</a>
+<a href="#to_attr">to_attr()</a>
+<a href="#to_content">to_content()</a>
+<a href="#traverse">traverse()</a>
+<a href="#traverse_a">traverse_a()</a>
+<a href="#traverse_abbr">traverse_abbr()</a>
+<a href="#traverse_address">traverse_address()</a>
+<a href="#traverse_area">traverse_area()</a>
+<a href="#traverse_b">traverse_b()</a>
+<a href="#traverse_base">traverse_base()</a>
+<a href="#traverse_big">traverse_big()</a>
+<a href="#traverse_blockquote">traverse_blockquote()</a>
+<a href="#traverse_body">traverse_body()</a>
+<a href="#traverse_br">traverse_br()</a>
+<a href="#traverse_button">traverse_button()</a>
+<a href="#traverse_caption">traverse_caption()</a>
+<a href="#traverse_center">traverse_center()</a>
+<a href="#traverse_col">traverse_col()</a>
+<a href="#traverse_colgroup">traverse_colgroup()</a>
+<a href="#traverse_datalist">traverse_datalist()</a>
+<a href="#traverse_dd">traverse_dd()</a>
+<a href="#traverse_div">traverse_div()</a>
+<a href="#traverse_dl">traverse_dl()</a>
+<a href="#traverse_dt">traverse_dt()</a>
+<a href="#traverse_fieldset">traverse_fieldset()</a>
+<a href="#traverse_font">traverse_font()</a>
+<a href="#traverse_form">traverse_form()</a>
+<a href="#traverse_hN">traverse_hN()</a>
+<a href="#traverse_hr">traverse_hr()</a>
+<a href="#traverse_i">traverse_i()</a>
+<a href="#traverse_img">traverse_img()</a>
+<a href="#traverse_input">traverse_input()</a>
+<a href="#traverse_intersecting">traverse_intersecting()</a>
+<a href="#traverse_label">traverse_label()</a>
+<a href="#traverse_legend">traverse_legend()</a>
+<a href="#traverse_li">traverse_li()</a>
+<a href="#traverse_link">traverse_link()</a>
+<a href="#traverse_list">traverse_list()</a>
+<a href="#traverse_map">traverse_map()</a>
+<a href="#traverse_mark">traverse_mark()</a>
+<a href="#traverse_nobr">traverse_nobr()</a>
+<a href="#traverse_optgroup">traverse_optgroup()</a>
+<a href="#traverse_option">traverse_option()</a>
+<a href="#traverse_p">traverse_p()</a>
+<a href="#traverse_pre">traverse_pre()</a>
+<a href="#traverse_q">traverse_q()</a>
+<a href="#traverse_s">traverse_s()</a>
+<a href="#traverse_select">traverse_select()</a>
+<a href="#traverse_small">traverse_small()</a>
+<a href="#traverse_sub">traverse_sub()</a>
+<a href="#traverse_sup">traverse_sup()</a>
+<a href="#traverse_tab_order">traverse_tab_order()</a>
+<a href="#traverse_table">traverse_table()</a>
+<a href="#traverse_tbody">traverse_tbody()</a>
+<a href="#traverse_td">traverse_td()</a>
+<a href="#traverse_text">traverse_text()</a>
+<a href="#traverse_textarea">traverse_textarea()</a>
+<a href="#traverse_title">traverse_title()</a>
+<a href="#traverse_tr">traverse_tr()</a>
+<a href="#traverse_tt">traverse_tt()</a>
+<a href="#traverse_u">traverse_u()</a>
+<a href="#traverse_wbr">traverse_wbr()</a>
+<a href="#update_grey">update_grey()</a>
+<a href="#valid_family">valid_family()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#banded">banded</a>
+<a href="#COLORS">COLORS</a>
+<a href="#curr_history_entry">curr_history_entry</a>
+<a href="#cursor_x">cursor_x</a>
+<a href="#cursor_y">cursor_y</a>
+<a href="#datalists">datalists</a>
+<a href="#default_font_clone">default_font_clone</a>
+<a href="#DEFAULT_HISTORY_SIZE">DEFAULT_HISTORY_SIZE</a>
+<a href="#done_set_top_data">done_set_top_data</a>
+<a href="#draw_band">draw_band</a>
+<a href="#font_factor">font_factor</a>
+<a href="#form_tab_children">form_tab_children</a>
+<a href="#forms">forms</a>
+<a href="#h_direction">h_direction</a>
+<a href="#highlighted_searched">highlighted_searched</a>
+<a href="#history">history</a>
+<a href="#history_pos">history_pos</a>
+<a href="#history_size">history_size</a>
+<a href="#last_highlight_component">last_highlight_component</a>
+<a href="#links_selection">links_selection</a>
+<a href="#maps">maps</a>
+<a href="#mark_x">mark_x</a>
+<a href="#mark_y">mark_y</a>
+<a href="#outermost_border">outermost_border</a>
+<a href="#page_alink_color">page_alink_color</a>
+<a href="#page_base">page_base</a>
+<a href="#page_charset">page_charset</a>
+<a href="#page_data">page_data</a>
+<a href="#page_favicon_resp">page_favicon_resp</a>
+<a href="#page_favicon_url">page_favicon_url</a>
+<a href="#page_link_color">page_link_color</a>
+<a href="#page_links">page_links</a>
+<a href="#page_name">page_name</a>
+<a href="#page_resp">page_resp</a>
+<a href="#page_text_color">page_text_color</a>
+<a href="#page_title">page_title</a>
+<a href="#page_url">page_url</a>
+<a href="#page_vlink_color">page_vlink_color</a>
+<a href="#primary">primary</a>
+<a href="#primary_selection_owner">primary_selection_owner</a>
+<a href="#running">running</a>
+<a href="#SCROLL_INCREMENT">SCROLL_INCREMENT</a>
+<a href="#scroll_ticker">scroll_ticker</a>
+<a href="#scroll_ticker_interval">scroll_ticker_interval</a>
+<a href="#searched">searched</a>
+<a href="#searched_term">searched_term</a>
+<a href="#shared_worker_pool_flag">shared_worker_pool_flag</a>
+<a href="#SIZES">SIZES</a>
+<a href="#sorted_searched">sorted_searched</a>
+<a href="#status_ticker">status_ticker</a>
+<a href="#text_selection">text_selection</a>
+<a href="#tidy_cache_task">tidy_cache_task</a>
+<a href="#ui">ui</a>
+<a href="#v_direction">v_direction</a>
+<a href="#worker_pool">worker_pool</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="add_component"/>
+<h3>add_component(p, c, context, align)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3979" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="add_form_component"/>
+<h3>add_form_component(e, p, q, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4030" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="additional_keys"/>
+<h3>additional_keys(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5647" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="browse_for_file"/>
+<h3>browse_for_file(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3423" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_banded"/>
+<h3>calculate_banded()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5341" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_banded_rect"/>
+<h3>calculate_banded_rect()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5370" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_links_selection"/>
+<h3>calculate_links_selection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5430" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="calculate_text_selection"/>
+<h3>calculate_text_selection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5405" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="can_lpress"/>
+<h3>can_lpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5498" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="can_rpress"/>
+<h3>can_rpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5488" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cancel"/>
+<h3>cancel()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3439" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="check_id"/>
+<h3>check_id(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3770" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="check_scroll_ticker"/>
+<h3>check_scroll_ticker(d)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5259" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_mark"/>
+<h3>clear_mark()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5324" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_searched"/>
+<h3>clear_searched()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3387" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="clear_selections"/>
+<h3>clear_selections()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5328" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="clone_history"/>
+<h3>clone_history(other)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5686" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_cap_align"/>
+<h3>convert_cap_align(el, name)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4540" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_color"/>
+<h3>convert_color(el, name)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3131" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_comp_align"/>
+<h3>convert_comp_align(el, name)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4549" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_halign"/>
+<h3>convert_halign(el, name)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4532" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_not_utf8"/>
+<h3>convert_not_utf8(cs, s)</h3>
+private static<p/>
+<dl>
+<dd>
+Convert string s to ucs based on charset cs.  If cs is utf-8, or
+unknown, then just fail (the conversion is done by the caller).
+<p/><a href="ipl.browser-browser.icn.html#3578" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="convert_valign"/>
+<h3>convert_valign(el, name)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4523" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="create_hsb"/>
+<h3>create_hsb()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ComponentScrollArea.html#create_hsb">create_hsb()</a> in <a href="gui.ComponentScrollArea.html" target="displayFrame">gui.ComponentScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5704" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="create_image_menu"/>
+<h3>create_image_menu(img)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3214" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="create_link_menu"/>
+<h3>create_link_menu(url)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3202" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="create_page_menu"/>
+<h3>create_page_menu()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3206" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="create_vsb"/>
+<h3>create_vsb()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ComponentScrollArea.html#create_vsb">create_vsb()</a> in <a href="gui.ComponentScrollArea.html" target="displayFrame">gui.ComponentScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5699" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="display"/>
+<h3>display()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#display">display()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5246" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="display_externally"/>
+<h3>display_externally(res)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3427" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_decrease_font"/>
+<h3>do_decrease_font()</h3>
+public<p/>
+<dl>
+<dd>
+Decrease the fonts by 5%
+<p/>
+<p/><a href="ipl.browser-browser.icn.html#5641" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_height_param"/>
+<h3>do_height_param(e, c)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4571" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_increase_font"/>
+<h3>do_increase_font()</h3>
+public<p/>
+<dl>
+<dd>
+Increase the fonts by 5%
+<p/><a href="ipl.browser-browser.icn.html#5635" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_jump"/>
+<h3>do_jump(he)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3348" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_next"/>
+<h3>do_next()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3330" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_prev"/>
+<h3>do_prev()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3339" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_refresh"/>
+<h3>do_refresh()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3416" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_search"/>
+<h3>do_search(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3368" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_stop"/>
+<h3>do_stop()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3408" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_update_grey"/>
+<h3>do_update_grey()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3250" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="do_width_param"/>
+<h3>do_width_param(e, c, def_w)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4561" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="dump_forms"/>
+<h3>dump_forms()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3969" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="enqueue"/>
+<h3>enqueue(req)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3444" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="finally"/>
+<h3>finally()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#finally">finally()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3318" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="finish_selection"/>
+<h3>finish_selection()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5464" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="focus_scroll"/>
+<h3>focus_scroll(e, c)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3725" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_authentication"/>
+<h3>get_authentication(httpc, dom, realm)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="ipl.browser.WorkerPoolOwner.html#get_authentication">get_authentication()</a> in <a href="ipl.browser.WorkerPoolOwner.html" target="displayFrame">ipl.browser.WorkerPoolOwner</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3243" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_band_rect"/>
+<h3>get_band_rect()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5220" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_cache"/>
+<h3>get_cache()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5585" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_child_index"/>
+<h3>get_child_index(child)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3560" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_col_info"/>
+<h3>get_col_info(ct, n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4744" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_colgroup_cols"/>
+<h3>get_colgroup_cols(ct)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4762" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_links_selection"/>
+<h3>get_current_links_selection()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5426" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_current_text_selection"/>
+<h3>get_current_text_selection()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5401" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_datalist"/>
+<h3>get_datalist(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3119" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_favicon"/>
+<h3>get_favicon()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5023" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_focusable_index"/>
+<h3>get_focusable_index(focus)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3541" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_map"/>
+<h3>get_map(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3115" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_meta_charset"/>
+<h3>get_meta_charset(doc)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3589" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_nth_child"/>
+<h3>get_nth_child(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3551" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_nth_focusable"/>
+<h3>get_nth_focusable(n)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3532" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="get_page_info"/>
+<h3>get_page_info()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5518" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="got_favicon"/>
+<h3>got_favicon(res)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5019" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="goto"/>
+<h3>goto(url, referer, form_data, kind)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5145" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="goto_externally"/>
+<h3>goto_externally(url)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3431" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="goto_searched"/>
+<h3>goto_searched(n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3392" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_copy"/>
+<h3>handle_copy(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5589" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_copy_links"/>
+<h3>handle_copy_links(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5595" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_in_chain"/>
+<h3>handle_in_chain(e)</h3>
+private<p/>
+<dl>
+<dd>
+This is used to forward an in chain event to Imgs and TextFlows
+in the point chain.  The reason they don't simply listen
+themselves is that they would then process the event in the wrong
+order.  Since the bottom components come last (ie the base
+TextFlow), when the mouse leaves a link in the top-level and
+moves to a link in another TextFlow (above the base one), the
+base TextFlow would process the event last, and would clear the
+UI message, overwriting the new message written by the upper
+level link.  So this traverses the point chain backwards, which
+is the correct order for this case.
+<p/><a href="ipl.browser-browser.icn.html#5382" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_interrupted"/>
+<h3>handle_interrupted()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5472" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_ldrag"/>
+<h3>handle_ldrag(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5188" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lpress"/>
+<h3>handle_lpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5156" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_lrelease"/>
+<h3>handle_lrelease(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5457" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_rpress"/>
+<h3>handle_rpress(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5508" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_select_all"/>
+<h3>handle_select_all(e)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5477" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_wheel_down"/>
+<h3>handle_wheel_down(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#handle_wheel_down">handle_wheel_down()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5679" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="handle_wheel_up"/>
+<h3>handle_wheel_up(e)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#handle_wheel_up">handle_wheel_up()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5672" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="info_msg"/>
+<h3>info_msg(s)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3223" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="init"/>
+<h3>init()</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2962" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="initially"/>
+<h3>initially()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#initially">initially()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3309" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_banded"/>
+<h3>is_banded(o)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5266" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_html"/>
+<h3>is_html(ct, s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3464" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_image"/>
+<h3>is_image(ct, s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3449" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_searched"/>
+<h3>is_searched(o)</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5270" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_text"/>
+<h3>is_text(ct, s)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3457" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="is_visited"/>
+<h3>is_visited(url)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3210" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="layout"/>
+<h3>layout()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ComponentScrollArea.html#layout">layout()</a> in <a href="gui.ComponentScrollArea.html" target="displayFrame">gui.ComponentScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5238" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="limit_text"/>
+<h3>limit_text(s, n)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3305" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="link_left_clicked"/>
+<h3>link_left_clicked(url)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3192" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="link_middle_clicked"/>
+<h3>link_middle_clicked(url)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3197" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="lookup_named_anchor"/>
+<h3>lookup_named_anchor(name)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3298" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="magnify"/>
+<h3>magnify(f)</h3>
+public<p/>
+<dl>
+<dd>
+Magnify the fonts in the page by multiplying by the given factor.
+<p/><a href="ipl.browser-browser.icn.html#5608" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="mk_anchor"/>
+<h3>mk_anchor(url, lim)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3520" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="mk_anchor_cell"/>
+<h3>mk_anchor_cell(url, lim)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3528" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="mk_link"/>
+<h3>mk_link(s)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3750" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="msg"/>
+<h3>msg(s, n)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3228" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.ScrollArea.html#new">new()</a> in <a href="gui.ScrollArea.html" target="displayFrame">gui.ScrollArea</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5709" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="on_lost_primary_ownership"/>
+<h3>on_lost_primary_ownership()</h3>
+package<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5334" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_fully_loaded"/>
+<h3>page_fully_loaded()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3263" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_loaded"/>
+<h3>page_loaded()</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3233" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="parse_size"/>
+<h3>parse_size(s, curr)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3787" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="put_new_row"/>
+<h3>put_new_row(p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4505" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="put_new_row1"/>
+<h3>put_new_row1(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4509" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="put_para"/>
+<h3>put_para(p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4496" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="put_para1"/>
+<h3>put_para1(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4500" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="redo_search"/>
+<h3>redo_search()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3355" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="reset_history_pos"/>
+<h3>reset_history_pos()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3402" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="restore_form_values"/>
+<h3>restore_form_values()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3501" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="restore_last_highlight"/>
+<h3>restore_last_highlight()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3493" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="save_attachment"/>
+<h3>save_attachment(file, res)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3435" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="save_form_values"/>
+<h3>save_form_values()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3481" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="scale_font"/>
+<h3>scale_font(s, f)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5604" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_tick"/>
+<h3>scroll_tick()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5281" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="select_family"/>
+<h3>select_family(faces)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3804" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_cursor_from_pos"/>
+<h3>set_cursor_from_pos(e)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5179" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_font_factor"/>
+<h3>set_font_factor(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set a scaling factor to apply to all fonts (default 1.0).
+<p/><a href="ipl.browser-browser.icn.html#5657" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_history_size"/>
+<h3>set_history_size(n)</h3>
+public<p/>
+<dl>
+<dd>
+Set the maximum size of the history, default 100
+<p/><a href="ipl.browser-browser.icn.html#5664" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_last_highlight"/>
+<h3>set_last_highlight(c, u)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3123" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_outermost_border"/>
+<h3>set_outermost_border(b)</h3>
+public<p/>
+<dl>
+<dd>
+Set a border around the outermost (top level) <code><a href="ipl.browser.TextFlow.html" target="displayFrame">TextFlow</a></code>; by
+default this is a <code><a href="gui.NullBorder.html" target="displayFrame">NullBorder</a></code>.
+<p/><a href="ipl.browser-browser.icn.html#3570" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_shared_worker_pool"/>
+<h3>set_shared_worker_pool(s)</h3>
+public<p/>
+<dl>
+<dd>
+A flag setting; if set then the worker pool is not initialized
+and finalized by this component.  By default off.
+<p/><a href="ipl.browser-browser.icn.html#5136" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_top_data"/>
+<h3>set_top_data(res)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3599" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_ui"/>
+<h3>set_ui(ui)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3218" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="set_worker_pool"/>
+<h3>set_worker_pool(worker_pool)</h3>
+public<p/>
+<dl>
+<dd>
+Set a custom <code><a href="ipl.browser.WorkerPool.html" target="displayFrame">WorkerPool</a></code> to use.  This also sets the shared
+worker pool flag; see <code><a href="ipl.browser.Browser.html#set_shared_worker_pool">set_shared_worker_pool</a></code>.
+<p/><a href="ipl.browser-browser.icn.html#5126" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="setup_tabbing"/>
+<h3>setup_tabbing()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3739" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="show_bounds"/>
+<h3>show_bounds()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5362" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="show_input"/>
+<h3>show_input(ii, l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4365" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="show_output"/>
+<h3>show_output(xo, l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4382" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="show_parents"/>
+<h3>show_parents(c)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4357" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="show_structure"/>
+<h3>show_structure(c, l)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4394" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="status"/>
+<h3>status()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3157" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="strip_newlines"/>
+<h3>strip_newlines(e)</h3>
+private static<p/>
+<dl>
+<dd>
+Strip optional start and end newlines from the child content
+<p/><a href="ipl.browser-browser.icn.html#4460" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="synch_font"/>
+<h3>synch_font(context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3146" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="tidy_cache"/>
+<h3>tidy_cache()</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5274" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="title_grid"/>
+<h3>title_grid(s)</h3>
+private static<p/>
+<dl>
+<dd>
+Convert a "title" attribute into a grid paint string if it
+contains CR or NL chars; this allows multi-line tooltips.
+<p/><a href="ipl.browser-browser.icn.html#5039" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="to_attr"/>
+<h3>to_attr(s)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3516" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="to_content"/>
+<h3>to_content(s)</h3>
+public static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3512" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse"/>
+<h3>traverse(n, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5051" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_a"/>
+<h3>traverse_a(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3754" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_abbr"/>
+<h3>traverse_abbr(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4985" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_address"/>
+<h3>traverse_address(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3915" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_area"/>
+<h3>traverse_area(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4972" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_b"/>
+<h3>traverse_b(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3892" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_base"/>
+<h3>traverse_base(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5003" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_big"/>
+<h3>traverse_big(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3848" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_blockquote"/>
+<h3>traverse_blockquote(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4910" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_body"/>
+<h3>traverse_body(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4992" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_br"/>
+<h3>traverse_br(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4416" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_button"/>
+<h3>traverse_button(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3988" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_caption"/>
+<h3>traverse_caption(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4668" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_center"/>
+<h3>traverse_center(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4514" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_col"/>
+<h3>traverse_col(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4716" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_colgroup"/>
+<h3>traverse_colgroup(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4701" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_datalist"/>
+<h3>traverse_datalist(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4962" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_dd"/>
+<h3>traverse_dd(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4894" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_div"/>
+<h3>traverse_div(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4411" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_dl"/>
+<h3>traverse_dl(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4869" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_dt"/>
+<h3>traverse_dt(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4883" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_fieldset"/>
+<h3>traverse_fieldset(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4926" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_font"/>
+<h3>traverse_font(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3830" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_form"/>
+<h3>traverse_form(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3939" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_hN"/>
+<h3>traverse_hN(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3776" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_hr"/>
+<h3>traverse_hr(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4433" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_i"/>
+<h3>traverse_i(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3900" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_img"/>
+<h3>traverse_img(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3998" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_input"/>
+<h3>traverse_input(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4146" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_intersecting"/>
+<h3>traverse_intersecting(c, r)</h3>
+private static<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5353" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_label"/>
+<h3>traverse_label(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3958" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_legend"/>
+<h3>traverse_legend(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4943" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_li"/>
+<h3>traverse_li(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4831" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_link"/>
+<h3>traverse_link(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5031" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_list"/>
+<h3>traverse_list(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4815" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_map"/>
+<h3>traverse_map(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4952" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_mark"/>
+<h3>traverse_mark(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3908" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_nobr"/>
+<h3>traverse_nobr(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4426" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_optgroup"/>
+<h3>traverse_optgroup(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4116" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_option"/>
+<h3>traverse_option(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4093" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_p"/>
+<h3>traverse_p(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4451" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_pre"/>
+<h3>traverse_pre(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4484" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_q"/>
+<h3>traverse_q(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4445" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_s"/>
+<h3>traverse_s(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3932" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_select"/>
+<h3>traverse_select(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4038" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_small"/>
+<h3>traverse_small(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3858" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_sub"/>
+<h3>traverse_sub(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3880" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_sup"/>
+<h3>traverse_sup(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3868" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_tab_order"/>
+<h3>traverse_tab_order()</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Component.html#traverse_tab_order">traverse_tab_order()</a> in <a href="gui.Component.html" target="displayFrame">gui.Component</a></dd>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3141" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_table"/>
+<h3>traverse_table(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4577" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_tbody"/>
+<h3>traverse_tbody(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4661" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_td"/>
+<h3>traverse_td(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4776" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_text"/>
+<h3>traverse_text(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5011" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_textarea"/>
+<h3>traverse_textarea(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4126" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_title"/>
+<h3>traverse_title(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5015" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_tr"/>
+<h3>traverse_tr(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#4728" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_tt"/>
+<h3>traverse_tt(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3840" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_u"/>
+<h3>traverse_u(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3925" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="traverse_wbr"/>
+<h3>traverse_wbr(e, p, context)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#5007" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="update_grey"/>
+<h3>update_grey(gs)</h3>
+public<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3238" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="valid_family"/>
+<h3>valid_family(fam)</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#3796" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="banded"/>
+<h3>banded</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2941" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="COLORS"/>
+<h3>COLORS</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2954" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="curr_history_entry"/>
+<h3>curr_history_entry</h3>
+private readable<p/>
+<dl>
+<dd>
+History entry currently being viewed.  Note this may not be history[history_pos]
+<p/><a href="ipl.browser-browser.icn.html#2916" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_x"/>
+<h3>cursor_x</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2938" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="cursor_y"/>
+<h3>cursor_y</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2939" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="datalists"/>
+<h3>datalists</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2898" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="default_font_clone"/>
+<h3>default_font_clone</h3>
+private static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2959" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="DEFAULT_HISTORY_SIZE"/>
+<h3>DEFAULT_HISTORY_SIZE</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2957" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="done_set_top_data"/>
+<h3>done_set_top_data</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2949" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="draw_band"/>
+<h3>draw_band</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2940" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="font_factor"/>
+<h3>font_factor</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2951" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="form_tab_children"/>
+<h3>form_tab_children</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2900" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="forms"/>
+<h3>forms</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2899" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="h_direction"/>
+<h3>h_direction</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2902" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="highlighted_searched"/>
+<h3>highlighted_searched</h3>
+private readable<p/>
+<dl>
+<dd>
+SearchMatch, one of sorted_searched, currently the highlighted search
+<p/><a href="ipl.browser-browser.icn.html#2945" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="history"/>
+<h3>history</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2913" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="history_pos"/>
+<h3>history_pos</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2914" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="history_size"/>
+<h3>history_size</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2915" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="last_highlight_component"/>
+<h3>last_highlight_component</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2950" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="links_selection"/>
+<h3>links_selection</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2948" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="maps"/>
+<h3>maps</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2897" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="mark_x"/>
+<h3>mark_x</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2936" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="mark_y"/>
+<h3>mark_y</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2937" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="outermost_border"/>
+<h3>outermost_border</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2904" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_alink_color"/>
+<h3>page_alink_color</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2930" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_base"/>
+<h3>page_base</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2925" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_charset"/>
+<h3>page_charset</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2927" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_data"/>
+<h3>page_data</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2921" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_favicon_resp"/>
+<h3>page_favicon_resp</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2932" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_favicon_url"/>
+<h3>page_favicon_url</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2933" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_link_color"/>
+<h3>page_link_color</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2929" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_links"/>
+<h3>page_links</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2924" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_name"/>
+<h3>page_name</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2922" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_resp"/>
+<h3>page_resp</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2926" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_text_color"/>
+<h3>page_text_color</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2928" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_title"/>
+<h3>page_title</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2923" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_url"/>
+<h3>page_url</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2920" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="page_vlink_color"/>
+<h3>page_vlink_color</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2931" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="primary"/>
+<h3>primary</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2935" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="primary_selection_owner"/>
+<h3>primary_selection_owner</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2910" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="running"/>
+<h3>running</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2934" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="SCROLL_INCREMENT"/>
+<h3>SCROLL_INCREMENT</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2956" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_ticker"/>
+<h3>scroll_ticker</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2908" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="scroll_ticker_interval"/>
+<h3>scroll_ticker_interval</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2901" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="searched"/>
+<h3>searched</h3>
+private readable<p/>
+<dl>
+<dd>
+Map of TextOut to list of TextSelection, giving the highlighted
+<p/><a href="ipl.browser-browser.icn.html#2942" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="searched_term"/>
+<h3>searched_term</h3>
+private readable<p/>
+<dl>
+<dd>
+List of words being searched for.
+<p/><a href="ipl.browser-browser.icn.html#2946" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="shared_worker_pool_flag"/>
+<h3>shared_worker_pool_flag</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2896" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="SIZES"/>
+<h3>SIZES</h3>
+public static const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2955" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="sorted_searched"/>
+<h3>sorted_searched</h3>
+private readable<p/>
+<dl>
+<dd>
+List of SearchMatch
+<p/><a href="ipl.browser-browser.icn.html#2944" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="status_ticker"/>
+<h3>status_ticker</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2907" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="text_selection"/>
+<h3>text_selection</h3>
+private readable<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2947" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="tidy_cache_task"/>
+<h3>tidy_cache_task</h3>
+private const<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2909" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="ui"/>
+<h3>ui</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2895" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="v_direction"/>
+<h3>v_direction</h3>
+private<p/>
+<dl>
+<dd>
+<p/><a href="ipl.browser-browser.icn.html#2903" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+<a name="worker_pool"/>
+<h3>worker_pool</h3>
+private readable<p/>
+<dl>
+<dd>
+if we've just done a navigation to a slowly loading page.  It may even be &amp;null
+on a new browser or one with a cloned history.
+<p/><a href="ipl.browser-browser.icn.html#2917" target="displayFrame">Source - browser.icn </a>
+</dd>
+</dl><hr>
+</body></html>

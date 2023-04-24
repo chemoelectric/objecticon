@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>limatch</title></head><body>
+<h1>limatch(l, i)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.scan-package.html" target="listFrame">ipl.scan</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+############################################################################
+<p/>
+This matching function illustrates how every can be 
+used in string scanning.   <br>
+<p/>
+<ol type="1">
+<li>
+Each element of the list argument is matched in 
+succession. 
+</li>
+<li>
+Leading characters in the subject are skipped over
+to match the first element.
+</li>
+<li>
+The strings listed may be seperated by other characters
+provided they are specified in a cset of characters to 
+be ignored.
+<p/>
+</li>
+</ol>
+It could be used to find things in text that have varying
+representations, for example: "i.e.", "e.g.", "P.O.", etc.
+<p/>
+<pre>
+limatch(l,i)
+</pre>
+<p/>
+<code>l</code>  list of strings to be found  <br>
+<code>i</code>  cset containing characters to be ignored between each string
+<p/>
+returns the last cursor position scanned to, or fails
+<p/><a href="ipl.scan-scan.icn.html#455" target="displayFrame">Source - scan.icn </a>
+<p/>
+</body></html>

@@ -1,0 +1,33 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>dir_recurse</title></head><body>
+<h1>dir_recurse(f, on_err)</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.io-package.html" target="listFrame">ipl.io</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+Recursively traverse directory <code>f</code>, generating all the filenames
+(including directories).  If this generator isn't used to
+exhaustion, the call must be wrapped in the <code><a href="util.clean.html" target="displayFrame">util.clean()</a></code> function,
+in order to close all outstanding files.  <code>on_err</code> is an optional
+procedure to invoke on an error reading a directory.  If it throws
+an exception, then the call to <code><a href="ipl.io.dir_recurse.html" target="displayFrame">dir_recurse</a></code> should also be enclosed
+with one of the try procedures.
+<p/>
+Example :-
+<pre>
+    clean{try1{{
+       every f := dir_recurse(d, dir_recurse_throw) \ 50 do
+          write("got ", f)
+    }}} | write("Problem: ", &amp;why)
+</pre>
+<dl>
+<dt>
+See also :
+</dt>
+<dd>
+<code><a href="ipl.io.dir_recurse_throw.html" target="displayFrame">dir_recurse_throw()</a></code>
+</dd>
+</dl>
+<p/><a href="ipl.io-iomisc.icn.html#86" target="displayFrame">Source - iomisc.icn </a>
+<p/>
+</body></html>

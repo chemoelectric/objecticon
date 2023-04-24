@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>node.icn</title></head><body><pre>
+<a name="1"/>#
+<a name="2"/># $Id: node.icn 8571 2020-10-09 14:37:12Z rparlett $
+<a name="3"/>#
+<a name="4"/># This file is in the public domain.
+<a name="5"/>#
+<a name="6"/># Author: Robert Parlett (parlett@dial.pipex.com)
+<a name="7"/>#
+<a name="8"/>
+<a name="9"/>package xml
+<a name="10"/>
+<a name="11"/>import lang, io, util, ipl.pdco
+<a name="12"/>
+<a name="13"/>#
+<a name="14"/># This is the base class for all objects in the document, including
+<a name="15"/># the document itself.
+<a name="16"/>#
+<a name="17"/>abstract class Node()
+<a name="18"/>   public
+<a name="19"/>      parent,
+<a name="20"/>      children
+<a name="21"/>
+<a name="22"/>   #
+<a name="23"/>   # Return the parent Node of this Node
+<a name="24"/>   #
+<a name="25"/>   public get_parent()
+<a name="26"/>      return parent
+<a name="27"/>   end
+<a name="28"/>
+<a name="29"/>   #
+<a name="30"/>   # Return the children of this node.
+<a name="31"/>   #
+<a name="32"/>   public get_children()
+<a name="33"/>      return children
+<a name="34"/>   end
+<a name="35"/>
+<a name="36"/>   #
+<a name="37"/>   # Add a child at the given pos.  If pos is not specified, the
+<a name="38"/>   # child is appended to the end.
+<a name="39"/>   #
+<a name="40"/>   # :Parameters :
+<a name="41"/>   # :  `obj` - either a string/ucs or a Node subclass
+<a name="42"/>   # :  `pos` - the pos to insert
+<a name="43"/>   # :Fails :
+<a name="44"/>   # :  If pos is out of range
+<a name="45"/>   #
+<a name="46"/>   public add(obj, pos)
+<a name="47"/>      local fl
+<a name="48"/>      /pos := 0
+<a name="49"/>      if obj := text(obj) then
+<a name="50"/>         fl := &amp;yes
+<a name="51"/>      insert(children, pos, obj) | fail
+<a name="52"/>      if /fl then
+<a name="53"/>         obj.parent := self
+<a name="54"/>      link
+<a name="55"/>   end
+<a name="56"/>
+<a name="57"/>   #
+<a name="58"/>   # Add a string at the given pos.  If pos is not specified, the
+<a name="59"/>   # child is appended to the end.
+<a name="60"/>   #
+<a name="61"/>   # This differs from the above `add()` method in that adjacent
+<a name="62"/>   # strings will be compacted together to form one longer string.
+<a name="63"/>   #
+<a name="64"/>   # :Parameters :
+<a name="65"/>   # :  `s` - a string/ucs
+<a name="66"/>   # :  `pos` - the pos to insert
+<a name="67"/>   # :Fails :
+<a name="68"/>   # :  If pos is out of range
+<a name="69"/>   #
+<a name="70"/>   public add_string(s, pos)
+<a name="71"/>      /pos := 0
+<a name="72"/>      if text(children[pos - 1]) then
+<a name="73"/>         children[pos - 1] ||:= s
+<a name="74"/>      else if text(children[pos]) then
+<a name="75"/>         children[pos] := s || children[pos]
+<a name="76"/>      else
+<a name="77"/>         insert(children, pos, need_text(s)) | fail
+<a name="78"/>      link
+<a name="79"/>   end
+<a name="80"/>
+<a name="81"/>   #
+<a name="82"/>   # Returns a copy of the children of this `Node`, in which adjacent
+<a name="83"/>   # text children are combined together.
+<a name="84"/>   #
+<a name="85"/>   public get_compacted_children()
+<a name="86"/>      local i, j, r
+<a name="87"/>      r := []
+<a name="88"/>      i := 1
+<a name="89"/>      while i &lt;= *children do {
+<a name="90"/>         if text(children[i]) then {
+<a name="91"/>            j := i + 1
+<a name="92"/>            while text(children[j]) do
+<a name="93"/>               j +:= 1
+<a name="94"/>            if j - i &gt; 1 then
+<a name="95"/>               put(r, String2{ children[i to j - 1] })
+<a name="96"/>            else 
+<a name="97"/>               put(r, children[i])
+<a name="98"/>            i := j
+<a name="99"/>         } else {
+<a name="100"/>            put(r, children[i])
+<a name="101"/>            i +:= 1
+<a name="102"/>         }
+<a name="103"/>      }
+<a name="104"/>      return r
+<a name="105"/>   end
+<a name="106"/>
+<a name="107"/>   #
+<a name="108"/>   # Traverse all the nodes in this `Node` with a preorder traversal.
+<a name="109"/>   #
+<a name="110"/>   public traverse_nodes_preorder()
+<a name="111"/>      local e
+<a name="112"/>      coact(self)
+<a name="113"/>      every e := !children do
+<a name="114"/>         text(e) | e.traverse_nodes_preorder()
+<a name="115"/>   end
+<a name="116"/>
+<a name="117"/>   #
+<a name="118"/>   # Traverse all the nodes in this `Node` with a postorder traversal.
+<a name="119"/>   #
+<a name="120"/>   public traverse_nodes_postorder()
+<a name="121"/>      local e
+<a name="122"/>      every e := !children do
+<a name="123"/>         text(e) | e.traverse_nodes_postorder()
+<a name="124"/>      coact(self)
+<a name="125"/>   end
+<a name="126"/>
+<a name="127"/>   #
+<a name="128"/>   # Traverse all the nodes and strings in this `Node` with a preorder traversal.
+<a name="129"/>   #
+<a name="130"/>   public traverse_all_preorder()
+<a name="131"/>      local e
+<a name="132"/>      coact(self)
+<a name="133"/>      every e := !children do {
+<a name="134"/>         if text(e) then
+<a name="135"/>            coact(e)
+<a name="136"/>         else
+<a name="137"/>            e.traverse_all_preorder()
+<a name="138"/>      }
+<a name="139"/>   end
+<a name="140"/>
+<a name="141"/>   #
+<a name="142"/>   # Traverse all the nodes and strings in this `Node` with a postorder traversal.
+<a name="143"/>   #
+<a name="144"/>   public traverse_all_postorder()
+<a name="145"/>      local e
+<a name="146"/>      every e := !children do {
+<a name="147"/>         if text(e) then
+<a name="148"/>            coact(e)
+<a name="149"/>         else
+<a name="150"/>            e.traverse_all_postorder()
+<a name="151"/>      }
+<a name="152"/>      coact(self)
+<a name="153"/>   end
+<a name="154"/>
+<a name="155"/>   #
+<a name="156"/>   # Get a copy list of the children elements, but with any whitespace-only string elements
+<a name="157"/>   # removed.  This leaves the children list intact.
+<a name="158"/>   #
+<a name="159"/>   public get_children_no_whitespace()
+<a name="160"/>      local e
+<a name="161"/>      return List{ (e := !children,
+<a name="162"/>                    if not(text(e)) | upto(~(XmlParser.SPACE ++ '\f'), e) then e) }
+<a name="163"/>   end
+<a name="164"/>
+<a name="165"/>   #
+<a name="166"/>   # Just like `get_children_no_whitespace()`, but this trims any string children
+<a name="167"/>   # left in the list.
+<a name="168"/>   #
+<a name="169"/>   public get_trimmed_children()
+<a name="170"/>      local e
+<a name="171"/>      return List{ (e := !children,
+<a name="172"/>                    if text(e) then "" ~== xml_trim(e) else e) }
+<a name="173"/>   end
+<a name="174"/>
+<a name="175"/>   #
+<a name="176"/>   # Get the string content of the node, which is the catenation of
+<a name="177"/>   # all the string children.
+<a name="178"/>   #
+<a name="179"/>   public get_string_content()
+<a name="180"/>      return String2{ text(!self.children) }
+<a name="181"/>   end
+<a name="182"/>
+<a name="183"/>   #
+<a name="184"/>   # Get the trimmed string content of the node, which is the catenation of
+<a name="185"/>   # all the trimmed string children.
+<a name="186"/>   #
+<a name="187"/>   public get_trimmed_string_content()
+<a name="188"/>      return String2{ xml_trim(text(!self.children)) }
+<a name="189"/>   end
+<a name="190"/>
+<a name="191"/>   #
+<a name="192"/>   # Like `get_string_content()`, but includes CDATA sections too.
+<a name="193"/>   #
+<a name="194"/>   public get_string_content_with_cdata()
+<a name="195"/>      local e
+<a name="196"/>      return String2{ (e := !self.children,
+<a name="197"/>                       if is(e, CData) then e.get_content() else text(e)) }
+<a name="198"/>   end
+<a name="199"/>
+<a name="200"/>   #
+<a name="201"/>   # Like `get_trimmed_string_content()`, but includes CDATA sections
+<a name="202"/>   # too (which are not trimmed).
+<a name="203"/>   #
+<a name="204"/>   public get_trimmed_string_content_with_cdata()
+<a name="205"/>      local e
+<a name="206"/>      return String2{ (e := !self.children,
+<a name="207"/>                       if is(e, CData) then e.get_content() else xml_trim(text(e))) }
+<a name="208"/>   end
+<a name="209"/>
+<a name="210"/>   #
+<a name="211"/>   # Succeed if this node has string `s` as a child.
+<a name="212"/>   #
+<a name="213"/>   public has_string(s)
+<a name="214"/>      succeed text(!self.children) == s
+<a name="215"/>   end
+<a name="216"/>
+<a name="217"/>   #
+<a name="218"/>   # As `has_string()` above, but trims the child strings before
+<a name="219"/>   # comparison.
+<a name="220"/>   #
+<a name="221"/>   public has_trimmed_string(s)
+<a name="222"/>      succeed xml_trim(text(!self.children)) == s
+<a name="223"/>   end
+<a name="224"/>
+<a name="225"/>   #
+<a name="226"/>   # Search recursively for the given string in the node tree.  Any
+<a name="227"/>   # nodes with the string as a child are produced.
+<a name="228"/>   #
+<a name="229"/>   public find_string(s)
+<a name="230"/>      local n
+<a name="231"/>      every n := Seq{traverse_nodes_preorder()} do
+<a name="232"/>         if n.has_string(s) then
+<a name="233"/>            suspend n
+<a name="234"/>   end
+<a name="235"/>
+<a name="236"/>   #
+<a name="237"/>   # As above, but uses trimmed child strings for comparison.
+<a name="238"/>   #
+<a name="239"/>   public find_trimmed_string(s)
+<a name="240"/>      local n
+<a name="241"/>      every n := Seq{traverse_nodes_preorder()} do
+<a name="242"/>         if n.has_trimmed_string(s) then
+<a name="243"/>            suspend n
+<a name="244"/>   end
+<a name="245"/>
+<a name="246"/>   #
+<a name="247"/>   # Return the nth child which is a string/ucs.
+<a name="248"/>   #
+<a name="249"/>   # :Parameters :
+<a name="250"/>   # :  `n` - the index to look for; 1 being the first.
+<a name="251"/>   # :Fails :
+<a name="252"/>   # :  if there is no such element.
+<a name="253"/>   #
+<a name="254"/>   public get_nth_string(n)
+<a name="255"/>      return Index{ text(!children), n }
+<a name="256"/>   end
+<a name="257"/>
+<a name="258"/>   #
+<a name="259"/>   # Return the nth child which is a string, after
+<a name="260"/>   # trimming it.
+<a name="261"/>   #
+<a name="262"/>   # :Parameters :
+<a name="263"/>   # :  `n` - the index to look for; 1 being the first.
+<a name="264"/>   # :Fails :
+<a name="265"/>   # :  if there is no such element.
+<a name="266"/>   #
+<a name="267"/>   public get_nth_trimmed_string(n)
+<a name="268"/>      return xml_trim(get_nth_string(n))
+<a name="269"/>   end
+<a name="270"/>
+<a name="271"/>   #
+<a name="272"/>   # Print the structure to the given file, for debugging.
+<a name="273"/>   #
+<a name="274"/>   public print_structure(f, indent, flags)
+<a name="275"/>      local i, j, e
+<a name="276"/>      /indent := 0
+<a name="277"/>      i := repl(" ", indent * 5)
+<a name="278"/>      write(f, i || to_string(self, 3))
+<a name="279"/>      every j := 1 to *children do {
+<a name="280"/>         writes(i || j || ":")
+<a name="281"/>         e := children[j]
+<a name="282"/>         if text(e) then
+<a name="283"/>            write(f, image(e))
+<a name="284"/>         else {
+<a name="285"/>            write(f)
+<a name="286"/>            e.print_structure(f, indent + 1, flags)
+<a name="287"/>         }
+<a name="288"/>      }
+<a name="289"/>   end
+<a name="290"/>
+<a name="291"/>   #
+<a name="292"/>   # Trim whitespace characters from both ends of the given string.
+<a name="293"/>   # Whitespace is `XmlParser.SPACE` plus formfeed, which is an
+<a name="294"/>   # illegal character in XML, but not HTML.
+<a name="295"/>   #
+<a name="296"/>   public static xml_trim(s)
+<a name="297"/>      return trim(s, XmlParser.SPACE ++ '\f')
+<a name="298"/>   end
+<a name="299"/>
+<a name="300"/>   public new()
+<a name="301"/>      self.children := []
+<a name="302"/>      return
+<a name="303"/>   end
+<a name="304"/>end
+</pre></body></html>

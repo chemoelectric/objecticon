@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>SearchMatch</title></head><body>
+<h1>SearchMatch</h1>
+<dl>
+<dt>Type :</dt><dd>class</dd>
+<dt>Superclasses :</dt><dd>
+<a href="gui.Point.html" target="displayFrame">gui.Point</a><br>
+</dd>
+<dt>Package :</dt><dd><a href="ipl.browser-package.html" target="listFrame">ipl.browser</a></dd>
+</dl><p/>
+Represents one result of a search.  The Point element is for sorting
+the results into order.  The <code><a href="ipl.browser.SearchMatch.html#memb">memb</a></code> member is the set of
+<code><a href="ipl.browser.TextSelection.html" target="displayFrame">TextSelection</a></code>s, one for each word (or part of word) in the search.
+<p/><a href="ipl.browser-textflow.icn.html#153" target="displayFrame">Source - textflow.icn </a>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Class summary</b></font></td>
+</tr>
+</table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Implemented classes</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html">gui.Point</a>
+<a href="ipl.browser.SearchMatch.html">ipl.browser.SearchMatch</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#cmp_xy">cmp_xy()</a>
+<a href="gui.Point.html#cmp_yx">cmp_yx()</a>
+<a href="gui.Point.html#get_x">get_x()</a>
+<a href="gui.Point.html#get_y">get_y()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables inherited from gui.Point</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="gui.Point.html#x">x</a>
+<a href="gui.Point.html#y">y</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Methods defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#get_bounds">get_bounds()</a>
+<a href="#new">new()</a>
+</td></tr></table>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#eeeeff">
+<td><b>Variables defined in this class</b></td></tr>
+<tr bgcolor="white"><td>
+<a href="#memb">memb</a>
+<a href="#textflow">textflow</a>
+</td></tr></table>
+<p/>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Method detail</b></font></td>
+</tr>
+</table>
+<a name="get_bounds"/>
+<h3>get_bounds()</h3>
+public<p/>
+<dl>
+<dd>
+Get the bounds of all the elements in the result.
+<p/><a href="ipl.browser-textflow.icn.html#163" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="new"/>
+<h3>new(textflow, x, y, memb)</h3>
+public override<p/>
+<dl>
+<dd>Overrides <a href="gui.Point.html#new">new()</a> in <a href="gui.Point.html" target="displayFrame">gui.Point</a></dd>
+<dd>
+<p/><a href="ipl.browser-textflow.icn.html#173" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<table border="1" cellpadding="3" cellspacing="0" width="100%">
+<tr bgcolor="#ccccff">
+<td colspan=1><font size="+2">
+<b>Variable detail</b></font></td>
+</tr>
+</table>
+<a name="memb"/>
+<h3>memb</h3>
+public const<p/>
+<dl>
+<dd>
+set of TextSelection
+<p/><a href="ipl.browser-textflow.icn.html#161" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+<a name="textflow"/>
+<h3>textflow</h3>
+public const<p/>
+<dl>
+<dd>
+owning TextFlow; all members are also in the same TextFlow.
+<p/><a href="ipl.browser-textflow.icn.html#160" target="displayFrame">Source - textflow.icn </a>
+</dd>
+</dl><hr>
+</body></html>

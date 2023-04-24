@@ -1,0 +1,579 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>sort.icn</title></head><body><pre>
+<a name="1"/>###########################################################################
+<a name="2"/>#
+<a name="3"/>#	File:     sort.icn
+<a name="4"/>#
+<a name="5"/>#	Subject:  Procedures for sorting
+<a name="6"/>#
+<a name="7"/>#	Authors:  Bob Alexander, Richard L. Goerwitz, and Ralph E. Griswold
+<a name="8"/>#
+<a name="9"/>#	Date:     September 10, 1998
+<a name="10"/>#
+<a name="11"/>############################################################################
+<a name="12"/>#
+<a name="13"/>#   This file is in the public domain.
+<a name="14"/>#
+<a name="15"/>############################################################################
+<a name="16"/>
+<a name="17"/>package ipl.sort
+<a name="18"/>
+<a name="19"/>import
+<a name="20"/>   lang(Class,Prog,Internal),
+<a name="21"/>   util(cvslice_def, need_callable),
+<a name="22"/>   datastruct(Entry),
+<a name="23"/>   ipl.tables(inserts)
+<a name="24"/>
+<a name="25"/>#
+<a name="26"/>#  Customizable sort procedure for inclusion in Icon programs.
+<a name="27"/>#  ~
+<a name="28"/>#       isort(x,keyproc,y)
+<a name="29"/>#  ~
+<a name="30"/>#  Argument x can be any Icon data type that is divisible into elements
+<a name="31"/>#  by the unary element generation (!) operator.  The result is a list
+<a name="32"/>#  of the objects in sorted order.
+<a name="33"/>#
+<a name="34"/>#  The default is to sort elements in their natural, Icon-defined order.
+<a name="35"/>#  However, an optional parameter (keyproc) allows a sort key to be
+<a name="36"/>#  derived from each element, rather than the default of using the
+<a name="37"/>#  element itself as the key.  Keyproc can be a procedure provided by
+<a name="38"/>#  the caller, in which case the first argument to the key procedure is
+<a name="39"/>#  the item for which the key is to be computed, and the second argument
+<a name="40"/>#  is isort's argument y, passed unchanged.  The keyproc must produce
+<a name="41"/>#  the extracted key.  Alternatively, the keyproc argument can be an
+<a name="42"/>#  integer, in which case it specifies a subscript to be applied to each
+<a name="43"/>#  item to produce a key.  Keyproc will be called once for each element
+<a name="44"/>#  of structure x.
+<a name="45"/>#
+<a name="46"/>procedure isort(x,keyproc,y)
+<a name="47"/>   local items,item,key,result
+<a name="48"/>   keyproc := if y := integer(keyproc) then
+<a name="49"/>	 Prog.get_operator("[]",2)
+<a name="50"/>   else need_callable(\keyproc,1) | 1
+<a name="51"/>   items := table()
+<a name="52"/>   every item := !x do {
+<a name="53"/>      key := keyproc(item,y)
+<a name="54"/>      inserts(items, key, item)
+<a name="55"/>      }
+<a name="56"/>   items := sort(items,3)
+<a name="57"/>   result := []
+<a name="58"/>   while get(items) do every put(result,!get(items))
+<a name="59"/>   return result
+<a name="60"/>end
+<a name="61"/>
+<a name="62"/># ~
+<a name="63"/># sortff:  structure [x integer [x integer...]] -&gt; structure
+<a name="64"/>#          (L, fields...) -&gt; new_L
+<a name="65"/># ~
+<a name="66"/># Sort on multiple fields, where L is any subscriptable structure, and
+<a name="67"/># fields are any number of integer subscripts in any desired order.
+<a name="68"/># Returns a copy of structure L with its elements sorted on fields[1],
+<a name="69"/># and, for those elements having an identical fields[1], sub- sorted
+<a name="70"/># on field[2], etc.
+<a name="71"/>#
+<a name="72"/>procedure sortff(L, fields[])		
+<a name="73"/>    *L &lt;= 1 &amp; { return copy(L) }
+<a name="74"/>    return sortff_1(L, fields, 1, [])
+<a name="75"/>end
+<a name="76"/>
+<a name="77"/>package procedure sortff_1(L, fields, k, uniqueObject)
+<a name="78"/>
+<a name="79"/>    local sortField, cachedKeyValue, i, startOfRun, thisKey
+<a name="80"/>
+<a name="81"/>    sortField := fields[k]
+<a name="82"/>    L := sortf(L, sortField)	# initial sort using fields[k]
+<a name="83"/>    #
+<a name="84"/>    #  If more than one sort field is given, use each field successively
+<a name="85"/>    #  as the current key, and, where members in L have the same value for
+<a name="86"/>    #  this key, do a subsort using fields[k+1].
+<a name="87"/>    #
+<a name="88"/>    if fields[k +:= 1] then {
+<a name="89"/>        #
+<a name="90"/>        #  Set the equal-key-run pointer to the start of the list and
+<a name="91"/>        #  save the value of the first key in the run.
+<a name="92"/>        #
+<a name="93"/>	startOfRun := 1
+<a name="94"/>	cachedKeyValue := L[startOfRun][sortField] | uniqueObject
+<a name="95"/>	every i := 2 to *L do {
+<a name="96"/>	    thisKey := L[i][sortField] | uniqueObject
+<a name="97"/>	    unless thisKey === cachedKeyValue then {
+<a name="98"/>	        #
+<a name="99"/>	        # We have an element with a sort key different from the
+<a name="100"/>	        # previous.  If there's a run of more than one equal keys,
+<a name="101"/>	        # sort the sublist.
+<a name="102"/>	        #
+<a name="103"/>		if i - startOfRun &gt; 1 then {
+<a name="104"/>		    L := L[1:startOfRun] |||
+<a name="105"/>			 sortff_1(L[startOfRun:i], fields, k, uniqueObject) |||
+<a name="106"/>			 L[i:0]
+<a name="107"/>		}
+<a name="108"/>	        # Reset the equal-key-run pointer to this key and cache.
+<a name="109"/>		startOfRun := i
+<a name="110"/>		cachedKeyValue := L[startOfRun][sortField] | uniqueObject
+<a name="111"/>            }
+<a name="112"/>	}
+<a name="113"/>	#
+<a name="114"/>	#  Sort a final run if it exists.
+<a name="115"/>	#
+<a name="116"/>	if i - startOfRun &gt; 0 then {
+<a name="117"/>	    L := L[1:startOfRun] |||
+<a name="118"/>		 sortff_1(L[startOfRun:0], fields, k, uniqueObject)
+<a name="119"/>	}
+<a name="120"/>    }
+<a name="121"/>
+<a name="122"/>    return L
+<a name="123"/>
+<a name="124"/>end
+<a name="125"/>
+<a name="126"/>#
+<a name="127"/># sortgen(T, m)
+<a name="128"/># generates sorted output in a manner specified by m:
+<a name="129"/>#
+<a name="130"/>#			"k+"	sort by key in ascending order
+<a name="131"/>#			"k-"	sort by key in descending order
+<a name="132"/>#			"v+"	sort by value in ascending order
+<a name="133"/>#			"v-"	sort by value in descending order
+<a name="134"/>procedure sortgen(T, m)		
+<a name="135"/>   local L
+<a name="136"/>
+<a name="137"/>   L := sort(T, case m of {
+<a name="138"/>      "k+" | "k-":  1
+<a name="139"/>      "v+" | "v-":  2
+<a name="140"/>      })
+<a name="141"/>
+<a name="142"/>   case m of {
+<a name="143"/>      "k+" | "v+":  suspend !L
+<a name="144"/>      "k-" | "v-":  suspend L[*L to 1 by -1]
+<a name="145"/>      }
+<a name="146"/>
+<a name="147"/>end
+<a name="148"/>
+<a name="149"/>
+<a name="150"/># Like sort(T, i) but produces a list of two-element records instead
+<a name="151"/># of a list of two-element lists.  The elements returned are `Entry`
+<a name="152"/># records.
+<a name="153"/>#
+<a name="154"/>procedure sortt(T, i)		
+<a name="155"/>   local result, k
+<a name="156"/>
+<a name="157"/>   unless integer(i) = (1 | 2) then runerr(205, i)
+<a name="158"/>
+<a name="159"/>   result := []
+<a name="160"/>
+<a name="161"/>   every put(result, Entry(k := key(T), T[k]))
+<a name="162"/>
+<a name="163"/>   return sortf(result, i)
+<a name="164"/>
+<a name="165"/>end
+<a name="166"/>
+<a name="167"/># This is a comparison function that just reverses the order of the
+<a name="168"/># `Internal.compare` function.
+<a name="169"/>#
+<a name="170"/>procedure rev_internal_cmp(a, b)
+<a name="171"/>   return Internal.compare(b, a)
+<a name="172"/>end
+<a name="173"/>
+<a name="174"/># Implementation class for `combine_cmp`.
+<a name="175"/>package class CombineCmp()
+<a name="176"/>   private const
+<a name="177"/>      f, g
+<a name="178"/>
+<a name="179"/>   public call(a, b)
+<a name="180"/>      local i
+<a name="181"/>      i := f(a, b)
+<a name="182"/>      if i = 0 then
+<a name="183"/>         i := g(a, b)
+<a name="184"/>      return i
+<a name="185"/>   end
+<a name="186"/>
+<a name="187"/>   public new(f, g)
+<a name="188"/>      self.f := f
+<a name="189"/>      self.g := g
+<a name="190"/>      return
+<a name="191"/>   end
+<a name="192"/>end
+<a name="193"/>
+<a name="194"/>#
+<a name="195"/># Return a compare function which combines two other compare functions
+<a name="196"/># in such a way that the second, `g`, is only called if the first,
+<a name="197"/># `f`, produces a tie for a particular pair (ie returns 0).
+<a name="198"/>#
+<a name="199"/># For example :-
+<a name="200"/># ~
+<a name="201"/>#    l := ["ABC",u"Abc",u"def",u"DEF",u"ABC","def",u"DEf","ABc"]
+<a name="202"/>#    mergesort(l, combine_cmp(convert_cmp(string,Text.caseless_compare),
+<a name="203"/>#                             type_cmp))
+<a name="204"/># ~
+<a name="205"/># gives
+<a name="206"/># ~
+<a name="207"/>#    ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
+<a name="208"/># ~
+<a name="209"/>procedure combine_cmp(f, g)
+<a name="210"/>   return CombineCmp(need_callable(f), need_callable(g)).call
+<a name="211"/>end
+<a name="212"/>
+<a name="213"/># Implementation class for `index_cmp`.
+<a name="214"/>package class IndexCmp()
+<a name="215"/>   private const
+<a name="216"/>      f, i
+<a name="217"/>
+<a name="218"/>   public call(a, b)
+<a name="219"/>      return f(a[i], b[i]) | runerr("Invalid index given to index_cmp")
+<a name="220"/>   end
+<a name="221"/>
+<a name="222"/>   public new(i, f)
+<a name="223"/>      self.i := i
+<a name="224"/>      self.f := f
+<a name="225"/>      return
+<a name="226"/>   end
+<a name="227"/>end
+<a name="228"/>
+<a name="229"/>#
+<a name="230"/># Return a compare function which applies the comparator function `f` to the
+<a name="231"/># `i`th field of each item.  `f` defaults to `Internal.compare`.
+<a name="232"/>#
+<a name="233"/># For example :-
+<a name="234"/># ~
+<a name="235"/>#     l := [ [1,54,2], [4,56,23], [4325,1,23], [123,4576,23]]
+<a name="236"/>#     # sort by the middle element of each item
+<a name="237"/>#     qsort(l, index_cmp(2))
+<a name="238"/># ~
+<a name="239"/>procedure index_cmp(i, f)
+<a name="240"/>   return IndexCmp(i, need_callable_def(f)).call
+<a name="241"/>end
+<a name="242"/>
+<a name="243"/># Implementation class for `field_cmp`.
+<a name="244"/>package class FieldCmp()
+<a name="245"/>   private const
+<a name="246"/>      f, q
+<a name="247"/>
+<a name="248"/>   public call(a, b)
+<a name="249"/>      return f(Class.get(a, q), Class.get(b, q))
+<a name="250"/>   end
+<a name="251"/>
+<a name="252"/>   public new(q, f)
+<a name="253"/>      self.q := q
+<a name="254"/>      self.f := f
+<a name="255"/>      return
+<a name="256"/>   end
+<a name="257"/>end
+<a name="258"/>
+<a name="259"/>#
+<a name="260"/># Return a compare function which applies the comparator function `f` to the
+<a name="261"/># field named `q` in each item.  `f` defaults to `Internal.compare`.
+<a name="262"/>#
+<a name="263"/># For example :-
+<a name="264"/># ~
+<a name="265"/>#     l := [Point(1,2),Point(34,4),Point(3,56),Point(23,55)]
+<a name="266"/>#     # sort by the x element of each item
+<a name="267"/>#     qsort(l, field_cmp("x"))
+<a name="268"/># ~
+<a name="269"/>procedure field_cmp(q, f)
+<a name="270"/>   return FieldCmp(q, need_callable_def(f)).call
+<a name="271"/>end
+<a name="272"/>
+<a name="273"/>#
+<a name="274"/># A compare function that compares solely by type, using the same
+<a name="275"/># ordering as the internal sorting functions.
+<a name="276"/>#
+<a name="277"/>procedure type_cmp(a, b)
+<a name="278"/>   return Internal.compare(Internal.order(a), Internal.order(b))
+<a name="279"/>end
+<a name="280"/>
+<a name="281"/># A numeric comparison function; unlike `Internal.compare`, reals and
+<a name="282"/># integers are sorted in their natural sort order.
+<a name="283"/>#
+<a name="284"/>procedure num_cmp(x, y)
+<a name="285"/>   return if x &lt; y then
+<a name="286"/>      -1
+<a name="287"/>   else if x &gt; y then
+<a name="288"/>      1
+<a name="289"/>   else
+<a name="290"/>      0
+<a name="291"/>end
+<a name="292"/>
+<a name="293"/># Implementation class for `convert_cmp`.
+<a name="294"/>package class ConvertCmp()
+<a name="295"/>   private const
+<a name="296"/>      f, cnv
+<a name="297"/>
+<a name="298"/>   public call(a, b)
+<a name="299"/>      a := cnv(a)
+<a name="300"/>      b := cnv(b)
+<a name="301"/>      return f(a, b)
+<a name="302"/>   end
+<a name="303"/>
+<a name="304"/>   public new(cnv, f)
+<a name="305"/>      self.cnv := cnv
+<a name="306"/>      self.f := f
+<a name="307"/>      return
+<a name="308"/>   end
+<a name="309"/>end
+<a name="310"/>
+<a name="311"/>#
+<a name="312"/># Return a compare function which first applies the conversion
+<a name="313"/># function `cnv` to the two arguments given to it, and then returns
+<a name="314"/># the result of applying the compare function `f`, which defaults to
+<a name="315"/># `Internal.compare`.
+<a name="316"/>#
+<a name="317"/># For example :-
+<a name="318"/># ~
+<a name="319"/>#     l := ["abc", "def",  u"abc",  u"xyz"]
+<a name="320"/>#     qsort(l, convert_cmp(string))
+<a name="321"/># ~
+<a name="322"/># leaves l as
+<a name="323"/># ~
+<a name="324"/>#     [u"abc", "abc", "def", u"xyz"]
+<a name="325"/># ~
+<a name="326"/># whilst
+<a name="327"/># ~
+<a name="328"/>#     l := [2, 1, 1.5, 4.0, 1.2, 4]
+<a name="329"/>#     qsort(l, convert_cmp(real))
+<a name="330"/># ~
+<a name="331"/># leaves l as
+<a name="332"/># ~
+<a name="333"/>#     [1, 1.2, 1.5, 2, 4, 4.0]
+<a name="334"/># ~
+<a name="335"/>#
+<a name="336"/># Tip: If cnv is an expensive function, consider using
+<a name="337"/># `ipl.functional.memoize1` so that it is only called once
+<a name="338"/># for each item; for example :-
+<a name="339"/># ~
+<a name="340"/># procedure expensive_key(x)
+<a name="341"/>#   return ... expensive computation on x
+<a name="342"/># end
+<a name="343"/>#
+<a name="344"/># ...
+<a name="345"/>#       qsort(big_list, convert_cmp(memoize1(expensive_key)))
+<a name="346"/># 
+<a name="347"/># ~
+<a name="348"/>procedure convert_cmp(cnv, f)
+<a name="349"/>   return ConvertCmp(need_callable(cnv),
+<a name="350"/>                     need_callable_def(f)).call
+<a name="351"/>end
+<a name="352"/>
+<a name="353"/># Implementation class for `coex_cmp`.
+<a name="354"/>package class CoexCmp()
+<a name="355"/>   private const
+<a name="356"/>      f
+<a name="357"/>
+<a name="358"/>   public call(e1, e2)
+<a name="359"/>      local i1, i2, c
+<a name="360"/>      while i1 := @e1 do {
+<a name="361"/>         if i2 := @e2 then {
+<a name="362"/>            c := f(i1, i2)
+<a name="363"/>            unless c = 0 then
+<a name="364"/>               return c
+<a name="365"/>         } else
+<a name="366"/>            return 1
+<a name="367"/>      }
+<a name="368"/>      return if @e2 then -1 else 0
+<a name="369"/>   end
+<a name="370"/>
+<a name="371"/>   public new(f)
+<a name="372"/>      self.f := f
+<a name="373"/>      return
+<a name="374"/>   end
+<a name="375"/>end
+<a name="376"/>
+<a name="377"/>#
+<a name="378"/># Return a comparator function which applies another comparator
+<a name="379"/># function `f` (by default `Internal.compare`) to the results
+<a name="380"/># generated by pairs of co-expressions, which will be passed to the
+<a name="381"/># returned function for comparison.  For example :-
+<a name="382"/># ~
+<a name="383"/>#   import ipl.strings(words)
+<a name="384"/>#   ...
+<a name="385"/>#   # "Convert" strings to co-expressions generating words
+<a name="386"/>#   procedure wcnv(x)
+<a name="387"/>#      return create words(x)
+<a name="388"/>#   end
+<a name="389"/>#
+<a name="390"/>#   ...
+<a name="391"/>#   # Compare strings word-by-word, ignoring whitespace
+<a name="392"/>#   l := [ "the quick brown  fox", "  abc      def", "xyz",
+<a name="393"/>#          "   abc def", "  the quick   brown fox"]
+<a name="394"/>#   # A comparator for co-expressions, using the default comparator
+<a name="395"/>#   # on each result pair.
+<a name="396"/>#   f1 := coex_cmp()
+<a name="397"/>#   # A comparator which convert its arguments (to co-expressions,
+<a name="398"/>#   # using wcnv), and then compares them (using f1).
+<a name="399"/>#   f2 := convert_cmp(wcnv, f1)
+<a name="400"/>#   qsort(l, f2)
+<a name="401"/>#   # l is now ["   abc def","  abc      def", "the quick brown  fox",
+<a name="402"/>#               "  the quick   brown fox","xyz"]
+<a name="403"/># ~
+<a name="404"/>#
+<a name="405"/>procedure coex_cmp(f)
+<a name="406"/>   return CoexCmp(need_callable_def(f)).call
+<a name="407"/>end
+<a name="408"/>
+<a name="409"/>#
+<a name="410"/># The classic quick sort procedure.  The given list is sorted
+<a name="411"/># in-place, and returned.  If pos1 and pos2 are given, then only
+<a name="412"/># the sublist l[pos1:pos2] is sorted.
+<a name="413"/>#
+<a name="414"/># :Parameters :
+<a name="415"/># :  `l` - the list to sort
+<a name="416"/># :  `cmp` - a comparator function, default `Internal.compare`
+<a name="417"/># :  `pos1` - the first slice index, default 1
+<a name="418"/># :  `pos2` - the second slice index, default 0
+<a name="419"/>#
+<a name="420"/>procedure qsort(l, cmp, pos1, pos2)
+<a name="421"/>   local s
+<a name="422"/>   s := cvslice_def(pos1, pos2, *l) | fail
+<a name="423"/>   cmp := need_callable_def(cmp)
+<a name="424"/>   return qsort1(l, cmp, s.lo, s.hi - 1)
+<a name="425"/>end
+<a name="426"/>
+<a name="427"/>package procedure qsort1(l, cmp, first, last)
+<a name="428"/>   local i, j, pivot
+<a name="429"/>   if last &lt;= first then
+<a name="430"/>      return l
+<a name="431"/>   i := first
+<a name="432"/>   j := last
+<a name="433"/>   pivot := l[(i + j) / 2]
+<a name="434"/>   repeat {
+<a name="435"/>      while cmp(l[i], pivot) &lt; 0 do i +:= 1
+<a name="436"/>      while cmp(l[j], pivot) &gt; 0 do j -:= 1
+<a name="437"/>      if i &lt;= j then {
+<a name="438"/>         l[i] :=: l[j]
+<a name="439"/>         i +:= 1
+<a name="440"/>         j -:= 1
+<a name="441"/>      }
+<a name="442"/>      if i &gt; j then
+<a name="443"/>         break
+<a name="444"/>   }
+<a name="445"/>   if first &lt; j then
+<a name="446"/>      qsort1(l, cmp, first, j)
+<a name="447"/>   if i &lt; last then
+<a name="448"/>      qsort1(l, cmp, i, last)
+<a name="449"/>   return l
+<a name="450"/>end
+<a name="451"/>
+<a name="452"/># A binary search algorithm.  If pos1 and pos2 are given, then only
+<a name="453"/># the sublist l[pos1:pos2] is searched.
+<a name="454"/>#
+<a name="455"/># If the `iflag` parameter is set, and the value is not found, then a
+<a name="456"/># valid insert position is returned which, when inserting val, would
+<a name="457"/># keep the list in order.  If `iflag` is not set, then the procedure
+<a name="458"/># simply fails.
+<a name="459"/>#
+<a name="460"/># :Parameters :
+<a name="461"/># :  `l` - the list to search
+<a name="462"/># :  `val` - the value to search for
+<a name="463"/># :  `cmp` - a comparator function, default `Internal.compare`
+<a name="464"/># :  `pos1` - the first slice index, default 1
+<a name="465"/># :  `pos2` - the second slice index, default 0
+<a name="466"/># :  `iflag` - a flag requesting an insert position if val is not
+<a name="467"/>#        found.
+<a name="468"/>#
+<a name="469"/>procedure bsearch(l, val, cmp, pos1, pos2, iflag)
+<a name="470"/>   local s, m, c, first, last
+<a name="471"/>   s := cvslice_def(pos1, pos2, *l) | fail
+<a name="472"/>   cmp := need_callable_def(cmp)
+<a name="473"/>   first := s.lo
+<a name="474"/>   last := s.hi - 1
+<a name="475"/>   while first &lt;= last do {
+<a name="476"/>      m := (first + last) / 2
+<a name="477"/>      c := cmp(val, l[m])
+<a name="478"/>      if c = 0 then
+<a name="479"/>         return m
+<a name="480"/>      if c &gt; 0 then
+<a name="481"/>         first := m + 1
+<a name="482"/>      else # c &lt; 0
+<a name="483"/>         last := m - 1
+<a name="484"/>   }
+<a name="485"/>   if \iflag then
+<a name="486"/>      return first
+<a name="487"/>end
+<a name="488"/>
+<a name="489"/># A merge sort implementation.  Unlike `qsort`, this returns a sorted
+<a name="490"/># copy, leaving the original unchanged.  If pos1 and pos2 are given,
+<a name="491"/># then only the sublist l[pos1:pos2] is sorted, and that sublist is
+<a name="492"/># returned.
+<a name="493"/>#
+<a name="494"/># :Parameters :
+<a name="495"/># :  `l` - the list to sort
+<a name="496"/># :  `cmp` - a comparator function, default `Internal.compare`
+<a name="497"/># :  `pos1` - the first slice index, default 1
+<a name="498"/># :  `pos2` - the second slice index, default 0
+<a name="499"/>#
+<a name="500"/>procedure mergesort(l, cmp, pos1, pos2)
+<a name="501"/>   local s
+<a name="502"/>   s := cvslice_def(pos1, pos2, *l) | fail
+<a name="503"/>   cmp := need_callable_def(cmp)
+<a name="504"/>   return mergesort1(l, cmp, s.lo, s.hi - 1)
+<a name="505"/>end
+<a name="506"/>
+<a name="507"/>package procedure mergesort1(l, cmp, first, last)
+<a name="508"/>   local l1, l2, l3, m, v1
+<a name="509"/>   if last &lt;= first then
+<a name="510"/>      return l[first:last + 1]
+<a name="511"/>   m := (first + last) / 2
+<a name="512"/>   l1 := mergesort1(l, cmp, first, m)
+<a name="513"/>   l2 := mergesort1(l, cmp, m + 1, last)
+<a name="514"/>   l3 := []
+<a name="515"/>   every v1 := !l1 do {
+<a name="516"/>      while cmp(v1, l2[1]) &gt; 0 do
+<a name="517"/>         put(l3, get(l2))
+<a name="518"/>      put(l3, v1)
+<a name="519"/>   }
+<a name="520"/>   every put(l3, !l2)
+<a name="521"/>   return l3
+<a name="522"/>end
+<a name="523"/>
+<a name="524"/>package record Item(last, e)
+<a name="525"/>
+<a name="526"/># This procedure takes a list of co-expressions and a comparator
+<a name="527"/># function, and generates the results of the co-expressions in order,
+<a name="528"/># according to the comparator.  Each co-expression must generate its
+<a name="529"/># results in the order indicated by the comparator.
+<a name="530"/>#
+<a name="531"/># For example :-
+<a name="532"/># ~
+<a name="533"/>#  sort_seq( [ create 5 to 20 by 5,
+<a name="534"/>#              create 11 | 200,
+<a name="535"/>#              create 11 | 99 ] )
+<a name="536"/># ~
+<a name="537"/># generates :-
+<a name="538"/># ~
+<a name="539"/>#          5  10  11  11  15  20  99  200
+<a name="540"/># ~
+<a name="541"/>#
+<a name="542"/># :Parameters :
+<a name="543"/># :  `el` - the list of co-expressions
+<a name="544"/># :  `cmp` - a comparator function, default `Internal.compare`
+<a name="545"/>#
+<a name="546"/>procedure sort_seq(el, cmp)
+<a name="547"/>   local l, cmp_item, e, i
+<a name="548"/>
+<a name="549"/>   cmp := need_callable_def(cmp)
+<a name="550"/>
+<a name="551"/>   # Create the initial list of Items, excluding those expressions
+<a name="552"/>   # that fail to produce a result.  The first element of the list
+<a name="553"/>   # will always give us the next result.
+<a name="554"/>   l := []
+<a name="555"/>   every e := !el do
+<a name="556"/>      put(l, Item(@e, e))
+<a name="557"/>
+<a name="558"/>   # Sort on the 1st field of Item (last).
+<a name="559"/>   cmp_item := index_cmp(1, cmp)
+<a name="560"/>   qsort(l, cmp_item)
+<a name="561"/>
+<a name="562"/>   while i := pop(l) do {
+<a name="563"/>      suspend i.last
+<a name="564"/>      if i.last := @i.e then
+<a name="565"/>         # Re-insert Item i into the list, keeping it in sorted order.
+<a name="566"/>         insert(l, bsearch(l, i, cmp_item,,, &amp;yes), i)
+<a name="567"/>   }
+<a name="568"/>end
+<a name="569"/>
+<a name="570"/>#
+<a name="571"/># A useful procedure which is like `need_callable`, but if f is null, then
+<a name="572"/># `Internal.compare` is assumed.
+<a name="573"/>#
+<a name="574"/>procedure need_callable_def(f)
+<a name="575"/>   return need_callable(\f) | Internal.compare
+<a name="576"/>end
+</pre></body></html>

@@ -1,0 +1,19 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta charset="UTF-8"><title>sortff</title></head><body>
+<h1>sortff(L, fields[])</h1>
+<dl>
+<dt>Package :</dt><dd><a href="ipl.sort-package.html" target="listFrame">ipl.sort</a></dd>
+<dt>Type :</dt><dd>procedure</dd>
+</dl><p/>
+<pre>
+sortff:  structure [x integer [x integer...]] -&gt; structure
+         (L, fields...) -&gt; new_L
+</pre>
+Sort on multiple fields, where L is any subscriptable structure, and
+fields are any number of integer subscripts in any desired order.
+Returns a copy of structure L with its elements sorted on fields[1],
+and, for those elements having an identical fields[1], sub- sorted
+on field[2], etc.
+<p/><a href="ipl.sort-sort.icn.html#62" target="displayFrame">Source - sort.icn </a>
+<p/>
+</body></html>
