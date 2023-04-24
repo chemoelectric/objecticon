@@ -1,2 +1,0 @@
-typedef int MYSQL, MYSQL_FIELD, MYSQL_RES, 
-    MYSQL_FIELD_OFFSET, MYSQL_ROW, MYSQL_ROW_OFFSET, my_ulonglong, bool;
