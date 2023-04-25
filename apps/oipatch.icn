@@ -1,0 +1,53 @@
+# A program that changes the oix path in an Object Icon executable,
+# similar to ipatch.icn for ordinary Icon.
+#
+# This program is in the public domain.
+#
+
+import io
+import ipl.options
+
+procedure main (args)
+  local file_name
+  local oix_path
+  local s
+  local i
+  local opts
+  local f
+
+  opts := options (args, "i!")
+
+  if *args ~= 2 then
+      stop ("Usage: ", &progname, " [-i] program_file new_oix_path\n\n",
+            "If the -i flag is present, patching is in-place. Otherwise\n",
+            "the patched program is written to standard output.")
+  file_name := get (args)
+  oix_path := get (args)
+
+  s := Files.file_to_string (file_name) |
+      stop ("Failed to open and read the contents of `", file_name, "'.")
+
+  s ? {
+    (match ("#!/bin/sh\nOIX_BIN=") &
+     i := find ("[executable Icon binary follows]")) |
+        stop ("The file `", file_name,
+              "' is not an Object Icon executable that we know how to patch.")
+  }
+
+  if \opts["i"] then {
+    f := open (file_name, "w") |
+        stop ("Failed to open `", file_name, "' for writing.")
+  } else {
+    f := FileStream.stdout
+  }
+  f.writes ("#!/bin/sh\n",
+            "OIX_BIN=\"", oix_path, "\"\n",
+            "\n",
+            "[ -n \"$OIX\" ] && exec \"$OIX\" \"$0\" \"$@\"\n",
+            "[ -x \"$OIX_BIN\" ] && exec \"$OIX_BIN\" \"$0\" \"$@\"\n",
+            "exec oix \"$0\" \"$@\"\n",
+            "\n",
+            s[i:0])
+  if \opts["i"] then
+      f.close ()
+end
