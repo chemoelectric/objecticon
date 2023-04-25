@@ -1,7 +1,4 @@
-AC_INIT([Object Icon],
-        [m4_esyscmd_s(svnversion | tr : -)],
-        [2rparlett@gmail.com],
-        [objecticon])
+AC_INIT([Object Icon],[chemoelectric-development],,[objecticon])
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_HOST
