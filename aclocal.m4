@@ -117,7 +117,7 @@ AC_DEFUN([AX_CHECK_MSG_NOSIGNAL],
         [ax_cv_flag_msg_nosignal=yes],
         [ax_cv_flag_msg_nosignal=no])])
    if test "$ax_cv_flag_msg_nosignal" = yes ; then
-	AC_DEFINE([HAVE_MSG_NOSIGNAL],[1],[Define to 1 if have MSG_NOSIGNAL.]))
+	AC_DEFINE([HAVE_MSG_NOSIGNAL],[1],[Define to 1 if have MSG_NOSIGNAL.])
    fi
 ])
 
@@ -128,7 +128,7 @@ AC_DEFUN([AX_CHECK_UNSETENV_RETURNS_INT],
         [ax_cv_flag_unsetenv_int_return=yes],
         [ax_cv_flag_unsetenv_int_return=no])])
    if test "$ax_cv_flag_unsetenv_int_return" = yes ; then
-      AC_DEFINE([HAVE_UNSETENV_INT_RETURN],[1],[Define to 1 if unsetenv returns int.]))
+      AC_DEFINE([HAVE_UNSETENV_INT_RETURN],[1],[Define to 1 if unsetenv returns int.])
    fi
 ])
 
