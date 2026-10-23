@@ -66,10 +66,10 @@ AC_DEFUN([AX_STRUCT_TIMEZONE_GMTOFF],
         [ax_cv_member_struct_tm_tm_isdst=yes],
         [ax_cv_member_struct_tm_tm_isdst=no])])
   if test "$ax_cv_member_struct_tm_tm_gmtoff" = yes; then
-     AC_DEFINE(HAVE_STRUCT_TM_TM_GMTOFF)
+     AC_DEFINE([HAVE_STRUCT_TM_TM_GMTOFF],[1],[Define to 1 if struct tm has a tm_gmtoff field.])
   fi
   if test "$ax_cv_member_struct_tm_tm_isdst" = yes; then
-     AC_DEFINE(HAVE_STRUCT_TM_TM_ISDST)
+     AC_DEFINE([HAVE_STRUCT_TM_TM_ISDST],[1],[Define to 1 if struct tm has a tm_isdst field.])
   fi
 ])
 
@@ -96,16 +96,16 @@ AC_DEFUN([AX_VAR_TIMEZONE_EXTERNALS],
         [ax_cv_var_tzname=no])
    ])
    if test $ax_cv_var_timezone = yes; then
-      AC_DEFINE(HAVE_TIMEZONE)
+      AC_DEFINE([HAVE_TIMEZONE],[1],[Define to 1 if timezone is in <time.h>])
    fi
    if test $ax_cv_var_altzone = yes; then
-      AC_DEFINE(HAVE_ALTZONE)
+      AC_DEFINE([HAVE_ALTZONE],[1],[Define to 1 if altzone is in <time.h>])
    fi
    if test $ax_cv_var_daylight = yes; then
-      AC_DEFINE(HAVE_DAYLIGHT)
+      AC_DEFINE([HAVE_DAYLIGHT],[1],[Define to 1 if daylight is in <time.h>])
    fi
    if test $ax_cv_var_tzname = yes; then
-      AC_DEFINE(HAVE_TZNAME)
+      AC_DEFINE([HAVE_TZNAME],[1],[Define to 1 if tzname is in <time.h>])
    fi
 ])
 
@@ -117,7 +117,7 @@ AC_DEFUN([AX_CHECK_MSG_NOSIGNAL],
         [ax_cv_flag_msg_nosignal=yes],
         [ax_cv_flag_msg_nosignal=no])])
    if test "$ax_cv_flag_msg_nosignal" = yes ; then
-	AC_DEFINE(HAVE_MSG_NOSIGNAL)
+	AC_DEFINE([HAVE_MSG_NOSIGNAL],[1],[Define to 1 if have MSG_NOSIGNAL.]))
    fi
 ])
 
@@ -128,7 +128,7 @@ AC_DEFUN([AX_CHECK_UNSETENV_RETURNS_INT],
         [ax_cv_flag_unsetenv_int_return=yes],
         [ax_cv_flag_unsetenv_int_return=no])])
    if test "$ax_cv_flag_unsetenv_int_return" = yes ; then
-      AC_DEFINE(HAVE_UNSETENV_INT_RETURN)
+      AC_DEFINE([HAVE_UNSETENV_INT_RETURN],[1],[Define to 1 if unsetenv returns int.]))
    fi
 ])
 
@@ -145,7 +145,7 @@ AC_DEFUN([AX_CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
                    [ax_cv_flag_double_has_word_alignment=yes],
                    [ax_cv_flag_double_has_word_alignment=no])])
    if test "$ax_cv_flag_double_has_word_alignment" = yes ; then
-      AC_DEFINE(DOUBLE_HAS_WORD_ALIGNMENT)
+      AC_DEFINE([DOUBLE_HAS_WORD_ALIGNMENT],[1],[Define to 1 double has word alignment.])
    fi
 ])
 
@@ -160,7 +160,7 @@ AC_DEFUN([AX_CHECK_TIOCSCTTY],
                  [ax_cv_flag_tiocsctty_is_defined=yes],
                  [ax_cv_flag_tiocsctty_is_defined=no])])
    if test "$ax_cv_flag_tiocsctty_is_defined" = yes ; then
-      AC_DEFINE(HAVE_TIOCSCTTY)
+      AC_DEFINE([HAVE_TIOCSCTTY],[1],[Define to 1 if TIOCSCTTY is defined.])
    fi
 ])
 
@@ -175,7 +175,7 @@ AC_DEFUN([AX_CHECK_NS_FILE_STAT],
         [ax_cv_flag_have_ns_file_stat=yes],
         [ax_cv_flag_have_ns_file_stat=no])])
    if test "$ax_cv_flag_have_ns_file_stat" = yes ; then
-      AC_DEFINE(HAVE_NS_FILE_STAT)
+      AC_DEFINE([HAVE_NS_FILE_STAT],[1],[Define to 1 if file stat has nanosecond support.])
    fi
 ])
 
@@ -193,7 +193,7 @@ AC_DEFUN([AX_CHECK_COMPUTED_GOTO],
         [ax_cv_flag_have_computed_goto=yes],
         [ax_cv_flag_have_computed_goto=no])])
    if test "$ax_cv_flag_have_computed_goto" = yes ; then
-      AC_DEFINE(HAVE_COMPUTED_GOTO)
+      AC_DEFINE([HAVE_COMPUTED_GOTO],[1],[Define to 1 for computed goto support.])
    fi
 ])
 
@@ -366,7 +366,7 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                              ]])],
                       [
                       AC_MSG_RESULT(yes)
-                      AC_DEFINE(HAVE_LIBDL)
+                      AC_DEFINE([HAVE_LIBDL],[1],[Define to 1 for dynamic loading support.])
                       HAVE_LIBDL=yes
                       ],
                       [
@@ -400,7 +400,7 @@ AC_DEFUN([AX_CHECK_CAIRO],
               CAIRO_LDFLAGS=`pkg-config --libs-only-L $CAIRO_CONFIG`
               CAIRO_LIBS=`pkg-config --libs-only-l $CAIRO_CONFIG`
               CAIRO_VERSION=`pkg-config --modversion cairo`
-              AC_DEFINE(HAVE_LIBCAIRO)
+              AC_DEFINE([HAVE_LIBCAIRO],[1],[Define to 1 if you have libcairo.])
               AC_MSG_RESULT(yes)
            else
               AC_MSG_RESULT(no)
@@ -427,7 +427,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
               OPENSSL_LDFLAGS=`pkg-config --libs-only-L $OPENSSL_CONFIG`
               OPENSSL_LIBS=`pkg-config --libs-only-l $OPENSSL_CONFIG`
               OPENSSL_VERSION=`pkg-config --modversion $OPENSSL_CONFIG`
-              AC_DEFINE(HAVE_LIBOPENSSL)
+              AC_DEFINE([HAVE_LIBOPENSSL],[1],[Define to 1 if you have libopenssl.])
               AC_MSG_RESULT(yes)
            else
               AC_MSG_RESULT(no)
@@ -453,7 +453,7 @@ AC_DEFUN([AX_CHECK_PNG],
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $PNG_CONFIG`"
               LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $PNG_CONFIG`"
               LIBS="$LIBS `pkg-config --libs-only-l $PNG_CONFIG`"
-              AC_DEFINE(HAVE_LIBPNG)
+              AC_DEFINE([HAVE_LIBPNG],[1],[Define to 1 if you have libpng.])
               AC_MSG_RESULT(yes)
               found_png=yes
            else
@@ -475,7 +475,7 @@ AC_DEFUN([AX_CHECK_ZLIB],
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $ZLIB_CONFIG`"
               LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $ZLIB_CONFIG`"
               LIBS="$LIBS `pkg-config --libs-only-l $ZLIB_CONFIG`"
-              AC_DEFINE(HAVE_LIBZ)
+              AC_DEFINE([HAVE_LIBZ],[1],[Define to 1 if you have zlib.])
               AC_MSG_RESULT(yes)
               found_zlib=yes
            else
@@ -497,7 +497,7 @@ AC_DEFUN([AX_CHECK_X11],
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $X11_CONFIG`"
               LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $X11_CONFIG`"
               LIBS="$LIBS `pkg-config --libs-only-l $X11_CONFIG`"
-              AC_DEFINE(HAVE_LIBX11)
+              AC_DEFINE([HAVE_LIBX11],[1],[Define to 1 if you have libX11.])
               AC_MSG_RESULT(yes)
               found_x11=yes
            else
@@ -519,7 +519,7 @@ AC_DEFUN([AX_CHECK_JPEG],
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $JPEG_CONFIG`"
               LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $JPEG_CONFIG`"
               LIBS="$LIBS `pkg-config --libs-only-l $JPEG_CONFIG`"
-              AC_DEFINE(HAVE_LIBJPEG)
+              AC_DEFINE([HAVE_LIBJPEG],[1],[Define to 1 if you have libjpeg.])
               AC_MSG_RESULT(yes)
               found_jpeg=yes
            else
@@ -542,7 +542,7 @@ AC_DEFUN([AX_LIB_MYSQL],
                MYSQL_LDFLAGS="`pkg-config --libs-only-L $MYSQL_CONFIG`"
                MYSQL_LIBS=`pkg-config --libs-only-l $MYSQL_CONFIG`
                MYSQL_VERSION=`pkg-config --modversion $MYSQL_CONFIG`
-               AC_DEFINE(HAVE_MYSQL)
+               AC_DEFINE([HAVE_MYSQL],[1],[Define to 1 if you have mysql.])
                AC_MSG_RESULT(yes)
            else
                AC_MSG_RESULT(no)

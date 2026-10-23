@@ -1,25 +1,25 @@
-AC_INIT([Object Icon],[chemoelectric-development],,[objecticon])
+AC_INIT([Object Icon],[chemoelectric-development],[],[objecticon])
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_HOST
 case $host_os in
      *linux*)
-        AC_DEFINE(OS_LINUX)
+        AC_DEFINE([OS_LINUX],[1],[Define to 1 if on Linux])
         ;;
      *solaris*)
-        AC_DEFINE(OS_SOLARIS)
+        AC_DEFINE([OS_SOLARIS],[1],[Define to 1 if on Solaris])
         ;;
      *aix*)
-        AC_DEFINE(OS_AIX)
+        AC_DEFINE([OS_AIX],[1],[Define to 1 if on AIX])
         ;;
      *bsd*)
-        AC_DEFINE(OS_BSD)
+        AC_DEFINE([OS_BSD],[1],[Define to 1 if on BSD])
         ;;
      *darwin*)
-        AC_DEFINE(OS_DARWIN)
+        AC_DEFINE([OS_DARWIN],[1],[Define to 1 if on Darwin])
         ;;
      *cygwin*)
-        AC_DEFINE(OS_CYGWIN)
+        AC_DEFINE([OS_CYGWIN],[1],[Define to 1 if on Cygwin])
         ;;
 esac
 
