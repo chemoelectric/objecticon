@@ -150,22 +150,22 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
 
-/* Define to 1 if on AIX */
+/* Define to 1 if on AIX. */
 #undef OS_AIX
 
-/* Define to 1 if on BSD */
+/* Define to 1 if on BSD. */
 #undef OS_BSD
 
-/* Define to 1 if on Cygwin */
+/* Define to 1 if on Cygwin. */
 #undef OS_CYGWIN
 
-/* Define to 1 if on Darwin */
+/* Define to 1 if on Darwin. */
 #undef OS_DARWIN
 
-/* Define to 1 if on Linux */
+/* Define to 1 if on Linux. */
 #undef OS_LINUX
 
-/* Define to 1 if on Solaris */
+/* Define to 1 if on Solaris. */
 #undef OS_SOLARIS
 
 /* Define to the address where bug reports for this package should be sent. */
@@ -222,6 +222,9 @@
 
 /* Define to 1 if your <sys/time.h> declares 'struct tm'. */
 #undef TM_IN_SYS_TIME
+
+/* Define to 1 if on a UNIX-like system. */
+#undef UNIX
 
 /* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE

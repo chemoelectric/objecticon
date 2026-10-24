@@ -4,24 +4,26 @@ AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_HOST
 case $host_os in
      *linux*)
-        AC_DEFINE([OS_LINUX],[1],[Define to 1 if on Linux])
+        AC_DEFINE([OS_LINUX],[1],[Define to 1 if on Linux.])
         ;;
      *solaris*)
-        AC_DEFINE([OS_SOLARIS],[1],[Define to 1 if on Solaris])
+        AC_DEFINE([OS_SOLARIS],[1],[Define to 1 if on Solaris.])
         ;;
      *aix*)
-        AC_DEFINE([OS_AIX],[1],[Define to 1 if on AIX])
+        AC_DEFINE([OS_AIX],[1],[Define to 1 if on AIX.])
         ;;
      *bsd*)
-        AC_DEFINE([OS_BSD],[1],[Define to 1 if on BSD])
+        AC_DEFINE([OS_BSD],[1],[Define to 1 if on BSD.])
         ;;
      *darwin*)
-        AC_DEFINE([OS_DARWIN],[1],[Define to 1 if on Darwin])
+        AC_DEFINE([OS_DARWIN],[1],[Define to 1 if on Darwin.])
         ;;
      *cygwin*)
-        AC_DEFINE([OS_CYGWIN],[1],[Define to 1 if on Cygwin])
+        AC_DEFINE([OS_CYGWIN],[1],[Define to 1 if on Cygwin.])
         ;;
 esac
+
+AC_DEFINE([UNIX],[1],[Define to 1 if on a UNIX-like system.])
 
 AC_SUBST([CONFIG_DIR])
 CONFIG_DIR=$(pwd -P)
@@ -49,7 +51,7 @@ unset y
 
 dnl Set compiler-specific flags
 case $CCVER in
-    gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing -Wno-deprecated-declarations" ;;
+    gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing -Wno-deprecated-declarations -std=gnu17" ;;
     pcc*) CFLAGS="$CFLAGS -Wall" ;;
     *clang*) CFLAGS="$CFLAGS -Wall -Wno-unknown-warning-option -Wno-unused-const-variable -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations -Wno-misleading-indentation" ;;
     *Sun\ C*) CFLAGS="$CFLAGS -errtags=yes -erroff=E_STATEMENT_NOT_REACHED -erroff=E_INVALID_CAST_EXPRESSION -erroff=E_ASSIGNMENT_TYPE_MISMATCH" ;;
